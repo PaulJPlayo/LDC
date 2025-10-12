@@ -6,19 +6,21 @@
     <title>Home</title>
     <meta name="description" content="Landing page" />
     <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet" />
     <style>
       html { scroll-behavior: smooth; }
       .hero-card {
-        background: radial-gradient(circle at center,
-          rgba(224, 176, 255, 0.34) 0%,
-          rgba(224, 176, 255, 0.18) 22%,
-          rgba(216, 180, 254, 0.014) 44%,
-          rgba(216, 180, 254, 0) 56%,
-          rgba(216, 180, 254, 0) 100%);
-        border-radius: 1.5rem;
-        padding: 2rem 2.5rem;
-        box-shadow: 0 10px 20px rgba(153, 40, 177, 0.065);
-        backdrop-filter: blur(2px);
+        background: none;
+        border-radius: 0;
+        padding: 0;
+        box-shadow: none;
+        backdrop-filter: none;
+      }
+      .hero-card h1 {
+        font-family: 'Lobster', cursive;
+        font-size: clamp(2rem, 4vw, 3rem);
       }
       .icon-button {
         border: none;
@@ -72,6 +74,9 @@
         width: 2.5rem;
         height: 2.5rem;
         box-shadow: 0 8px 16px rgba(153, 40, 177, 0.16);
+      }
+      .tile-mauve {
+        background: linear-gradient(135deg, #E0B0FF 0%, #D8B4FE 100%);
       }
       .tile-action-favorite.is-active {
         background: linear-gradient(135deg, #FF9AED 0%, #FF5CA8 100%);
@@ -590,14 +595,14 @@
             <!-- Product card template start -->
             <div class="group">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
-                <div class="w-[55%] h-[75%] rounded-md" style="background: linear-gradient(180deg,#7b4d3d 0%,#b27f6f 100%);"></div>
+                <img id="slimProductImage" src="assets/Tumbler%202%20-%20White.jpeg" alt="Slim tumbler product photo" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="swatch w-5 h-5 rounded-full bg-[#554d3e] ring-1 ring-slate-300"></span>
-                  <span class="swatch w-5 h-5 rounded-full bg-[#a99f8a] ring-1 ring-slate-300"></span>
-                  <span class="swatch w-5 h-5 rounded-full bg-[#1f1f1f] ring-1 ring-slate-300"></span>
-                  <span class="text-xs text-slate-600">+3 colors</span>
+                <div class="flex items-center gap-3 flex-wrap">
+                  <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="background: radial-gradient(circle, #ffffff 0%, #f7f7f7 55%, #d9d9d9 100%); box-shadow: 0 0 6px rgba(217, 217, 217, 0.6);" role="button" tabindex="0" aria-label="View white option" data-image-target="slimProductImage" data-image-src="assets/Tumbler%202%20-%20White.jpeg" data-image-alt="Slim tumbler - white" data-price-target="slimProductPrice" data-price="30.00"></span>
+                  <span class="text-xs text-slate-600">White</span>
+                  <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="background: radial-gradient(circle, #ccff88 0%, #8dff3a 65%, #48ff5b 100%); box-shadow: 0 0 8px rgba(141, 255, 58, 0.65);" role="button" tabindex="0" aria-label="View glow in the dark option" data-image-target="slimProductImage" data-image-src="assets/Tumbler%201%20-%20Green.jpeg" data-image-alt="Slim tumbler - glow in the dark" data-price-target="slimProductPrice" data-price="35.00"></span>
+                  <span class="text-xs text-slate-600">Glow in the Dark</span>
                 </div>
                 <div class="flex items-center gap-2 tile-actions">
                   <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
@@ -613,28 +618,25 @@
                 </div>
               </div>
               <div class="mt-1 text-xs text-slate-600 flex items-center gap-2">
-                <span>24oz | Wood Brown</span>
-                <span class="inline-flex items-center rounded bg-slate-900 text-white px-1.5 py-0.5">Sold Out</span>
+                <span>20oz | Slim Stainless Steel</span>
                 <span class="inline-flex items-center rounded bg-emerald-600 text-white px-1.5 py-0.5">New Arrival</span>
               </div>
-              <a href="#" class="block mt-2 font-semibold tile-title">LDC Tumbler 1</a>
-              <div class="text-sm text-slate-700">$28.00</div>
+              <a href="#" class="block mt-2 font-semibold tile-title">Sublimination</a>
+              <div id="slimProductPrice" class="text-sm text-slate-700">$30.00</div>
               <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
-                <!-- rating: 3.7 -->
-                <span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">☆</span>
-                <span class="text-xs text-slate-600">3.7 (533)</span>
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
             <div class="group">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
-                <div class="w-[30%] h-[80%] rounded-md" style="background: linear-gradient(180deg,#d8b6ab 0%,#c08f86 100%);"></div>
+                <img src="assets/Tumbler%207%20-%20Glass.jpeg" alt="LDC Tumbler 2" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="swatch w-5 h-5 rounded-full bg-[#bda291] ring-1 ring-slate-300"></span>
-                  <span class="swatch w-5 h-5 rounded-full bg-[#3a332a] ring-1 ring-slate-300"></span>
-                  <span class="swatch w-5 h-5 rounded-full bg-[#e6ded4] ring-1 ring-slate-300"></span>
-                  <span class="text-xs text-slate-600">+8 colors</span>
+                  <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" style="background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(210,226,238,0.65) 60%, rgba(164,191,214,0.85) 100%);"></span>
+                  <span class="text-xs text-slate-600">Glass</span>
                 </div>
                 <div class="flex items-center gap-2 tile-actions">
                   <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
@@ -650,27 +652,28 @@
                 </div>
               </div>
               <div class="mt-1 text-xs text-slate-600 flex items-center gap-2">
-                <span>20oz | Wood Brown</span>
+                <span>40oz | Glass</span>
                 <span class="inline-flex items-center rounded bg-emerald-600 text-white px-1.5 py-0.5">New Arrival</span>
                 <span class="inline-flex items-center rounded bg-slate-900 text-white px-1.5 py-0.5">Customizable</span>
               </div>
-              <a class="block mt-2 font-semibold tile-title">LDC Tumbler 2</a>
-              <div class="text-sm text-slate-700">$35.00</div>
-              <div class="mt-1 flex items-center gap-1 rating">
-                <span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">☆</span>
-                <span class="text-xs text-slate-600">4.1 (276)</span>
+              <a class="block mt-2 font-semibold tile-title">Glass Tumbler</a>
+              <div class="text-sm text-slate-700">$40.00</div>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
             <div class="group">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
-                <div class="w-[50%] h-[60%] rounded-md" style="background: linear-gradient(180deg,#f0d77c 0%,#e9c45e 100%);"></div>
+                <img src="assets/Tumbler%203%20-%20White.jpeg" alt="LDC Tumbler 3" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="swatch w-5 h-5 rounded-full bg-[#e0c55a] ring-1 ring-slate-300"></span>
-                  <span class="swatch w-5 h-5 rounded-full bg-[#c4b7a6] ring-1 ring-slate-300"></span>
-                  <span class="swatch w-5 h-5 rounded-full bg-[#f1ded8] ring-1 ring-slate-300"></span>
-                  <span class="text-xs text-slate-600">+16 colors</span>
+                  <span class="inline-flex items-center gap-1">
+                    <span class="swatch w-5 h-5 rounded-full bg-white ring-1 ring-slate-300"></span>
+                    <span class="text-xs text-slate-600">White</span>
+                  </span>
                 </div>
                 <div class="flex items-center gap-2 tile-actions">
                   <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
@@ -686,26 +689,25 @@
                 </div>
               </div>
               <div class="mt-1 text-xs text-slate-600 flex items-center gap-2">
-                <span>16oz | Sun Yellow</span>
+                <span>12-15oz | Stainless Steel</span>
                 <span class="inline-flex items-center rounded bg-slate-900 text-white px-1.5 py-0.5">Customizable</span>
               </div>
-              <a class="block mt-2 font-semibold tile-title">LDC Tumbler 3</a>
+              <a class="block mt-2 font-semibold tile-title">Kids Water Bottle</a>
               <div class="text-sm text-slate-700">$12.00</div>
-              <div class="mt-1 flex items-center gap-1 rating">
-                <span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">☆</span>
-                <span class="text-xs text-slate-600">4.4 (277)</span>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
             <div class="group">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
-                <div class="w-[50%] h-[60%] rounded-md" style="background: linear-gradient(180deg,#efc2c4 0%,#e3a6ab 100%);"></div>
+                <img src="assets/Tumbler%208%20-%20Black.jpeg" alt="LDC Tumbler 4" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="swatch w-5 h-5 rounded-full bg-[#d7b2b7] ring-1 ring-slate-300"></span>
-                  <span class="swatch w-5 h-5 rounded-full bg-[#b0a8a0] ring-1 ring-slate-300"></span>
-                  <span class="swatch w-5 h-5 rounded-full bg-[#f1ded8] ring-1 ring-slate-300"></span>
-                  <span class="text-xs text-slate-600">+16 colors</span>
+                  <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" style="background: radial-gradient(circle, #2b2b2b 0%, #000000 70%, #050505 100%);"></span>
+                  <span class="text-xs text-slate-600">Black</span>
                 </div>
                 <div class="flex items-center gap-2 tile-actions">
                   <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
@@ -721,26 +723,26 @@
                 </div>
               </div>
               <div class="mt-1 text-xs text-slate-600 flex items-center gap-2">
-                <span>16oz | Pink Mist</span>
+                <span>40oz | Top Handle</span>
                 <span class="inline-flex items-center rounded bg-slate-900 text-white px-1.5 py-0.5">Customizable</span>
               </div>
-              <a class="block mt-2 font-semibold tile-title">LDC Tumbler 4</a>
-              <div class="text-sm text-slate-700"><span class="text-rose-600">$12.00</span> <span class="line-through text-slate-400 ml-1">$20.00</span></div>
-              <div class="mt-1 flex items-center gap-1 rating">
-                <span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">☆</span>
-                <span class="text-xs text-slate-600">4.4 (277)</span>
+              <a class="block mt-2 font-semibold tile-title">Water Bottle Tumbler</a>
+              <div class="text-sm text-slate-700"><span class="text-rose-600">$40.00</span> <span class="line-through text-slate-400 ml-1">$60.00</span></div>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
             <!-- second row (placeholders mimic screenshot layout) -->
             <div class="group">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
-                <div class="w-[35%] h-[85%] rounded-md" style="background: linear-gradient(180deg,#eadbd6 0%,#f4ece8 100%);"></div>
+                <img src="assets/Tumbler%209%20-%20Pink.jpeg" alt="LDC Tumbler 5" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="swatch w-5 h-5 rounded-full bg-[#d9cec7] ring-1 ring-slate-300"></span>
-                  <span class="swatch w-5 h-5 rounded-full bg-[#b8aaa2] ring-1 ring-slate-300"></span>
-                  <span class="swatch w-5 h-5 rounded-full bg-[#e6ded4] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" style="background-color:#ff669d; background-image:none;"></span>
+                  <span class="text-xs text-slate-600">Pink</span>
                 </div>
                 <div class="flex items-center gap-2 tile-actions">
                   <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
@@ -754,19 +756,22 @@
                     </svg>
                   </button>
                 </div>
+              </div>
+              <div class="mt-1 text-xs text-slate-600 flex items-center gap-2">
+                <span>40oz | Top Handle</span>
+                <span class="inline-flex items-center rounded bg-emerald-600 text-white px-1.5 py-0.5">New Arrival</span>
               </div>
               <a class="block mt-2 font-semibold tile-title">LDC Tumbler 5</a>
-              <div class="text-sm text-slate-700">$30.00</div>
+              <div class="text-sm text-slate-700">$40.00</div>
             </div>
             <div class="group">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
-                <div class="w-[35%] h-[85%] rounded-md" style="background: linear-gradient(180deg,#f4efe7 0%,#efe6d8 100%);"></div>
+                <img src="assets/Tumbler%2012%20-%20Light%20Pink.jpeg" alt="LDC Tumbler 6" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="swatch w-5 h-5 rounded-full bg-[#efe6d8] ring-1 ring-slate-300"></span>
-                  <span class="swatch w-5 h-5 rounded-full bg-[#d2c9bd] ring-1 ring-slate-300"></span>
-                  <span class="swatch w-5 h-5 rounded-full bg-[#b8b0a6] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" style="background: radial-gradient(circle,#ffe3f4 0%,#ffadc7 68%,#ff7aa8 100%);"></span>
+                  <span class="text-xs text-slate-600">Light Pink</span>
                 </div>
                 <div class="flex items-center gap-2 tile-actions">
                   <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
@@ -780,19 +785,22 @@
                     </svg>
                   </button>
                 </div>
+              </div>
+              <div class="mt-1 text-xs text-slate-600 flex items-center gap-2">
+                <span>40oz | Top Handle</span>
+                <span class="inline-flex items-center rounded bg-emerald-600 text-white px-1.5 py-0.5">New Arrival</span>
               </div>
               <a class="block mt-2 font-semibold tile-title">LDC Tumbler 6</a>
-              <div class="text-sm text-slate-700">$30.00</div>
+              <div class="text-sm text-slate-700">$45.00</div>
             </div>
             <div class="group">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
-                <div class="w-[35%] h-[75%] rounded-md" style="background: linear-gradient(180deg,#1f2428 0%,#2d3338 100%);"></div>
+                <img src="assets/Tumbler%2010%20-%20Orange.jpeg" alt="LDC Tumbler 7" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="swatch w-5 h-5 rounded-full bg-[#1f1f1f] ring-1 ring-slate-300"></span>
-                  <span class="swatch w-5 h-5 rounded-full bg-[#8c8c8c] ring-1 ring-slate-300"></span>
-                  <span class="swatch w-5 h-5 rounded-full bg-[#d1d1d1] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" style="background-color:#ff7a1f; background-image:none;"></span>
+                  <span class="text-xs text-slate-600">Orange</span>
                 </div>
                 <div class="flex items-center gap-2 tile-actions">
                   <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
@@ -806,19 +814,22 @@
                     </svg>
                   </button>
                 </div>
+              </div>
+              <div class="mt-1 text-xs text-slate-600 flex items-center gap-2">
+                <span>40oz | Side Handle</span>
+                <span class="inline-flex items-center rounded bg-emerald-600 text-white px-1.5 py-0.5">New Arrival</span>
               </div>
               <a class="block mt-2 font-semibold tile-title">LDC Tumbler 7</a>
-              <div class="text-sm text-slate-700">$30.00</div>
+              <div class="text-sm text-slate-700">$45.00</div>
             </div>
             <div class="group">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
-                <div class="w-[55%] h-[70%] rounded-md" style="background: linear-gradient(180deg,#89b4ab 0%,#6ea198 100%);"></div>
+                <img src="assets/Tumbler%2011%20-%20Brown.jpeg" alt="LDC Tumbler 8" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="swatch w-5 h-5 rounded-full bg-[#8fb7ae] ring-1 ring-slate-300"></span>
-                  <span class="swatch w-5 h-5 rounded-full bg-[#b0a8a0] ring-1 ring-slate-300"></span>
-                  <span class="swatch w-5 h-5 rounded-full bg-[#f1ded8] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" style="background-color:#8b5a2b; background-image:none;"></span>
+                  <span class="text-xs text-slate-600">Brown</span>
                 </div>
                 <div class="flex items-center gap-2 tile-actions">
                   <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
@@ -833,8 +844,12 @@
                   </button>
                 </div>
               </div>
+              <div class="mt-1 text-xs text-slate-600 flex items-center gap-2">
+                <span>40oz | Side Handle</span>
+                <span class="inline-flex items-center rounded bg-emerald-600 text-white px-1.5 py-0.5">New Arrival</span>
+              </div>
               <a class="block mt-2 font-semibold tile-title">LDC Tumbler 8</a>
-              <div class="text-sm text-slate-700">$28.00</div>
+              <div class="text-sm text-slate-700">$40.00</div>
             </div>
             <!-- Product card template end -->
           </div>
@@ -894,9 +909,10 @@
               <div class="mt-1 text-xs inline-flex items-center rounded bg-rose-600 text-white px-1.5 py-0.5">Sale</div>
               <a class="block mt-2 font-semibold tile-title">LDC Cup 1</a>
               <div class="text-sm text-slate-700"><span class="text-rose-600">$22.50</span> <span class="line-through text-slate-400 ml-1">$30.00</span></div>
-              <div class="mt-1 flex items-center gap-1 rating">
-                <span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">☆</span>
-                <span class="text-xs text-slate-600">4.2 (150)</span>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
             <div class="group">
@@ -927,9 +943,10 @@
               <div class="mt-1 text-xs inline-flex items-center rounded bg-rose-600 text-white px-1.5 py-0.5">Sale</div>
               <a class="block mt-2 font-semibold tile-title">LDC Cup 2</a>
               <div class="text-sm text-slate-700"><span class="text-rose-600">$17.50</span> <span class="line-through text-slate-400 ml-1">$28.00</span></div>
-              <div class="mt-1 flex items-center gap-1 rating">
-                <span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">☆</span><span class="star text-amber-500">☆</span>
-                <span class="text-xs text-slate-600">3.7 (668)</span>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
             <div class="group">
@@ -962,9 +979,10 @@
               <div class="mt-1 text-xs inline-flex items-center rounded bg-rose-600 text-white px-1.5 py-0.5">Sale</div>
               <a class="block mt-2 font-semibold tile-title">LDC Cup 3</a>
               <div class="text-sm text-slate-700"><span class="text-rose-600">$15.00</span> <span class="line-through text-slate-400 ml-1">$30.00</span></div>
-              <div class="mt-1 flex items-center gap-1 rating">
-                <span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">☆</span>
-                <span class="text-xs text-slate-600">4.2 (150)</span>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
             <div class="group">
@@ -994,9 +1012,10 @@
               <div class="mt-1 text-xs text-slate-600">12oz | Charcoal</div>
               <a class="block mt-2 font-semibold tile-title">LDC Cup 4</a>
               <div class="text-sm text-slate-700">$23.00</div>
-              <div class="mt-1 flex items-center gap-1 rating">
-                <span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">☆</span>
-                <span class="text-xs text-slate-600">4.2 (241)</span>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
             <!-- Row 2 -->
@@ -1028,9 +1047,10 @@
               <div class="mt-1 text-xs inline-flex items-center rounded bg-rose-600 text-white px-1.5 py-0.5">Sale</div>
               <a class="block mt-2 font-semibold tile-title">LDC Cup 5</a>
               <div class="text-sm text-slate-700"><span class="text-rose-600">$17.50</span> <span class="line-through text-slate-400 ml-1">$28.00</span></div>
-              <div class="mt-1 flex items-center gap-1 rating">
-                <span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">☆</span><span class="star text-amber-500">☆</span>
-                <span class="text-xs text-slate-600">3.7 (668)</span>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
             <div class="group">
@@ -1061,9 +1081,10 @@
               <div class="mt-1 text-xs inline-flex items-center rounded bg-rose-600 text-white px-1.5 py-0.5">Sale</div>
               <a class="block mt-2 font-semibold tile-title">LDC Cup 6</a>
               <div class="text-sm text-slate-700"><span class="text-rose-600">$22.50</span> <span class="line-through text-slate-400 ml-1">$30.00</span></div>
-              <div class="mt-1 flex items-center gap-1 rating">
-                <span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">☆</span>
-                <span class="text-xs text-slate-600">4.2 (150)</span>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
             <div class="group">
@@ -1093,9 +1114,10 @@
               <div class="mt-1 text-xs inline-flex items-center rounded bg-rose-600 text-white px-1.5 py-0.5">Sale</div>
               <a class="block mt-2 font-semibold tile-title">LDC Cup 7</a>
               <div class="text-sm text-slate-700"><span class="text-rose-600">$10.00</span> <span class="line-through text-slate-400 ml-1">$20.00</span></div>
-              <div class="mt-1 flex items-center gap-1 rating">
-                <span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">☆</span>
-                <span class="text-xs text-slate-600">4.4 (119)</span>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
             <div class="group">
@@ -1112,11 +1134,361 @@
               <div class="mt-1 text-xs inline-flex items-center rounded bg-rose-600 text-white px-1.5 py-0.5">Sale</div>
               <a class="block mt-2 font-semibold tile-title">LDC Cup 8</a>
               <div class="text-sm text-slate-700"><span class="text-rose-600">$22.50</span> <span class="line-through text-slate-400 ml-1">$30.00</span></div>
-              <div class="mt-1 flex items-center gap-1 rating">
-                <span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">★</span><span class="star text-amber-500">☆</span>
-                <span class="text-xs text-slate-600">4.2 (150)</span>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+      <!-- Accessories Section -->
+      <section id="section-accessories" class="">
+        <div class="container py-12 md:py-16">
+          <div class="mb-6">
+            <h2 class="font-heading text-2xl md:text-3xl font-semibold tracking-tight">Accessories</h2>
+            <div class="mt-2 text-sm text-slate-600">8 Products</div>
+          </div>
+          <div class="flex items-center justify-between mb-6">
+            <button class="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-slate-300 hover:bg-slate-50 text-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M6 12h12M10 18h4"/></svg>
+              Filter
+            </button>
+            <label class="text-sm flex items-center gap-2">
+              <span class="text-slate-600">Sort by:</span>
+              <select class="h-9 rounded-md border border-slate-300 bg-white px-3 select-mauve-dark">
+                <option>Relevance</option>
+                <option>Price: Low to High</option>
+                <option>Price: High to Low</option>
+                <option>Rating</option>
+                <option>Newest</option>
+              </select>
+            </label>
+          </div>
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <!-- Row 1 -->
+            <div class="group">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+                <div class="w-[45%] h-[55%] rounded-md" style="background: linear-gradient(180deg,#f8d7e5 0%,#f5b6cc 100%);"></div>
+              </div>
+              <div class="mt-4 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="swatch w-5 h-5 rounded-full bg-[#f08bb3] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full bg-[#ffe1ef] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full bg-[#d9d9d9] ring-1 ring-slate-300"></span>
+                </div>
+                <div class="flex items-center gap-2 tile-actions">
+                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="mt-1 text-xs text-slate-600">Set of 3 | Keychains</div>
+              <a class="block mt-2 font-semibold tile-title">LDC Accessory 1</a>
+              <div class="text-sm text-slate-700">$12.00</div>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
+              </div>
+            </div>
+            <div class="group">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+                <div class="w-[55%] h-[55%] rounded-md" style="background: linear-gradient(180deg,#d7ecff 0%,#b9d8ff 100%);"></div>
+              </div>
+              <div class="mt-4 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="swatch w-5 h-5 rounded-full bg-[#6da9ff] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full bg-[#f5f9ff] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full bg-[#989db1] ring-1 ring-slate-300"></span>
+                </div>
+                <div class="flex items-center gap-2 tile-actions">
+                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="mt-1 text-xs text-slate-600">Bundle | Phone Grips</div>
+              <a class="block mt-2 font-semibold tile-title">LDC Accessory 2</a>
+              <div class="text-sm text-slate-700">$18.00</div>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
+              </div>
+            </div>
+            <div class="group">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+                <div class="w-[50%] h-[60%] rounded-md" style="background: linear-gradient(180deg,#ffe7d2 0%,#ffc9a1 100%);"></div>
+              </div>
+              <div class="mt-4 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="swatch w-5 h-5 rounded-full bg-[#ffb47e] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full bg-[#ffe5cc] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full bg-[#f0d7c7] ring-1 ring-slate-300"></span>
+                </div>
+                <div class="flex items-center gap-2 tile-actions">
+                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="mt-1 text-xs text-slate-600">Pair | Resin Bookmarks</div>
+              <a class="block mt-2 font-semibold tile-title">LDC Accessory 3</a>
+              <div class="text-sm text-slate-700">$15.00</div>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
+              </div>
+            </div>
+            <div class="group">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+                <div class="w-[55%] h-[55%] rounded-md" style="background: linear-gradient(180deg,#d4f0f4 0%,#a7e0e9 100%);"></div>
+              </div>
+              <div class="mt-4 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="swatch w-5 h-5 rounded-full bg-[#6ec9cf] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full bg-[#daf4f5] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full bg-[#97b5b9] ring-1 ring-slate-300"></span>
+                </div>
+                <div class="flex items-center gap-2 tile-actions">
+                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="mt-1 text-xs text-slate-600">4 Pack | Wristlets</div>
+              <a class="block mt-2 font-semibold tile-title">LDC Accessory 4</a>
+              <div class="text-sm text-slate-700">$22.00</div>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
+              </div>
+            </div>
+            <!-- Row 2 -->
+            <div class="group">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+                <div class="w-[55%] h-[65%] rounded-md" style="background: linear-gradient(180deg,#ebe0ff 0%,#d5c3ff 100%);"></div>
+              </div>
+              <div class="mt-4 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="swatch w-5 h-5 rounded-full bg-[#c7adff] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full bg-[#f5efff] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full bg-[#9c88c9] ring-1 ring-slate-300"></span>
+                </div>
+                <div class="flex items-center gap-2 tile-actions">
+                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="mt-1 text-xs text-slate-600">Set | Beaded Bracelets</div>
+              <a class="block mt-2 font-semibold tile-title">LDC Accessory 5</a>
+              <div class="text-sm text-slate-700">$28.00</div>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
+              </div>
+            </div>
+            <div class="group">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+                <div class="w-[45%] h-[60%] rounded-md" style="background: linear-gradient(180deg,#ffe6f2 0%,#ffbfdc 100%);"></div>
+              </div>
+              <div class="mt-4 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="swatch w-5 h-5 rounded-full bg-[#f99bc9] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full bg-[#ffe8f3] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full bg-[#dcb6c7] ring-1 ring-slate-300"></span>
+                </div>
+                <div class="flex items-center gap-2 tile-actions">
+                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="mt-1 text-xs text-slate-600">3 Pack | Scrunchies</div>
+              <a class="block mt-2 font-semibold tile-title">LDC Accessory 6</a>
+              <div class="text-sm text-slate-700">$14.00</div>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
+              </div>
+            </div>
+            <div class="group">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+                <div class="w-[55%] h-[55%] rounded-md" style="background: linear-gradient(180deg,#f9efd7 0%,#f4ddaa 100%);"></div>
+              </div>
+              <div class="mt-4 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="swatch w-5 h-5 rounded-full bg-[#f1c96a] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full bg-[#fff2d8] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full bg-[#d5bf92] ring-1 ring-slate-300"></span>
+                </div>
+                <div class="flex items-center gap-2 tile-actions">
+                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="mt-1 text-xs text-slate-600">Handmade | Trinket Dish</div>
+              <a class="block mt-2 font-semibold tile-title">LDC Accessory 7</a>
+              <div class="text-sm text-slate-700">$24.00</div>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
+              </div>
+            </div>
+            <div class="group">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+                <div class="w-[55%] h-[60%] rounded-md" style="background: linear-gradient(180deg,#e5f4ff 0%,#bde3ff 100%);"></div>
+              </div>
+              <div class="mt-4 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="swatch w-5 h-5 rounded-full bg-[#8ac9f9] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full bg-[#dff2ff] ring-1 ring-slate-300"></span>
+                  <span class="swatch w-5 h-5 rounded-full bg-[#94a9bf] ring-1 ring-slate-300"></span>
+                </div>
+                <div class="flex items-center gap-2 tile-actions">
+                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="mt-1 text-xs text-slate-600">Limited | Badge Reels</div>
+              <a class="block mt-2 font-semibold tile-title">LDC Accessory 8</a>
+              <div class="text-sm text-slate-700">$16.00</div>
+              <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+                <!-- rating: 0.0 -->
+                <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+                <span class="text-xs text-slate-600">0.0 (0)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section id="section-customization" class="">
+        <div class="container py-12 md:py-16">
+          <div class="overflow-hidden rounded-[2.25rem] tile-mauve shadow-[0_18px_40px_rgba(153,40,177,0.12)] border border-slate-200">
+            <div class="px-6 py-10 md:px-12 md:py-14 text-center text-white rounded-t-3xl" style="background: linear-gradient(135deg, #E0B0FF 0%, #D8B4FE 100%);">
+              <p class="text-sm font-semibold tracking-[0.35em] uppercase mb-3">Customization</p>
+              <h2 class="font-heading text-3xl md:text-5xl font-extrabold uppercase tracking-[0.18em]">Customization</h2>
+              <p class="mt-4 text-sm md:text-base">Let your imagination run wild.</p>
+            </div>
+            <div class="p-6 md:p-10 rounded-b-3xl">
+              <div class="rounded-3xl overflow-hidden border border-[#ead8ff] shadow-[0_18px_40px_rgba(153,40,177,0.12)]">
+                <img src="assets/Tumbler%207%20-%20Glass.jpeg" alt="Customized glass tumbler with palm tree graphic" class="w-full h-full object-cover" />
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 text-center">
+            <p class="text-sm font-semibold tracking-[0.35em] uppercase text-slate-600">Colors</p>
+          </div>
+          <div class="mt-4 flex flex-wrap items-center justify-center md:justify-between gap-4 md:gap-6">
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f8ddff 0%,#d08af5 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fde1ff 0%,#ff9aed 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fff7d6 0%,#f6ce6c 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#e0f7ff 0%,#8ac9f9 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#d9d9d9 0%,#707070 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#ffe4f2 0%,#ff9bbf 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f0ffdd 0%,#b6f542 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f5f1ff 0%,#c5b0ff 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#ffeede 0%,#ffb780 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f4fffd 0%,#9ce8d0 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fff0f0 0%,#ff7676 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#eef2ff 0%,#4f46e5 100%);"></span>
+          </div>
+          <div class="mt-10 text-center">
+            <p class="text-sm font-semibold tracking-[0.35em] uppercase text-slate-600">Accessories</p>
+          </div>
+          <div class="mt-4 flex flex-wrap items-center justify-center md:justify-between gap-4 md:gap-6">
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fef3c7 0%,#f97316 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#edf2f7 0%,#64748b 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#ecfeff 0%,#0ea5e9 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f4fce3 0%,#4ade80 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fdf2f8 0%,#be185d 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#eef2ff 0%,#312e81 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fff7ec 0%,#ea580c 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f8fafc 0%,#94a3b8 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fef2f2 0%,#b91c1c 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f0fdf4 0%,#22c55e 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#eff6ff 0%,#2563eb 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fdf4ff 0%,#c084fc 100%);"></span>
+          </div>
+          <div class="mt-4 flex flex-wrap items-center justify-center md:justify-between gap-4 md:gap-6">
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fff5f7 0%,#fb7185 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f5f5f5 0%,#737373 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f9f7ff 0%,#7c3aed 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fef9c3 0%,#d97706 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fef2f2 0%,#ef4444 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#eef2ff 0%,#4c1d95 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#ecfdf5 0%,#047857 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f5f5f5 0%,#0f172a 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fef3c7 0%,#ea580c 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#eefdfd 0%,#14b8a6 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fdf2f8 0%,#db2777 100%);"></span>
+            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f1f5f9 0%,#64748b 100%);"></span>
           </div>
         </div>
       </section>
@@ -1886,6 +2258,29 @@
         close: closeCart
       };
 
+      const buildImagePreviewStyle = src => {
+        if (!src) return '';
+        return `background-color: #ffffff; background-image: url("${src}"); background-size: cover; background-position: center; background-repeat: no-repeat;`;
+      };
+
+      const getCardPreviewStyle = card => {
+        if (!card) return '';
+        const media = card.querySelector('.tile-mauve');
+        if (!media) return '';
+        const activeImage = media.querySelector('img');
+        if (activeImage) {
+          const src = activeImage.getAttribute('src');
+          if (src) {
+            return buildImagePreviewStyle(src);
+          }
+        }
+        const styledChild = media.querySelector('[style]');
+        if (styledChild) {
+          return styledChild.getAttribute('style') || '';
+        }
+        return media.getAttribute('style') || '';
+      };
+
       const getProductDetails = button => {
         const card = button.closest('.group');
         if (!card) return null;
@@ -1899,8 +2294,7 @@
           const numeric = priceText.replace(/[^0-9.]/g, '');
           price = numeric ? Number(numeric) : 0;
         }
-        const previewNode = card.querySelector('.tile-mauve > div');
-        const previewStyle = previewNode ? previewNode.getAttribute('style') || '' : '';
+        const previewStyle = getCardPreviewStyle(card);
         const id = `${titleText}|${price}`;
         return { id, name: titleText, price, quantity: 1, previewStyle };
       };
@@ -2113,10 +2507,44 @@
         syncFavoriteButtons();
       };
 
+      const wireProductSwatches = () => {
+        document.querySelectorAll('[data-image-target][data-image-src]').forEach(swatch => {
+          if (swatch.dataset.imageSwapInit) return;
+          swatch.dataset.imageSwapInit = 'true';
+          const activateSwap = () => {
+            const targetId = swatch.dataset.imageTarget;
+            const newSrc = swatch.dataset.imageSrc;
+            if (!targetId || !newSrc) return;
+            const targetImage = document.getElementById(targetId);
+            if (!targetImage) return;
+            targetImage.setAttribute('src', newSrc);
+            if (swatch.dataset.imageAlt) {
+              targetImage.setAttribute('alt', swatch.dataset.imageAlt);
+            }
+            const priceTargetId = swatch.dataset.priceTarget;
+            const priceValue = swatch.dataset.price;
+            if (priceTargetId && priceValue) {
+              const priceEl = document.getElementById(priceTargetId);
+              if (priceEl) {
+                priceEl.textContent = `$${priceValue}`;
+              }
+            }
+          };
+          swatch.addEventListener('click', activateSwap);
+          swatch.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              activateSwap();
+            }
+          });
+        });
+      };
+
       syncBadge();
       renderCart();
       wireCartButtons();
       wireFavoriteButtons();
+      wireProductSwatches();
 
       window.ldcCart = cartApi;
 
