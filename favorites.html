@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Favorites</title>
+    <meta name="description" content="Saved favorites" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet" />
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: radial-gradient(circle at top left, rgba(255, 199, 229, 0.45), transparent 55%), radial-gradient(circle at bottom right, rgba(255, 154, 217, 0.4), transparent 55%), linear-gradient(135deg, #420634 0%, #160312 100%);
+        padding: clamp(1.5rem, 4vw, 3rem) 1.25rem;
+        color: #ffffff;
+      }
+      .favorites-shell {
+        width: 100%;
+        max-width: 960px;
+        margin: 0 auto;
+      }
+      .favorites-card {
+        background: linear-gradient(135deg, #ff9aed 0%, #ff5ca8 100%);
+        border-radius: 1.75rem;
+        box-shadow: 0 24px 48px rgba(15, 23, 42, 0.35);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        backdrop-filter: blur(16px);
+      }
+      .favorites-header {
+        padding: clamp(1.5rem, 3vw, 2.5rem);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+      }
+      .favorites-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        text-decoration: none;
+        color: rgba(255, 255, 255, 0.85);
+      }
+      .favorites-back svg {
+        width: 1.1rem;
+        height: 1.1rem;
+      }
+      .favorites-title {
+        font-family: inherit;
+        font-size: clamp(1.5rem, 4vw, 2.25rem);
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin: 0;
+      }
+      .favorites-subtitle {
+        font-size: 1rem;
+        max-width: 48ch;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.84);
+      }
+      .favorites-content {
+        padding: clamp(1.5rem, 3vw, 2.5rem);
+        display: flex;
+        flex-direction: column;
+        gap: clamp(1.75rem, 3vw, 2.5rem);
+      }
+      .favorites-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .favorites-empty {
+        border: 1px dashed rgba(255, 255, 255, 0.3);
+        border-radius: 1.25rem;
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.85);
+        background: rgba(255, 255, 255, 0.08);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .favorites-item {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.14);
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
+      }
+      .favorites-item-main {
+        display: flex;
+        gap: 0.85rem;
+        align-items: flex-start;
+        flex: 1 1 auto;
+      }
+      .favorites-item-preview {
+        width: 3.4rem;
+        height: 3.4rem;
+        border-radius: 0.95rem;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        flex-shrink: 0;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28), 0 6px 18px rgba(15, 23, 42, 0.25);
+      }
+      .favorites-item-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+      .favorites-item-name {
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #ffffff;
+      }
+      .favorites-item-price {
+        font-size: 0.85rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.95);
+      }
+      .favorites-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      .favorites-clear-btn {
+        border: none;
+        border-radius: 999px;
+        padding: 0.75rem 1.5rem;
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      .favorites-clear-btn:hover {
+        background: rgba(255, 255, 255, 0.26);
+      }
+      .favorites-remove-btn {
+        border: none;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 1.25rem;
+        line-height: 1;
+        padding: 0.25rem;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      .favorites-remove-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+        color: #ffffff;
+      }
+      .empty-actions {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+      }
+      .continue-btn {
+        border: none;
+        border-radius: 999px;
+        padding: 0.85rem 2rem;
+        background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+        color: #fff;
+        font-size: 0.95rem;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+      .continue-btn svg {
+        width: 1rem;
+        height: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="favorites-shell">
+      <main class="favorites-card" aria-labelledby="favorites-heading">
+        <header class="favorites-header">
+          <a class="favorites-back" href="index.html">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+            Continue Shopping
+          </a>
+          <div>
+            <h1 id="favorites-heading" class="favorites-title">Favorites</h1>
+            <p class="favorites-subtitle">Explore your saved items in one place. Remove anything you no longer love or head back to keep browsing.</p>
+          </div>
+        </header>
+        <div class="favorites-content">
+          <section class="favorites-list" data-favorites-items aria-live="polite"></section>
+          <div class="favorites-actions" data-favorites-actions hidden>
+            <button type="button" class="favorites-clear-btn" data-favorites-clear>Clear Favorites</button>
+            <a class="continue-btn" href="index.html">
+              Continue Shopping
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M13 5l7 7-7 7" />
+              </svg>
+            </a>
+          </div>
+          <div class="empty-actions" data-favorites-empty-cta hidden>
+            <a class="continue-btn" href="index.html">
+              Discover Products
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M13 5l7 7-7 7" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </main>
+    </div>
+    <script>
+      (() => {
+        const FAVORITES_STORAGE_KEY = 'ldc:favorites';
+        const storage = (() => {
+          try {
+            const probeKey = '__ldc_favorites_probe__';
+            localStorage.setItem(probeKey, '1');
+            localStorage.removeItem(probeKey);
+            return localStorage;
+          } catch (error) {
+            console.warn('Favorites page: localStorage is unavailable.', error);
+            return null;
+          }
+        })();
+
+        const formatCurrency = value => new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD'
+        }).format(value ?? 0);
+
+        const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => {
+          const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+          };
+          return map[char] || char;
+        });
+
+        const loadFavoritesState = () => {
+          if (!storage) return { items: [] };
+          const raw = storage.getItem(FAVORITES_STORAGE_KEY);
+          if (!raw) return { items: [] };
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed && Array.isArray(parsed.items)) {
+              const deduped = [];
+              const seen = new Set();
+              parsed.items.forEach(item => {
+                const id = String(item.id ?? '');
+                if (!id || seen.has(id)) return;
+                seen.add(id);
+                deduped.push({
+                  id,
+                  name: String(item.name ?? 'Item'),
+                  price: Number(item.price ?? 0) || 0,
+                  previewStyle: typeof item.previewStyle === 'string' ? item.previewStyle.trim() : ''
+                });
+              });
+              return { items: deduped };
+            }
+          } catch (error) {
+            console.warn('Favorites page: unable to parse favorites payload.', error);
+          }
+          return { items: [] };
+        };
+
+        const favoritesItemsEl = document.querySelector('[data-favorites-items]');
+        const favoritesActionsEl = document.querySelector('[data-favorites-actions]');
+        const favoritesEmptyCTA = document.querySelector('[data-favorites-empty-cta]');
+        const clearBtn = document.querySelector('[data-favorites-clear]');
+
+        const favoritesState = loadFavoritesState();
+
+        const saveFavoritesState = () => {
+          if (!storage) return;
+          storage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favoritesState));
+        };
+
+        const renderFavorites = () => {
+          if (!favoritesItemsEl) return;
+          if (!favoritesState.items.length) {
+            favoritesItemsEl.innerHTML = '<div class="favorites-empty">No favorites yet.</div>';
+            favoritesActionsEl?.setAttribute('hidden', 'true');
+            favoritesEmptyCTA?.removeAttribute('hidden');
+            return;
+          }
+
+          const itemsMarkup = favoritesState.items.map(item => {
+            const fallbackPreview = 'background: linear-gradient(135deg, #fde1ff 0%, #f99ad9 100%);';
+            const previewStyle = item.previewStyle && item.previewStyle.trim() ? item.previewStyle : fallbackPreview;
+            const safePreview = previewStyle.replace(/"/g, '&quot;');
+            return `
+            <article class="favorites-item" data-favorite-item="${escapeHtml(item.id)}">
+              <div class="favorites-item-main">
+                <div class="favorites-item-preview" style="${safePreview}"></div>
+                <div class="favorites-item-info">
+                  <div class="favorites-item-name">${escapeHtml(item.name)}</div>
+                  <div class="favorites-item-price">${formatCurrency(item.price)}</div>
+                </div>
+              </div>
+              <button type="button" class="favorites-remove-btn" data-favorite-remove aria-label="Remove ${escapeHtml(item.name)}">×</button>
+            </article>`;
+          }).join('');
+
+          favoritesItemsEl.innerHTML = itemsMarkup;
+          favoritesActionsEl?.removeAttribute('hidden');
+          favoritesEmptyCTA?.setAttribute('hidden', 'true');
+        };
+
+        favoritesItemsEl?.addEventListener('click', event => {
+          const removeBtn = event.target.closest('[data-favorite-remove]');
+          if (!removeBtn) return;
+          const card = removeBtn.closest('[data-favorite-item]');
+          if (!card) return;
+          const id = card.getAttribute('data-favorite-item');
+          favoritesState.items = favoritesState.items.filter(item => item.id !== id);
+          saveFavoritesState();
+          renderFavorites();
+        });
+
+        clearBtn?.addEventListener('click', () => {
+          favoritesState.items = [];
+          saveFavoritesState();
+          renderFavorites();
+        });
+
+        renderFavorites();
+      })();
+    </script>
+  </body>
+</html>

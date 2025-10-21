@@ -277,10 +277,21 @@
         font-weight: 600;
         cursor: pointer;
         transition: transform 160ms ease, box-shadow 160ms ease;
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
       }
       .checkout-btn:hover {
         transform: translateY(-1px);
         box-shadow: 0 12px 24px rgba(168, 85, 247, 0.25);
+      }
+      .checkout-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
       }
       body.cart-open {
         overflow: hidden;
@@ -358,6 +369,34 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;
+      }
+      .favorites-footer {
+        padding: 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.22);
+      }
+      .favorites-btn {
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        width: 100%;
+        border-radius: 999px;
+        height: 2.75rem;
+        background: rgba(255, 255, 255, 0.14);
+        color: #fff;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: none;
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
+      }
+      .favorites-btn:hover,
+      .favorites-btn:focus-visible {
+        transform: none;
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
+        background: rgba(255, 255, 255, 0.14);
+      }
+      .favorites-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        box-shadow: none;
       }
       .favorites-empty {
         text-align: center;
@@ -471,7 +510,7 @@
             <a href="#section-1" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Shop</a>
             <div class="invisible opacity-0 translate-y-1 origin-top scale-95 hover:visible hover:opacity-100 hover:translate-y-0 hover:scale-100 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:scale-100 transition ease-out duration-700 absolute left-1/2 -translate-x-1/2 top-full mt-0 w-56 rounded-2xl border border-slate-200 bg-white shadow-xl dropdown-panel transform">
               <div class="p-2">
-                <a href="#section-2" class="block px-3 py-2 rounded hover:bg-white">New Arrivals</a>
+                <a href="new-arrivals.html" class="block px-3 py-2 rounded hover:bg-white">New Arrivals</a>
                 <a href="#section-2" class="block px-3 py-2 rounded hover:bg-white">Mugs & Cups</a>
                 <a href="#section-2" class="block px-3 py-2 rounded hover:bg-white">Bottles</a>
                 <a href="#section-2" class="block px-3 py-2 rounded hover:bg-white">Accessories</a>
@@ -1944,6 +1983,9 @@
       <div class="favorites-body" data-favorites-items>
         <div class="favorites-empty">No favorites yet.</div>
       </div>
+      <div class="favorites-footer">
+        <button type="button" class="favorites-btn" data-favorites-cta>Favorites</button>
+      </div>
     </aside>
   </div>
 
@@ -1966,7 +2008,7 @@
           <span>Subtotal</span>
           <span data-cart-total>$0.00</span>
         </div>
-        <button type="button" class="checkout-btn">Proceed to Checkout</button>
+        <button type="button" class="checkout-btn" data-cart-checkout>Proceed to Checkout</button>
       </div>
     </aside>
   </div>
@@ -2018,6 +2060,7 @@
       const cartCloseBtn = cartDrawer?.querySelector('[data-cart-close]');
       const cartItemsContainer = cartDrawer?.querySelector('[data-cart-items]');
       const cartTotalEl = cartDrawer?.querySelector('[data-cart-total]');
+      const cartCheckoutBtn = cartDrawer?.querySelector('[data-cart-checkout]');
       const cartOpeners = document.querySelectorAll('[data-cart-open]');
 
       if (cartPanel) {
@@ -2094,6 +2137,10 @@
         if (!cartState.items.length) {
           cartItemsContainer.innerHTML = '<div class="cart-empty">Your cart is empty.</div>';
           cartTotalEl.textContent = formatCurrency(0);
+          if (cartCheckoutBtn) {
+            cartCheckoutBtn.setAttribute('disabled', 'true');
+            cartCheckoutBtn.textContent = 'Cart is empty';
+          }
           return;
         }
 
@@ -2122,6 +2169,10 @@
         cartItemsContainer.innerHTML = itemsMarkup;
         const total = cartState.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
         cartTotalEl.textContent = formatCurrency(total);
+        if (cartCheckoutBtn) {
+          cartCheckoutBtn.removeAttribute('disabled');
+          cartCheckoutBtn.textContent = 'Proceed to Checkout';
+        }
       };
 
       const openCart = () => {
@@ -2156,6 +2207,11 @@
           event.preventDefault();
           openCart();
         });
+      });
+      cartCheckoutBtn?.addEventListener('click', () => {
+        if (!cartState.items.length) return;
+        closeCart();
+        window.location.href = 'checkout.html';
       });
 
       if (cartItemsContainer) {
@@ -2305,6 +2361,7 @@
       const favoritesOverlay = favoritesDrawer?.querySelector('[data-favorites-overlay]');
       const favoritesCloseBtn = favoritesDrawer?.querySelector('[data-favorites-close]');
       const favoritesItemsContainer = favoritesDrawer?.querySelector('[data-favorites-items]');
+      const favoritesCTA = favoritesDrawer?.querySelector('[data-favorites-cta]');
       const favoritesOpeners = document.querySelectorAll('[data-favorites-open]');
 
       const loadFavoritesState = () => {
@@ -2351,6 +2408,10 @@
         if (!favoritesItemsContainer) return;
         if (!favoritesState.items.length) {
           favoritesItemsContainer.innerHTML = '<div class="favorites-empty">No favorites yet.</div>';
+          if (favoritesCTA) {
+            favoritesCTA.setAttribute('disabled', 'true');
+            favoritesCTA.textContent = 'Favorites (empty)';
+          }
           return;
         }
         const itemsMarkup = favoritesState.items.map(item => {
@@ -2370,6 +2431,10 @@
           </div>`;
         }).join('');
         favoritesItemsContainer.innerHTML = itemsMarkup;
+        if (favoritesCTA) {
+          favoritesCTA.removeAttribute('disabled');
+          favoritesCTA.textContent = 'Favorites';
+        }
       };
 
       const favoritesHas = id => favoritesState.items.some(item => item.id === id);
@@ -2427,6 +2492,11 @@
           event.preventDefault();
           openFavorites();
         });
+      });
+      favoritesCTA?.addEventListener('click', () => {
+        if (!favoritesState.items.length) return;
+        closeFavorites();
+        window.location.href = 'favorites.html';
       });
 
       const normalizeFavoriteProduct = product => {
