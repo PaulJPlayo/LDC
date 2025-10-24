@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sale</title>
+    <meta name="description" content="Discover Lovett's Designs & Crafts pieces on sale with limited-time pricing and exclusive offers." />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: radial-gradient(circle at top left, rgba(255, 209, 102, 0.45), transparent 55%), radial-gradient(circle at bottom right, rgba(249, 115, 22, 0.32), transparent 60%), linear-gradient(135deg, #fff7eb 0%, #fde3c7 45%, #fffaf0 100%);
+        color: #1f0f24;
+      }
+      a {
+        color: inherit;
+      }
+      .page-shell {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        backdrop-filter: blur(16px);
+        background: rgba(255, 248, 235, 0.92);
+        border-bottom: 1px solid rgba(249, 115, 22, 0.16);
+      }
+      .header-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 64px;
+      }
+      .brand-mark {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .brand-mark img {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        object-fit: cover;
+      }
+      .home-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.55rem 1.1rem;
+        border-radius: 999px;
+        border: 1px solid rgba(249, 115, 22, 0.3);
+        background: rgba(255, 255, 255, 0.85);
+        font-size: 0.75rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+      }
+      .home-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 30px rgba(249, 115, 22, 0.25);
+        background: linear-gradient(135deg, #ffd166 0%, #f97316 100%);
+        color: #1f0f24;
+      }
+      .hero {
+        padding: clamp(4rem, 9vw, 6rem) 0 clamp(3rem, 7vw, 5rem);
+      }
+      .hero-card {
+        max-width: 880px;
+        margin: 0 auto;
+        border-radius: 2.75rem;
+        overflow: hidden;
+        box-shadow: 0 30px 70px rgba(249, 115, 22, 0.2);
+        border: 1px solid rgba(249, 115, 22, 0.18);
+      }
+      .hero-top {
+        padding: clamp(2.5rem, 5vw, 3.5rem) clamp(2.25rem, 6vw, 4.5rem);
+        text-align: center;
+        background: linear-gradient(135deg, #ffd166 0%, #f97316 100%);
+        color: #1f0f24;
+      }
+      .hero-eyebrow {
+        font-size: 0.75rem;
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+        font-weight: 600;
+        display: inline-flex;
+        gap: 0.45rem;
+        align-items: center;
+      }
+      .hero-heading {
+        margin-top: 1.5rem;
+        font-family: 'Lobster', cursive;
+        font-size: clamp(2.75rem, 7vw, 4.75rem);
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+      }
+      .hero-tagline {
+        margin-top: 1.25rem;
+        font-size: clamp(1rem, 2.2vw, 1.25rem);
+        line-height: 1.8;
+        opacity: 0.92;
+      }
+      .hero-bottom {
+        padding: clamp(2.25rem, 6vw, 3.75rem);
+        background: rgba(255, 255, 255, 0.9);
+      }
+      .preview-frame {
+        border-radius: 2.5rem;
+        border: 1px solid rgba(249, 115, 22, 0.2);
+        overflow: hidden;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+      }
+      .preview-frame img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .section-eyebrow {
+        margin-top: clamp(2.5rem, 7vw, 3.5rem);
+        font-size: 0.75rem;
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+        font-weight: 600;
+        text-align: center;
+        color: rgba(31, 15, 36, 0.72);
+      }
+      .deal-grid {
+        margin-top: 1.75rem;
+        display: grid;
+        gap: 1.5rem;
+      }
+      .deal-card {
+        border-radius: 2rem;
+        padding: clamp(1.75rem, 3vw, 2.25rem);
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(249, 115, 22, 0.18);
+        box-shadow: 0 24px 48px rgba(249, 115, 22, 0.18);
+        display: grid;
+        gap: 1rem;
+      }
+      .deal-card h3 {
+        margin: 0;
+        font-size: 1.35rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .deal-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.45rem 0.95rem;
+        border-radius: 999px;
+        background: rgba(249, 115, 22, 0.14);
+      }
+      .cta-wrap {
+        margin-top: clamp(3rem, 8vw, 4rem);
+        text-align: center;
+      }
+      .cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.95rem 1.85rem;
+        border-radius: 999px;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border: none;
+        background: linear-gradient(135deg, #f97316 0%, #ef4444 100%);
+        color: #fff5eb;
+        text-decoration: none;
+        transition: transform 160ms ease, box-shadow 160ms ease;
+      }
+      .cta-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 18px 36px rgba(239, 68, 68, 0.25);
+      }
+      footer {
+        margin-top: auto;
+        padding: 2rem 0;
+        text-align: center;
+        font-size: 0.75rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(31, 15, 36, 0.6);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header>
+        <div class="container header-inner">
+          <a href="index.html" class="brand-mark">
+            <img src="assets/LDC%20LOGOS%20Black.png" alt="LDC logo" />
+            <span>Lovett's Designs & Crafts</span>
+          </a>
+          <a href="index.html#section-4" class="home-link">
+            <span aria-hidden="true">←</span>
+            Back Home
+          </a>
+        </div>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div class="hero-card">
+            <div class="hero-top">
+              <span class="hero-eyebrow">Limited-Time Offers</span>
+              <h1 class="hero-heading">Sale Spotlight</h1>
+              <p class="hero-tagline">
+                Save on signature Lovett’s creations featuring exclusive finishes, bundled sets, and seasonal best-sellers. Once they’re gone, they’re gone!
+              </p>
+            </div>
+            <div class="hero-bottom">
+              <div class="preview-frame">
+                <img src="assets/Tumbler%209%20-%20Green.jpeg" alt="Sale tumblers in green finish" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="container">
+            <p class="section-eyebrow">Featured Sale Collections</p>
+            <div class="deal-grid">
+              <article class="deal-card">
+                <span class="deal-tag">Up to 40% Off</span>
+                <h3>Glow In The Dark Tumblers</h3>
+                <p>Limited-edition luminous finishes paired with upgraded handles and leak-proof lids. Perfect for evening events and festivals.</p>
+              </article>
+              <article class="deal-card">
+                <span class="deal-tag">Bundle & Save</span>
+                <h3>Family Cup Set</h3>
+                <p>Mix-and-match four 16oz cups with your choice of color palettes and monogramming—ideal for gifting or stocking your shelf.</p>
+              </article>
+              <article class="deal-card">
+                <span class="deal-tag">Last Chance</span>
+                <h3>Retiring Accessories</h3>
+                <p>Snag final-run accessories including badge reels, coasters, and straw toppers before they leave the collection.</p>
+              </article>
+            </div>
+
+            <div class="cta-wrap">
+              <a href="mailto:info@lovettsdesigns.com?subject=Sale%20Inquiry" class="cta-btn">
+                Reserve Sale Items
+              </a>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        Lovett's Designs &amp; Crafts · Savings crafted with love
+      </footer>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cups</title>
+    <meta name="description" content="Lovett's Designs and Crafts cup collection featuring layered finishes, bold palettes, and limited drops." />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet" />
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: radial-gradient(circle at top left, rgba(255, 185, 220, 0.35), transparent 55%), radial-gradient(circle at bottom right, rgba(224, 176, 255, 0.35), transparent 60%), linear-gradient(135deg, #130720 0%, #26123a 100%);
+        color: #ffffff;
+      }
+      .page-shell {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+      }
+      .top-bar {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(15, 23, 42, 0.55);
+        backdrop-filter: blur(14px);
+      }
+      .nav-link {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        letter-spacing: 0.18em;
+        color: rgba(255, 255, 255, 0.76);
+        transition: background-color 180ms ease, color 180ms ease;
+      }
+      .nav-link:hover {
+        background: rgba(255, 255, 255, 0.14);
+        color: #ffffff;
+      }
+      .nav-link.is-active {
+        background: linear-gradient(135deg, #FF7EC8 0%, #FF417E 100%);
+        color: #2d0f33;
+      }
+      .page-hero {
+        position: relative;
+        padding: clamp(4.5rem, 10vw, 7rem) 0 clamp(3rem, 8vw, 5rem);
+      }
+      .page-hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.24), transparent 55%);
+        opacity: 0.35;
+        z-index: -1;
+      }
+      .hero-card {
+        max-width: 820px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.08) 100%);
+        border-radius: 2rem;
+        padding: clamp(2rem, 5vw, 3.25rem);
+        box-shadow: 0 24px 48px rgba(15, 23, 42, 0.32);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        backdrop-filter: blur(16px);
+      }
+      .hero-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        letter-spacing: 0.32em;
+        padding: 0.45rem 0.95rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.16);
+      }
+      .hero-heading {
+        margin-top: 1.25rem;
+        font-family: 'Lobster', cursive;
+        font-size: clamp(2.6rem, 7vw, 4.2rem);
+        line-height: 1.05;
+      }
+      .hero-subtext {
+        margin-top: 1.25rem;
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.85);
+        max-width: 52ch;
+        line-height: 1.7;
+      }
+      .hero-actions {
+        margin-top: 2rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      .cta-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.85rem 1.65rem;
+        border-radius: 999px;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.18em;
+        border: none;
+        color: #230920;
+        background: linear-gradient(135deg, #FF7EC8 0%, #FF417E 100%);
+        font-weight: 600;
+        text-decoration: none;
+        transition: transform 180ms ease, box-shadow 180ms ease;
+      }
+      .cta-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 28px rgba(255, 65, 126, 0.3);
+      }
+      .cta-button.secondary {
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+      }
+      .collection-section {
+        padding: clamp(3.5rem, 9vw, 6.5rem) 0;
+      }
+      .collection-header {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        max-width: 760px;
+      }
+      @media (min-width: 768px) {
+        .collection-header {
+          flex-direction: row;
+          align-items: flex-end;
+          justify-content: space-between;
+        }
+      }
+      .filter-bar {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      @media (min-width: 640px) {
+        .filter-bar {
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+        }
+      }
+      .collection-grid {
+        margin-top: clamp(2.5rem, 6vw, 4rem);
+        display: grid;
+        gap: 2rem;
+      }
+      @media (min-width: 640px) {
+        .collection-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (min-width: 1024px) {
+        .collection-grid {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+      }
+      .product-card {
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        box-shadow: 0 16px 32px rgba(15, 23, 42, 0.22);
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        transition: transform 200ms ease, box-shadow 200ms ease;
+      }
+      .product-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 24px 44px rgba(15, 23, 42, 0.28);
+      }
+      .product-media {
+        width: 100%;
+        aspect-ratio: 4 / 5;
+        border-radius: 1.25rem;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .cup-graphic {
+        width: 32%;
+        height: 78%;
+        border-radius: 0.75rem;
+        background: var(--cup-gradient);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+      }
+      .product-meta-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      .swatch-row {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+        font-size: 0.72rem;
+        color: rgba(255, 255, 255, 0.75);
+      }
+      .swatch {
+        width: 1.15rem;
+        height: 1.15rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        display: inline-block;
+      }
+      .icon-button {
+        border: none;
+        background: linear-gradient(135deg, #FF9AED 0%, #FF5CA8 100%);
+        color: #ffffff;
+        border-radius: 999px;
+        width: 2.5rem;
+        height: 2.5rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 16px rgba(255, 92, 168, 0.28);
+        transition: transform 180ms ease, box-shadow 180ms ease;
+      }
+      .icon-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(255, 92, 168, 0.3);
+      }
+      .icon-button svg {
+        width: 1.1rem;
+        height: 1.1rem;
+      }
+      .product-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #ffffff;
+      }
+      .product-details {
+        font-size: 0.82rem;
+        color: rgba(255, 255, 255, 0.78);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .price-line {
+        font-size: 0.9rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+      .price-sale {
+        color: #ff8fae;
+      }
+      .price-original {
+        color: rgba(255, 255, 255, 0.5);
+        text-decoration: line-through;
+        margin-left: 0.4rem;
+      }
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+      }
+      .tag.sale {
+        background: rgba(255, 65, 126, 0.35);
+        color: #ff9ec7;
+      }
+      .tag.club {
+        background: rgba(16, 185, 129, 0.25);
+        color: #7ff3cd;
+      }
+      .footer {
+        margin-top: auto;
+        padding: 2rem 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.8rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="top-bar">
+        <div class="container mx-auto px-5 lg:px-12 py-5 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          <div class="flex items-center gap-4">
+            <img src="assets/LDC%20LOGOS%20Black.png" alt="Lovett's Designs and Crafts logo" class="w-12 h-12 rounded object-contain bg-white" />
+            <div>
+              <p class="text-xs uppercase tracking-[0.35em] text-white/80">Lovett's Designs and Crafts</p>
+              <p class="text-sm text-white/60 mt-1">Hand-crafted tumblers, cups, accessories &amp; more</p>
+            </div>
+          </div>
+          <nav class="flex items-center gap-2 flex-wrap">
+            <a class="nav-link" href="index.html">Home</a>
+            <a class="nav-link" href="new-arrivals.html">New Arrivals</a>
+            <a class="nav-link" href="tumblers.html">Tumblers</a>
+            <span class="nav-link is-active">Cups</span>
+            <a class="nav-link" href="favorites.html">Favorites</a>
+            <a class="nav-link" href="checkout.html">Checkout</a>
+            <a class="nav-link" href="mailto:lovettsdesignsandcrafts@gmail.com">Contact</a>
+          </nav>
+        </div>
+      </header>
+
+      <main>
+        <section class="page-hero">
+          <div class="container mx-auto px-5 lg:px-12">
+            <div class="hero-card">
+              <span class="hero-eyebrow">Sip in color</span>
+              <h1 class="hero-heading">Cups designed for everyday sparkle.</h1>
+              <p class="hero-subtext">
+                Layered gradients, shimmering finishes, and hand-selected palettes make each Lovett cup a small piece of art. Choose a ready-to-ship style or reach out for a custom color story that matches your mood.
+              </p>
+              <div class="hero-actions">
+                <a class="cta-button" href="#cups-grid">Shop Cups</a>
+                <a class="cta-button secondary" href="mailto:lovettsdesignsandcrafts@gmail.com">Request a custom</a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="cups-grid" class="collection-section">
+          <div class="container mx-auto px-5 lg:px-12">
+            <header class="collection-header">
+              <div>
+                <p class="text-xs uppercase tracking-[0.35em] text-white/70">Limited batches</p>
+                <h2 class="mt-3 text-2xl md:text-3xl font-extrabold tracking-tight text-white">Lovett's cup collection</h2>
+              </div>
+              <p class="max-w-md text-sm md:text-base text-white/70 leading-relaxed">
+                Small runs keep the colors exclusive. Snap up the ones you love or tap the heart to save them in favorites while you browse.
+              </p>
+            </header>
+
+            <div class="filter-bar mt-6">
+              <button class="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-white/30 bg-white/10 hover:bg-white/15 text-sm text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M6 12h12M10 18h4"/></svg>
+                Filter
+              </button>
+              <label class="text-sm flex items-center gap-2 text-white/80">
+                <span>Sort by:</span>
+                <select class="h-9 rounded-md border border-white/25 bg-white/10 px-3 text-white">
+                  <option>Relevance</option>
+                  <option>Price: Low to High</option>
+                  <option>Price: High to Low</option>
+                  <option>Rating</option>
+                  <option>Newest</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="collection-grid mt-8">
+              <article class="product-card">
+                <div class="product-media">
+                  <div class="cup-graphic" style="--cup-gradient: linear-gradient(180deg,#d7a8d6 0%,#c693c5 100%);"></div>
+                </div>
+                <div class="product-meta-row">
+                  <div class="swatch-row">
+                    <span class="swatch" style="background:#b98eb9;"></span>
+                    <span class="swatch" style="background:#9fb2b3;"></span>
+                    <span class="swatch" style="background:#d1d7d8;"></span>
+                    <span>+6 colors</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="product-details">
+                  <span>16oz | Lavender</span>
+                  <span class="tag sale">Sale</span>
+                </div>
+                <h3 class="product-title">LDC Cup 1</h3>
+                <div class="price-line">
+                  <span class="price-sale">$22.50</span>
+                  <span class="price-original">$30.00</span>
+                </div>
+              </article>
+
+              <article class="product-card">
+                <div class="product-media">
+                  <div class="cup-graphic" style="--cup-gradient: linear-gradient(180deg,#c9c8c4 0%,#bdbbb6 100%);"></div>
+                </div>
+                <div class="product-meta-row">
+                  <div class="swatch-row">
+                    <span class="swatch" style="background:#bfc2c1;"></span>
+                    <span class="swatch" style="background:#6f7776;"></span>
+                    <span class="swatch" style="background:#e5e7e6;"></span>
+                    <span>+9 colors</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="product-details">
+                  <span>24oz | Light Green</span>
+                  <span class="tag sale">Sale</span>
+                </div>
+                <h3 class="product-title">LDC Cup 2</h3>
+                <div class="price-line">
+                  <span class="price-sale">$17.50</span>
+                  <span class="price-original">$28.00</span>
+                </div>
+              </article>
+
+              <article class="product-card">
+                <div class="product-media">
+                  <div class="cup-graphic" style="--cup-gradient: linear-gradient(180deg,#efeede 0%,#dedabf 100%);"></div>
+                </div>
+                <div class="product-meta-row">
+                  <div class="swatch-row">
+                    <span class="swatch" style="background:#2b3a4a;"></span>
+                    <span class="swatch" style="background:#6f7776;"></span>
+                    <span class="swatch" style="background:#e5e7e6;"></span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="product-details">
+                  <span>16oz | Vanilla</span>
+                  <span class="tag club">Club Exclusive</span>
+                  <span class="tag sale">Sale</span>
+                </div>
+                <h3 class="product-title">LDC Cup 3</h3>
+                <div class="price-line">
+                  <span class="price-sale">$15.00</span>
+                  <span class="price-original">$30.00</span>
+                </div>
+              </article>
+
+              <article class="product-card">
+                <div class="product-media">
+                  <div class="cup-graphic" style="--cup-gradient: linear-gradient(180deg,#1a1a1a 0%,#2a2a2a 100%);"></div>
+                </div>
+                <div class="product-meta-row">
+                  <div class="swatch-row">
+                    <span class="swatch" style="background:#1f1f1f;"></span>
+                    <span class="swatch" style="background:#7a7070;"></span>
+                    <span class="swatch" style="background:#e0dcdc;"></span>
+                    <span>+4 colors</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="product-details">
+                  <span>12oz | Charcoal</span>
+                </div>
+                <h3 class="product-title">LDC Cup 4</h3>
+                <div class="price-line">
+                  <span>$23.00</span>
+                </div>
+              </article>
+
+              <article class="product-card">
+                <div class="product-media">
+                  <div class="cup-graphic" style="--cup-gradient: linear-gradient(180deg,#aab3b3 0%,#889192 100%);"></div>
+                </div>
+                <div class="product-meta-row">
+                  <div class="swatch-row">
+                    <span class="swatch" style="background:#a0a8a8;"></span>
+                    <span class="swatch" style="background:#6f7776;"></span>
+                    <span class="swatch" style="background:#e5e7e6;"></span>
+                    <span>+9 colors</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="product-details">
+                  <span>24oz | Silver Woods</span>
+                  <span class="tag sale">Sale</span>
+                </div>
+                <h3 class="product-title">LDC Cup 5</h3>
+                <div class="price-line">
+                  <span class="price-sale">$17.50</span>
+                  <span class="price-original">$28.00</span>
+                </div>
+              </article>
+
+              <article class="product-card">
+                <div class="product-media">
+                  <div class="cup-graphic" style="--cup-gradient: linear-gradient(180deg,#647f59 0%,#5f7655 100%);"></div>
+                </div>
+                <div class="product-meta-row">
+                  <div class="swatch-row">
+                    <span class="swatch" style="background:#6a8b76;"></span>
+                    <span class="swatch" style="background:#d1d7d8;"></span>
+                    <span class="swatch" style="background:#e5e7e6;"></span>
+                    <span>+6 colors</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="product-details">
+                  <span>16oz | Forest Green</span>
+                  <span class="tag sale">Sale</span>
+                </div>
+                <h3 class="product-title">LDC Cup 6</h3>
+                <div class="price-line">
+                  <span class="price-sale">$22.50</span>
+                  <span class="price-original">$30.00</span>
+                </div>
+              </article>
+
+              <article class="product-card">
+                <div class="product-media">
+                  <div class="cup-graphic" style="--cup-gradient: linear-gradient(180deg,#c59c8f 0%,#b68171 100%);"></div>
+                </div>
+                <div class="product-meta-row">
+                  <div class="swatch-row">
+                    <span class="swatch" style="background:#7b5d56;"></span>
+                    <span class="swatch" style="background:#cbb7b1;"></span>
+                    <span class="swatch" style="background:#e0d7d2;"></span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="product-details">
+                  <span>10oz | Caramel</span>
+                  <span class="tag sale">Sale</span>
+                </div>
+                <h3 class="product-title">LDC Cup 7</h3>
+                <div class="price-line">
+                  <span class="price-sale">$10.00</span>
+                  <span class="price-original">$20.00</span>
+                </div>
+              </article>
+
+              <article class="product-card">
+                <div class="product-media">
+                  <div class="cup-graphic" style="--cup-gradient: linear-gradient(180deg,#f1e1df 0%,#e7cfc9 100%);"></div>
+                </div>
+                <div class="product-meta-row">
+                  <div class="swatch-row">
+                    <span class="swatch" style="background:#d4bdb6;"></span>
+                    <span class="swatch" style="background:#bfb2a9;"></span>
+                    <span class="swatch" style="background:#e5e7e6;"></span>
+                    <span>+6 colors</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="product-details">
+                  <span>16oz | Pink Silver</span>
+                  <span class="tag sale">Sale</span>
+                </div>
+                <h3 class="product-title">LDC Cup 8</h3>
+                <div class="price-line">
+                  <span class="price-sale">$22.50</span>
+                  <span class="price-original">$30.00</span>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="py-12 md:py-16 bg-white/5">
+          <div class="container mx-auto px-5 lg:px-12 grid gap-12 md:grid-cols-2 items-center">
+            <div>
+              <p class="text-xs uppercase tracking-[0.3em] text-white/60">Mix &amp; match</p>
+              <h2 class="mt-4 text-2xl md:text-3xl font-extrabold tracking-tight text-white">Build a cup bundle for your next event.</h2>
+              <p class="mt-4 text-sm md:text-base text-white/70 leading-relaxed">
+                Pair matching lids, add vinyl names, or bundle cups for bridesmaids and corporate gifts. Lovett will help you curate a color mix that feels personal and celebratory.
+              </p>
+            </div>
+            <div class="flex flex-col gap-4">
+              <a class="cta-button" href="mailto:lovettsdesignsandcrafts@gmail.com">Start a bundle</a>
+              <a class="cta-button secondary" href="https://instagram.com/lovetts._ldc" target="_blank" rel="noopener">See finished sets</a>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <div class="container mx-auto px-5 lg:px-12 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <span>&copy; <span id="year"></span> Lovett's Designs and Crafts</span>
+          <span>Crafted with love in Atlanta, GA</span>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      const y = document.getElementById('year');
+      if (y) y.textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>

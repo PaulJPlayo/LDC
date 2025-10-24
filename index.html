@@ -42,6 +42,27 @@
         outline: 2px solid #F7EEFF;
         outline-offset: 2px;
       }
+      .header-search-trigger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.25rem;
+        height: 2.25rem;
+        border: none;
+        background: none;
+        color: #B678F5;
+        padding: 0;
+        border-radius: 9999px;
+        transition: color 160ms ease, transform 160ms ease;
+      }
+      .header-search-trigger:hover {
+        transform: translateY(-1px);
+        color: rgba(182, 120, 245, 0.85);
+      }
+      .header-search-trigger:focus-visible {
+        outline: 2px solid rgba(182, 120, 245, 0.45);
+        outline-offset: 2px;
+      }
       .icon-button.favorites-active {
         color: #ff5ca8;
         box-shadow: 0 12px 28px rgba(255, 92, 168, 0.25);
@@ -61,7 +82,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.65rem;
+        font-size: 0.68rem;
         font-weight: 600;
         background: linear-gradient(135deg, #FF7EC8 0%, #FF417E 100%);
         color: #fff;
@@ -74,6 +95,253 @@
         width: 2.5rem;
         height: 2.5rem;
         box-shadow: 0 8px 16px rgba(153, 40, 177, 0.16);
+      }
+      .best-sellers-nav-inline {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.85rem;
+        border-radius: 999px;
+        background: transparent;
+        color: #000000;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+      }
+      .best-sellers-nav-inline:visited {
+        color: #000000;
+      }
+      .best-sellers-nav-inline:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 26px rgba(249, 115, 22, 0.26);
+        background: linear-gradient(135deg, #ffd166 0%, #f97316 100%);
+        color: #ffffff;
+      }
+      .best-sellers-nav-inline svg {
+        width: 0.78rem;
+        height: 0.78rem;
+      }
+      .best-sellers-nav-inline span {
+        white-space: nowrap;
+      }
+      .best-sellers-nav-inline.is-active {
+        box-shadow: 0 16px 30px rgba(249, 115, 22, 0.32);
+      }
+      .best-sellers-nav-inline-mobile {
+        width: 100%;
+        justify-content: center;
+      }
+      .customization-card,
+      .customization-card:hover,
+      .customization-card *:not(.customization-title-link) {
+        transform: none !important;
+        transition: none !important;
+      }
+      .customization-title-link,
+      .customization-title-link:visited {
+        text-decoration: none !important;
+        color: inherit;
+        display: inline-block;
+        transition: transform 220ms ease, text-shadow 220ms ease;
+      }
+      .customization-title-link:hover,
+      .customization-title-link:focus-visible {
+        transform: translateY(-0.35rem);
+        text-shadow: 0 16px 28px rgba(153, 40, 177, 0.35);
+        text-decoration: none !important;
+        color: inherit;
+      }
+      body.signin-open,
+      body.signup-open,
+      body.support-open {
+        overflow: hidden;
+      }
+      .signin-overlay,
+      .signup-overlay,
+      .support-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 90;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        background: rgba(15, 23, 42, 0.55);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 220ms ease;
+      }
+      .signin-overlay.is-open,
+      .signup-overlay.is-open,
+      .support-overlay.is-open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .signin-card,
+      .signup-card,
+      .support-card {
+        position: relative;
+        width: min(420px, 100%);
+        border-radius: 1.75rem;
+        overflow: hidden;
+        background: linear-gradient(135deg, #E0B0FF 0%, #B678F5 100%);
+        box-shadow: 0 30px 60px rgba(79, 70, 229, 0.3);
+        color: #ffffff;
+      }
+      .signin-card::before,
+      .signup-card::before,
+      .support-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(17, 24, 39, 0.25);
+        pointer-events: none;
+      }
+      .signin-card-content,
+      .signup-card-content,
+      .support-card-content {
+        position: relative;
+        padding: 2.5rem 2.5rem 2.75rem;
+        display: grid;
+        gap: 1.75rem;
+      }
+      .signin-close-btn,
+      .signup-close-btn,
+      .support-close-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        border: none;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 180ms ease, transform 180ms ease;
+        z-index: 1;
+      }
+      .signin-close-btn:hover,
+      .signup-close-btn:hover,
+      .support-close-btn:hover {
+        background: rgba(255, 255, 255, 0.22);
+        transform: translateY(-1px);
+      }
+      .signin-eyebrow,
+      .signup-eyebrow,
+      .support-eyebrow {
+        font-size: 0.7rem;
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+        font-weight: 600;
+        opacity: 0.85;
+        text-align: center;
+      }
+      .signin-title,
+      .signup-title,
+      .support-title {
+        font-family: 'Lobster', cursive;
+        font-size: clamp(2rem, 5vw, 2.75rem);
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        margin: 0;
+        text-align: center;
+      }
+      .signin-subtitle,
+      .signup-subtitle,
+      .support-subtitle {
+        margin: 0;
+        text-align: center;
+        font-size: 0.95rem;
+        opacity: 0.85;
+        line-height: 1.6;
+      }
+      .signin-form,
+      .signup-form,
+      .support-form {
+        display: grid;
+        gap: 1rem;
+      }
+      .signin-field,
+      .signup-field,
+      .support-field {
+        display: grid;
+        gap: 0.35rem;
+        font-size: 0.8rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .signin-input,
+      .signup-input,
+      .support-input,
+      .signin-submit,
+      .signup-submit,
+      .support-submit {
+        font: inherit;
+      }
+      .signin-input,
+      .signup-input,
+      .support-input,
+      textarea.support-input {
+        width: 100%;
+        border-radius: 0.9rem;
+        border: none;
+        padding: 0.85rem 1rem;
+        background: rgba(255, 255, 255, 0.95);
+        color: #1f0f24;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24);
+      }
+.signin-input:focus,
+.signup-input:focus,
+.support-input:focus,
+      textarea.support-input:focus {
+        outline: 2px solid rgba(153, 40, 177, 0.65);
+        outline-offset: 2px;
+      }
+.header-search-input {
+  color: #1f2937;
+}
+.header-search-input::placeholder {
+  color: rgba(100, 116, 139, 0.85);
+}
+.header-search-input:focus {
+  border-color: rgba(153, 40, 177, 0.85) !important;
+  box-shadow: 0 0 0 0.18rem rgba(153, 40, 177, 0.28);
+}
+      .signin-footer,
+      .signup-footer,
+      .support-footer {
+        text-align: center;
+        font-size: 0.85rem;
+        opacity: 0.9;
+      }
+      .signin-footer a,
+      .signup-footer a,
+      .support-footer a {
+        text-decoration: underline;
+      }
+      .signin-submit,
+      .signup-submit,
+      .support-submit {
+        border: none;
+        border-radius: 999px;
+        padding: 0.95rem 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.22em;
+        font-weight: 600;
+        background: linear-gradient(135deg, #ffd166 0%, #f97316 100%);
+        color: #1f0f24;
+        transition: transform 180ms ease, box-shadow 180ms ease;
+      }
+      .signin-submit:hover,
+      .signup-submit:hover,
+      .support-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 32px rgba(249, 115, 22, 0.28);
       }
       .tile-mauve {
         background: linear-gradient(135deg, #E0B0FF 0%, #D8B4FE 100%);
@@ -100,6 +368,78 @@
       }
       .cart-drawer.is-open .cart-overlay {
         opacity: 1;
+      }
+      .mobile-search {
+        position: fixed;
+        top: calc(2.25rem + 5.5rem);
+        left: 0;
+        right: 0;
+        z-index: 35;
+        background: rgba(255, 255, 255, 0.95);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+      }
+      .mobile-search[hidden] {
+        display: none;
+      }
+      .mobile-search-inner {
+        padding: 0.9rem 1.5rem 1.2rem;
+        width: min(640px, 100%);
+        margin: 0 auto;
+      }
+      .mobile-search-form {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .mobile-search-label {
+        position: relative;
+        flex: 1 1 auto;
+      }
+      .mobile-search-input {
+        width: 100%;
+        height: 2.8rem;
+        border-radius: 999px;
+        border: none;
+        padding: 0 2.75rem 0 2.5rem;
+        background: rgba(248, 250, 252, 0.95);
+        color: #1f2937;
+        font-size: 0.95rem;
+        box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.3);
+      }
+      .mobile-search-input:focus {
+        outline: 2px solid rgba(153, 40, 177, 0.6);
+        outline-offset: 2px;
+      }
+      .mobile-search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 1.2rem;
+        height: 1.2rem;
+        color: #64748b;
+      }
+      .mobile-search-close {
+        border: none;
+        background: rgba(148, 163, 184, 0.15);
+        color: #1f2937;
+        border-radius: 999px;
+        width: 2.4rem;
+        height: 2.4rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 160ms ease;
+      }
+      .mobile-search-close:hover {
+        background: rgba(148, 163, 184, 0.3);
+      }
+      @media (min-width: 768px) {
+        .mobile-search {
+          display: none !important;
+        }
       }
       .cart-panel {
         position: absolute;
@@ -482,117 +822,224 @@
     </div>
     <header class="fixed top-9 left-0 right-0 z-40 bg-thistle-dark">
       <!-- Utility bar -->
-      <div class="hidden md:block bg-thistle-dark">
-        <div class="container px-0 h-10 flex items-center justify-end gap-4 text-xs text-slate-600">
-          <div class="hidden lg:flex items-center gap-1">
+      <div class="bg-thistle-dark">
+        <div class="container px-4 py-2 flex items-center justify-center gap-2 text-xs text-slate-600 md:hidden">
+          <div class="flex items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3zm0 0c-4.418 0-8 2.239-8 5v3h16v-3c0-2.761-3.582-5-8-5z"/></svg>
             <span>Lovett's Designs and Crafts Club</span>
           </div>
-          <a href="#" class="hover:text-slate-900">Sign In</a>
           <span aria-hidden="true">|</span>
-          <a href="#" class="hover:text-slate-900">Sign Up</a>
-          <a href="#" class="hover:text-slate-900">Support</a>
+          <a href="#" class="hover:text-slate-900" data-signin-open>Sign In</a>
+          <span aria-hidden="true">|</span>
+          <a href="#" class="hover:text-slate-900" data-signup-open>Sign Up</a>
+          <span aria-hidden="true">|</span>
+          <a href="#" class="hover:text-slate-900" data-support-open>Support</a>
+        </div>
+        <div class="hidden md:flex container px-6 md:px-8 py-2 items-center justify-end gap-4 text-xs text-slate-600">
           <div class="flex items-center gap-1">
-            <span class="hidden sm:inline">USA</span>
-            <span class="block w-5 h-3 rounded-sm bg-gradient-to-r from-blue-600 via-white to-red-600 ring-1 ring-slate-300"></span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3zm0 0c-4.418 0-8 2.239-8 5v3h16v-3c0-2.761-3.582-5-8-5z"/></svg>
+            <span>Lovett's Designs and Crafts Club</span>
           </div>
+          <span aria-hidden="true">|</span>
+          <a href="#" class="hover:text-slate-900" data-signin-open>Sign In</a>
+          <span aria-hidden="true">|</span>
+          <a href="#" class="hover:text-slate-900" data-signup-open>Sign Up</a>
+          <span aria-hidden="true">|</span>
+          <a href="#" class="hover:text-slate-900" data-support-open>Support</a>
         </div>
       </div>
       <!-- Main nav -->
-      <div class="relative flex items-center justify-between h-16 pl-6 md:pl-8 pr-6 md:pr-8">
-        <div class="flex items-center gap-3 -ml-6">
-          <img src="assets/LDC%20LOGOS%20Black.png" alt="Lovett's Designs and Crafts logo" class="w-12 h-12 rounded object-contain" />
-          <span class="font-heading font-semibold tracking-tight uppercase -ml-8">Lovett's Designs and Crafts</span>
-        </div>
-        <nav class="primary-nav hidden lg:flex items-center gap-8 text-sm lg:absolute lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:transform">
-          <!-- Shop dropdown -->
-          <div class="group relative">
-            <a href="#section-1" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Shop</a>
-            <div class="invisible opacity-0 translate-y-1 origin-top scale-95 hover:visible hover:opacity-100 hover:translate-y-0 hover:scale-100 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:scale-100 transition ease-out duration-700 absolute left-1/2 -translate-x-1/2 top-full mt-0 w-56 rounded-2xl border border-slate-200 bg-white shadow-xl dropdown-panel transform">
-              <div class="p-2">
-                <a href="new-arrivals.html" class="block px-3 py-2 rounded hover:bg-white">New Arrivals</a>
-                <a href="#section-2" class="block px-3 py-2 rounded hover:bg-white">Mugs & Cups</a>
-                <a href="#section-2" class="block px-3 py-2 rounded hover:bg-white">Bottles</a>
-                <a href="#section-2" class="block px-3 py-2 rounded hover:bg-white">Accessories</a>
+      <div class="relative">
+        <div class="container px-6 md:px-8">
+          <div class="flex items-center h-16 gap-4">
+            <div class="flex flex-1 items-center gap-3"></div>
+            <nav class="primary-nav flex flex-1 flex-wrap items-center justify-center gap-4 text-xs sm:gap-6 sm:text-sm lg:gap-8">
+              <div class="group relative">
+                <a href="#section-1" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Shop</a>
+                <div class="invisible opacity-0 translate-y-1 origin-top scale-95 hover:visible hover:opacity-100 hover:translate-y-0 hover:scale-100 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:scale-100 transition ease-out duration-700 absolute left-1/2 -translate-x-1/2 top-full mt-0 w-56 rounded-2xl border border-slate-200 bg-white shadow-xl dropdown-panel transform">
+                  <div class="p-2 space-y-2">
+                    <a href="new-arrivals.html" class="block px-3 py-2 rounded hover:bg-white">New Arrivals</a>
+                    <a href="tumblers.html" class="block px-3 py-2 rounded hover:bg-white">Tumblers</a>
+                    <a href="cups.html" class="block px-3 py-2 rounded hover:bg-white">Cups</a>
+                    <a href="accessories.html" class="block px-3 py-2 rounded hover:bg-white">Accessories</a>
+                    <a href="attire.html" class="block px-3 py-2 rounded hover:bg-white">Attire</a>
+                  </div>
+                </div>
+              </div>
+              <div class="group relative">
+                <a href="#section-2" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Trending</a>
+                <div class="invisible opacity-0 translate-y-1 origin-top scale-95 hover:visible hover:opacity-100 hover:translate-y-0 hover:scale-100 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:scale-100 transition ease-out duration-700 absolute left-1/2 -translate-x-1/2 top-full mt-0 w-56 rounded-2xl border border-slate-200 bg-white shadow-xl dropdown-panel transform">
+                  <div class="p-2 space-y-2">
+                    <a href="best-sellers.html" class="best-sellers-nav-inline">Best Sellers</a>
+                    <a href="editors-picks.html" class="best-sellers-nav-inline">Editor’s Picks</a>
+                  </div>
+                </div>
+              </div>
+              <a href="customization.html" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Customize</a>
+              <a href="sale.html" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Sale</a>
+            </nav>
+            <div class="flex flex-1 items-center justify-end gap-3 text-white">
+              <div class="flex items-center gap-3">
+                <button type="button" class="header-search-trigger" data-search-toggle aria-label="Open search">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5"><path fill="currentColor" d="M21 21a1 1 0 0 1-1.41 0l-4.35-4.35a7 7 0 1 1 1.41-1.41l4.35 4.35a1 1 0 0 1 0 1.41ZM5 10a5 5 0 1 0 10 0 5 5 0 0 0-10 0Z"/></svg>
+                </button>
+                <label class="relative hidden md:block w-56 sm:w-64 md:w-72 lg:w-80 flex-shrink-0" data-search-field>
+                  <span class="sr-only">Search</span>
+                  <input type="search" placeholder="What are you looking for?" class="header-search-input w-full h-9 pl-10 pr-4 rounded-md border border-slate-300 bg-white/80 placeholder-mauve focus:outline-none" />
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/></svg>
+                </label>
+                <div class="flex items-center gap-2">
+                  <a href="#" class="relative inline-flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 icon-button cart-btn" aria-label="Favorites" data-favorites-open>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                      <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                    </svg>
+                  </a>
+                  <a href="#" class="relative inline-flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 icon-button cart-btn" aria-label="Cart" data-cart-open>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                      <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+                    </svg>
+                    <span class="icon-badge" data-cart-count hidden>0</span>
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-          <!-- Trending dropdown -->
-          <div class="group relative">
-            <a href="#section-2" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Trending</a>
-            <div class="invisible opacity-0 translate-y-1 origin-top scale-95 hover:visible hover:opacity-100 hover:translate-y-0 hover:scale-100 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:scale-100 transition ease-out duration-700 absolute left-1/2 -translate-x-1/2 top-full mt-0 w-56 rounded-2xl border border-slate-200 bg-white shadow-xl dropdown-panel transform">
-              <div class="p-2">
-                <a href="#section-2" class="block px-3 py-2 rounded hover:bg-white">Best Sellers</a>
-                <a href="#section-2" class="block px-3 py-2 rounded hover:bg-white">Back in Stock</a>
-                <a href="#section-2" class="block px-3 py-2 rounded hover:bg-white">Editor’s Picks</a>
-              </div>
-            </div>
-          </div>
-          <!-- Customize dropdown -->
-          <div class="group relative">
-            <a href="#section-3" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Customize</a>
-            <div class="invisible opacity-0 translate-y-1 origin-top scale-95 hover:visible hover:opacity-100 hover:translate-y-0 hover:scale-100 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:scale-100 transition ease-out duration-700 absolute left-1/2 -translate-x-1/2 top-full mt-0 w-56 rounded-2xl border border-slate-200 bg-white shadow-xl dropdown-panel transform">
-              <div class="p-2">
-                <a href="#section-3" class="block px-3 py-2 rounded hover:bg-white">Engraving</a>
-                <a href="#section-3" class="block px-3 py-2 rounded hover:bg-white">Color Mix & Match</a>
-                <a href="#section-3" class="block px-3 py-2 rounded hover:bg-white">Corporate Gifts</a>
-              </div>
-            </div>
-          </div>
-          <!-- Sale dropdown -->
-          <div class="group relative">
-            <a href="#section-4" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Sale</a>
-            <div class="invisible opacity-0 translate-y-1 origin-top scale-95 hover:visible hover:opacity-100 hover:translate-y-0 hover:scale-100 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:scale-100 transition ease-out duration-700 absolute left-1/2 -translate-x-1/2 top-full mt-0 w-56 rounded-2xl border border-slate-200 bg-white shadow-xl dropdown-panel transform">
-              <div class="p-2">
-                <a href="#section-4" class="block px-3 py-2 rounded hover:bg-white">All Deals</a>
-                <a href="#section-4" class="block px-3 py-2 rounded hover:bg-white">Under $25</a>
-                <a href="#section-4" class="block px-3 py-2 rounded hover:bg-white">Last Chance</a>
-              </div>
-            </div>
-          </div>
-          <a href="#section-2" class="tile-title hover:text-brand-700">Lovett's Designs and Crafts</a>
-        </nav>
-        <div class="hidden md:flex items-center gap-3 flex-1 justify-end">
-          <label class="relative w-56 sm:w-64 md:w-72 lg:w-80">
-            <span class="sr-only">Search</span>
-            <input type="search" placeholder="What are you looking for?" class="w-full h-9 pl-10 pr-4 rounded-md border border-slate-300 bg-white/80 placeholder-mauve focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/></svg>
-          </label>
-          <div class="flex items-center gap-2 text-white">
-            <a href="#" class="relative inline-flex items-center justify-center w-10 h-10 icon-button cart-btn" aria-label="Favorites" data-favorites-open>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-                <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
-              </svg>
-            </a>
-            <a href="#" class="relative inline-flex items-center justify-center w-10 h-10 icon-button cart-btn" aria-label="Cart" data-cart-open>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-                <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
-              </svg>
-              <span class="icon-badge" data-cart-count hidden>0</span>
-            </a>
-          </div>
-        </div>
-        <button id="mobileMenuButton" class="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-md border border-slate-300 hover:bg-slate-50" aria-expanded="false" aria-controls="mobileMenu">
-          <span class="sr-only">Toggle menu</span>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-        </button>
-      </div>
-      <!-- Mobile menu -->
-      <div id="mobileMenu" class="md:hidden hidden">
-        <div class="container py-3 space-y-2">
-          <a href="#section-1" class="block py-2">Shop</a>
-          <a href="#section-2" class="block py-2">Trending</a>
-          <a href="#section-3" class="block py-2">Customize</a>
-          <a href="#section-4" class="block py-2">Sale</a>
-          <a href="#section-2" class="block py-2">Lovett's Designs and Crafts</a>
-          <label class="relative block pt-2">
-            <input type="search" placeholder="What are you looking for?" class="w-full h-10 pl-10 pr-3 rounded-md border border-slate-300" />
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/></svg>
-          </label>
         </div>
       </div>
     </header>
-    <main id="main" class="pt-24 md:pt-[9rem]">
+    <div class="mobile-search" data-search-panel hidden aria-hidden="true">
+      <div class="mobile-search-inner">
+        <form class="mobile-search-form" role="search">
+          <label class="mobile-search-label">
+            <span class="sr-only">Search</span>
+            <input type="search" class="mobile-search-input" placeholder="Search Lovett's..." />
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="mobile-search-icon"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/></svg>
+          </label>
+          <button type="button" class="mobile-search-close" data-search-close>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            <span class="sr-only">Close search</span>
+          </button>
+        </form>
+      </div>
+    </div>
+    <div class="signin-overlay" data-signin-overlay aria-hidden="true">
+      <div class="signin-card" data-signin-card role="dialog" aria-modal="true" aria-labelledby="signInTitle">
+        <button type="button" class="signin-close-btn" data-signin-close aria-label="Close sign in">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <div class="signin-card-content">
+          <p class="signin-eyebrow">Welcome Back</p>
+          <h2 class="signin-title" id="signInTitle">Sign In to Lovett's</h2>
+          <p class="signin-subtitle">Access your saved carts, favorites, and exclusive member offers.</p>
+          <form class="signin-form" data-signin-form>
+            <label class="signin-field" for="signInEmail">
+              <span>Email</span>
+              <input type="email" id="signInEmail" class="signin-input" placeholder="you@example.com" autocomplete="email" required />
+            </label>
+            <label class="signin-field" for="signInPassword">
+              <span>Password</span>
+              <input type="password" id="signInPassword" class="signin-input" placeholder="Enter your password" autocomplete="current-password" required />
+            </label>
+            <div class="signin-footer">
+              <a href="#">Forgot password?</a>
+            </div>
+            <button type="submit" class="signin-submit" data-signin-submit>Sign In</button>
+          </form>
+          <div class="signin-footer">
+            New here? <a href="#" data-signin-to-signup>Join the Lovett's Club</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="signup-overlay" data-signup-overlay aria-hidden="true">
+      <div class="signup-card" data-signup-card role="dialog" aria-modal="true" aria-labelledby="signUpTitle">
+        <button type="button" class="signup-close-btn" data-signup-close aria-label="Close sign up">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <div class="signup-card-content">
+          <p class="signup-eyebrow">Join the Club</p>
+          <h2 class="signup-title" id="signUpTitle">Create Your Account</h2>
+          <p class="signup-subtitle">Unlock exclusive savings, track orders, and save your favorite Lovett’s creations.</p>
+          <form class="signup-form" data-signup-form>
+            <label class="signup-field" for="signUpName">
+              <span>Full Name</span>
+              <input type="text" id="signUpName" class="signup-input" placeholder="Your name" autocomplete="name" required />
+            </label>
+            <label class="signup-field" for="signUpEmail">
+              <span>Email</span>
+              <input type="email" id="signUpEmail" class="signup-input" placeholder="you@example.com" autocomplete="email" required />
+            </label>
+            <label class="signup-field" for="signUpPassword">
+              <span>Password</span>
+              <input type="password" id="signUpPassword" class="signup-input" placeholder="Create a password" autocomplete="new-password" required />
+            </label>
+            <label class="signup-field" for="signUpConfirm">
+              <span>Confirm Password</span>
+              <input type="password" id="signUpConfirm" class="signup-input" placeholder="Re-enter password" autocomplete="new-password" required />
+            </label>
+            <button type="submit" class="signup-submit" data-signup-submit>Create Account</button>
+          </form>
+          <div class="signup-footer">
+            Already have an account? <a href="#" data-signup-to-signin>Sign in instead</a>
+          </div>
+          <div class="signup-footer">
+            <small>By continuing you agree to our <a href="#">Terms</a> &amp; <a href="#">Privacy Policy</a>.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="support-overlay" data-support-overlay aria-hidden="true">
+      <div class="support-card" data-support-card role="dialog" aria-modal="true" aria-labelledby="supportTitle">
+        <button type="button" class="support-close-btn" data-support-close aria-label="Close support">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <div class="support-card-content">
+          <p class="support-eyebrow">Need a hand?</p>
+          <h2 class="support-title" id="supportTitle">Lovett's Support</h2>
+          <p class="support-subtitle">Send us a message and our customer care team will reply within 1 business day.</p>
+          <form class="support-form" data-support-form>
+            <label class="support-field" for="supportName">
+              <span>Full Name</span>
+              <input type="text" id="supportName" class="support-input" placeholder="Your name" autocomplete="name" required />
+            </label>
+            <label class="support-field" for="supportEmail">
+              <span>Email</span>
+              <input type="email" id="supportEmail" class="support-input" placeholder="you@example.com" autocomplete="email" required />
+            </label>
+            <label class="support-field" for="supportOrder">
+              <span>Order Number (optional)</span>
+              <input type="text" id="supportOrder" class="support-input" placeholder="#LDC12345" />
+            </label>
+            <label class="support-field" for="supportTopic">
+              <span>Topic</span>
+              <select id="supportTopic" class="support-input" required>
+                <option value="" disabled selected>Select a topic</option>
+                <option>Order Status</option>
+                <option>Product Question</option>
+                <option>Customization Help</option>
+                <option>Returns &amp; Exchanges</option>
+                <option>Other</option>
+              </select>
+            </label>
+            <label class="support-field" for="supportMessage">
+              <span>Message</span>
+              <textarea id="supportMessage" class="support-input" rows="4" placeholder="How can we help?" required></textarea>
+            </label>
+            <button type="submit" class="support-submit" data-support-submit>Send Message</button>
+          </form>
+          <div class="support-footer">
+            Prefer direct contact? Email <a href="mailto:info@lovettsdesigns.com">info@lovettsdesigns.com</a> or call <a href="tel:+17067220845">(706) 722-0845</a>.
+          </div>
+        </div>
+      </div>
+    </div>
+    <main id="main" class="pt-[10rem] md:pt-[9rem]">
       <section id="section-1" class="relative">
         <div class="relative h-[60vh] md:h-[72vh] w-full overflow-hidden">
           <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('assets/LDC LOGOS purple with marble back.png');"></div>
@@ -632,8 +1079,8 @@
           </div>
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             <!-- Product card template start -->
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <img id="slimProductImage" src="assets/Tumbler%202%20-%20White.jpeg" alt="Slim tumbler product photo" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -668,8 +1115,8 @@
                 <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <img src="assets/Tumbler%207%20-%20Glass.jpeg" alt="LDC Tumbler 2" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -703,8 +1150,8 @@
                 <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <img src="assets/Tumbler%203%20-%20White.jpeg" alt="LDC Tumbler 3" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -739,8 +1186,8 @@
                 <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <img src="assets/Tumbler%208%20-%20Black.jpeg" alt="LDC Tumbler 4" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -774,8 +1221,8 @@
               </div>
             </div>
             <!-- second row (placeholders mimic screenshot layout) -->
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <img src="assets/Tumbler%209%20-%20Pink.jpeg" alt="LDC Tumbler 5" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -803,8 +1250,8 @@
               <a class="block mt-2 font-semibold tile-title">LDC Tumbler 5</a>
               <div class="text-sm text-slate-700">$40.00</div>
             </div>
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <img src="assets/Tumbler%2012%20-%20Light%20Pink.jpeg" alt="LDC Tumbler 6" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -832,8 +1279,8 @@
               <a class="block mt-2 font-semibold tile-title">LDC Tumbler 6</a>
               <div class="text-sm text-slate-700">$45.00</div>
             </div>
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <img src="assets/Tumbler%2010%20-%20Orange.jpeg" alt="LDC Tumbler 7" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -861,8 +1308,8 @@
               <a class="block mt-2 font-semibold tile-title">LDC Tumbler 7</a>
               <div class="text-sm text-slate-700">$45.00</div>
             </div>
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <img src="assets/Tumbler%2011%20-%20Brown.jpeg" alt="LDC Tumbler 8" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -918,8 +1365,8 @@
           </div>
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             <!-- Row 1 -->
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[30%] h-[80%] rounded-md" style="background: linear-gradient(180deg,#d7a8d6 0%,#c693c5 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -954,8 +1401,8 @@
                 <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[55%] h-[70%] rounded-md" style="background: linear-gradient(180deg,#c9c8c4 0%,#bdbbb6 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -988,8 +1435,8 @@
                 <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[30%] h-[80%] rounded-md" style="background: linear-gradient(180deg,#efeede 0%,#dedabf 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1024,8 +1471,8 @@
                 <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[55%] h-[60%] rounded-md" style="background: linear-gradient(180deg,#1a1a1a 0%,#2a2a2a 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1058,8 +1505,8 @@
               </div>
             </div>
             <!-- Row 2 -->
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[55%] h-[70%] rounded-md" style="background: linear-gradient(180deg,#aab3b3 0%,#889192 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1092,8 +1539,8 @@
                 <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[30%] h-[80%] rounded-md" style="background: linear-gradient(180deg,#647f59 0%,#5f7655 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1126,8 +1573,8 @@
                 <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[50%] h-[60%] rounded-md" style="background: linear-gradient(180deg,#c59c8f 0%,#b68171 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1159,8 +1606,8 @@
                 <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg bg-[rgb(245,245,245)] border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg bg-[rgb(245,245,245)] border border-slate-200 flex items-center justify-center">
                 <div class="w-[30%] h-[80%] rounded-md" style="background: linear-gradient(180deg,#f1e1df 0%,#e7cfc9 100%);"></div>
               </div>
               <div class="mt-2 flex items-center gap-2">
@@ -1207,8 +1654,8 @@
           </div>
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             <!-- Row 1 -->
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[45%] h-[55%] rounded-md" style="background: linear-gradient(180deg,#f8d7e5 0%,#f5b6cc 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1239,8 +1686,8 @@
                 <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[55%] h-[55%] rounded-md" style="background: linear-gradient(180deg,#d7ecff 0%,#b9d8ff 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1271,8 +1718,8 @@
                 <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[50%] h-[60%] rounded-md" style="background: linear-gradient(180deg,#ffe7d2 0%,#ffc9a1 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1303,8 +1750,8 @@
                 <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[55%] h-[55%] rounded-md" style="background: linear-gradient(180deg,#d4f0f4 0%,#a7e0e9 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1336,8 +1783,8 @@
               </div>
             </div>
             <!-- Row 2 -->
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[55%] h-[65%] rounded-md" style="background: linear-gradient(180deg,#ebe0ff 0%,#d5c3ff 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1368,8 +1815,8 @@
                 <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[45%] h-[60%] rounded-md" style="background: linear-gradient(180deg,#ffe6f2 0%,#ffbfdc 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1400,8 +1847,8 @@
                 <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[55%] h-[55%] rounded-md" style="background: linear-gradient(180deg,#f9efd7 0%,#f4ddaa 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1432,8 +1879,8 @@
                 <span class="text-xs text-slate-600">0.0 (0)</span>
               </div>
             </div>
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[55%] h-[60%] rounded-md" style="background: linear-gradient(180deg,#e5f4ff 0%,#bde3ff 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1469,14 +1916,16 @@
       </section>
       <section id="section-customization" class="">
         <div class="container py-12 md:py-16">
-          <div class="overflow-hidden rounded-[2.25rem] tile-mauve shadow-[0_18px_40px_rgba(153,40,177,0.12)] border border-slate-200">
+          <div class="rounded-[2.25rem] tile-mauve border border-slate-200 customization-card">
             <div class="px-6 py-10 md:px-12 md:py-14 text-center text-white rounded-t-3xl" style="background: linear-gradient(135deg, #E0B0FF 0%, #D8B4FE 100%);">
               <p class="text-sm font-semibold tracking-[0.35em] uppercase mb-3">Customization</p>
-              <h2 class="font-heading text-3xl md:text-5xl font-extrabold uppercase tracking-[0.18em]">Customization</h2>
+              <h2 class="font-heading text-3xl md:text-5xl font-extrabold uppercase tracking-[0.18em]">
+                <a href="customization.html" class="customization-title-link text-white hover:text-white focus:text-white">Customization</a>
+              </h2>
               <p class="mt-4 text-sm md:text-base">Let your imagination run wild.</p>
             </div>
             <div class="p-6 md:p-10 rounded-b-3xl">
-              <div class="rounded-3xl overflow-hidden border border-[#ead8ff] shadow-[0_18px_40px_rgba(153,40,177,0.12)]">
+              <div class="rounded-3xl border border-[#ead8ff]">
                 <img src="assets/Tumbler%207%20-%20Glass.jpeg" alt="Customized glass tumbler with palm tree graphic" class="w-full h-full object-cover" />
               </div>
             </div>
@@ -1556,8 +2005,8 @@
           </div>
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             <!-- 1 -->
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[65%] h-[55%] rounded-md" style="background: linear-gradient(180deg,#cfd2ff 0%,#a8afff 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1583,8 +2032,8 @@
               <div class="text-sm text-slate-700">$20.00</div>
             </div>
             <!-- 2 -->
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[65%] h-[55%] rounded-md" style="background: linear-gradient(180deg,#ffd6e7 0%,#ffb3cf 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1610,8 +2059,8 @@
               <div class="text-sm text-slate-700">$22.00</div>
             </div>
             <!-- 3 -->
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[65%] h-[55%] rounded-md" style="background: linear-gradient(180deg,#c7f0e6 0%,#93e2cf 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1637,8 +2086,8 @@
               <div class="text-sm text-slate-700">$18.00</div>
             </div>
             <!-- 4 -->
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[65%] h-[55%] rounded-md" style="background: linear-gradient(180deg,#fde68a 0%,#fbbf24 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1664,8 +2113,8 @@
               <div class="text-sm text-slate-700">$24.00</div>
             </div>
             <!-- 5 -->
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[65%] h-[55%] rounded-md" style="background: linear-gradient(180deg,#fbcfe8 0%,#f472b6 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1691,8 +2140,8 @@
               <div class="text-sm text-slate-700">$21.00</div>
             </div>
             <!-- 6 -->
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[65%] h-[55%] rounded-md" style="background: linear-gradient(180deg,#bae6fd 0%,#60a5fa 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1718,8 +2167,8 @@
               <div class="text-sm text-slate-700">$19.00</div>
             </div>
             <!-- 7 -->
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[65%] h-[55%] rounded-md" style="background: linear-gradient(180deg,#e9d5ff 0%,#c084fc 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1745,8 +2194,8 @@
               <div class="text-sm text-slate-700">$23.00</div>
             </div>
             <!-- 8 -->
-            <div class="group">
-              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div class="group relative">
+              <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <div class="w-[65%] h-[55%] rounded-md" style="background: linear-gradient(180deg,#d1fae5 0%,#34d399 100%);"></div>
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
@@ -1783,7 +2232,7 @@
           <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-8">
             <!-- Instagram tiles: drop images into assets/instagram/1.jpg ... 6.jpg -->
             <!-- Each tile links to the Instagram profile; update INSTAGRAM_URL below. -->
-            <a class="insta-link relative block aspect-[4/5] rounded-md overflow-hidden bg-gradient-to-br from-[#E0B0FF] to-[#D8B4FE] group">
+            <a class="insta-link relative block aspect-[4/5] rounded-md bg-gradient-to-br from-[#E0B0FF] to-[#D8B4FE] group">
               <img src="assets/instagram/1.jpg" loading="lazy" alt="Instagram tile 1" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'" />
               <div class="absolute inset-0 bg-[#E0B0FF]/0 group-hover:bg-[#E0B0FF]/30 transition-colors"></div>
               <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2">
@@ -1791,7 +2240,7 @@
                 <span class="text-xs md:text-sm font-medium">@lovetts._ldc</span>
               </div>
             </a>
-            <a class="insta-link relative block aspect-[4/5] rounded-md overflow-hidden bg-gradient-to-br from-[#E0B0FF] to-[#D8B4FE] group">
+            <a class="insta-link relative block aspect-[4/5] rounded-md bg-gradient-to-br from-[#E0B0FF] to-[#D8B4FE] group">
               <img src="assets/instagram/2.jpg" loading="lazy" alt="Instagram tile 2" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'" />
               <div class="absolute inset-0 bg-[#E0B0FF]/0 group-hover:bg-[#E0B0FF]/30 transition-colors"></div>
               <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2">
@@ -1799,7 +2248,7 @@
                 <span class="text-xs md:text-sm font-medium">@lovetts._ldc</span>
               </div>
             </a>
-            <a class="insta-link relative block aspect-[4/5] rounded-md overflow-hidden bg-gradient-to-br from-[#E0B0FF] to-[#D8B4FE] group">
+            <a class="insta-link relative block aspect-[4/5] rounded-md bg-gradient-to-br from-[#E0B0FF] to-[#D8B4FE] group">
               <img src="assets/instagram/3.jpg" loading="lazy" alt="Instagram tile 3" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'" />
               <div class="absolute inset-0 bg-[#E0B0FF]/0 group-hover:bg-[#E0B0FF]/30 transition-colors"></div>
               <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2">
@@ -1807,7 +2256,7 @@
                 <span class="text-xs md:text-sm font-medium">@lovetts._ldc</span>
               </div>
             </a>
-            <a class="insta-link relative block aspect-[4/5] rounded-md overflow-hidden bg-gradient-to-br from-[#E0B0FF] to-[#D8B4FE] group">
+            <a class="insta-link relative block aspect-[4/5] rounded-md bg-gradient-to-br from-[#E0B0FF] to-[#D8B4FE] group">
               <img src="assets/instagram/4.jpg" loading="lazy" alt="Instagram tile 4" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'" />
               <div class="absolute inset-0 bg-[#E0B0FF]/0 group-hover:bg-[#E0B0FF]/30 transition-colors"></div>
               <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2">
@@ -1815,7 +2264,7 @@
                 <span class="text-xs md:text-sm font-medium">@lovetts._ldc</span>
               </div>
             </a>
-            <a class="insta-link relative block aspect-[4/5] rounded-md overflow-hidden bg-gradient-to-br from-[#E0B0FF] to-[#D8B4FE] group">
+            <a class="insta-link relative block aspect-[4/5] rounded-md bg-gradient-to-br from-[#E0B0FF] to-[#D8B4FE] group">
               <img src="assets/instagram/5.jpg" loading="lazy" alt="Instagram tile 5" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'" />
               <div class="absolute inset-0 bg-[#E0B0FF]/0 group-hover:bg-[#E0B0FF]/30 transition-colors"></div>
               <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2">
@@ -1823,7 +2272,7 @@
                 <span class="text-xs md:text-sm font-medium">@lovetts._ldc</span>
               </div>
             </a>
-            <a class="insta-link relative block aspect-[4/5] rounded-md overflow-hidden bg-gradient-to-br from-[#E0B0FF] to-[#D8B4FE] group">
+            <a class="insta-link relative block aspect-[4/5] rounded-md bg-gradient-to-br from-[#E0B0FF] to-[#D8B4FE] group">
               <img src="assets/instagram/6.jpg" loading="lazy" alt="Instagram tile 6" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'" />
               <div class="absolute inset-0 bg-[#E0B0FF]/0 group-hover:bg-[#E0B0FF]/30 transition-colors"></div>
               <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2">
@@ -1900,9 +2349,8 @@
       </section>
     </main>
     <footer>
-      <div class="container py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-600">
+        <div class="container py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-600">
         <div class="flex items-center gap-3 -ml-6">
-          <img src="assets/LDC%20LOGOS%20Black.png" alt="Lovett's Designs and Crafts logo" class="w-12 h-12 rounded object-contain" />
           <span>© <span id="year"></span> Brand. All rights reserved.</span>
         </div>
         <div class="flex items-center gap-4">
@@ -1956,7 +2404,7 @@
           </div>
           <!-- Right: image with CTA -->
           <div>
-            <div class="relative rounded-xl overflow-hidden ring-1 ring-white/10 bg-slate-800">
+            <div class="relative rounded-xl ring-1 ring-white/10 bg-slate-800">
               <img src="assets/section6-hero.jpg" alt="Beach picnic" class="w-full h-[360px] md:h-[520px] object-cover" loading="lazy" onerror="this.style.display='none'" />
               <div class="absolute left-4 bottom-4">
                 <a href="#" class="inline-flex items-center gap-2 bg-black/80 text-white rounded-full h-11 px-5 hover:bg-black">Shop Lovett's Designs and Crafts913
@@ -2014,15 +2462,6 @@
   </div>
 
     <script>
-      const btn = document.getElementById('mobileMenuButton');
-      const menu = document.getElementById('mobileMenu');
-      if (btn && menu) {
-        btn.addEventListener('click', () => {
-          const expanded = btn.getAttribute('aria-expanded') === 'true';
-          btn.setAttribute('aria-expanded', String(!expanded));
-          menu.classList.toggle('hidden');
-        });
-      }
       const y = document.getElementById('year');
       if (y) y.textContent = new Date().getFullYear();
       // Instagram links: set your profile once here
@@ -2041,6 +2480,228 @@
         a.setAttribute('rel', 'noopener');
         a.setAttribute('aria-label', 'View on Instagram');
       });
+      const signInOverlay = document.querySelector('[data-signin-overlay]');
+      const signUpOverlay = document.querySelector('[data-signup-overlay]');
+      const supportOverlay = document.querySelector('[data-support-overlay]');
+      let openSignIn = () => {};
+      let closeSignIn = () => {};
+      let openSignUp = () => {};
+      let closeSignUp = () => {};
+      let openSupport = () => {};
+      let closeSupport = () => {};
+      if (signInOverlay) {
+        const signInOpeners = document.querySelectorAll('[data-signin-open]');
+        const signInClosers = signInOverlay.querySelectorAll('[data-signin-close]');
+        const signInForm = signInOverlay.querySelector('[data-signin-form]');
+        const signInEmail = document.getElementById('signInEmail');
+        const signInToSignUp = signInOverlay.querySelector('[data-signin-to-signup]');
+        const setSignInState = isOpen => {
+          signInOverlay.classList.toggle('is-open', isOpen);
+          signInOverlay.setAttribute('aria-hidden', String(!isOpen));
+          document.body.classList.toggle('signin-open', isOpen);
+          if (isOpen && signInEmail) {
+            requestAnimationFrame(() => signInEmail.focus());
+          }
+        };
+        closeSignIn = () => setSignInState(false);
+        openSignIn = () => {
+          if (signUpOverlay?.classList.contains('is-open')) {
+            closeSignUp();
+          }
+          if (supportOverlay?.classList.contains('is-open')) {
+            closeSupport();
+          }
+          if (searchPanel && !searchPanel.hidden) {
+            toggleSearchPanel(false);
+          }
+          setSignInState(true);
+        };
+        signInOpeners.forEach(trigger => {
+          trigger.addEventListener('click', event => {
+            event.preventDefault();
+            openSignIn();
+          });
+        });
+        signInClosers.forEach(trigger => {
+          trigger.addEventListener('click', event => {
+            event.preventDefault();
+            closeSignIn();
+          });
+        });
+        signInOverlay.addEventListener('click', event => {
+          if (event.target === signInOverlay) {
+            closeSignIn();
+          }
+        });
+        document.addEventListener('keydown', event => {
+          if (event.key === 'Escape' && signInOverlay.classList.contains('is-open')) {
+            closeSignIn();
+          }
+        });
+        signInForm?.addEventListener('submit', event => {
+          event.preventDefault();
+          closeSignIn();
+        });
+        signInToSignUp?.addEventListener('click', event => {
+          event.preventDefault();
+          closeSignIn();
+          openSignUp();
+        });
+      }
+      if (signUpOverlay) {
+        const signUpOpeners = document.querySelectorAll('[data-signup-open]');
+        const signUpClosers = signUpOverlay.querySelectorAll('[data-signup-close]');
+        const signUpForm = signUpOverlay.querySelector('[data-signup-form]');
+        const signUpName = document.getElementById('signUpName');
+        const signUpToSignIn = signUpOverlay.querySelector('[data-signup-to-signin]');
+        const setSignUpState = isOpen => {
+          signUpOverlay.classList.toggle('is-open', isOpen);
+          signUpOverlay.setAttribute('aria-hidden', String(!isOpen));
+          document.body.classList.toggle('signup-open', isOpen);
+          if (isOpen && signUpName) {
+            requestAnimationFrame(() => signUpName.focus());
+          }
+        };
+        closeSignUp = () => setSignUpState(false);
+        openSignUp = () => {
+          if (signInOverlay?.classList.contains('is-open')) {
+            closeSignIn();
+          }
+          if (supportOverlay?.classList.contains('is-open')) {
+            closeSupport();
+          }
+          if (searchPanel && !searchPanel.hidden) {
+            toggleSearchPanel(false);
+          }
+          setSignUpState(true);
+        };
+        signUpOpeners.forEach(trigger => {
+          trigger.addEventListener('click', event => {
+            event.preventDefault();
+            openSignUp();
+          });
+        });
+        signUpClosers.forEach(trigger => {
+          trigger.addEventListener('click', event => {
+            event.preventDefault();
+            closeSignUp();
+          });
+        });
+        signUpOverlay.addEventListener('click', event => {
+          if (event.target === signUpOverlay) {
+            closeSignUp();
+          }
+        });
+        document.addEventListener('keydown', event => {
+          if (event.key === 'Escape' && signUpOverlay.classList.contains('is-open')) {
+            closeSignUp();
+          }
+        });
+        signUpForm?.addEventListener('submit', event => {
+          event.preventDefault();
+          closeSignUp();
+        });
+        signUpToSignIn?.addEventListener('click', event => {
+          event.preventDefault();
+          closeSignUp();
+          openSignIn();
+        });
+      }
+      const searchToggle = document.querySelector('[data-search-toggle]');
+      const searchField = document.querySelector('[data-search-field]');
+      const searchPanel = document.querySelector('[data-search-panel]');
+      const searchClose = document.querySelector('[data-search-close]');
+      const searchFormMobile = searchPanel?.querySelector('form');
+      const searchInputMobile = searchPanel?.querySelector('input[type="search"]');
+      const searchInputDesktop = searchField?.querySelector('input[type="search"]');
+      const toggleSearchPanel = isOpen => {
+        if (!searchPanel) return;
+        searchPanel.hidden = !isOpen;
+        searchPanel.setAttribute('aria-hidden', String(!isOpen));
+        if (isOpen && searchInputMobile) {
+          requestAnimationFrame(() => searchInputMobile.focus());
+        }
+      };
+      searchToggle?.addEventListener('click', event => {
+        event.preventDefault();
+        if (window.innerWidth >= 768) {
+          searchInputDesktop?.focus();
+        } else {
+          const isOpen = searchPanel && !searchPanel.hidden;
+          toggleSearchPanel(!isOpen);
+        }
+      });
+      searchClose?.addEventListener('click', event => {
+        event.preventDefault();
+        toggleSearchPanel(false);
+      });
+      searchFormMobile?.addEventListener('submit', event => {
+        event.preventDefault();
+        toggleSearchPanel(false);
+      });
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && searchPanel && !searchPanel.hidden) {
+          toggleSearchPanel(false);
+        }
+      });
+      window.addEventListener('resize', () => {
+        if (window.innerWidth >= 768 && searchPanel && !searchPanel.hidden) {
+          toggleSearchPanel(false);
+        }
+      });
+      if (supportOverlay) {
+        const supportOpeners = document.querySelectorAll('[data-support-open]');
+        const supportClosers = supportOverlay.querySelectorAll('[data-support-close]');
+        const supportForm = supportOverlay.querySelector('[data-support-form]');
+        const supportName = document.getElementById('supportName');
+        const setSupportState = isOpen => {
+          supportOverlay.classList.toggle('is-open', isOpen);
+          supportOverlay.setAttribute('aria-hidden', String(!isOpen));
+          document.body.classList.toggle('support-open', isOpen);
+          if (isOpen && supportName) {
+            requestAnimationFrame(() => supportName.focus());
+          }
+        };
+        closeSupport = () => setSupportState(false);
+        openSupport = () => {
+          if (signInOverlay?.classList.contains('is-open')) {
+            closeSignIn();
+          }
+          if (signUpOverlay?.classList.contains('is-open')) {
+            closeSignUp();
+          }
+          if (searchPanel && !searchPanel.hidden) {
+            toggleSearchPanel(false);
+          }
+          setSupportState(true);
+        };
+        supportOpeners.forEach(trigger => {
+          trigger.addEventListener('click', event => {
+            event.preventDefault();
+            openSupport();
+          });
+        });
+        supportClosers.forEach(trigger => {
+          trigger.addEventListener('click', event => {
+            event.preventDefault();
+            closeSupport();
+          });
+        });
+        supportOverlay.addEventListener('click', event => {
+          if (event.target === supportOverlay) {
+            closeSupport();
+          }
+        });
+        document.addEventListener('keydown', event => {
+          if (event.key === 'Escape' && supportOverlay.classList.contains('is-open')) {
+            closeSupport();
+          }
+        });
+        supportForm?.addEventListener('submit', event => {
+          event.preventDefault();
+          closeSupport();
+        });
+      }
       // FAQ toggle behavior
       document.querySelectorAll('.faq-toggle').forEach(btn => {
         btn.addEventListener('click', () => {

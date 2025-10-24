@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Customization</title>
+    <meta name="description" content="Bring your Lovett's Designs & Crafts ideas to life with our tailored customization studio." />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: radial-gradient(circle at top left, rgba(224, 176, 255, 0.45), transparent 55%), radial-gradient(circle at bottom right, rgba(153, 40, 177, 0.32), transparent 60%), linear-gradient(135deg, #f5f3ff 0%, #ede9fe 40%, #faf5ff 100%);
+        color: #1f0f24;
+      }
+      a {
+        color: inherit;
+      }
+      .page-shell {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        backdrop-filter: blur(16px);
+        background: rgba(250, 245, 255, 0.85);
+        border-bottom: 1px solid rgba(153, 40, 177, 0.12);
+      }
+      .header-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 64px;
+      }
+      .brand-mark {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .brand-mark img {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        object-fit: cover;
+      }
+      .home-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.55rem 1.1rem;
+        border-radius: 999px;
+        border: 1px solid rgba(153, 40, 177, 0.25);
+        background: rgba(255, 255, 255, 0.8);
+        font-size: 0.75rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+      }
+      .home-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 32px rgba(153, 40, 177, 0.22);
+        background: linear-gradient(135deg, #ffd166 0%, #f97316 100%);
+        color: #1f0f24;
+      }
+      .hero {
+        padding: clamp(4rem, 9vw, 6rem) 0 clamp(3rem, 7vw, 5rem);
+      }
+      .hero-card {
+        max-width: 880px;
+        margin: 0 auto;
+        border-radius: 2.75rem;
+        overflow: hidden;
+        box-shadow: 0 30px 70px rgba(79, 70, 229, 0.18);
+        border: 1px solid rgba(153, 40, 177, 0.18);
+      }
+      .hero-top {
+        padding: clamp(2.5rem, 5vw, 3.5rem) clamp(2.25rem, 6vw, 4.5rem);
+        text-align: center;
+        background: linear-gradient(135deg, #E0B0FF 0%, #D8B4FE 100%);
+        color: #ffffff;
+      }
+      .hero-eyebrow {
+        font-size: 0.75rem;
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+        font-weight: 600;
+        display: inline-flex;
+        gap: 0.45rem;
+        align-items: center;
+      }
+      .hero-heading {
+        margin-top: 1.5rem;
+        font-family: 'Lobster', cursive;
+        font-size: clamp(2.75rem, 7vw, 4.75rem);
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+      }
+      .hero-tagline {
+        margin-top: 1.25rem;
+        font-size: clamp(1rem, 2.2vw, 1.25rem);
+        line-height: 1.8;
+        opacity: 0.92;
+      }
+      .hero-bottom {
+        padding: clamp(2.25rem, 6vw, 3.75rem);
+        background: rgba(255, 255, 255, 0.85);
+      }
+      .preview-frame {
+        border-radius: 2.5rem;
+        border: 1px solid rgba(153, 40, 177, 0.18);
+        overflow: hidden;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+      }
+      .preview-frame img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .section-eyebrow {
+        margin-top: clamp(2.5rem, 7vw, 3.5rem);
+        font-size: 0.75rem;
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+        font-weight: 600;
+        text-align: center;
+        color: rgba(31, 15, 36, 0.68);
+      }
+      .swatch-grid {
+        margin-top: 1.75rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
+        gap: 1rem;
+        justify-items: center;
+      }
+      .swatch {
+        width: 56px;
+        height: 56px;
+        border-radius: 999px;
+        border: 3px solid #fff;
+        box-shadow: 0 18px 24px rgba(81, 56, 105, 0.18);
+      }
+      .customization-flow {
+        margin-top: clamp(3rem, 8vw, 4.5rem);
+        border-radius: 2.5rem;
+        border: 1px solid rgba(153, 40, 177, 0.14);
+        background: rgba(255, 255, 255, 0.82);
+        box-shadow: 0 28px 60px rgba(79, 70, 229, 0.15);
+        padding: clamp(2rem, 5vw, 3rem);
+      }
+      .flow-title {
+        font-size: clamp(1.8rem, 4vw, 2.5rem);
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        text-align: center;
+      }
+      .flow-steps {
+        margin-top: 2.25rem;
+        display: grid;
+        gap: 1.75rem;
+      }
+      .flow-step {
+        display: grid;
+        gap: 1rem;
+        border-radius: 1.5rem;
+        padding: 1.6rem;
+        background: rgba(224, 176, 255, 0.14);
+        border: 1px solid rgba(153, 40, 177, 0.12);
+      }
+      .flow-step h3 {
+        margin: 0;
+        font-size: 1.2rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .cta-wrap {
+        margin-top: clamp(3rem, 8vw, 4rem);
+        text-align: center;
+      }
+      .cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.95rem 1.85rem;
+        border-radius: 999px;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border: none;
+        background: linear-gradient(135deg, #ffd166 0%, #f97316 100%);
+        color: #1f0f24;
+        text-decoration: none;
+        transition: transform 160ms ease, box-shadow 160ms ease;
+      }
+      .cta-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 18px 36px rgba(249, 115, 22, 0.25);
+      }
+      footer {
+        margin-top: auto;
+        padding: 2rem 0;
+        text-align: center;
+        font-size: 0.75rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(31, 15, 36, 0.6);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header>
+        <div class="container header-inner">
+          <a href="index.html" class="brand-mark">
+            <img src="assets/LDC%20LOGOS%20Black.png" alt="LDC logo" />
+            <span>Lovett's Designs & Crafts</span>
+          </a>
+          <a href="index.html#section-customization" class="home-link">
+            <span aria-hidden="true">←</span>
+            Back Home
+          </a>
+        </div>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div class="hero-card">
+            <div class="hero-top">
+              <span class="hero-eyebrow">Customization Studio</span>
+              <h1 class="hero-heading">Customization</h1>
+              <p class="hero-tagline">
+                Turn your vision into a one-of-a-kind Lovett’s creation. Select colors, finishes, engravings, and accessories to match your style or celebrate every special moment.
+              </p>
+            </div>
+            <div class="hero-bottom">
+              <div class="preview-frame">
+                <img src="assets/Tumbler%207%20-%20Glass.jpeg" alt="Customized palm tree tumbler" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="container">
+            <p class="section-eyebrow">Signature Finishes</p>
+            <div class="swatch-grid">
+              <span class="swatch" style="background: linear-gradient(135deg,#f8ddff 0%,#d08af5 100%);"></span>
+              <span class="swatch" style="background: linear-gradient(135deg,#fde1ff 0%,#ff9aed 100%);"></span>
+              <span class="swatch" style="background: linear-gradient(135deg,#fff7d6 0%,#f6ce6c 100%);"></span>
+              <span class="swatch" style="background: linear-gradient(135deg,#e0f7ff 0%,#8ac9f9 100%);"></span>
+              <span class="swatch" style="background: linear-gradient(135deg,#d9d9d9 0%,#707070 100%);"></span>
+              <span class="swatch" style="background: linear-gradient(135deg,#ffe4f2 0%,#ff9bbf 100%);"></span>
+              <span class="swatch" style="background: linear-gradient(135deg,#f0ffdd 0%,#b6f542 100%);"></span>
+              <span class="swatch" style="background: linear-gradient(135deg,#f5f1ff 0%,#c5b0ff 100%);"></span>
+            </div>
+
+            <p class="section-eyebrow">Accessory Accents</p>
+            <div class="swatch-grid">
+              <span class="swatch" style="background: linear-gradient(135deg,#fef3c7 0%,#f97316 100%);"></span>
+              <span class="swatch" style="background: linear-gradient(135deg,#edf2f7 0%,#64748b 100%);"></span>
+              <span class="swatch" style="background: linear-gradient(135deg,#ecfeff 0%,#0ea5e9 100%);"></span>
+              <span class="swatch" style="background: linear-gradient(135deg,#f4fce3 0%,#4ade80 100%);"></span>
+              <span class="swatch" style="background: linear-gradient(135deg,#fdf2f8 0%,#be185d 100%);"></span>
+              <span class="swatch" style="background: linear-gradient(135deg,#eef2ff 0%,#312e81 100%);"></span>
+              <span class="swatch" style="background: linear-gradient(135deg,#fff7ec 0%,#ea580c 100%);"></span>
+              <span class="swatch" style="background: linear-gradient(135deg,#f8fafc 0%,#94a3b8 100%);"></span>
+            </div>
+
+            <div class="customization-flow">
+              <h2 class="flow-title">How Your Custom Piece Comes To Life</h2>
+              <div class="flow-steps">
+                <div class="flow-step">
+                  <h3>1. Choose Your Base</h3>
+                  <p>Select a tumbler, cup, bottle, or accessory silhouette and pick the exact finish and capacity you need.</p>
+                </div>
+                <div class="flow-step">
+                  <h3>2. Personalize Every Detail</h3>
+                  <p>Layer on colors, lids, handles, and hardware accents. Add names, monograms, or event dates with premium engraving.</p>
+                </div>
+                <div class="flow-step">
+                  <h3>3. Preview & Approve</h3>
+                  <p>Review a mock-up from our design studio and request tweaks until it matches your vision perfectly.</p>
+                </div>
+                <div class="flow-step">
+                  <h3>4. Crafted & Delivered</h3>
+                  <p>Your bespoke Lovett’s creation is produced with care, inspected by hand, and prepared for pickup or shipping.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="cta-wrap">
+              <a href="mailto:info@lovettsdesigns.com?subject=Customization%20Request" class="cta-btn">
+                Start Your Design
+              </a>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        Lovett's Designs &amp; Crafts · Custom creations made with love
+      </footer>
+    </div>
+  </body>
+</html>
