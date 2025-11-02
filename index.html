@@ -20,7 +20,173 @@
       }
       .hero-card h1 {
         font-family: 'Lobster', cursive;
-        font-size: clamp(2rem, 4vw, 3rem);
+        font-size: clamp(1.5rem, 5vw, 3.25rem);
+      }
+      .hero-visual {
+        position: relative;
+        width: 100%;
+        height: clamp(24rem, 70vh, 48rem);
+        min-height: 22rem;
+        overflow: hidden;
+      }
+      .hero-visual img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+      }
+      .hero-visual-content {
+        position: absolute;
+        z-index: 1;
+        top: clamp(0rem, 3.5vh, 2.5rem);
+        left: 0;
+        right: 0;
+        padding: 0 clamp(1rem, 4vw, 2.5rem);
+      }
+      .design-palette {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0.75rem;
+        justify-items: center;
+        justify-content: center;
+        margin: 0 auto;
+      }
+      @media (min-width: 1024px) {
+        .design-palette {
+          gap: 1rem;
+        }
+      }
+      .header-menu {
+        display: none;
+        position: relative;
+      }
+      .header-menu-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.25rem;
+        height: 2.25rem;
+        border: none;
+        background: none;
+        color: #B678F5;
+        border-radius: 9999px;
+        transition: color 160ms ease, transform 160ms ease;
+      }
+      .header-menu-toggle:hover {
+        transform: translateY(-1px);
+        color: rgba(182, 120, 245, 0.85);
+      }
+      .header-menu-toggle:focus-visible {
+        outline: 2px solid rgba(182, 120, 245, 0.45);
+        outline-offset: 2px;
+      }
+      .header-menu-panel {
+        position: absolute;
+        top: calc(100% + 0.75rem);
+        left: 0;
+        width: min(18rem, calc(100vw - 1.5rem));
+        padding: 0.75rem;
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.98);
+        border: 1px solid rgba(226, 215, 255, 0.8);
+        box-shadow: 0 18px 40px rgba(20, 0, 45, 0.28);
+        z-index: 40;
+        backdrop-filter: blur(6px);
+      }
+      .header-menu-panel a {
+        text-decoration: none;
+      }
+      .header-menu-collapsible {
+        border-bottom: 1px solid rgba(182, 120, 245, 0.18);
+        padding-bottom: 0.35rem;
+        margin-bottom: 0.35rem;
+      }
+      .header-menu-collapsible:last-of-type {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+      }
+      .header-menu-toggle-link {
+        width: 100%;
+        border: none;
+        background: none;
+        padding: 0.35rem 0.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: #34104f;
+        font-size: 0.95rem;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      .header-menu-toggle-link svg {
+        width: 1.1rem;
+        height: 1.1rem;
+        transition: transform 200ms ease;
+      }
+      .header-menu-collapsible.is-open .header-menu-toggle-link {
+        color: #9928B1;
+      }
+      .header-menu-collapsible.is-open .header-menu-toggle-link svg {
+        transform: rotate(180deg);
+      }
+      .header-menu-submenu {
+        margin-top: 0.25rem;
+        padding-left: 0.1rem;
+      }
+      .header-menu-submenu[hidden] {
+        display: none !important;
+      }
+      .header-menu-panel[hidden] {
+        display: none !important;
+      }
+      .header-menu.is-open .header-menu-toggle {
+        color: #9928B1;
+      }
+      @media (max-width: 640px) {
+        .header-menu-panel {
+          left: 0;
+          right: auto;
+          min-width: min(18rem, calc(100vw - 2rem));
+        }
+      }
+      @media (max-width: 1024px) {
+        .hero-visual {
+          height: clamp(20rem, 60vh, 40rem);
+        }
+      }
+      @media (max-width: 640px) {
+        .hero-visual {
+          height: clamp(14rem, 52vh, 20rem);
+          min-height: 13rem;
+        }
+        .hero-visual img {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center 55%;
+        }
+        .hero-visual-content {
+          top: clamp(0.25rem, 8vw, 1.5rem);
+          bottom: auto;
+          padding: 0 1rem;
+        }
+      }
+      @media (max-width: 767px) {
+        .primary-nav {
+          display: none;
+        }
+        .header-menu {
+          display: inline-flex;
+          align-items: center;
+        }
       }
       .icon-button {
         border: none;
@@ -29,6 +195,66 @@
         border-radius: 9999px;
         box-shadow: 0 10px 20px rgba(153, 40, 177, 0.2);
         transition: transform 200ms ease, box-shadow 200ms ease;
+      }
+      .header-main {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        align-items: center;
+        column-gap: clamp(1.5rem, 4vw, 3.5rem);
+      }
+      .header-main .header-start {
+        grid-column: 1;
+        justify-self: start;
+      }
+      .header-main .primary-nav {
+        grid-column: 2;
+      }
+      .header-main .header-end {
+        grid-column: 3;
+        justify-self: end;
+      }
+      .header-main .primary-nav {
+        justify-self: center;
+      }
+      .primary-nav {
+        gap: clamp(2rem, 6vw, 4rem);
+      }
+      .search-controls {
+        gap: 0;
+        margin-right: 0;
+        margin-left: clamp(1.5rem, 4vw, 3rem);
+      }
+      .search-actions {
+        margin-left: clamp(1rem, 2.5vw, 1.75rem);
+      }
+      .search-field {
+        width: 13.25rem;
+      }
+      @media (min-width: 768px) {
+        .search-field {
+          width: 17.25rem;
+        }
+      }
+      @media (min-width: 1024px) {
+        .search-field {
+          width: 18.25rem;
+        }
+      }
+      @media (min-width: 768px) and (max-width: 1099px) {
+        .primary-nav {
+          gap: 1.5rem;
+        }
+        .search-controls {
+          margin-left: 1.25rem;
+        }
+        .search-field {
+          width: 15rem;
+        }
+      }
+      @media (max-width: 1580px) {
+        .search-controls .search-field {
+          display: none;
+        }
       }
       .icon-button svg {
         color: inherit;
@@ -851,16 +1077,71 @@
       <!-- Main nav -->
       <div class="relative">
         <div class="container px-6 md:px-8">
-          <div class="flex items-center h-16 gap-4">
-            <div class="flex flex-1 items-center gap-3"></div>
-            <nav class="primary-nav flex flex-1 flex-wrap items-center justify-center gap-4 text-xs sm:gap-6 sm:text-sm lg:gap-8">
+          <div class="header-main flex items-center h-16 gap-4">
+            <div class="header-start flex items-center gap-3">
+              <a href="index.html#top" class="relative inline-flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 icon-button cart-btn" aria-label="Home">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                  <path d="M12 3.172 3.172 12H6v8a1 1 0 0 0 1 1h4v-5h2v5h4a1 1 0 0 0 1-1v-8h2.828L12 3.172Z" />
+                </svg>
+              </a>
+              <div class="header-menu" data-menu>
+                <button type="button" class="header-menu-toggle" data-menu-toggle aria-expanded="false" aria-controls="headerMenuPanel" aria-label="Open navigation menu">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5" stroke-width="2">
+                    <path stroke-linecap="round" d="M4 7h16" />
+                    <path stroke-linecap="round" d="M7 12h13" />
+                    <path stroke-linecap="round" d="M10 17h10" />
+                  </svg>
+                </button>
+                <div class="header-menu-panel dropdown-panel transform" id="headerMenuPanel" data-menu-panel hidden>
+                  <div class="space-y-3 text-sm text-slate-700">
+                    <div class="header-menu-collapsible" data-menu-collapsible>
+                      <button type="button" class="header-menu-toggle-link tile-title" data-menu-collapsible-toggle="shop">
+                        <span>Shop</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/></svg>
+                      </button>
+                      <div class="header-menu-submenu space-y-1" data-menu-submenu="shop" hidden>
+                        <a href="tumblers.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Tumblers</a>
+                        <a href="cups.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Cups &amp; Mugs</a>
+                        <a href="accessories.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Accessories</a>
+                        <a href="attire.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Attire</a>
+                      </div>
+                    </div>
+                    <div class="header-menu-collapsible" data-menu-collapsible>
+                      <button type="button" class="header-menu-toggle-link tile-title" data-menu-collapsible-toggle="trending">
+                        <span>Trending</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/></svg>
+                      </button>
+                      <div class="header-menu-submenu space-y-1" data-menu-submenu="trending" hidden>
+                        <a href="new-arrivals.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">New Arrivals</a>
+                        <a href="best-sellers.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Best Sellers</a>
+                        <a href="restock.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Restock</a>
+                      </div>
+                    </div>
+                    <div class="header-menu-collapsible" data-menu-collapsible>
+                      <a href="customization.html" class="header-menu-toggle-link tile-title no-underline">Design</a>
+                    </div>
+                    <div class="header-menu-collapsible" data-menu-collapsible>
+                      <button type="button" class="header-menu-toggle-link tile-title" data-menu-collapsible-toggle="sale">
+                        <span>Sale</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/></svg>
+                      </button>
+                      <div class="header-menu-submenu space-y-1" data-menu-submenu="sale" hidden>
+                        <a href="sale.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Deals for the Steal</a>
+                        <a href="under-25.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Under $25 Items</a>
+                        <a href="last-chance.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Last Chance - Seasonal</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <nav class="primary-nav flex flex-wrap items-center justify-center gap-4 text-xs sm:gap-6 sm:text-sm lg:gap-8">
               <div class="group relative">
                 <a href="#section-1" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Shop</a>
                 <div class="invisible opacity-0 translate-y-1 origin-top scale-95 hover:visible hover:opacity-100 hover:translate-y-0 hover:scale-100 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:scale-100 transition ease-out duration-700 absolute left-1/2 -translate-x-1/2 top-full mt-0 w-56 rounded-2xl border border-slate-200 bg-white shadow-xl dropdown-panel transform">
                   <div class="p-2 space-y-2">
-                    <a href="new-arrivals.html" class="block px-3 py-2 rounded hover:bg-white">New Arrivals</a>
                     <a href="tumblers.html" class="block px-3 py-2 rounded hover:bg-white">Tumblers</a>
-                    <a href="cups.html" class="block px-3 py-2 rounded hover:bg-white">Cups</a>
+                    <a href="cups.html" class="block px-3 py-2 rounded hover:bg-white">Cups &amp; Mugs</a>
                     <a href="accessories.html" class="block px-3 py-2 rounded hover:bg-white">Accessories</a>
                     <a href="attire.html" class="block px-3 py-2 rounded hover:bg-white">Attire</a>
                   </div>
@@ -870,25 +1151,38 @@
                 <a href="#section-2" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Trending</a>
                 <div class="invisible opacity-0 translate-y-1 origin-top scale-95 hover:visible hover:opacity-100 hover:translate-y-0 hover:scale-100 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:scale-100 transition ease-out duration-700 absolute left-1/2 -translate-x-1/2 top-full mt-0 w-56 rounded-2xl border border-slate-200 bg-white shadow-xl dropdown-panel transform">
                   <div class="p-2 space-y-2">
+                    <a href="new-arrivals.html" class="best-sellers-nav-inline">New Arrivals</a>
                     <a href="best-sellers.html" class="best-sellers-nav-inline">Best Sellers</a>
-                    <a href="editors-picks.html" class="best-sellers-nav-inline">Editor’s Picks</a>
+                    <a href="restock.html" class="best-sellers-nav-inline">Restock</a>
                   </div>
                 </div>
               </div>
-              <a href="customization.html" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Customize</a>
-              <a href="sale.html" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Sale</a>
+              <a href="customization.html" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Design</a>
+              <div class="group relative">
+                <a href="#" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Sale</a>
+                <div class="invisible opacity-0 translate-y-1 origin-top scale-95 hover:visible hover:opacity-100 hover:translate-y-0 hover:scale-100 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:scale-100 transition ease-out duration-700 absolute left-1/2 -translate-x-1/2 top-full mt-0 w-56 rounded-2xl border border-slate-200 bg-white shadow-xl dropdown-panel transform">
+                  <div class="p-2 space-y-2">
+                    <a href="sale.html" class="block px-3 py-2 rounded hover:bg-white">Deals for the Steal</a>
+                    <a href="under-25.html" class="block px-3 py-2 rounded hover:bg-white">Under $25 Items</a>
+                    <a href="last-chance.html" class="block px-3 py-2 rounded hover:bg-white">Last Chance - Seasonal</a>
+                  </div>
+                </div>
+              </div>
             </nav>
-            <div class="flex flex-1 items-center justify-end gap-3 text-white">
-              <div class="flex items-center gap-3">
+            <div class="header-end flex items-center justify-end gap-3 text-white">
+              <div class="flex items-center search-controls">
                 <button type="button" class="header-search-trigger" data-search-toggle aria-label="Open search">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5"><path fill="currentColor" d="M21 21a1 1 0 0 1-1.41 0l-4.35-4.35a7 7 0 1 1 1.41-1.41l4.35 4.35a1 1 0 0 1 0 1.41ZM5 10a5 5 0 1 0 10 0 5 5 0 0 0-10 0Z"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="7" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35" />
+                  </svg>
                 </button>
-                <label class="relative hidden md:block w-56 sm:w-64 md:w-72 lg:w-80 flex-shrink-0" data-search-field>
+                <label class="relative hidden md:block search-field flex-shrink-0" data-search-field>
                   <span class="sr-only">Search</span>
                   <input type="search" placeholder="What are you looking for?" class="header-search-input w-full h-9 pl-10 pr-4 rounded-md border border-slate-300 bg-white/80 placeholder-mauve focus:outline-none" />
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/></svg>
                 </label>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 search-actions">
                   <a href="#" class="relative inline-flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 icon-button cart-btn" aria-label="Favorites" data-favorites-open>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
@@ -1041,9 +1335,9 @@
     </div>
     <main id="main" class="pt-[10rem] md:pt-[9rem]">
       <section id="section-1" class="relative">
-        <div class="relative h-[60vh] md:h-[72vh] w-full overflow-hidden">
-          <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('assets/LDC LOGOS purple with marble back.png');"></div>
-          <div class="absolute inset-x-0 bottom-10 md:bottom-16">
+        <div class="hero-visual">
+          <img src="assets/hero-ldc.png" alt="Lovett Design Company drinkware display" loading="eager" />
+          <div class="hero-visual-content">
             <div class="container pb-10 flex justify-start pl-0 pr-4 md:pr-8 md:pl-0">
               <div class="max-w-xl">
                 <div class="hero-card text-left">
@@ -1077,7 +1371,7 @@
               </select>
             </label>
           </div>
-          <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             <!-- Product card template start -->
             <div class="group relative">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
@@ -1344,7 +1638,7 @@
       <section id="section-3" class="">
         <div class="container py-12 md:py-16">
           <div class="mb-6">
-            <h2 class="font-heading text-2xl md:text-3xl font-semibold tracking-tight">Cups</h2>
+            <h2 class="font-heading text-2xl md:text-3xl font-semibold tracking-tight">Cups &amp; Mugs</h2>
             <div class="mt-2 text-sm text-slate-600">8 Products</div>
           </div>
           <div class="flex items-center justify-between mb-6">
@@ -1363,7 +1657,7 @@
               </select>
             </label>
           </div>
-          <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             <!-- Row 1 -->
             <div class="group relative">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
@@ -1652,7 +1946,7 @@
               </select>
             </label>
           </div>
-          <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             <!-- Row 1 -->
             <div class="group relative">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
@@ -1916,67 +2210,90 @@
       </section>
       <section id="section-customization" class="">
         <div class="container py-12 md:py-16">
-          <div class="rounded-[2.25rem] tile-mauve border border-slate-200 customization-card">
-            <div class="px-6 py-10 md:px-12 md:py-14 text-center text-white rounded-t-3xl" style="background: linear-gradient(135deg, #E0B0FF 0%, #D8B4FE 100%);">
-              <p class="text-sm font-semibold tracking-[0.35em] uppercase mb-3">Customization</p>
-              <h2 class="font-heading text-3xl md:text-5xl font-extrabold uppercase tracking-[0.18em]">
-                <a href="customization.html" class="customization-title-link text-white hover:text-white focus:text-white">Customization</a>
-              </h2>
-              <p class="mt-4 text-sm md:text-base">Let your imagination run wild.</p>
-            </div>
-            <div class="p-6 md:p-10 rounded-b-3xl">
-              <div class="rounded-3xl border border-[#ead8ff]">
-                <img src="assets/Tumbler%207%20-%20Glass.jpeg" alt="Customized glass tumbler with palm tree graphic" class="w-full h-full object-cover" />
+          <div class="md:flex md:items-center md:justify-center md:gap-8 lg:gap-12 xl:gap-14">
+            <div class="hidden md:block md:w-60 lg:w-[18rem]">
+              <p class="text-sm font-semibold tracking-[0.35em] uppercase text-slate-600 text-center mb-6">Colors</p>
+              <div class="mt-3 design-palette">
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f8ddff 0%,#d08af5 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fde1ff 0%,#ff9aed 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fff7d6 0%,#f6ce6c 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#e0f7ff 0%,#8ac9f9 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#d9d9d9 0%,#707070 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#ffe4f2 0%,#ff9bbf 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f0ffdd 0%,#b6f542 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f5f1ff 0%,#c5b0ff 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#ffeede 0%,#ffb780 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f4fffd 0%,#9ce8d0 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fff0f0 0%,#ff7676 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#eef2ff 0%,#4f46e5 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fef3f7 0%,#f0abfc 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fff4e6 0%,#ff9f68 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f0f9ff 0%,#38bdf8 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f5fff0 0%,#86efac 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fef2ff 0%,#d946ef 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f1f5ff 0%,#3b82f6 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fff7f0 0%,#fb923c 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f0fdf4 0%,#22c55e 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fdf2f8 0%,#f472b6 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#eef2ff 0%,#6366f1 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fefce8 0%,#facc15 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f0fdfa 0%,#14b8a6 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fff5f5 0%,#f87171 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fdf4ff 0%,#a855f7 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f1fff5 0%,#4ade80 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f2f4ff 0%,#818cf8 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fff7ed 0%,#fdba74 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f4f1ff 0%,#a78bfa 100%);"></span>
               </div>
             </div>
-          </div>
-          <div class="mt-6 text-center">
-            <p class="text-sm font-semibold tracking-[0.35em] uppercase text-slate-600">Colors</p>
-          </div>
-          <div class="mt-4 flex flex-wrap items-center justify-center md:justify-between gap-4 md:gap-6">
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f8ddff 0%,#d08af5 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fde1ff 0%,#ff9aed 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fff7d6 0%,#f6ce6c 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#e0f7ff 0%,#8ac9f9 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#d9d9d9 0%,#707070 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#ffe4f2 0%,#ff9bbf 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f0ffdd 0%,#b6f542 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f5f1ff 0%,#c5b0ff 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#ffeede 0%,#ffb780 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f4fffd 0%,#9ce8d0 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fff0f0 0%,#ff7676 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#eef2ff 0%,#4f46e5 100%);"></span>
-          </div>
-          <div class="mt-10 text-center">
-            <p class="text-sm font-semibold tracking-[0.35em] uppercase text-slate-600">Accessories</p>
-          </div>
-          <div class="mt-4 flex flex-wrap items-center justify-center md:justify-between gap-4 md:gap-6">
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fef3c7 0%,#f97316 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#edf2f7 0%,#64748b 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#ecfeff 0%,#0ea5e9 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f4fce3 0%,#4ade80 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fdf2f8 0%,#be185d 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#eef2ff 0%,#312e81 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fff7ec 0%,#ea580c 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f8fafc 0%,#94a3b8 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fef2f2 0%,#b91c1c 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f0fdf4 0%,#22c55e 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#eff6ff 0%,#2563eb 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fdf4ff 0%,#c084fc 100%);"></span>
-          </div>
-          <div class="mt-4 flex flex-wrap items-center justify-center md:justify-between gap-4 md:gap-6">
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fff5f7 0%,#fb7185 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f5f5f5 0%,#737373 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f9f7ff 0%,#7c3aed 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fef9c3 0%,#d97706 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fef2f2 0%,#ef4444 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#eef2ff 0%,#4c1d95 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#ecfdf5 0%,#047857 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f5f5f5 0%,#0f172a 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fef3c7 0%,#ea580c 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#eefdfd 0%,#14b8a6 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fdf2f8 0%,#db2777 100%);"></span>
-            <span class="swatch w-8 h-8 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f1f5f9 0%,#64748b 100%);"></span>
+            <div class="rounded-[2.25rem] tile-mauve border border-slate-200 customization-card mx-auto max-w-lg md:mx-0 md:w-[20rem]">
+              <div class="px-3 py-5 md:px-4 md:py-5 text-center text-white rounded-t-3xl" style="background: linear-gradient(135deg, #E0B0FF 0%, #D8B4FE 100%);">
+                <h2 class="font-heading text-2xl md:text-4xl font-extrabold uppercase tracking-[0.18em]">
+                  <a href="customization.html" class="customization-title-link text-white hover:text-white focus:text-white">Design</a>
+                </h2>
+                <p class="mt-3 text-xs md:text-sm">Let your imagination run wild.</p>
+              </div>
+              <div class="p-3 md:p-4 rounded-b-3xl">
+                <div class="rounded-3xl border border-[#ead8ff] bg-white/80 flex items-center justify-center p-4">
+                  <img src="assets/Tumbler%207%20-%20Glass.jpeg" alt="Customized glass tumbler with palm tree graphic" class="max-h-56 md:max-h-72 w-auto object-contain" />
+                </div>
+              </div>
+            </div>
+            <div class="hidden md:block md:w-60 lg:w-[18rem]">
+              <p class="text-sm font-semibold tracking-[0.35em] uppercase text-slate-600 text-center mb-6">Accessories</p>
+              <div class="mt-3 design-palette">
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fef3c7 0%,#f97316 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#edf2f7 0%,#64748b 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#ecfeff 0%,#0ea5e9 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f4fce3 0%,#4ade80 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fdf2f8 0%,#be185d 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#eef2ff 0%,#312e81 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fff7ec 0%,#ea580c 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f8fafc 0%,#94a3b8 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fef2f2 0%,#b91c1c 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f0fdf4 0%,#22c55e 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#eff6ff 0%,#2563eb 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fdf4ff 0%,#c084fc 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fff5f7 0%,#fb7185 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f5f5f5 0%,#737373 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f9f7ff 0%,#7c3aed 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fef9c3 0%,#d97706 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fee2e2 0%,#ef4444 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#e0e7ff 0%,#6366f1 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#ecfdf5 0%,#047857 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#e2e8f0 0%,#0f172a 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fde68a 0%,#ea580c 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#ccfbf1 0%,#14b8a6 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fee2f2 0%,#db2777 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#e2e8f0 0%,#64748b 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#bae6fd 0%,#0ea5e9 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#dcfce7 0%,#22c55e 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fce7f3 0%,#f43f5e 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#e0e7ff 0%,#6366f1 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#f8faf0 0%,#84cc16 100%);"></span>
+                <span class="swatch w-6 h-6 rounded-full ring-2 ring-white shadow-lg" style="background: linear-gradient(135deg,#fef2ff 0%,#d946ef 100%);"></span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -2003,7 +2320,7 @@
               </select>
             </label>
           </div>
-          <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             <!-- 1 -->
             <div class="group relative">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
@@ -2323,7 +2640,7 @@
           <!-- Popular categories -->
           <div class="mt-16">
             <h3 class="font-heading text-xl md:text-2xl font-semibold tracking-tight">Popular Categories</h3>
-            <div class="mt-6 grid md:grid-cols-3 gap-4 md:gap-6">
+            <div class="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
               <a class="flex items-center justify-between rounded-lg border border-slate-200 tile-mauve transition-colors p-5 text-white no-underline hover:no-underline">
                 <span class="font-medium text-white no-underline hover:no-underline">Tumblers</span>
                 <div class="flex items-center gap-3">
@@ -2406,11 +2723,6 @@
           <div>
             <div class="relative rounded-xl ring-1 ring-white/10 bg-slate-800">
               <img src="assets/section6-hero.jpg" alt="Beach picnic" class="w-full h-[360px] md:h-[520px] object-cover" loading="lazy" onerror="this.style.display='none'" />
-              <div class="absolute left-4 bottom-4">
-                <a href="#" class="inline-flex items-center gap-2 bg-black/80 text-white rounded-full h-11 px-5 hover:bg-black">Shop Lovett's Designs and Crafts913
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M13 5l7 7-7 7"/></svg>
-                </a>
-              </div>
             </div>
           </div>
         </div>
@@ -2614,6 +2926,19 @@
       const searchFormMobile = searchPanel?.querySelector('form');
       const searchInputMobile = searchPanel?.querySelector('input[type="search"]');
       const searchInputDesktop = searchField?.querySelector('input[type="search"]');
+      const headerMenu = document.querySelector('[data-menu]');
+      const menuToggle = document.querySelector('[data-menu-toggle]');
+      const menuPanel = document.querySelector('[data-menu-panel]');
+      const menuLinks = menuPanel?.querySelectorAll('a');
+      const submenuPanels = menuPanel?.querySelectorAll('[data-menu-submenu]');
+      const submenuToggles = menuPanel?.querySelectorAll('[data-menu-collapsible-toggle]');
+      const MENU_BREAKPOINT = 768;
+      let menuIsOpen = false;
+      const isDesktopSearchVisible = () => {
+        if (!searchField) return false;
+        if (searchField.offsetParent === null) return false;
+        return window.getComputedStyle(searchField).display !== 'none';
+      };
       const toggleSearchPanel = isOpen => {
         if (!searchPanel) return;
         searchPanel.hidden = !isOpen;
@@ -2622,9 +2947,20 @@
           requestAnimationFrame(() => searchInputMobile.focus());
         }
       };
+      const setMenuState = isOpen => {
+        menuIsOpen = isOpen;
+        if (!menuPanel || !menuToggle) return;
+        menuPanel.hidden = !isOpen;
+        menuToggle.setAttribute('aria-expanded', String(isOpen));
+        menuToggle.setAttribute('aria-label', isOpen ? 'Close navigation menu' : 'Open navigation menu');
+        headerMenu?.classList.toggle('is-open', isOpen);
+        if (isOpen && searchPanel && !searchPanel.hidden) {
+          toggleSearchPanel(false);
+        }
+      };
       searchToggle?.addEventListener('click', event => {
         event.preventDefault();
-        if (window.innerWidth >= 768) {
+        if (isDesktopSearchVisible()) {
           searchInputDesktop?.focus();
         } else {
           const isOpen = searchPanel && !searchPanel.hidden;
@@ -2639,14 +2975,89 @@
         event.preventDefault();
         toggleSearchPanel(false);
       });
+      menuToggle?.addEventListener('click', event => {
+        event.preventDefault();
+        setMenuState(!menuIsOpen);
+      });
+      menuLinks?.forEach(link => {
+        link.addEventListener('click', () => closeMenu());
+      });
+      const closeAllSubmenus = () => {
+        submenuPanels?.forEach(panel => {
+          panel.setAttribute('hidden', '');
+          const group = panel.closest('[data-menu-collapsible]');
+          group?.classList.remove('is-open');
+        });
+      };
+      const closeMenu = () => {
+        setMenuState(false);
+        closeAllSubmenus();
+      };
+      submenuToggles?.forEach(toggle => {
+        toggle.addEventListener('click', event => {
+          event.preventDefault();
+          const id = toggle.getAttribute('data-menu-collapsible-toggle');
+          if (!id) return;
+          const panel = menuPanel?.querySelector(`[data-menu-submenu="${id}"]`);
+          if (!panel) return;
+          const group = toggle.closest('[data-menu-collapsible]');
+          const isOpen = !panel.hasAttribute('hidden');
+          closeAllSubmenus();
+          if (!isOpen) {
+            panel.removeAttribute('hidden');
+            group?.classList.add('is-open');
+          }
+        });
+      });
+      document.addEventListener('click', event => {
+        if (!menuIsOpen) return;
+        const target = event.target;
+        if (headerMenu && target instanceof Node && !headerMenu.contains(target)) {
+          closeMenu();
+        }
+      });
       document.addEventListener('keydown', event => {
-        if (event.key === 'Escape' && searchPanel && !searchPanel.hidden) {
-          toggleSearchPanel(false);
+        if (event.key === 'Escape') {
+          let handled = false;
+          if (searchPanel && !searchPanel.hidden) {
+            toggleSearchPanel(false);
+            handled = true;
+          }
+          if (menuIsOpen) {
+            closeMenu();
+            if (menuToggle && menuToggle.offsetParent !== null) {
+              menuToggle.focus();
+            }
+            handled = true;
+          }
+          if (handled) {
+            event.preventDefault();
+          }
+        } else if (event.key === 'Tab' && menuIsOpen && menuPanel && !menuPanel.hidden) {
+          const focusable = menuLinks ? Array.from(menuLinks) : [];
+          if (!focusable.length) return;
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
         }
       });
       window.addEventListener('resize', () => {
-        if (window.innerWidth >= 768 && searchPanel && !searchPanel.hidden) {
+        if (isDesktopSearchVisible() && searchPanel && !searchPanel.hidden) {
           toggleSearchPanel(false);
+        }
+        if (window.innerWidth > MENU_BREAKPOINT && menuIsOpen) {
+          closeMenu();
+        }
+      });
+      window.addEventListener('orientationchange', () => {
+        if (menuIsOpen) {
+          closeMenu();
         }
       });
       if (supportOverlay) {

@@ -49,6 +49,169 @@
         background: linear-gradient(135deg, #E0B0FF 0%, #B678F5 100%);
         color: #1f0e3d;
       }
+      .nav-icon-cluster {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .nav-icon-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+        transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+      }
+      .nav-icon-link:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.25);
+      }
+      .nav-icon-link svg {
+        width: 1rem;
+        height: 1rem;
+      }
+
+      body.support-open {
+        overflow: hidden;
+      }
+      .support-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 90;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        background: rgba(15, 23, 42, 0.55);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 220ms ease;
+      }
+      .support-overlay.is-open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .support-card {
+        position: relative;
+        width: min(420px, 100%);
+        border-radius: 1.75rem;
+        overflow: hidden;
+        background: linear-gradient(135deg, #E0B0FF 0%, #B678F5 100%);
+        box-shadow: 0 30px 60px rgba(79, 70, 229, 0.3);
+        color: #ffffff;
+      }
+      .support-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(17, 24, 39, 0.25);
+        pointer-events: none;
+      }
+      .support-card-content {
+        position: relative;
+        padding: 2.5rem 2.5rem 2.75rem;
+        display: grid;
+        gap: 1.75rem;
+      }
+      .support-close-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        border: none;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 180ms ease, transform 180ms ease;
+        z-index: 1;
+      }
+      .support-close-btn:hover {
+        background: rgba(255, 255, 255, 0.22);
+        transform: translateY(-1px);
+      }
+      .support-eyebrow {
+        font-size: 0.7rem;
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+        font-weight: 600;
+        opacity: 0.85;
+        text-align: center;
+      }
+      .support-title {
+        font-family: 'Lobster', cursive;
+        font-size: clamp(2rem, 5vw, 2.75rem);
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        margin: 0;
+        text-align: center;
+      }
+      .support-subtitle {
+        margin: 0;
+        text-align: center;
+        font-size: 0.95rem;
+        opacity: 0.85;
+        line-height: 1.6;
+      }
+      .support-form {
+        display: grid;
+        gap: 1rem;
+      }
+      .support-field {
+        display: grid;
+        gap: 0.35rem;
+        font-size: 0.8rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .support-input,
+      textarea.support-input {
+        width: 100%;
+        border-radius: 0.9rem;
+        border: none;
+        padding: 0.85rem 1rem;
+        background: rgba(255, 255, 255, 0.95);
+        color: #1f0f24;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24);
+        font: inherit;
+      }
+      .support-input:focus,
+      textarea.support-input:focus {
+        outline: 2px solid rgba(153, 40, 177, 0.65);
+        outline-offset: 2px;
+      }
+      .support-footer {
+        text-align: center;
+        font-size: 0.85rem;
+        opacity: 0.9;
+      }
+      .support-footer a {
+        text-decoration: underline;
+      }
+      .support-submit {
+        border: none;
+        border-radius: 999px;
+        padding: 0.95rem 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.22em;
+        font-weight: 600;
+        background: linear-gradient(135deg, #ffd166 0%, #f97316 100%);
+        color: #1f0f24;
+        transition: transform 180ms ease, box-shadow 180ms ease;
+        font: inherit;
+      }
+      .support-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 32px rgba(249, 115, 22, 0.28);
+      }
       .page-hero {
         position: relative;
         padding: clamp(4.5rem, 11vw, 7rem) 0 clamp(3rem, 8vw, 5rem);
@@ -256,11 +419,27 @@
           </div>
           <nav class="flex items-center gap-2 flex-wrap">
             <a class="nav-link" href="index.html">Home</a>
-            <a class="nav-link" href="new-arrivals.html">New Arrivals</a>
             <span class="nav-link is-active">Tumblers</span>
-            <a class="nav-link" href="favorites.html">Favorites</a>
-            <a class="nav-link" href="checkout.html">Checkout</a>
-            <a class="nav-link" href="mailto:lovettsdesignsandcrafts@gmail.com">Contact</a>
+            <a class="nav-link" href="cups.html">Cups &amp; Mugs</a>
+            <a class="nav-link" href="accessories.html">Accessories</a>
+            <a class="nav-link" href="attire.html">Attire</a>
+            <div class="nav-icon-cluster">
+              <a class="nav-icon-link" href="favorites.html" aria-label="Favorites">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                  <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                </svg>
+              </a>
+              <a class="nav-icon-link" href="checkout.html" aria-label="Checkout">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+                </svg>
+              </a>
+              <a class="nav-icon-link" href="#" aria-label="Contact" data-support-open>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M2.25 5.25A2.25 2.25 0 0 1 4.5 3h15a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 19.5 21h-15A2.25 2.25 0 0 1 2.25 18.75zm2.039-.75 7.211 5.74 7.211-5.74zM19.5 8.384l-6.401 5.096a1.5 1.5 0 0 1-1.198.27 1.5 1.5 0 0 1-.64-.27L4.86 8.384V18h14.64z" />
+                </svg>
+              </a>
+            </div>
           </nav>
         </div>
       </header>
@@ -578,11 +757,102 @@
           <span>Built in Atlanta, GA</span>
         </div>
       </footer>
+
+      <div class="support-overlay" data-support-overlay aria-hidden="true">
+      <div class="support-card" data-support-card role="dialog" aria-modal="true" aria-labelledby="supportTitle">
+        <button type="button" class="support-close-btn" data-support-close aria-label="Close support">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        <div class="support-card-content">
+          <p class="support-eyebrow">Need a hand?</p>
+          <h2 class="support-title" id="supportTitle">Lovett's Support</h2>
+          <p class="support-subtitle">Send us a message and our customer care team will reply within 1 business day.</p>
+          <form class="support-form" data-support-form>
+            <label class="support-field" for="supportName">
+              <span>Your name</span>
+              <input type="text" id="supportName" class="support-input" placeholder="Your name" autocomplete="name" required />
+            </label>
+            <label class="support-field" for="supportEmail">
+              <span>Email</span>
+              <input type="email" id="supportEmail" class="support-input" placeholder="you@example.com" autocomplete="email" required />
+            </label>
+            <label class="support-field" for="supportOrder">
+              <span>Order # (optional)</span>
+              <input type="text" id="supportOrder" class="support-input" placeholder="#LDC12345" />
+            </label>
+            <label class="support-field" for="supportTopic">
+              <span>Topic</span>
+              <select id="supportTopic" class="support-input" required>
+                <option value="">Choose one</option>
+                <option value="order">Order status</option>
+                <option value="custom">Custom request</option>
+                <option value="bulk">Bulk inquiry</option>
+                <option value="other">Something else</option>
+              </select>
+            </label>
+            <label class="support-field" for="supportMessage">
+              <span>Message</span>
+              <textarea id="supportMessage" class="support-input" rows="4" placeholder="How can we help?" required></textarea>
+            </label>
+            <button type="submit" class="support-submit" data-support-submit>Send Message</button>
+          </form>
+          <div class="support-footer">
+            Prefer email? <a href="mailto:lovettsdesignsandcrafts@gmail.com">lovettsdesignsandcrafts@gmail.com</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
     </div>
 
     <script>
-      const y = document.getElementById('year');
-      if (y) y.textContent = new Date().getFullYear();
+      const footerYear = document.getElementById('year');
+      if (footerYear) footerYear.textContent = new Date().getFullYear();
+
+      const supportOverlay = document.querySelector('[data-support-overlay]');
+      if (supportOverlay) {
+        const supportOpeners = document.querySelectorAll('[data-support-open]');
+        const supportClosers = supportOverlay.querySelectorAll('[data-support-close]');
+        const supportForm = supportOverlay.querySelector('[data-support-form]');
+        const supportName = document.getElementById('supportName');
+        const setSupportState = isOpen => {
+          supportOverlay.classList.toggle('is-open', isOpen);
+          supportOverlay.setAttribute('aria-hidden', String(!isOpen));
+          document.body.classList.toggle('support-open', isOpen);
+          if (isOpen && supportName) {
+            requestAnimationFrame(() => supportName.focus());
+          }
+        };
+        const closeSupport = () => setSupportState(false);
+        const openSupport = () => setSupportState(true);
+        supportOpeners.forEach(trigger => {
+          trigger.addEventListener('click', event => {
+            event.preventDefault();
+            openSupport();
+          });
+        });
+        supportClosers.forEach(trigger => {
+          trigger.addEventListener('click', event => {
+            event.preventDefault();
+            closeSupport();
+          });
+        });
+        supportOverlay.addEventListener('click', event => {
+          if (event.target === supportOverlay) {
+            closeSupport();
+          }
+        });
+        document.addEventListener('keydown', event => {
+          if (event.key === 'Escape' && supportOverlay.classList.contains('is-open')) {
+            closeSupport();
+          }
+        });
+        supportForm?.addEventListener('submit', event => {
+          event.preventDefault();
+          closeSupport();
+        });
+      }
     </script>
+
   </body>
 </html>

@@ -117,3 +117,34 @@ html { scroll-behavior: smooth; }
 /* Header primary nav hover color: white */
 .mauve-mode .primary-nav a.tile-title:hover { color: #ffffff !important; text-shadow: none !important; }
 .mauve-mode #mobileMenu a:hover { color: #ffffff !important; }
+
+/* Overrides for product color swatches */
+.swatch {
+  border: none !important;
+  box-shadow: none !important;
+  --tw-ring-color: transparent !important;
+  --tw-ring-offset-width: 0 !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+}
+
+/* Hover effect for rating stars */
+.rating .star { cursor: pointer; }
+.rating .star:hover { color: #FFD700 !important; }
+
+/* Ensure no underlines on popular category tiles */
+a.tile-mauve,
+a.tile-mauve:hover,
+a.tile-mauve:focus {
+  text-decoration: none !important;
+}
+.tile-mauve .font-medium {
+  text-decoration: none !important;
+  color: #fff !important;
+}
+
+/* Force bright white text in Section 6 */
+#section-6,
+#section-6 * {
+  color: #ffffff !important;
+}
