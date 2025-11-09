@@ -1,0 +1,48 @@
+{
+  "updatedAt": "2024-11-05T00:00:00.000Z",
+  "profile": "https://instagram.com/lovetts._ldc",
+  "data": [
+    {
+      "id": "placeholder-1",
+      "permalink": "https://instagram.com/lovetts._ldc",
+      "caption": "Follow @lovetts._ldc for the latest drops and behind the scenes.",
+      "imageUrl": "assets/instagram/1.jpg",
+      "mediaType": "IMAGE"
+    },
+    {
+      "id": "placeholder-2",
+      "permalink": "https://instagram.com/lovetts._ldc",
+      "caption": "Tap to see more handcrafted tumblers and accessories.",
+      "imageUrl": "assets/instagram/2.jpg",
+      "mediaType": "IMAGE"
+    },
+    {
+      "id": "placeholder-3",
+      "permalink": "https://instagram.com/lovetts._ldc",
+      "caption": "Pastel palettes and sparkle moments crafted with love.",
+      "imageUrl": "assets/instagram/3.jpg",
+      "mediaType": "IMAGE"
+    },
+    {
+      "id": "placeholder-4",
+      "permalink": "https://instagram.com/lovetts._ldc",
+      "caption": "Custom lids and straw sets to brighten your day.",
+      "imageUrl": "assets/instagram/4.jpg",
+      "mediaType": "IMAGE"
+    },
+    {
+      "id": "placeholder-5",
+      "permalink": "https://instagram.com/lovetts._ldc",
+      "caption": "Limited runs sell fast—set your reminders!",
+      "imageUrl": "assets/instagram/5.jpg",
+      "mediaType": "IMAGE"
+    },
+    {
+      "id": "placeholder-6",
+      "permalink": "https://instagram.com/lovetts._ldc",
+      "caption": "Thanks for supporting Lovett's Designs and Crafts.",
+      "imageUrl": "assets/instagram/6.jpg",
+      "mediaType": "IMAGE"
+    }
+  ]
+}

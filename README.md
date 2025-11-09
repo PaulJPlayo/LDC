@@ -13,6 +13,13 @@ Local development
 - Build once: `npm run build` (outputs `styles.css` in project root)
 - Watch during edits: `npm run dev`
 
+Instagram feed automation
+- Create an Instagram Basic Display app and generate a long-lived user token.
+- Run `INSTAGRAM_ACCESS_TOKEN=your-token npm run instagram:fetch` to refresh `assets/instagram-feed.json`.
+- Deployments should refresh this feed regularly (e.g., via cron or CI) so the home page stays in sync.
+- The site falls back to the bundled placeholder images if the JSON fetch fails.
+- Requires Node 18+ locally so the fetch script can call the Instagram API.
+
 Cloudflare Pages
 - Create a new Pages project pointing to this repo
 - Framework preset: `None`
