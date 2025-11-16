@@ -86,6 +86,7 @@
         overflow: hidden;
         box-shadow: 0 30px 70px rgba(79, 70, 229, 0.18);
         border: 1px solid rgba(153, 40, 177, 0.18);
+        background: #ffffff;
       }
       .hero-top {
         padding: clamp(2.5rem, 5vw, 3.5rem) clamp(2.25rem, 6vw, 4.5rem);
@@ -124,12 +125,23 @@
         border: 1px solid rgba(153, 40, 177, 0.18);
         overflow: hidden;
         box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+        min-height: 260px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at top, rgba(224, 176, 255, 0.35), rgba(255,255,255,0.9));
       }
       .preview-frame img {
         display: block;
         width: 100%;
         height: 100%;
         object-fit: cover;
+      }
+      .preview-placeholder {
+        font-size: 0.95rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: rgba(31, 15, 36, 0.6);
       }
       .section-eyebrow {
         margin-top: clamp(2.5rem, 7vw, 3.5rem);
@@ -153,6 +165,280 @@
         border-radius: 999px;
         border: 3px solid #fff;
         box-shadow: 0 18px 24px rgba(81, 56, 105, 0.18);
+      }
+      .design-layout {
+        display: grid;
+        gap: 1.75rem;
+        align-items: center;
+      }
+      @media (min-width: 768px) {
+        .design-layout {
+          grid-template-columns: minmax(0, 220px) minmax(0, 1fr) minmax(0, 220px);
+        }
+      }
+      .design-palette-column {
+        text-align: center;
+      }
+      .design-feature .palette-label {
+        font-size: 0.75rem;
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: #000 !important;
+        margin-bottom: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .design-notes {
+        margin-top: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        color: #000;
+      }
+      .design-notes label {
+        font-size: 0.75rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: #000 !important;
+      }
+      .design-notes textarea {
+        border-radius: 1rem;
+        border: 1px solid rgba(153, 40, 177, 0.25);
+        padding: 0.9rem 1rem;
+        min-height: 120px;
+        resize: vertical;
+        font-size: 0.9rem;
+        font-family: inherit;
+        background: rgba(248, 245, 255, 0.65);
+        color: #000 !important;
+        opacity: 1 !important;
+      }
+      .design-notes textarea::placeholder {
+        color: #000 !important;
+        opacity: 1 !important;
+      }
+      .design-notes textarea:focus {
+        outline: 2px solid rgba(153, 40, 177, 0.35);
+        outline-offset: 2px;
+      }
+      .align-bottom {
+        margin-top: 0;
+      }
+      .design-video-frame {
+        width: 100%;
+        min-height: 240px;
+        background: rgba(248, 245, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .design-video-frame video {
+        width: 100%;
+        height: 100%;
+        border-radius: 1rem;
+        object-fit: cover;
+        background: #000;
+      }
+      .design-media-grid {
+        margin-top: 1.5rem;
+        display: grid;
+        gap: 1.25rem;
+      }
+      @media (min-width: 768px) {
+        .design-media-grid {
+          grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr) minmax(0, 0.9fr);
+          align-items: start;
+        }
+      }
+      .design-media-grid .wrap-menu {
+        margin: 0;
+      }
+      .design-palette {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0.65rem;
+        justify-items: center;
+      }
+      .design-palette .swatch {
+        width: 44px;
+        height: 44px;
+        border-width: 2px;
+      }
+      .design-card {
+        border-radius: 1.75rem;
+        border: 1px solid rgba(153, 40, 177, 0.15);
+        background: #ffffff;
+        box-shadow: 0 25px 45px rgba(112, 26, 117, 0.12);
+        max-width: 20rem;
+        margin: 0 auto;
+        width: 100%;
+        overflow: hidden;
+      }
+      .design-card-header {
+        padding: 1.25rem 1.5rem;
+        text-align: center;
+        background: linear-gradient(135deg, #E0B0FF 0%, #D8B4FE 100%);
+        color: #fff;
+      }
+      .design-card-header * {
+        color: #fff !important;
+      }
+      .design-card-header h2 {
+        margin: 0.25rem 0 0;
+        font-size: 1.8rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #fff;
+      }
+      .design-card-header .design-heading-link {
+        color: inherit;
+        text-decoration: none;
+        transition: transform 180ms ease, color 180ms ease;
+        display: inline-block;
+      }
+      .design-card-header .design-heading-link:hover {
+        transform: scale(1.04);
+        color: #fff;
+      }
+      .design-card--full {
+        max-width: min(1100px, 100%);
+        margin: 0 auto;
+      }
+      .design-card-body {
+        padding: 1.75rem;
+        background: #ffffff;
+      }
+      .design-palette-grid {
+        display: grid;
+        gap: 1rem;
+      }
+      @media (min-width: 768px) {
+        .design-palette-grid {
+          grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr) minmax(0, 0.9fr);
+          gap: 1.5rem;
+        }
+      }
+      .design-center {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+      }
+      .wrap-menu {
+        margin-top: 1.25rem;
+        border: 1px solid rgba(153, 40, 177, 0.2);
+        border-radius: 1rem;
+        overflow: hidden;
+        background: rgba(248, 245, 255, 0.8);
+        width: 100%;
+      }
+      .wrap-menu summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 0.9rem 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #000 !important;
+        background: rgba(248, 245, 255, 0.95);
+      }
+      .wrap-menu[open] summary {
+        background: rgba(153, 40, 177, 0.08);
+      }
+      .wrap-menu summary::-webkit-details-marker {
+        display: none;
+      }
+      .wrap-menu summary svg {
+        width: 1rem;
+        height: 1rem;
+        transition: transform 200ms ease;
+        color: #000 !important;
+        stroke: currentColor;
+      }
+      .wrap-menu[open] summary svg {
+        transform: rotate(180deg);
+      }
+      .wrap-menu ul {
+        margin: 0;
+        padding: 0.25rem 0 0.75rem;
+        list-style: none;
+        display: grid;
+        gap: 0.35rem;
+      }
+      .wrap-menu li {
+        padding: 0.4rem 1rem;
+        font-size: 0.85rem;
+        color: #3f2a56;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .wrap-menu li span {
+        font-weight: 600;
+      }
+      .palette-menu {
+        width: 100%;
+        margin-top: 0;
+      }
+      .palette-menu summary {
+        display: flex;
+        color: #000 !important;
+        opacity: 1 !important;
+      }
+      .palette-menu summary span {
+        color: #000 !important;
+        opacity: 1 !important;
+      }
+      .palette-menu summary::-webkit-details-marker {
+        display: none;
+      }
+      .palette-content {
+        display: block;
+        padding: 0;
+        background: rgba(248, 245, 255, 0.9);
+      }
+      @media (max-width: 767px) {
+        .palette-content {
+          display: none;
+          padding: 0 1rem 1rem;
+        }
+        .palette-menu[open] .palette-content {
+          display: block;
+        }
+        .palette-label--desktop {
+          display: none;
+        }
+      }
+      @media (min-width: 768px) {
+        .palette-content {
+          display: block !important;
+          padding: 0;
+          background: transparent;
+        }
+      }
+      .design-card-frame {
+        border-radius: 1.5rem;
+        aspect-ratio: 4/5;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+        border: 1px solid rgba(153, 40, 177, 0.18);
+        background: rgba(248, 245, 255, 0.85);
+        padding: 1rem;
+        min-height: 320px;
+      }
+      .design-card-frame img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
       }
       .customization-flow {
         margin-top: clamp(3rem, 8vw, 4.5rem);
@@ -270,52 +556,188 @@
                 </div>
               </div>
             </div>
-            <div class="hero-bottom">
-              <div class="preview-frame">
-                <img src="assets/glass-tumbler.jpeg" alt="Designed palm tree tumbler" />
+          </div>
+        </section>
+
+        <section class="design-feature">
+          <div class="container">
+            <div class="design-card design-card--full">
+              <div class="design-card-header">
+                <p class="text-xs font-semibold uppercase tracking-[0.35em]" style="color:#ffffff;opacity:1;">Design Studio</p>
+                <h2>
+                  <a href="customization.html" class="design-heading-link" aria-label="Visit the design customization page">Design</a>
+                </h2>
+                <p class="mt-2 text-sm" style="color:#ffffff;opacity:1;">Bring your Lovett's concepts to life.</p>
+              </div>
+              <div class="design-card-body">
+                <div class="design-palette-grid">
+                  <div class="design-palette-column">
+                    <details class="wrap-menu palette-menu" open style="margin-top:0.75rem;">
+                      <summary style="color:#000;">
+                        <span style="color:#000;">Colors</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
+                      </summary>
+                      <div class="palette-content">
+                        <p class="palette-label palette-label--desktop" style="color:#000;">Colors</p>
+                        <div class="design-palette">
+                        <span class="swatch" style="background: linear-gradient(135deg,#f8ddff 0%,#d08af5 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fde1ff 0%,#ff9aed 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fff7d6 0%,#f6ce6c 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#e0f7ff 0%,#8ac9f9 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#d9d9d9 0%,#707070 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#ffe4f2 0%,#ff9bbf 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f0ffdd 0%,#b6f542 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f5f1ff 0%,#c5b0ff 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#ffeede 0%,#ffb780 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f4fffd 0%,#9ce8d0 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fff0f0 0%,#ff7676 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#eef2ff 0%,#4f46e5 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fef3f7 0%,#f0abfc 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fff4e6 0%,#ff9f68 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f0f9ff 0%,#38bdf8 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f5fff0 0%,#86efac 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fef2ff 0%,#d946ef 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f1f5ff 0%,#3b82f6 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fff7f0 0%,#fb923c 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f0fdf4 0%,#22c55e 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fdf2f8 0%,#f472b6 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#eef2ff 0%,#6366f1 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fefce8 0%,#facc15 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f0fdfa 0%,#14b8a6 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fff5f5 0%,#f87171 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fdf4ff 0%,#a855f7 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f1fff5 0%,#4ade80 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f2f4ff 0%,#818cf8 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fff7ed 0%,#fdba74 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f4f1ff 0%,#a78bfa 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fde68a 0%,#f97316 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#cffafe 0%,#0ea5e9 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fecdd3 0%,#f43f5e 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#ddd6fe 0%,#7c3aed 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#dcfce7 0%,#16a34a 100%);"></span>
+                          </div>
+                      </div>
+                    </details>
+                  </div>
+                  <div class="design-center">
+                    <div class="design-card-frame">
+                      <img id="designPagePreview" src="assets/glass-tumbler.jpeg" alt="Designed palm tree tumbler" />
+                    </div>
+                  </div>
+                  <div class="design-palette-column">
+                    <details class="wrap-menu palette-menu" open style="margin-top:0.75rem;">
+                      <summary style="color:#000;">
+                        <span style="color:#000;">Accessories</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
+                      </summary>
+                      <div class="palette-content">
+                        <p class="palette-label palette-label--desktop" style="color:#000;">Accessories</p>
+                        <div class="design-palette">
+                        <span class="swatch" style="background: linear-gradient(135deg,#f8ddff 0%,#d08af5 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fde1ff 0%,#ff9aed 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fff7d6 0%,#f6ce6c 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#e0f7ff 0%,#8ac9f9 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#d9d9d9 0%,#707070 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#ffe4f2 0%,#ff9bbf 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f0ffdd 0%,#b6f542 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f5f1ff 0%,#c5b0ff 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#ffeede 0%,#ffb780 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f4fffd 0%,#9ce8d0 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fff0f0 0%,#ff7676 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#eef2ff 0%,#4f46e5 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fef3f7 0%,#f0abfc 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fff4e6 0%,#ff9f68 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f0f9ff 0%,#38bdf8 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f5fff0 0%,#86efac 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fef2ff 0%,#d946ef 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f1f5ff 0%,#3b82f6 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fff7f0 0%,#fb923c 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f0fdf4 0%,#22c55e 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fdf2f8 0%,#f472b6 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#eef2ff 0%,#6366f1 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fefce8 0%,#facc15 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f0fdfa 0%,#14b8a6 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fff5f5 0%,#f87171 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fdf4ff 0%,#a855f7 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f1fff5 0%,#4ade80 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f2f4ff 0%,#818cf8 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fff7ed 0%,#fdba74 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#f4f1ff 0%,#a78bfa 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fde68a 0%,#f97316 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#cffafe 0%,#0ea5e9 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#fecdd3 0%,#f43f5e 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#ddd6fe 0%,#7c3aed 100%);"></span>
+                        <span class="swatch" style="background: linear-gradient(135deg,#dcfce7 0%,#16a34a 100%);"></span>
+                          </div>
+                      </div>
+                    </details>
+                  </div>
+                </div>
+                <div class="design-media-grid">
+                  <div>
+                    <details class="wrap-menu" style="margin-top:0.75rem;">
+                      <summary style="color:#000;">
+                        Explore wrap templates
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
+                      </summary>
+                      <ul>
+                        <li><span>Seasonal / Holiday</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                        <li><span>Women</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                        <li><span>Special Characters &amp; Designers</span><small>email for custom details</small></li>
+                        <li><span>Drinks</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                        <li><span>Boys &amp; Girls</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                        <li><span>Supporting Causes</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                        <li><span>Men</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                        <li><span>Careers &amp; Hobbies</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                        <li><span>Sports</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                        <li><span>Religion</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                      </ul>
+                    </details>
+                  </div>
+                  <div>
+                    <div class="design-card-frame design-video-frame">
+                      <video id="designWrapVideoCustomization" controls muted playsinline poster="assets/glass-tumbler.jpeg">
+                        <source src="assets/instagramtile11.mp4" type="video/mp4" />
+                      </video>
+                    </div>
+                    <div class="design-notes">
+                      <label for="design-notes-customization" style="color:#000;">Design Notes</label>
+                      <textarea id="design-notes-customization" name="design-notes" placeholder="Share your color combos, engraving details, or special instructions..." style="color:#000 !important;"></textarea>
+                    </div>
+                  </div>
+                  <div></div>
+                </div>
+                <div class="cta-wrap">
+                  <a href="mailto:info@lovettsdesigns.com?subject=Design%20Request" class="cta-btn">
+                    Submit Your Design
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-        </section>
-
-        <section>
-          <div class="container">
-            <p class="section-eyebrow">Signature Finishes</p>
-            <div class="swatch-grid">
-              <span class="swatch" style="background: linear-gradient(135deg,#f8ddff 0%,#d08af5 100%);"></span>
-              <span class="swatch" style="background: linear-gradient(135deg,#fde1ff 0%,#ff9aed 100%);"></span>
-              <span class="swatch" style="background: linear-gradient(135deg,#fff7d6 0%,#f6ce6c 100%);"></span>
-              <span class="swatch" style="background: linear-gradient(135deg,#e0f7ff 0%,#8ac9f9 100%);"></span>
-              <span class="swatch" style="background: linear-gradient(135deg,#d9d9d9 0%,#707070 100%);"></span>
-              <span class="swatch" style="background: linear-gradient(135deg,#ffe4f2 0%,#ff9bbf 100%);"></span>
-              <span class="swatch" style="background: linear-gradient(135deg,#f0ffdd 0%,#b6f542 100%);"></span>
-              <span class="swatch" style="background: linear-gradient(135deg,#f5f1ff 0%,#c5b0ff 100%);"></span>
-            </div>
-
-            <p class="section-eyebrow">Accessory Accents</p>
-            <div class="swatch-grid">
-              <span class="swatch" style="background: linear-gradient(135deg,#fef3c7 0%,#f97316 100%);"></span>
-              <span class="swatch" style="background: linear-gradient(135deg,#edf2f7 0%,#64748b 100%);"></span>
-              <span class="swatch" style="background: linear-gradient(135deg,#ecfeff 0%,#0ea5e9 100%);"></span>
-              <span class="swatch" style="background: linear-gradient(135deg,#f4fce3 0%,#4ade80 100%);"></span>
-              <span class="swatch" style="background: linear-gradient(135deg,#fdf2f8 0%,#be185d 100%);"></span>
-              <span class="swatch" style="background: linear-gradient(135deg,#eef2ff 0%,#312e81 100%);"></span>
-              <span class="swatch" style="background: linear-gradient(135deg,#fff7ec 0%,#ea580c 100%);"></span>
-              <span class="swatch" style="background: linear-gradient(135deg,#f8fafc 0%,#94a3b8 100%);"></span>
-            </div>
-
-            <div class="cta-wrap">
-              <a href="mailto:info@lovettsdesigns.com?subject=Design%20Request" class="cta-btn">
-                Submit Your Design
-              </a>
-            </div>
-          </div>
-        </section>
-      </main>
+        </section>      </main>
 
       <footer>
         Lovett's Designs &amp; Crafts · Design creations made with love
       </footer>
     </div>
+    <script>
+      (() => {
+        const DESIGN_SELECTION_KEY = 'ldcDesignSelection';
+        const designPreview = document.getElementById('designPagePreview');
+        if (!designPreview) return;
+        try {
+          const storedValue = localStorage.getItem(DESIGN_SELECTION_KEY);
+          if (!storedValue) return;
+          const parsed = JSON.parse(storedValue);
+          if (parsed && typeof parsed === 'object' && parsed.src) {
+            designPreview.setAttribute('src', parsed.src);
+            designPreview.setAttribute('alt', parsed.alt || 'Custom design preview');
+          }
+        } catch (error) {
+          console.warn('Unable to load saved design selection', error);
+        }
+      })();
+    </script>
   </body>
 </html>
