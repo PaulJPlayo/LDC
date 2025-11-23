@@ -80,7 +80,7 @@
         padding: clamp(4rem, 9vw, 6rem) 0 clamp(3rem, 7vw, 5rem);
       }
       .hero-card {
-        max-width: 880px;
+        max-width: 1040px;
         margin: 0 auto;
         border-radius: 2.75rem;
         overflow: hidden;
@@ -191,12 +191,155 @@
         justify-content: center;
         text-align: center;
       }
-      .design-notes {
+      .design-notes-panel {
+        margin-top: 1.25rem;
+        border-radius: 1.5rem;
+        border: 1px solid rgba(153, 40, 177, 0.18);
+        background: rgba(248, 245, 255, 0.9);
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+      }
+      .design-notes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+      }
+      .design-notes-grid > div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .design-notes-grid .wrap-field {
+        grid-column: 1 / -1;
+        align-items: center;
+      }
+      .design-notes-grid .wrap-field .design-selection-target--wrap {
+        margin: 0 auto;
+      }
+      .design-notes-grid > div .design-selection-target {
+        width: 100%;
+      }
+      .design-selection-target {
+        border-radius: 1rem;
+        border: 1px dashed rgba(153, 40, 177, 0.35);
+        background: rgba(255, 255, 255, 0.75);
+        padding: 0.75rem;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.85rem;
+        min-height: 64px;
+        transition: border-color 150ms ease, background 150ms ease;
+      }
+      .design-selection-target.has-selection {
+        border-style: solid;
+        border-color: rgba(153, 40, 177, 0.65);
+        background: #ffffff;
+      }
+      .design-selection-swatch {
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        background: rgba(241, 245, 249, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: #0f172a;
+      }
+      .design-selection-target.has-selection .design-selection-swatch {
+        border-color: transparent;
+      }
+      .design-selection-target--wrap {
+        width: 100%;
+        max-width: 520px;
+      }
+      .design-selection-label {
+        font-size: 0.85rem;
+        color: rgba(31, 15, 36, 0.75);
+        letter-spacing: 0.04em;
+        text-align: left;
+      }
+      .design-price-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-top: 1rem;
+      }
+      .design-price-bubble {
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(153, 40, 177, 0.25);
+        padding: 0.35rem 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .design-cta {
+        margin-top: -0.5in;
+      }
+      .design-price-value {
+        font-size: 1.05rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: #15803d;
+      }
+      .design-wrap-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 0.75rem;
+      }
+      .design-selection-clear {
+        border: none;
+        background: transparent;
+        font-size: 1.1rem;
+        color: rgba(15, 15, 36, 0.4);
+        cursor: pointer;
+        padding: 0.25rem 0.4rem;
+        border-radius: 999px;
+        transition: color 150ms ease, background 150ms ease;
+        display: none;
+      }
+      .design-selection-target.has-selection .design-selection-clear {
+        color: rgba(15, 15, 36, 0.75);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .design-selection-clear:hover,
+      .design-selection-clear:focus-visible {
+        color: rgba(153, 40, 177, 0.85);
+        background: rgba(153, 40, 177, 0.1);
+      }
+.design-notes {
         margin-top: 1rem;
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
         color: #000;
+      }
+      .design-notes-field {
+        display: inline-flex;
+        align-items: stretch;
+        justify-content: center;
+        padding: 0.35rem 0.5rem;
+        width: auto;
+        max-width: 100%;
+        margin: 0 auto;
+        border-radius: 0.85rem;
+        border: 1px dashed rgba(153, 40, 177, 0.35);
+        background: rgba(255, 255, 255, 0.75);
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+      .design-notes-field:focus-within {
+        outline: 2px solid rgba(153, 40, 177, 0.35);
+        outline-offset: 2px;
       }
       .design-notes label {
         font-size: 0.75rem;
@@ -205,25 +348,87 @@
         font-weight: 600;
         color: #000 !important;
       }
+      .design-notes-label {
+        align-self: center;
+        text-align: center;
+      }
       .design-notes textarea {
-        border-radius: 1rem;
-        border: 1px solid rgba(153, 40, 177, 0.25);
-        padding: 0.9rem 1rem;
-        min-height: 120px;
-        resize: vertical;
+        display: block;
+        flex: 0 1 auto;
+        width: clamp(280px, 90vw, 820px);
+        max-width: 100%;
+        box-sizing: border-box;
+        border: none;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 1rem 1.25rem;
+        min-height: 140px;
+        height: auto;
+        resize: none;
+        overflow: hidden;
         font-size: 0.9rem;
         font-family: inherit;
-        background: rgba(248, 245, 255, 0.65);
         color: #000 !important;
         opacity: 1 !important;
+        height: 100%;
       }
       .design-notes textarea::placeholder {
         color: #000 !important;
         opacity: 1 !important;
       }
       .design-notes textarea:focus {
-        outline: 2px solid rgba(153, 40, 177, 0.35);
-        outline-offset: 2px;
+        outline: none;
+      }
+      .design-notes-panel {
+        margin-top: 1.25rem;
+        border-radius: 1.5rem;
+        border: 1px solid rgba(153, 40, 177, 0.18);
+        background: rgba(248, 245, 255, 0.9);
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .design-notes-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+      }
+      .design-selection-target {
+        border-radius: 1rem;
+        border: 1px dashed rgba(153, 40, 177, 0.35);
+        background: rgba(255, 255, 255, 0.75);
+        padding: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        min-height: 64px;
+        transition: border-color 150ms ease, background 150ms ease;
+      }
+      .design-selection-target.has-selection {
+        border-style: solid;
+        border-color: rgba(153, 40, 177, 0.65);
+        background: #ffffff;
+      }
+      .design-selection-swatch {
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        background: rgba(241, 245, 249, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: #0f172a;
+      }
+      .design-selection-target.has-selection .design-selection-swatch {
+        border-color: transparent;
+      }
+      .design-selection-label {
+        font-size: 0.85rem;
+        color: rgba(31, 15, 36, 0.75);
+        letter-spacing: 0.04em;
+        text-align: left;
       }
       .align-bottom {
         margin-top: 0;
@@ -231,17 +436,65 @@
       .design-video-frame {
         width: 100%;
         min-height: 240px;
-        background: rgba(248, 245, 255, 0.9);
         display: flex;
         align-items: center;
         justify-content: center;
+        position: relative;
+        overflow: hidden;
       }
       .design-video-frame video {
         width: 100%;
         height: 100%;
-        border-radius: 1rem;
-        object-fit: cover;
+        border-radius: inherit;
+        object-fit: contain;
         background: #000;
+        transition: opacity 150ms ease, visibility 150ms ease;
+      }
+      .design-video-message {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        text-align: center;
+        background: rgba(248, 245, 255, 0.98);
+        color: #1f0f24 !important;
+      }
+      .design-video-message-inner {
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+        max-width: 320px;
+      }
+      .design-video-message-title {
+        font-size: 1.15rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: #1f0f24 !important;
+      }
+      .design-video-message-body {
+        font-size: 0.95rem;
+        line-height: 1.5;
+        color: rgba(31, 15, 36, 0.8) !important;
+      }
+      .design-video-message-cta {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0.6rem 1.4rem;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #E0B0FF 0%, #D8B4FE 100%);
+        color: #1f0f24 !important;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        text-decoration: none !important;
+      }
+      .design-video-message[hidden] {
+        display: none;
       }
       .design-media-grid {
         margin-top: 1.5rem;
@@ -435,6 +688,12 @@
         padding: 1rem;
         min-height: 320px;
       }
+      .design-card-frame.design-video-frame {
+        padding: 0;
+        background: #0c0715;
+        aspect-ratio: 9 / 16;
+        min-height: clamp(360px, 55vw, 520px);
+      }
       .design-card-frame img {
         width: 100%;
         height: 100%;
@@ -476,7 +735,7 @@
         text-transform: uppercase;
       }
       .cta-wrap {
-        margin-top: clamp(3rem, 8vw, 4rem);
+        margin-top: 0.75rem;
         text-align: center;
       }
       .cta-btn {
@@ -510,7 +769,7 @@
       }
     </style>
   </head>
-  <body>
+  <body data-cloudflare-account="https://customer-3ptq6xbmg2sfpv29.cloudflarestream.com">
     <div class="page-shell">
       <header>
         <div class="container header-inner">
@@ -579,42 +838,42 @@
                       </summary>
                       <div class="palette-content">
                         <p class="palette-label palette-label--desktop" style="color:#000;">Colors</p>
-                        <div class="design-palette">
-                        <span class="swatch" style="background: linear-gradient(135deg,#f8ddff 0%,#d08af5 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fde1ff 0%,#ff9aed 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fff7d6 0%,#f6ce6c 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#e0f7ff 0%,#8ac9f9 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#d9d9d9 0%,#707070 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#ffe4f2 0%,#ff9bbf 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f0ffdd 0%,#b6f542 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f5f1ff 0%,#c5b0ff 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#ffeede 0%,#ffb780 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f4fffd 0%,#9ce8d0 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fff0f0 0%,#ff7676 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#eef2ff 0%,#4f46e5 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fef3f7 0%,#f0abfc 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fff4e6 0%,#ff9f68 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f0f9ff 0%,#38bdf8 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f5fff0 0%,#86efac 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fef2ff 0%,#d946ef 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f1f5ff 0%,#3b82f6 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fff7f0 0%,#fb923c 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f0fdf4 0%,#22c55e 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fdf2f8 0%,#f472b6 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#eef2ff 0%,#6366f1 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fefce8 0%,#facc15 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f0fdfa 0%,#14b8a6 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fff5f5 0%,#f87171 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fdf4ff 0%,#a855f7 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f1fff5 0%,#4ade80 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f2f4ff 0%,#818cf8 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fff7ed 0%,#fdba74 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f4f1ff 0%,#a78bfa 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fde68a 0%,#f97316 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#cffafe 0%,#0ea5e9 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fecdd3 0%,#f43f5e 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#ddd6fe 0%,#7c3aed 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#dcfce7 0%,#16a34a 100%);"></span>
+                        <div class="design-palette" data-design-colors-source>
+                            <span class="swatch" aria-label="View white option" style="background: radial-gradient(circle, #ffffff 0%, #f7f7f7 55%, #d9d9d9 100%);"></span>
+                            <span class="swatch" aria-label="View glow in the dark option" style="background: radial-gradient(circle, #ccff88 0%, #8dff3a 65%, #48ff5b 100%);"></span>
+                            <span class="swatch" aria-label="Glass finish swatch" style="background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 60%), linear-gradient(135deg, rgba(226,232,240,0.7) 0%, rgba(148,163,184,0.4) 100%);"></span>
+                            <span class="swatch" aria-label="White swatch" style="background: linear-gradient(145deg,#ffffff 0%,#f5f5f5 40%,#e2e8f0 100%);"></span>
+                            <span class="swatch" aria-label="Black swatch" style="background: #1f2937;"></span>
+                            <span class="swatch" aria-label="Hot pink swatch" style="background: radial-gradient(circle at 30% 30%, #ffd1e8 0%, #ff4ba5 45%, #d9048e 100%);"></span>
+                            <span class="swatch" aria-label="Two-tone pink swatch" style="background: linear-gradient(135deg, #ff6fb7 0%, #ffa8df 50%, #ffd1f1 100%);"></span>
+                            <span class="swatch" aria-label="Pumpkin orange swatch" style="background: radial-gradient(circle at 30% 30%, #ffd7a3 0%, #ff8b0f 50%, #b45309 100%);"></span>
+                            <span class="swatch" aria-label="Chocolate brown swatch" style="background: radial-gradient(circle at 30% 30%, #fbd5a8 0%, #8b4513 55%, #4a2505 100%);"></span>
+                            <span class="swatch" aria-label="Blue swatch" style="background: #2563eb;"></span>
+                            <span class="swatch" aria-label="Purple swatch" style="background: #8b5cf6;"></span>
+                            <span class="swatch" aria-label="Teal swatch" style="background: #0d9488;"></span>
+                            <span class="swatch" aria-label="Pink swatch" style="background: #ec4899;"></span>
+                            <span class="swatch" aria-label="White swatch" style="background: #ffffff;"></span>
+                            <span class="swatch" aria-label="Hot pink swatch" style="background: #db2777;"></span>
+                            <span class="swatch" aria-label="Black swatch" style="background: #000000;"></span>
+                            <span class="swatch" aria-label="Navy blue swatch" style="background: #1e3a8a;"></span>
+                            <span class="swatch" aria-label="Red swatch" style="background: #ef4444;"></span>
+                            <span class="swatch" aria-label="Orange swatch" style="background: #f97316;"></span>
+                            <span class="swatch" aria-label="Yellow swatch" style="background: #facc15;"></span>
+                            <span class="swatch" style="background: #ff78c4;"></span>
+                            <span class="swatch" style="background: #ff1493;"></span>
+                            <span class="swatch" style="background: #ff4d4f;"></span>
+                            <span class="swatch" style="background: #add8e6;"></span>
+                            <span class="swatch" style="background: #a855f7;"></span>
+                            <span class="swatch" style="background: #fb923c;"></span>
+                            <span class="swatch" style="background: #ff6ec7;"></span>
+                            <span class="swatch" aria-label="Glass swatch" style="background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 60%), linear-gradient(135deg, rgba(238,242,255,0.65) 0%, rgba(148,163,184,0.35) 100%);"></span>
+                            <span class="swatch" aria-label="Green swatch" style="background: #22c55e;"></span>
+                            <span class="swatch" aria-label="Forest green swatch" style="background: #14532d;"></span>
+                            <span class="swatch" aria-label="Clear swatch" style="background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.95) 0%, rgba(148,163,184,0.3) 65%);"></span>
+                            <span class="swatch" aria-label="Light pink swatch" style="background: #f9a8d4;"></span>
+                            <span class="swatch" aria-label="Royal blue swatch" style="background: #1d4ed8;"></span>
+                            <span class="swatch" aria-label="Black swatch" style="background: #111827;"></span>
+                        
                           </div>
                       </div>
                     </details>
@@ -622,6 +881,48 @@
                   <div class="design-center">
                     <div class="design-card-frame">
                       <img id="designPagePreview" src="assets/glass-tumbler.jpeg" alt="Designed palm tree tumbler" />
+                    </div>
+                    <div class="design-notes-panel">
+                      <div class="design-notes-grid">
+                        <div>
+                          <p class="design-palette-title design-palette-title--center design-palette-title--highlight">Color</p>
+                          <div class="design-selection-target" data-selected-color>
+                            <div class="design-selection-swatch" aria-hidden="true"></div>
+                            <span class="design-selection-label">Select a color option</span>
+                            <button type="button" class="design-selection-clear" data-clear-color aria-label="Clear color selection">&times;</button>
+                          </div>
+                        </div>
+                        <div>
+                          <p class="design-palette-title design-palette-title--center design-palette-title--highlight">Accessory</p>
+                          <div class="design-selection-target" data-selected-accessory>
+                            <div class="design-selection-swatch" aria-hidden="true"></div>
+                            <span class="design-selection-label">Select an accessory</span>
+                            <button type="button" class="design-selection-clear" data-clear-accessory aria-label="Clear accessory selection">&times;</button>
+                          </div>
+                        </div>
+                        <div class="wrap-field">
+                          <p class="design-palette-title design-palette-title--center design-palette-title--highlight">Wrap Template</p>
+                          <div class="design-selection-target design-selection-target--wrap" data-selected-wrap>
+                            <div class="design-selection-swatch" aria-hidden="true"></div>
+                            <span class="design-selection-label">Select a wrap template</span>
+                            <button type="button" class="design-selection-clear" data-clear-wrap aria-label="Clear wrap selection">&times;</button>
+                          </div>
+                        </div>
+                      </div>
+                      <label class="design-notes-label" for="design-notes-customization" style="color:#000;">Customer Notes</label>
+                      <div class="design-notes-field">
+                        <textarea id="design-notes-customization" name="design-notes" placeholder="Share favorite color combos, accessory ideas, or special instructions..." style="color:#000 !important;"></textarea>
+                      </div>
+                      <div class="design-price-wrapper">
+                        <div class="design-price-bubble" data-design-price>
+                          <span class="design-price-value">$0.00</span>
+                        </div>
+                      </div>
+                      <div class="cta-wrap design-cta">
+                        <a href="mailto:info@lovettsdesigns.com?subject=Design%20Request" class="cta-btn">
+                          Submit Your Design
+                        </a>
+                      </div>
                     </div>
                   </div>
                   <div class="design-palette-column">
@@ -632,42 +933,18 @@
                       </summary>
                       <div class="palette-content">
                         <p class="palette-label palette-label--desktop" style="color:#000;">Accessories</p>
-                        <div class="design-palette">
-                        <span class="swatch" style="background: linear-gradient(135deg,#f8ddff 0%,#d08af5 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fde1ff 0%,#ff9aed 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fff7d6 0%,#f6ce6c 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#e0f7ff 0%,#8ac9f9 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#d9d9d9 0%,#707070 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#ffe4f2 0%,#ff9bbf 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f0ffdd 0%,#b6f542 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f5f1ff 0%,#c5b0ff 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#ffeede 0%,#ffb780 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f4fffd 0%,#9ce8d0 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fff0f0 0%,#ff7676 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#eef2ff 0%,#4f46e5 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fef3f7 0%,#f0abfc 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fff4e6 0%,#ff9f68 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f0f9ff 0%,#38bdf8 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f5fff0 0%,#86efac 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fef2ff 0%,#d946ef 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f1f5ff 0%,#3b82f6 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fff7f0 0%,#fb923c 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f0fdf4 0%,#22c55e 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fdf2f8 0%,#f472b6 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#eef2ff 0%,#6366f1 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fefce8 0%,#facc15 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f0fdfa 0%,#14b8a6 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fff5f5 0%,#f87171 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fdf4ff 0%,#a855f7 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f1fff5 0%,#4ade80 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f2f4ff 0%,#818cf8 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fff7ed 0%,#fdba74 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#f4f1ff 0%,#a78bfa 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fde68a 0%,#f97316 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#cffafe 0%,#0ea5e9 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#fecdd3 0%,#f43f5e 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#ddd6fe 0%,#7c3aed 100%);"></span>
-                        <span class="swatch" style="background: linear-gradient(135deg,#dcfce7 0%,#16a34a 100%);"></span>
+                        <div class="design-palette" data-design-accessories-source>
+                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.6rem; line-height:1;" aria-label="Rhinestone accessory accent">💎</span>
+                            <span class="swatch" style="background:#5eead4; display:flex; align-items:center; justify-content:center; color:#0f172a; font-size:0.7rem; line-height:1;" aria-label="Jelly accessory accent">🪼</span>
+                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.7rem; line-height:1;" aria-label="Bow accent">🎀</span>
+                            <span class="swatch" style="background:#f8d7f5; display:flex; align-items:center; justify-content:center; color:#6b21a8; font-size:0.7rem; line-height:1;" aria-label="Swirl accent">🎀</span>
+                            <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cafe accent">☕</span>
+                            <span class="swatch" style="background:#f9a8d4; display:flex; align-items:center; justify-content:center; color:#7f1d1d; font-size:0.7rem; line-height:1;" aria-label="Christmas accent">⛄️</span>
+                            <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cat accent">🐱</span>
+                            <span class="swatch" style="background:#86efac; display:flex; align-items:center; justify-content:center; color:#14532d; font-size:0.7rem; line-height:1;" aria-label="Cactus accent">🌵</span>
+                            <span class="swatch" style="background:#93c5fd; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Beach cup accent">🥤</span>
+                            <span class="swatch" style="background:#fef3c7; display:flex; align-items:center; justify-content:center; color:#92400e; font-size:0.7rem; line-height:1;" aria-label="Football accent">🏈</span>
+                        
                           </div>
                       </div>
                     </details>
@@ -675,42 +952,48 @@
                 </div>
                 <div class="design-media-grid">
                   <div>
-                    <details class="wrap-menu" style="margin-top:0.75rem;">
+                    <details class="wrap-menu" style="margin-top:0.75rem;" open>
                       <summary style="color:#000;">
                         Explore wrap templates
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
                       </summary>
                       <ul>
-                        <li><span>Seasonal / Holiday</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                        <li><span>Women</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                        <li><span>Special Characters &amp; Designers</span><small>email for custom details</small></li>
+                        <li data-wrap-option="seasonal-holiday" data-wrap-default="true" data-video-id="de65351aa0c825fa0c3d3a71ea6db687"><span>Seasonal / Holiday</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                        <li data-wrap-option="women" data-video-id="281dfbc0a9072b1ee25b87ccc9d016b6"><span>Women</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                        <li
+                          data-wrap-option="special-designers"
+                          data-video-prompt-title="Need a Special Character or Designer Wrap?"
+                          data-video-prompt="Share your character or designer theme with us and we will send next steps."
+                          data-video-prompt-cta-label="Request Custom Wrap"
+                          data-video-prompt-cta-href="mailto:info@lovettsdesigns.com?subject=Special%20Character%20Wrap"
+                        >
+                          <span>Special Characters &amp; Designers</span><small>email for custom details</small>
+                        </li>
                         <li><span>Drinks</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                        <li><span>Boys &amp; Girls</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                        <li><span>Supporting Causes</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                        <li><span>Men</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                        <li><span>Careers &amp; Hobbies</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                        <li><span>Sports</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                        <li><span>Religion</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                        <li data-wrap-option="boys-girls" data-video-id="4e6abab155e7cf1cd2810b095e8ac5db"><span>Boys &amp; Girls</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                        <li data-wrap-option="supporting-causes" data-video-id="d9c0f246f9b66240d23e875a2ddcce99"><span>Supporting Causes</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                        <li data-wrap-option="men" data-video-id="3b6e9b07e55512bf69b1f4bcd59489b1"><span>Men</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                        <li data-wrap-option="careers-hobbies" data-video-id="f003a3be6d1efc71dfd7a1051ae931c1"><span>Careers &amp; Hobbies</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                        <li data-wrap-option="sports" data-video-id="b256183a06842b86d88c6cbfb1de0225"><span>Sports</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                        <li data-wrap-option="religion" data-video-id="9bcf826bc7560dfa80644d3f4bc37f00"><span>Religion</span><small>cups &middot; mugs &middot; tumblers</small></li>
                       </ul>
                     </details>
                   </div>
                   <div>
                     <div class="design-card-frame design-video-frame">
-                      <video id="designWrapVideoCustomization" controls muted playsinline poster="assets/glass-tumbler.jpeg">
-                        <source src="assets/instagramtile11.mp4" type="video/mp4" />
+                      <div class="design-video-message" data-design-video-prompt hidden aria-hidden="true">
+                        <div class="design-video-message-inner">
+                          <p class="design-video-message-title" data-prompt-title>Need a Special Character or Designer Wrap?</p>
+                          <p class="design-video-message-body" data-prompt-body>Share your character or designer theme with us and we will send next steps.</p>
+                          <a class="design-video-message-cta" data-prompt-cta href="mailto:info@lovettsdesigns.com?subject=Special%20Character%20Wrap">Request Custom Wrap</a>
+                        </div>
+                      </div>
+                      <video id="designWrapVideoCustomization" data-design-video controls muted playsinline>
+                        <source data-source="hls" src="https://customer-3ptq6xbmg2sfpv29.cloudflarestream.com/de65351aa0c825fa0c3d3a71ea6db687/manifest/video.m3u8" type="application/x-mpegURL" />
                       </video>
-                    </div>
-                    <div class="design-notes">
-                      <label for="design-notes-customization" style="color:#000;">Design Notes</label>
-                      <textarea id="design-notes-customization" name="design-notes" placeholder="Share your color combos, engraving details, or special instructions..." style="color:#000 !important;"></textarea>
                     </div>
                   </div>
                   <div></div>
-                </div>
-                <div class="cta-wrap">
-                  <a href="mailto:info@lovettsdesigns.com?subject=Design%20Request" class="cta-btn">
-                    Submit Your Design
-                  </a>
                 </div>
               </div>
             </div>
@@ -721,6 +1004,7 @@
         Lovett's Designs &amp; Crafts · Design creations made with love
       </footer>
     </div>
+    <script src="scripts/wrap-videos.js"></script>
     <script>
       (() => {
         const DESIGN_SELECTION_KEY = 'ldcDesignSelection';
@@ -737,7 +1021,155 @@
         } catch (error) {
           console.warn('Unable to load saved design selection', error);
         }
+
+        const initDesignSelections = () => {
+          const colorTarget = document.querySelector('[data-selected-color]');
+          const accessoryTarget = document.querySelector('[data-selected-accessory]');
+          const wrapTarget = document.querySelector('[data-selected-wrap]');
+          if (!colorTarget && !accessoryTarget && !wrapTarget) return;
+
+          const applyToTarget = (target, swatch, placeholder) => {
+            if (!target || !swatch) return;
+            const style = swatch.getAttribute('style') || '';
+            const text = (swatch.textContent || '').trim();
+            const label = swatch.getAttribute('aria-label') || placeholder;
+            const swatchNode = target.querySelector('.design-selection-swatch');
+            const labelNode = target.querySelector('.design-selection-label');
+            if (swatchNode) {
+              swatchNode.setAttribute('style', style);
+              swatchNode.textContent = text;
+            }
+            if (labelNode) {
+              labelNode.textContent = label;
+            }
+            target.classList.add('has-selection');
+          };
+
+          const clearTarget = (target, placeholder) => {
+            if (!target) return;
+            const swatchNode = target.querySelector('.design-selection-swatch');
+            const labelNode = target.querySelector('.design-selection-label');
+            if (swatchNode) {
+              swatchNode.removeAttribute('style');
+              swatchNode.textContent = '';
+            }
+            if (labelNode) {
+              labelNode.textContent = placeholder;
+            }
+            target.classList.remove('has-selection');
+          };
+
+          const bindSwatches = (selector, target, placeholder) => {
+            if (!target) return;
+            document.querySelectorAll(selector).forEach(swatch => {
+              if (swatch.dataset.selectionInit) return;
+              swatch.dataset.selectionInit = 'true';
+              swatch.setAttribute('role', 'button');
+              swatch.setAttribute('tabindex', '0');
+              const activate = event => {
+                if (event) event.preventDefault();
+                applyToTarget(target, swatch, placeholder);
+              };
+              swatch.addEventListener('click', activate);
+              swatch.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  activate(event);
+                }
+              });
+            });
+          };
+
+          const applyWrapSelection = label => {
+            if (!wrapTarget) return;
+            const swatchNode = wrapTarget.querySelector('.design-selection-swatch');
+            const labelNode = wrapTarget.querySelector('.design-selection-label');
+            if (swatchNode) {
+              swatchNode.removeAttribute('style');
+              swatchNode.textContent = label ? label.charAt(0).toUpperCase() : '';
+            }
+            if (labelNode) {
+              labelNode.textContent = label || 'Select a wrap template';
+            }
+            if (label) {
+              wrapTarget.classList.add('has-selection');
+            } else {
+              wrapTarget.classList.remove('has-selection');
+            }
+          };
+
+          const bindWrapOptions = () => {
+            if (!wrapTarget) return;
+            document.querySelectorAll('[data-wrap-option]').forEach(option => {
+              if (option.dataset.wrapSelectionInit) return;
+              option.dataset.wrapSelectionInit = 'true';
+              const getLabel = () => {
+                const span = option.querySelector('span');
+                return span ? span.textContent.trim() : option.textContent.trim();
+              };
+              const activate = event => {
+                if (event) event.preventDefault();
+                applyWrapSelection(getLabel());
+              };
+              option.addEventListener('click', activate);
+              option.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  activate(event);
+                }
+              });
+            });
+          };
+
+          bindSwatches('[data-design-colors-source] .swatch', colorTarget, 'Color selected');
+          bindSwatches('[data-design-accessories-source] .swatch', accessoryTarget, 'Accessory selected');
+          bindWrapOptions();
+          const bindClear = (buttonSelector, target, placeholder) => {
+            const button = document.querySelector(buttonSelector);
+            if (!button) return;
+            button.addEventListener('click', () => clearTarget(target, placeholder));
+          };
+
+          bindClear('[data-clear-color]', colorTarget, 'Select a color swatch');
+          bindClear('[data-clear-accessory]', accessoryTarget, 'Select an accessory');
+          bindClear('[data-clear-wrap]', wrapTarget, 'Select a wrap template');
+        };
+
+        initDesignSelections();
+      })();
+    </script>
+    <script>
+      (() => {
+        const notes = document.getElementById('design-notes-customization');
+        if (!notes) return;
+        const autosize = () => {
+          notes.style.height = 'auto';
+          notes.style.height = `${notes.scrollHeight}px`;
+        };
+        notes.addEventListener('input', autosize);
+        autosize();
       })();
     </script>
   </body>
 </html>
+      .design-palette-title {
+        font-size: 0.75rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: rgba(31, 15, 36, 0.7);
+      }
+      .design-palette-title--center {
+        text-align: center;
+      }
+      .design-palette-title--highlight {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.95rem;
+        padding: 0.25rem 1rem;
+        border-radius: 999px;
+        background: linear-gradient(135deg, rgba(224, 176, 255, 0.25) 0%, rgba(255, 255, 255, 0.8) 100%);
+        box-shadow: inset 0 0 0 1px rgba(153, 40, 177, 0.15);
+        color: rgba(31, 15, 36, 0.8);
+      }
