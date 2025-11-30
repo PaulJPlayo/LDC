@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet" />
+    
     <style>
       :root {
         color-scheme: light;
@@ -105,7 +105,7 @@
       }
       .hero-heading {
         margin-top: 1.5rem;
-        font-family: 'Lobster', cursive;
+        font-family: Georgia, 'Times New Roman', serif;
         font-size: clamp(2.75rem, 7vw, 4.75rem);
         text-transform: uppercase;
         letter-spacing: 0.18em;
@@ -160,11 +160,37 @@
         justify-items: center;
       }
       .swatch {
-        width: 56px;
-        height: 56px;
+        width: 40px;
+        height: 40px;
         border-radius: 999px;
         border: 3px solid #fff;
-        box-shadow: 0 18px 24px rgba(81, 56, 105, 0.18);
+        box-shadow: 0 14px 20px rgba(81, 56, 105, 0.16);
+      }
+      .design-swatch-slider {
+        justify-content: center;
+        gap: 0.75rem;
+      }
+      .design-swatch-slider button[data-swatch-prev],
+      .design-swatch-slider button[data-swatch-next] {
+        transition: transform 0.2s ease, opacity 0.2s ease;
+      }
+      .design-swatch-slider button[data-swatch-prev]:hover,
+      .design-swatch-slider button[data-swatch-next]:hover {
+        transform: translateY(-2px);
+      }
+      .design-swatch-window {
+        width: auto;
+        max-width: 100%;
+      }
+      .design-swatch-track {
+        gap: 0.5rem;
+      }
+      .design-swatch-slider .swatch {
+        flex: 0 0 auto;
+      }
+      .design-swatch-slider button svg {
+        color: #6b4a7a;
+        stroke: currentColor;
       }
       .design-layout {
         display: grid;
@@ -196,16 +222,22 @@
         border-radius: 1.5rem;
         border: 1px solid rgba(153, 40, 177, 0.18);
         background: rgba(248, 245, 255, 0.9);
-        padding: 1.25rem;
+        padding: 0.75rem;
         display: flex;
         flex-direction: column;
-        align-items: stretch;
-        gap: 1rem;
+        align-items: center;
+        gap: 0.75rem;
+        width: 100%;
+        max-width: 720px;
+        margin-left: auto;
+        margin-right: auto;
       }
       .design-notes-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.65rem;
+        width: 100%;
+        justify-items: center;
       }
       .design-notes-grid > div {
         display: flex;
@@ -227,12 +259,12 @@
         border-radius: 1rem;
         border: 1px dashed rgba(153, 40, 177, 0.35);
         background: rgba(255, 255, 255, 0.75);
-        padding: 0.75rem;
+        padding: 0.6rem;
         display: grid;
         grid-template-columns: auto minmax(0, 1fr) auto;
         align-items: center;
-        gap: 0.85rem;
-        min-height: 64px;
+        gap: 0.65rem;
+        min-height: 56px;
         transition: border-color 150ms ease, background 150ms ease;
       }
       .design-selection-target.has-selection {
@@ -383,25 +415,32 @@
         border-radius: 1.5rem;
         border: 1px solid rgba(153, 40, 177, 0.18);
         background: rgba(248, 245, 255, 0.9);
-        padding: 1.25rem;
+        padding: 0.75rem;
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        align-items: center;
+        gap: 0.75rem;
+        width: 100%;
+        max-width: 720px;
+        margin-left: auto;
+        margin-right: auto;
       }
       .design-notes-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 1rem;
+        gap: 0.65rem;
+        width: 100%;
+        justify-items: center;
       }
       .design-selection-target {
         border-radius: 1rem;
         border: 1px dashed rgba(153, 40, 177, 0.35);
         background: rgba(255, 255, 255, 0.75);
-        padding: 0.75rem;
+        padding: 0.6rem;
         display: flex;
         align-items: center;
-        gap: 0.85rem;
-        min-height: 64px;
+        gap: 0.65rem;
+        min-height: 56px;
         transition: border-color 150ms ease, background 150ms ease;
       }
       .design-selection-target.has-selection {
@@ -498,14 +537,10 @@
       }
       .design-media-grid {
         margin-top: 1.5rem;
-        display: grid;
-        gap: 1.25rem;
-      }
-      @media (min-width: 768px) {
-        .design-media-grid {
-          grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr) minmax(0, 0.9fr);
-          align-items: start;
-        }
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
       }
       .design-media-grid .wrap-menu {
         margin: 0;
@@ -517,9 +552,9 @@
         justify-items: center;
       }
       .design-palette .swatch {
-        width: 44px;
-        height: 44px;
-        border-width: 2px;
+        width: 40px;
+        height: 40px;
+        border-width: 3px;
       }
       .design-card {
         border-radius: 1.75rem;
@@ -562,24 +597,21 @@
         margin: 0 auto;
       }
       .design-card-body {
-        padding: 1.75rem;
+        padding: 1.25rem;
         background: #ffffff;
       }
       .design-palette-grid {
-        display: grid;
-        gap: 1rem;
-      }
-      @media (min-width: 768px) {
-        .design-palette-grid {
-          grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr) minmax(0, 0.9fr);
-          gap: 1.5rem;
-        }
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
       }
       .design-center {
         display: flex;
         flex-direction: column;
         gap: 1rem;
-        align-items: stretch;
+        align-items: center;
+        width: 100%;
       }
       .wrap-menu {
         margin-top: 1.25rem;
@@ -679,14 +711,15 @@
       }
       .design-card-frame {
         border-radius: 1.5rem;
-        aspect-ratio: 4/5;
+        aspect-ratio: 9 / 16;
         display: flex;
         align-items: stretch;
         justify-content: center;
         border: 1px solid rgba(153, 40, 177, 0.18);
         background: rgba(248, 245, 255, 0.85);
-        padding: 1rem;
-        min-height: 320px;
+        padding: 0.95rem;
+        min-height: clamp(260px, 38vw, 360px);
+        max-width: 380px;
       }
       .design-card-frame.design-video-frame {
         padding: 0;
@@ -721,8 +754,10 @@
         gap: 1.75rem;
       }
       .flow-step {
-        display: grid;
-        gap: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
         border-radius: 1.5rem;
         padding: 1.6rem;
         background: rgba(224, 176, 255, 0.14);
@@ -830,15 +865,19 @@
               </div>
               <div class="design-card-body">
                 <div class="design-palette-grid">
-                  <div class="design-palette-column">
-                    <details class="wrap-menu palette-menu" open style="margin-top:0.75rem;">
-                      <summary style="color:#000;">
-                        <span style="color:#000;">Colors</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
-                      </summary>
-                      <div class="palette-content">
-                        <p class="palette-label palette-label--desktop" style="color:#000;">Colors</p>
-                        <div class="design-palette" data-design-colors-source>
+                  <div class="design-center">
+                    <div class="design-card-frame">
+                      <img id="designPagePreview" src="assets/glass-tumbler.jpeg" alt="Designed palm tree tumbler" />
+                    </div>
+                    <div class="w-full flex justify-center">
+                      <p class="design-palette-title design-palette-title--center design-palette-title--highlight" style="margin-bottom:0.35rem;">Colors</p>
+                    </div>
+                    <div class="design-swatch-slider swatch-slider flex items-center gap-2" data-swatch-slider data-visible="10">
+                      <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
+                      </button>
+                      <div class="relative overflow-hidden design-swatch-window" data-swatch-window>
+                        <div class="flex items-center design-swatch-track transition-transform duration-200" data-swatch-track data-design-colors-source>
                             <span class="swatch" aria-label="View white option" style="background: radial-gradient(circle, #ffffff 0%, #f7f7f7 55%, #d9d9d9 100%);"></span>
                             <span class="swatch" aria-label="View glow in the dark option" style="background: radial-gradient(circle, #ccff88 0%, #8dff3a 65%, #48ff5b 100%);"></span>
                             <span class="swatch" aria-label="Glass finish swatch" style="background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 60%), linear-gradient(135deg, rgba(226,232,240,0.7) 0%, rgba(148,163,184,0.4) 100%);"></span>
@@ -847,6 +886,13 @@
                             <span class="swatch" aria-label="Hot pink swatch" style="background: radial-gradient(circle at 30% 30%, #ffd1e8 0%, #ff4ba5 45%, #d9048e 100%);"></span>
                             <span class="swatch" aria-label="Two-tone pink swatch" style="background: linear-gradient(135deg, #ff6fb7 0%, #ffa8df 50%, #ffd1f1 100%);"></span>
                             <span class="swatch" aria-label="Pumpkin orange swatch" style="background: radial-gradient(circle at 30% 30%, #ffd7a3 0%, #ff8b0f 50%, #b45309 100%);"></span>
+                            <span class="swatch" aria-label="Light orange swatch" style="background: radial-gradient(circle, #ffe9c7 0%, #ffc17a 55%, #ffad55 100%);"></span>
+                            <span class="swatch" aria-label="Orange swatch" style="background: radial-gradient(circle, #ffbb66 0%, #ff931e 60%, #ff7b00 100%);"></span>
+                            <span class="swatch" aria-label="Blue swatch" style="background: radial-gradient(circle, #d8ecff 0%, #8fc7ff 55%, #4da3ff 100%);"></span>
+                            <span class="swatch" aria-label="Green swatch" style="background: radial-gradient(circle, #e3fcec 0%, #6ee7b7 55%, #22c55e 100%);"></span>
+                            <span class="swatch" aria-label="Pink swatch" style="background: radial-gradient(circle, #ffd6e8 0%, #f9a8d4 55%, #ec4899 100%);"></span>
+                            <span class="swatch" aria-label="Red swatch" style="background: radial-gradient(circle, #ffd1d1 0%, #f87171 55%, #dc2626 100%);"></span>
+                            <span class="swatch" aria-label="Glass swatch" style="background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 60%), linear-gradient(135deg, rgba(238,242,255,0.65) 0%, rgba(148,163,184,0.35) 100%);"></span>
                             <span class="swatch" aria-label="Chocolate brown swatch" style="background: radial-gradient(circle at 30% 30%, #fbd5a8 0%, #8b4513 55%, #4a2505 100%);"></span>
                             <span class="swatch" aria-label="Blue swatch" style="background: #2563eb;"></span>
                             <span class="swatch" aria-label="Purple swatch" style="background: #8b5cf6;"></span>
@@ -873,14 +919,36 @@
                             <span class="swatch" aria-label="Light pink swatch" style="background: #f9a8d4;"></span>
                             <span class="swatch" aria-label="Royal blue swatch" style="background: #1d4ed8;"></span>
                             <span class="swatch" aria-label="Black swatch" style="background: #111827;"></span>
-                        
-                          </div>
+                        </div>
                       </div>
-                    </details>
-                  </div>
-                  <div class="design-center">
-                    <div class="design-card-frame">
-                      <img id="designPagePreview" src="assets/glass-tumbler.jpeg" alt="Designed palm tree tumbler" />
+                      <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next color">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
+                      </button>
+                    </div>
+                    <div class="w-full flex justify-center">
+                      <p class="design-palette-title design-palette-title--center design-palette-title--highlight" style="margin:0.65rem 0 0.35rem;">Accessories</p>
+                    </div>
+                    <div class="design-swatch-slider swatch-slider flex items-center gap-2 mt-2" data-swatch-slider data-visible="10">
+                      <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous accessory">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
+                      </button>
+                      <div class="relative overflow-hidden design-swatch-window" data-swatch-window>
+                        <div class="flex items-center design-swatch-track transition-transform duration-200" data-swatch-track data-design-accessories-source>
+                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-items:center; color:#ffffff; font-size:0.6rem; line-height:1;" aria-label="Rhinestone accessory accent">💎</span>
+                            <span class="swatch" style="background:#5eead4; display:flex; align-items:center; justify-content:center; color:#0f172a; font-size:0.7rem; line-height:1;" aria-label="Jelly accessory accent">🪼</span>
+                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.7rem; line-height:1;" aria-label="Bow accent">🎀</span>
+                            <span class="swatch" style="background:#f8d7f5; display:flex; align-items:center; justify-content:center; color:#6b21a8; font-size:0.7rem; line-height:1;" aria-label="Swirl accent">🎀</span>
+                            <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cafe accent">☕</span>
+                            <span class="swatch" style="background:#f9a8d4; display:flex; align-items:center; justify-content:center; color:#7f1d1d; font-size:0.7rem; line-height:1;" aria-label="Christmas accent">⛄️</span>
+                            <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cat accent">🐱</span>
+                            <span class="swatch" style="background:#86efac; display:flex; align-items:center; justify-content:center; color:#14532d; font-size:0.7rem; line-height:1;" aria-label="Cactus accent">🌵</span>
+                            <span class="swatch" style="background:#93c5fd; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Beach cup accent">🥤</span>
+                            <span class="swatch" style="background:#fef3c7; display:flex; align-items:center; justify-content:center; color:#92400e; font-size:0.7rem; line-height:1;" aria-label="Football accent">🏈</span>
+                        </div>
+                      </div>
+                      <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next accessory">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
+                      </button>
                     </div>
                     <div class="design-notes-panel">
                       <div class="design-notes-grid">
@@ -919,40 +987,28 @@
                         </div>
                       </div>
                       <div class="cta-wrap design-cta">
-                        <a href="mailto:info@lovettsdesigns.com?subject=Design%20Request" class="cta-btn">
+                        <a href="mailto:lovettsdandc@gmail.com" class="cta-btn">
                           Submit Your Design
                         </a>
                       </div>
                     </div>
                   </div>
-                  <div class="design-palette-column">
-                    <details class="wrap-menu palette-menu" open style="margin-top:0.75rem;">
-                      <summary style="color:#000;">
-                        <span style="color:#000;">Accessories</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
-                      </summary>
-                      <div class="palette-content">
-                        <p class="palette-label palette-label--desktop" style="color:#000;">Accessories</p>
-                        <div class="design-palette" data-design-accessories-source>
-                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.6rem; line-height:1;" aria-label="Rhinestone accessory accent">💎</span>
-                            <span class="swatch" style="background:#5eead4; display:flex; align-items:center; justify-content:center; color:#0f172a; font-size:0.7rem; line-height:1;" aria-label="Jelly accessory accent">🪼</span>
-                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.7rem; line-height:1;" aria-label="Bow accent">🎀</span>
-                            <span class="swatch" style="background:#f8d7f5; display:flex; align-items:center; justify-content:center; color:#6b21a8; font-size:0.7rem; line-height:1;" aria-label="Swirl accent">🎀</span>
-                            <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cafe accent">☕</span>
-                            <span class="swatch" style="background:#f9a8d4; display:flex; align-items:center; justify-content:center; color:#7f1d1d; font-size:0.7rem; line-height:1;" aria-label="Christmas accent">⛄️</span>
-                            <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cat accent">🐱</span>
-                            <span class="swatch" style="background:#86efac; display:flex; align-items:center; justify-content:center; color:#14532d; font-size:0.7rem; line-height:1;" aria-label="Cactus accent">🌵</span>
-                            <span class="swatch" style="background:#93c5fd; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Beach cup accent">🥤</span>
-                            <span class="swatch" style="background:#fef3c7; display:flex; align-items:center; justify-content:center; color:#92400e; font-size:0.7rem; line-height:1;" aria-label="Football accent">🏈</span>
-                        
-                          </div>
-                      </div>
-                    </details>
-                  </div>
                 </div>
                 <div class="design-media-grid">
-                  <div>
-                    <details class="wrap-menu" style="margin-top:0.75rem;" open>
+                  <div class="design-card-frame design-video-frame">
+                    <div class="design-video-message" data-design-video-prompt hidden aria-hidden="true">
+                      <div class="design-video-message-inner">
+                        <p class="design-video-message-title" data-prompt-title>Need a Special Character or Designer Wrap?</p>
+                        <p class="design-video-message-body" data-prompt-body>Share your character or designer theme with us and we will send next steps.</p>
+                        <a class="design-video-message-cta" data-prompt-cta href="mailto:lovettsdandc@gmail.com">Request Custom Wrap</a>
+                      </div>
+                    </div>
+                    <video id="designWrapVideoCustomization" data-design-video controls muted playsinline>
+                      <source data-source="hls" src="https://customer-3ptq6xbmg2sfpv29.cloudflarestream.com/de65351aa0c825fa0c3d3a71ea6db687/manifest/video.m3u8" type="application/x-mpegURL" />
+                    </video>
+                  </div>
+                  <div class="wrap-menu" style="margin-top:0.75rem;">
+                    <details open>
                       <summary style="color:#000;">
                         Explore wrap templates
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
@@ -965,7 +1021,7 @@
                           data-video-prompt-title="Need a Special Character or Designer Wrap?"
                           data-video-prompt="Share your character or designer theme with us and we will send next steps."
                           data-video-prompt-cta-label="Request Custom Wrap"
-                          data-video-prompt-cta-href="mailto:info@lovettsdesigns.com?subject=Special%20Character%20Wrap"
+                          data-video-prompt-cta-href="mailto:lovettsdandc@gmail.com"
                         >
                           <span>Special Characters &amp; Designers</span><small>email for custom details</small>
                         </li>
@@ -979,21 +1035,6 @@
                       </ul>
                     </details>
                   </div>
-                  <div>
-                    <div class="design-card-frame design-video-frame">
-                      <div class="design-video-message" data-design-video-prompt hidden aria-hidden="true">
-                        <div class="design-video-message-inner">
-                          <p class="design-video-message-title" data-prompt-title>Need a Special Character or Designer Wrap?</p>
-                          <p class="design-video-message-body" data-prompt-body>Share your character or designer theme with us and we will send next steps.</p>
-                          <a class="design-video-message-cta" data-prompt-cta href="mailto:info@lovettsdesigns.com?subject=Special%20Character%20Wrap">Request Custom Wrap</a>
-                        </div>
-                      </div>
-                      <video id="designWrapVideoCustomization" data-design-video controls muted playsinline>
-                        <source data-source="hls" src="https://customer-3ptq6xbmg2sfpv29.cloudflarestream.com/de65351aa0c825fa0c3d3a71ea6db687/manifest/video.m3u8" type="application/x-mpegURL" />
-                      </video>
-                    </div>
-                  </div>
-                  <div></div>
                 </div>
               </div>
             </div>
@@ -1021,6 +1062,80 @@
         } catch (error) {
           console.warn('Unable to load saved design selection', error);
         }
+
+        const initSwatchSliders = () => {
+          document.querySelectorAll('[data-swatch-slider]').forEach(slider => {
+            if (slider.dataset.sliderInit) return;
+            slider.dataset.sliderInit = 'true';
+            const track = slider.querySelector('[data-swatch-track]');
+            const windowEl = slider.querySelector('[data-swatch-window]');
+            const prev = slider.querySelector('[data-swatch-prev]');
+            const next = slider.querySelector('[data-swatch-next]');
+            const visible = Number(slider.getAttribute('data-visible') || 5);
+            let index = 0;
+
+            const setWindowWidth = () => {
+              if (!windowEl || !track) return;
+              const first = track.children[0];
+              if (!first) return;
+              const styles = getComputedStyle(track);
+              const gap = parseFloat(styles.gap || styles.columnGap || '0');
+              const swatchWidth = first.getBoundingClientRect().width;
+              const totalWidth = swatchWidth * visible + gap * (visible - 1);
+              windowEl.style.width = `${totalWidth}px`;
+            };
+
+            const update = () => {
+              if (!track) return;
+              const swatches = Array.from(track.children);
+              const total = swatches.length;
+              const maxIndex = Math.max(0, total - visible);
+              if (maxIndex === 0) {
+                index = 0;
+              } else if (index < 0) {
+                index = maxIndex;
+              } else if (index > maxIndex) {
+                index = 0;
+              }
+              const first = swatches[0];
+              const styles = getComputedStyle(track);
+              const gap = parseFloat(styles.gap || styles.columnGap || '0');
+              const swatchWidth = first ? first.getBoundingClientRect().width : 0;
+              const offset = (swatchWidth + gap) * index;
+              track.style.transform = `translateX(-${offset}px)`;
+              const disable = maxIndex === 0;
+              if (prev) {
+                prev.classList.toggle('opacity-40', disable);
+                prev.classList.toggle('pointer-events-none', disable);
+                prev.setAttribute('aria-disabled', disable ? 'true' : 'false');
+              }
+              if (next) {
+                next.classList.toggle('opacity-40', disable);
+                next.classList.toggle('pointer-events-none', disable);
+                next.setAttribute('aria-disabled', disable ? 'true' : 'false');
+              }
+            };
+
+            const step = direction => {
+              index += direction;
+              update();
+            };
+
+            prev?.addEventListener('click', event => {
+              event.preventDefault();
+              step(-1);
+            });
+            next?.addEventListener('click', event => {
+              event.preventDefault();
+              step(1);
+            });
+
+            window.addEventListener('resize', setWindowWidth);
+            window.addEventListener('resize', update);
+            setWindowWidth();
+            update();
+          });
+        };
 
         const initDesignSelections = () => {
           const colorTarget = document.querySelector('[data-selected-color]');
@@ -1135,6 +1250,7 @@
           bindClear('[data-clear-wrap]', wrapTarget, 'Select a wrap template');
         };
 
+        initSwatchSliders();
         initDesignSelections();
       })();
     </script>

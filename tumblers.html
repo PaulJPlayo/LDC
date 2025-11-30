@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet" />
+    
     <style>
       body {
         margin: 0;
@@ -16,7 +16,7 @@
         display: flex;
         flex-direction: column;
         background: radial-gradient(circle at top left, rgba(224, 176, 255, 0.4), transparent 55%), radial-gradient(circle at bottom right, rgba(153, 40, 177, 0.35), transparent 60%), linear-gradient(135deg, #0f1534 0%, #221242 100%);
-        color: #ffffff;
+        color: #fdf7ed;
       }
       .page-shell {
         flex: 1 1 auto;
@@ -76,7 +76,8 @@
         height: 1rem;
       }
 
-      body.support-open {
+      body.support-open,
+      body.custom-open {
         overflow: hidden;
       }
       .support-overlay {
@@ -138,6 +139,66 @@
         background: rgba(255, 255, 255, 0.22);
         transform: translateY(-1px);
       }
+      /* Custom request overlay (reuse support styling) */
+      .custom-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 90;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        background: rgba(15, 23, 42, 0.55);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 220ms ease;
+      }
+      .custom-overlay.is-open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .custom-card {
+        position: relative;
+        width: min(460px, 100%);
+        border-radius: 1.5rem;
+        overflow: hidden;
+        background: linear-gradient(135deg, #E0B0FF 0%, #B678F5 100%);
+        box-shadow: 0 26px 52px rgba(79, 70, 229, 0.26);
+        color: #ffffff;
+      }
+      .custom-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(17, 24, 39, 0.25);
+        pointer-events: none;
+      }
+      .custom-card-content {
+        position: relative;
+        padding: 1.5rem 1.5rem 1.75rem;
+        display: grid;
+        gap: 1rem;
+      }
+      .custom-close-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        border: none;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 180ms ease, transform 180ms ease;
+        z-index: 1;
+      }
+      .custom-close-btn:hover {
+        background: rgba(255, 255, 255, 0.22);
+        transform: translateY(-1px);
+      }
       .support-eyebrow {
         font-size: 0.7rem;
         letter-spacing: 0.32em;
@@ -147,7 +208,7 @@
         text-align: center;
       }
       .support-title {
-        font-family: 'Lobster', cursive;
+        font-family: Georgia, 'Times New Roman', serif;
         font-size: clamp(2rem, 5vw, 2.75rem);
         text-transform: uppercase;
         letter-spacing: 0.18em;
@@ -246,7 +307,7 @@
       }
       .hero-heading {
         margin-top: 1.25rem;
-        font-family: 'Lobster', cursive;
+        font-family: Georgia, 'Times New Roman', serif;
         font-size: clamp(2.6rem, 7vw, 4.2rem);
         line-height: 1.05;
       }
@@ -332,26 +393,27 @@
         }
       }
       .product-card {
-        background: rgba(255, 255, 255, 0.12);
-        border-radius: 1.5rem;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        box-shadow: 0 16px 32px rgba(15, 23, 42, 0.22);
+        background: linear-gradient(135deg, #E0B0FF 0%, #D8B4FE 100%);
+        border-radius: 1.25rem;
+        border: 1px solid #d8b4fe;
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
         padding: 1.5rem;
         display: flex;
         flex-direction: column;
         gap: 1rem;
         transition: transform 200ms ease, box-shadow 200ms ease;
+        color: #ffffff;
       }
       .product-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 24px 44px rgba(15, 23, 42, 0.28);
+        transform: translateY(-3px);
+        box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
       }
       .product-media {
         aspect-ratio: 4 / 5;
         width: 100%;
-        border-radius: 1.25rem;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        background: rgba(255, 255, 255, 0.08);
+        border-radius: 1rem;
+        border: 1px solid #d8b4fe;
+        background: linear-gradient(135deg, #E0B0FF 0%, #D8B4FE 100%);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -363,37 +425,116 @@
         object-fit: contain;
       }
       .product-title {
-        font-size: 0.95rem;
+        font-size: 1rem;
         font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: #ffffff;
+        letter-spacing: 0.04em;
+        color: #fdf7ed;
       }
       .product-meta {
-        font-size: 0.82rem;
-        color: rgba(255, 255, 255, 0.78);
+        font-size: 0.85rem;
+        color: rgba(253, 247, 237, 0.85);
         display: flex;
         align-items: center;
         gap: 0.5rem;
         flex-wrap: wrap;
       }
       .product-price {
-        font-size: 0.9rem;
-        font-weight: 600;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: #ffffff;
+        font-size: 0.95rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: #fdf7ed;
       }
       .tag {
         display: inline-flex;
         align-items: center;
-        padding: 0.15rem 0.5rem;
+        padding: 0.2rem 0.6rem;
         border-radius: 999px;
-        font-size: 0.7rem;
+        font-size: 0.68rem;
         text-transform: uppercase;
         letter-spacing: 0.14em;
-        background: rgba(99, 102, 241, 0.16);
-        color: #c4c6ff;
+        background: rgba(253, 247, 237, 0.18);
+        color: #fdf7ed;
+        border: 1px solid rgba(253, 247, 237, 0.24);
+      }
+      .badge-new {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.65rem;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        background: #059669;
+        color: #ffffff;
+        box-shadow: 0 6px 16px rgba(5, 150, 105, 0.25);
+      }
+      .badge-limited {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.65rem;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        background: #fbbf24;
+        color: #78350f;
+        box-shadow: 0 6px 16px rgba(251, 191, 36, 0.25);
+      }
+      .icon-button {
+        border: none;
+        background: linear-gradient(135deg, #E0B0FF 0%, #B678F5 100%);
+        color: #ffffff;
+        border-radius: 999px;
+        box-shadow: 0 10px 20px rgba(153, 40, 177, 0.2);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      }
+      .icon-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 28px rgba(153, 40, 177, 0.28);
+      }
+      .swatch-slider {
+        display: flex;
+        align-items: center;
+        gap: 0.1rem;
+        justify-content: center;
+      }
+      .swatch-slider-window {
+        position: relative;
+        overflow: hidden;
+        width: 4.6rem;
+        flex: 0 0 auto;
+      }
+      .swatch-slider-track {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        transition: transform 180ms ease;
+      }
+      .swatch {
+        display: inline-block;
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 9999px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.35);
+        flex: 0 0 auto;
+      }
+      .swatch-slider button {
+        background: transparent;
+        border: none;
+        padding: 0;
+        color: #0f172a;
+        width: 1.5rem;
+        height: 1.5rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s ease, opacity 0.2s ease;
+      }
+      .swatch-slider button:hover {
+        transform: translateY(-2px);
       }
       .footer {
         margin-top: auto;
@@ -448,14 +589,14 @@
         <section class="page-hero">
           <div class="container mx-auto px-5 lg:px-12">
             <div class="hero-card">
-              <span class="hero-eyebrow">Signature stainless</span>
-              <h1 class="hero-heading">Tumblers that glow, shimmer, and shine.</h1>
+              <span class="hero-eyebrow">Stainless Steel</span>
+              <h1 class="hero-heading">Tumblers customized to your style.</h1>
               <p class="hero-subtext">
-                From glow-in-the-dark finishes to hand painted gradients, every Lovett tumbler keeps drinks at the perfect temperature while showing off your style. Grab a ready-to-ship favorite or request a custom palette.
+                Every Lovett tumbler keeps drinks at the perfect temperature while showing off your style. Grab a ready-to-ship favorite or request a custom palette.
               </p>
               <div class="hero-actions">
                 <a class="cta-button" href="#tumblers-grid">Shop Tumblers</a>
-                <a class="cta-button secondary" href="mailto:lovettsdesignsandcrafts@gmail.com">Request a custom</a>
+                <button class="cta-button secondary" type="button" data-custom-open style="border:none;">Request a custom</button>
               </div>
             </div>
           </div>
@@ -473,22 +614,7 @@
               </p>
             </header>
 
-            <div class="filter-bar mt-6">
-              <button class="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-white/30 bg-white/10 hover:bg-white/15 text-sm text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18M6 12h12M10 18h4"/></svg>
-                Filter
-              </button>
-              <label class="text-sm flex items-center gap-2 text-white/80">
-                <span>Sort by:</span>
-                <select class="h-9 rounded-md border border-white/25 bg-white/10 px-3 text-white">
-                  <option>Relevance</option>
-                  <option>Price: Low to High</option>
-                  <option>Price: High to Low</option>
-                  <option>Rating</option>
-                  <option>Newest</option>
-                </select>
-              </label>
-            </div>
+
 
             <div class="arrivals-grid mt-8">
               <article class="product-card">
@@ -496,9 +622,22 @@
                   <img id="tumblersSlimImage" src="assets/sublimination.jpeg" alt="Slim tumbler product photo" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="flex items-center gap-3 flex-wrap text-xs text-white/80">
-                    <span class="tag">White</span>
-                    <span class="tag">Glow in the Dark</span>
+                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                    <button type="button" class="swatch-arrow" data-swatch-prev aria-label="Previous color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
+                    </button>
+                    <div class="swatch-slider-window">
+                      <div class="swatch-slider-track" data-swatch-track>
+                        <span class="swatch cursor-pointer" aria-label="White swatch" data-image-target="tumblersSlimImage" data-image-src="assets/sublimination.jpeg" data-image-alt="Slim tumbler - white" data-price-target="tumblersSlimPrice" data-price="25.00" data-limited-target="tumblersSlimLimited" data-limited="false" style="background: radial-gradient(circle, #ffffff 0%, #f7f7f7 55%, #d9d9d9 100%); box-shadow: 0 0 6px rgba(217, 217, 217, 0.6); border-color: rgba(226,232,240,0.65);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Glow in the dark swatch" data-image-target="tumblersSlimImage" data-image-src="assets/sublimination-glow-in-the-dark.jpeg" data-image-alt="Slim tumbler - glow in the dark" data-price-target="tumblersSlimPrice" data-price="35.00" data-limited-target="tumblersSlimLimited" data-limited="true" style="background: radial-gradient(circle, #ccff88 0%, #8dff3a 65%, #48ff5b 100%); box-shadow: 0 0 8px rgba(141, 255, 58, 0.65); border-color: rgba(190,242,100,0.6);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Light orange swatch" data-image-target="tumblersSlimImage" data-image-src="assets/Sublimination - 25.png" data-image-alt="Slim tumbler - light orange" data-price-target="tumblersSlimPrice" data-price="25.00" data-limited-target="tumblersSlimLimited" data-limited="false" style="background: radial-gradient(circle, #ffe9c7 0%, #ffc17a 55%, #ffad55 100%); box-shadow: 0 0 6px rgba(255, 193, 122, 0.6); border-color: rgba(255,193,122,0.6);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Orange swatch" data-image-target="tumblersSlimImage" data-image-src="assets/Sublimination - 25.png" data-image-alt="Slim tumbler - orange" data-price-target="tumblersSlimPrice" data-price="25.00" data-limited-target="tumblersSlimLimited" data-limited="true" style="background: radial-gradient(circle, #ffbb66 0%, #ff931e 60%, #ff7b00 100%); box-shadow: 0 0 8px rgba(255, 147, 30, 0.65); border-color: rgba(255,147,30,0.65);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Blue swatch" data-image-target="tumblersSlimImage" data-image-src="assets/Sublimination - 25.png" data-image-alt="Slim tumbler - blue" data-price-target="tumblersSlimPrice" data-price="25.00" data-limited-target="tumblersSlimLimited" data-limited="false" style="background: radial-gradient(circle, #d8ecff 0%, #8fc7ff 55%, #4da3ff 100%); box-shadow: 0 0 8px rgba(79, 163, 255, 0.6); border-color: rgba(79,163,255,0.6);"></span>
+                      </div>
+                    </div>
+                    <button type="button" class="swatch-arrow" data-swatch-next aria-label="Next color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
+                    </button>
                   </div>
                   <div class="flex items-center gap-2 tile-actions">
                     <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
@@ -515,20 +654,24 @@
                 </div>
                 <div class="product-meta">
                   <span>20oz &bull; Slim Stainless Steel</span>
-                  <span class="tag">New Arrival</span>
+                  <span class="badge-new">New Arrival</span>
+                  <span id="tumblersSlimLimited" class="badge-limited" style="display:none;">Limited Edition</span>
                 </div>
                 <h3 class="product-title">Sublimination</h3>
-                <span class="product-price" data-price-id="tumblersSlimPrice">$30.00</span>
+                <span class="product-price" id="tumblersSlimPrice">$25.00</span>
               </article>
 
               <article class="product-card">
                 <div class="product-media">
-                  <img src="assets/glass-tumbler.jpeg" alt="LDC Tumbler 2 glass finish" />
+                  <img id="glassTumblerPageImage" src="assets/glass-tumbler.jpeg" alt="Glass tumbler with frosted finish" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="flex items-center gap-3 flex-wrap text-xs text-white/80">
-                    <span class="tag">Glass</span>
-                    <span class="tag">Customizable</span>
+                  <div class="swatch-slider">
+                    <div class="swatch-slider-window" style="width:auto;">
+                      <div class="swatch-slider-track" data-swatch-track>
+                        <span class="swatch cursor-pointer" aria-label="Glass finish swatch" data-image-target="glassTumblerPageImage" data-image-src="assets/glass-tumbler.jpeg" data-image-alt="Glass tumbler with frosted finish" style="background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 60%), linear-gradient(135deg, rgba(226,232,240,0.7) 0%, rgba(148,163,184,0.4) 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.45), inset 0 8px 14px rgba(255,255,255,0.4), inset 0 -10px 18px rgba(148,163,184,0.35);"></span>
+                      </div>
+                    </div>
                   </div>
                   <div class="flex items-center gap-2 tile-actions">
                     <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
@@ -544,8 +687,8 @@
                   </div>
                 </div>
                 <div class="product-meta">
-                  <span>40oz &bull; Glass</span>
-                  <span class="tag">New Arrival</span>
+                  <span>40oz &bull; Glass Handle</span>
+                  <span class="badge-new">New Arrival</span>
                 </div>
                 <h3 class="product-title">Glass Tumbler</h3>
                 <span class="product-price">$40.00</span>
@@ -553,12 +696,25 @@
 
               <article class="product-card">
                 <div class="product-media">
-                  <img src="assets/kids-water-bottle.jpeg" alt="Kids water bottle tumbler" />
+                  <img id="kidsWaterBottlePageImage" src="assets/kids-water-bottle.jpeg" alt="Kids water bottle tumbler" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="flex items-center gap-3 flex-wrap text-xs text-white/80">
-                    <span class="tag">Kids</span>
-                    <span class="tag">Flip Straw</span>
+                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                    <button type="button" class="swatch-arrow" data-swatch-prev aria-label="Previous color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
+                    </button>
+                    <div class="swatch-slider-window">
+                      <div class="swatch-slider-track" data-swatch-track>
+                        <span class="swatch cursor-pointer" aria-label="White swatch" data-image-target="kidsWaterBottlePageImage" data-image-src="assets/kids-water-bottle.jpeg" data-image-alt="Kids water bottle tumbler - white" style="background: linear-gradient(145deg,#ffffff 0%,#f5f5f5 40%,#e2e8f0 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.25), inset 0 6px 12px rgba(255,255,255,0.7);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Blue swatch" data-image-target="kidsWaterBottlePageImage" data-image-src="assets/kids water bottle - 12oz - 20.png" data-image-alt="Kids water bottle tumbler - blue" style="background: radial-gradient(circle, #d8ecff 0%, #8fc7ff 55%, #4da3ff 100%); box-shadow: 0 0 6px rgba(79, 163, 255, 0.6);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Green swatch" data-image-target="kidsWaterBottlePageImage" data-image-src="assets/kids water bottle - 12oz - 20.png" data-image-alt="Kids water bottle tumbler - green" style="background: radial-gradient(circle, #e3fcec 0%, #6ee7b7 55%, #22c55e 100%); box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Pink swatch" data-image-target="kidsWaterBottlePageImage" data-image-src="assets/kids water bottle - 12oz - 20.png" data-image-alt="Kids water bottle tumbler - pink" style="background: radial-gradient(circle, #ffd6e8 0%, #f9a8d4 55%, #ec4899 100%); box-shadow: 0 0 6px rgba(236, 72, 153, 0.45);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Red swatch" data-image-target="kidsWaterBottlePageImage" data-image-src="assets/kids water bottle - 12oz - 20.png" data-image-alt="Kids water bottle tumbler - red" style="background: radial-gradient(circle, #ffd1d1 0%, #f87171 55%, #dc2626 100%); box-shadow: 0 0 6px rgba(220, 38, 38, 0.45);"></span>
+                      </div>
+                    </div>
+                    <button type="button" class="swatch-arrow" data-swatch-next aria-label="Next color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
+                    </button>
                   </div>
                   <div class="flex items-center gap-2 tile-actions">
                     <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
@@ -574,21 +730,36 @@
                   </div>
                 </div>
                 <div class="product-meta">
-                  <span>18oz &bull; Flip Straw</span>
-                  <span class="tag">Kids Favorite</span>
+                  <span>12oz - 16oz &bull; Stainless Steel</span>
                 </div>
                 <h3 class="product-title">Kids Water Bottle</h3>
-                <span class="product-price">$32.00</span>
+                <span class="product-price">$20.00</span>
               </article>
 
               <article class="product-card">
                 <div class="product-media">
-                  <img src="assets/water-bottle-tumbler.jpeg" alt="Stainless water bottle tumbler" />
+                  <img id="waterBottleTumblerPageImage" src="assets/water-bottle-tumbler.jpeg" alt="Stainless water bottle tumbler" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="flex items-center gap-3 flex-wrap text-xs text-white/80">
-                    <span class="tag">Stainless</span>
-                    <span class="tag">Hydration</span>
+                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                    <button type="button" class="swatch-arrow" data-swatch-prev aria-label="Previous color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
+                    </button>
+                    <div class="swatch-slider-window">
+                      <div class="swatch-slider-track" data-swatch-track>
+                        <span class="swatch cursor-pointer" aria-label="Black swatch" data-image-target="waterBottleTumblerPageImage" data-image-src="assets/water-bottle-tumbler.jpeg" data-image-alt="Black water bottle tumbler" style="background:#1f2937;"></span>
+                        <span class="swatch cursor-pointer" aria-label="Hot pink swatch" data-image-target="waterBottleTumblerPageImage" data-image-src="assets/Water Bottle Tumbler - 40.png" data-image-alt="Hot pink water bottle tumbler" style="background: radial-gradient(circle at 30% 30%, #ffd1e8 0%, #ff4ba5 45%, #d9048e 100%);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Light pink swatch" data-image-target="waterBottleTumblerPageImage" data-image-src="assets/Water Bottle Tumbler - 40.png" data-image-alt="Light pink water bottle tumbler" style="background: radial-gradient(circle, #ffd6e8 0%, #f9a8d4 55%, #ec4899 100%);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Very light pink swatch" data-image-target="waterBottleTumblerPageImage" data-image-src="assets/Water Bottle Tumbler - 40.png" data-image-alt="Very light pink water bottle tumbler" style="background: radial-gradient(circle, #fff0f7 0%, #ffe4f0 55%, #f5cde2 100%);"></span>
+                        <span class="swatch cursor-pointer" aria-label="White swatch" data-image-target="waterBottleTumblerPageImage" data-image-src="assets/Water Bottle Tumbler - 40.png" data-image-alt="White water bottle tumbler" style="background: linear-gradient(145deg,#ffffff 0%,#f5f5f5 40%,#e2e8f0 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.25), inset 0 6px 12px rgba(255,255,255,0.7);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Light blue swatch" data-image-target="waterBottleTumblerPageImage" data-image-src="assets/Water Bottle Tumbler - blue - 40.png" data-image-alt="Light blue water bottle tumbler" style="background: radial-gradient(circle, #e8f4ff 0%, #b8ddff 55%, #7bb7ff 100%); box-shadow: 0 0 6px rgba(123, 183, 255, 0.5);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Light teal swatch" data-image-target="waterBottleTumblerPageImage" data-image-src="assets/Water Bottle Tumbler - blue - 40.png" data-image-alt="Light teal water bottle tumbler" style="background: radial-gradient(circle, #e7fbf6 0%, #9fe7d7 55%, #2dd4bf 100%); box-shadow: 0 0 6px rgba(45, 212, 191, 0.45);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Cream white swatch" data-image-target="waterBottleTumblerPageImage" data-image-src="assets/Water Bottle Tumbler - blue - 40.png" data-image-alt="Cream white water bottle tumbler" style="background: radial-gradient(circle, #fff7eb 0%, #fbe8c7 55%, #f3d7a6 100%); box-shadow: 0 0 6px rgba(243, 215, 166, 0.45);"></span>
+                      </div>
+                    </div>
+                    <button type="button" class="swatch-arrow" data-swatch-next aria-label="Next color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
+                    </button>
                   </div>
                   <div class="flex items-center gap-2 tile-actions">
                     <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
@@ -605,20 +776,32 @@
                 </div>
                 <div class="product-meta">
                   <span>40oz &bull; Stainless Steel</span>
-                  <span class="tag">Best Seller</span>
                 </div>
                 <h3 class="product-title">Water Bottle Tumbler</h3>
-                <span class="product-price">$36.00</span>
+                <span class="product-price">$40.00</span>
               </article>
 
               <article class="product-card">
                 <div class="product-media">
-                  <img src="assets/ldc-tumbler-5.jpeg" alt="Gold and mauve tumbler" />
+                  <img id="ldcTumbler5PageImage" src="assets/ldc-tumbler-5.jpeg" alt="Hot pink silver trim tumbler" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="flex items-center gap-3 flex-wrap text-xs text-white/80">
-                    <span class="tag">Mauve</span>
-                    <span class="tag">Gold</span>
+                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                    <button type="button" class="swatch-arrow" data-swatch-prev aria-label="Previous color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
+                    </button>
+                    <div class="swatch-slider-window">
+                      <div class="swatch-slider-track" data-swatch-track>
+                        <span class="swatch cursor-pointer" aria-label="Hot pink swatch" data-image-target="ldcTumbler5PageImage" data-image-src="assets/ldc-tumbler-5.jpeg" data-image-alt="Hot pink silver trim tumbler" style="background: radial-gradient(circle at 30% 30%, #ffd1e8 0%, #ff4ba5 45%, #d9048e 100%); box-shadow: 0 0 10px rgba(255, 75, 165, 0.55);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Light pink swatch" data-image-target="ldcTumbler5PageImage" data-image-src="assets/Silver Trim Tumbler - 40.png" data-image-alt="Light pink silver trim tumbler" style="background: radial-gradient(circle, #ffe6f2 0%, #f9a8d4 55%, #f472b6 100%);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Tan brown swatch" data-image-target="ldcTumbler5PageImage" data-image-src="assets/Silver Trim Tumbler - 40.png" data-image-alt="Tan brown silver trim tumbler" style="background: radial-gradient(circle, #f6e0c3 0%, #e0b989 55%, #b27a3c 100%);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Black swatch" data-image-target="ldcTumbler5PageImage" data-image-src="assets/Silver Trim Tumbler - 40.png" data-image-alt="Black silver trim tumbler" style="background:#0f172a;"></span>
+                        <span class="swatch cursor-pointer" aria-label="Dark teal swatch" data-image-target="ldcTumbler5PageImage" data-image-src="assets/Silver Trim Tumbler - 40.png" data-image-alt="Dark teal silver trim tumbler" style="background: radial-gradient(circle, #bfe4df 0%, #1fb79f 55%, #0b534d 100%);"></span>
+                      </div>
+                    </div>
+                    <button type="button" class="swatch-arrow" data-swatch-next aria-label="Next color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
+                    </button>
                   </div>
                   <div class="flex items-center gap-2 tile-actions">
                     <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
@@ -634,21 +817,24 @@
                   </div>
                 </div>
                 <div class="product-meta">
-                  <span>40oz &bull; Straw Lid</span>
-                  <span class="tag">Best Seller</span>
+                  <span>40oz &bull; Stainless Steel</span>
+                  <span class="badge-new">New Arrival</span>
                 </div>
-                <h3 class="product-title">LDC Tumbler 5</h3>
-                <span class="product-price">$44.00</span>
+                <h3 class="product-title">Silver Trim Tumbler</h3>
+                <span class="product-price">$40.00</span>
               </article>
 
               <article class="product-card">
                 <div class="product-media">
-                  <img src="assets/ldc-tumbler-6.jpeg" alt="Pink glitter tumbler" />
+                  <img id="ldcTumbler6PageImage" src="assets/ldc-tumbler-6.jpeg" alt="Pink glitter tumbler" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="flex items-center gap-3 flex-wrap text-xs text-white/80">
-                    <span class="tag">Pink</span>
-                    <span class="tag">Glitter</span>
+                  <div class="swatch-slider" data-swatch-slider data-visible="1">
+                    <div class="swatch-slider-window" style="width:auto;">
+                      <div class="swatch-slider-track" data-swatch-track>
+                        <span class="swatch cursor-pointer" aria-label="Two-tone pink swatch" data-image-target="ldcTumbler6PageImage" data-image-src="assets/ldc-tumbler-6.jpeg" data-image-alt="Pink glitter tumbler" style="background: linear-gradient(135deg, #ff6fb7 0%, #ffa8df 50%, #ffd1f1 100%); box-shadow: 0 0 8px rgba(255, 111, 183, 0.45);"></span>
+                      </div>
+                    </div>
                   </div>
                   <div class="flex items-center gap-2 tile-actions">
                     <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
@@ -664,21 +850,24 @@
                   </div>
                 </div>
                 <div class="product-meta">
-                  <span>40oz &bull; Side Handle</span>
-                  <span class="tag">New Arrival</span>
+                  <span>40oz &bull; Silver Rim</span>
+                  <span class="badge-new">New Arrival</span>
                 </div>
-                <h3 class="product-title">LDC Tumbler 6</h3>
-                <span class="product-price">$43.00</span>
+                <h3 class="product-title">Pink Flamingo</h3>
+                <span class="product-price">$40.00</span>
               </article>
 
               <article class="product-card">
                 <div class="product-media">
-                  <img src="assets/ldc-tumbler-7.jpeg" alt="Blue tumbler with side handle" />
+                  <img id="ldcTumbler7PageImage" src="assets/ldc-tumbler-7.jpeg" alt="Pumpkin silver-rim tumbler" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="flex items-center gap-3 flex-wrap text-xs text-white/80">
-                    <span class="tag">Blue</span>
-                    <span class="tag">Side Handle</span>
+                  <div class="swatch-slider" data-swatch-slider data-visible="1">
+                    <div class="swatch-slider-window" style="width:auto;">
+                      <div class="swatch-slider-track" data-swatch-track>
+                        <span class="swatch cursor-pointer" aria-label="Pumpkin orange swatch" data-image-target="ldcTumbler7PageImage" data-image-src="assets/ldc-tumbler-7.jpeg" data-image-alt="Pumpkin silver-rim tumbler" style="background: radial-gradient(circle at 30% 30%, #ffd7a3 0%, #ff8b0f 50%, #b45309 100%); box-shadow: 0 0 10px rgba(255, 139, 15, 0.45); border: 1px solid rgba(255,139,15,0.35);"></span>
+                      </div>
+                    </div>
                   </div>
                   <div class="flex items-center gap-2 tile-actions">
                     <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
@@ -694,21 +883,66 @@
                   </div>
                 </div>
                 <div class="product-meta">
-                  <span>40oz &bull; Side Handle</span>
-                  <span class="tag">New Arrival</span>
+                  <span>40oz &bull; Silver Rim</span>
+                  <span class="badge-limited">Limited Edition</span>
                 </div>
-                <h3 class="product-title">LDC Tumbler 7</h3>
+                <h3 class="product-title">Pumpkin Spice</h3>
+                <span class="product-price">$40.00</span>
+              </article>
+
+              <article class="product-card">
+                <div class="product-media">
+                  <img id="ldcTumbler8PageImage" src="assets/ldc-tumbler-8.jpeg" alt="Matte brown tumbler with handle" />
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                  <div class="swatch-slider" data-swatch-slider data-visible="1">
+                    <div class="swatch-slider-window" style="width:auto;">
+                      <div class="swatch-slider-track" data-swatch-track>
+                        <span class="swatch cursor-pointer" aria-label="Chocolate brown swatch" data-image-target="ldcTumbler8PageImage" data-image-src="assets/ldc-tumbler-8.jpeg" data-image-alt="Matte brown tumbler with handle" style="background: radial-gradient(circle at 30% 30%, #fbd5a8 0%, #8b4513 55%, #4a2505 100%); box-shadow: 0 0 10px rgba(139, 69, 19, 0.45); border: 1px solid rgba(139,69,19,0.35);"></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2 tile-actions">
+                    <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                        <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+                    <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                        <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="product-meta">
+                  <span>40oz &bull; Stainless Steel</span>
+                  <span class="badge-limited">Limited Edition</span>
+                </div>
+                <h3 class="product-title">Autumn Leaves</h3>
                 <span class="product-price">$45.00</span>
               </article>
 
               <article class="product-card">
                 <div class="product-media">
-                  <img src="assets/ldc-tumbler-8.jpeg" alt="Brown tumbler with handle" />
+                  <img id="subliminationTumblersImage" src="assets/Sublimination Tumblers - 40.png" alt="Sublimination tumblers stainless" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="flex items-center gap-3 flex-wrap text-xs text-white/80">
-                    <span class="tag">Brown</span>
-                    <span class="tag">Matte Finish</span>
+                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                    <button type="button" class="swatch-arrow" data-swatch-prev aria-label="Previous color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
+                    </button>
+                    <div class="swatch-slider-window">
+                      <div class="swatch-slider-track" data-swatch-track>
+                        <span class="swatch cursor-pointer" aria-label="Cream white swatch" data-image-target="subliminationTumblersImage" data-image-src="assets/Sublimination Tumblers - 40.png" data-image-alt="Cream white sublimination tumbler" style="background: radial-gradient(circle, #fff7eb 0%, #fbe8c7 55%, #f3d7a6 100%); box-shadow: 0 0 6px rgba(243, 215, 166, 0.45);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Pearl white swatch" data-image-target="subliminationTumblersImage" data-image-src="assets/Sublimination Tumblers - 40.png" data-image-alt="Pearl white sublimination tumbler" style="background: linear-gradient(145deg,#ffffff 0%,#f5f5f5 40%,#e2e8f0 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.25), inset 0 6px 12px rgba(255,255,255,0.7);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Cream pink swatch" data-image-target="subliminationTumblersImage" data-image-src="assets/Sublimination Tumblers - 40.png" data-image-alt="Cream pink sublimination tumbler" style="background: radial-gradient(circle, #ffe6f2 0%, #f9a8d4 55%, #f472b6 100%); box-shadow: 0 0 6px rgba(244, 114, 182, 0.45);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Cream peach swatch" data-image-target="subliminationTumblersImage" data-image-src="assets/Sublimination Tumblers - 40.png" data-image-alt="Cream peach sublimination tumbler" style="background: radial-gradient(circle, #ffe9c7 0%, #ffc17a 55%, #ffad55 100%); box-shadow: 0 0 6px rgba(255, 193, 122, 0.6);"></span>
+                      </div>
+                    </div>
+                    <button type="button" class="swatch-arrow" data-swatch-next aria-label="Next color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
+                    </button>
                   </div>
                   <div class="flex items-center gap-2 tile-actions">
                     <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
@@ -724,10 +958,85 @@
                   </div>
                 </div>
                 <div class="product-meta">
-                  <span>40oz &bull; Side Handle</span>
-                  <span class="tag">New Arrival</span>
+                  <span>40oz &bull; Stainless Steel</span>
                 </div>
-                <h3 class="product-title">LDC Tumbler 8</h3>
+                <h3 class="product-title">Sublimination Tumblers</h3>
+                <span class="product-price">$40.00</span>
+              </article>
+
+              <article class="product-card">
+                <div class="product-media">
+                  <img id="tumblerHeavenImage" src="assets/Tumbler Heaven - 40.png" alt="Tumbler Heaven stainless tumbler" />
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                    <button type="button" class="swatch-arrow" data-swatch-prev aria-label="Previous color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
+                    </button>
+                    <div class="swatch-slider-window">
+                      <div class="swatch-slider-track" data-swatch-track>
+                        <span class="swatch cursor-pointer" aria-label="Red swatch" data-image-target="tumblerHeavenImage" data-image-src="assets/Tumbler Heaven - 40.png" data-image-alt="Red Tumbler Heaven" style="background: radial-gradient(circle, #ffd1d1 0%, #f87171 55%, #dc2626 100%); box-shadow: 0 0 6px rgba(220, 38, 38, 0.45);"></span>
+                        <span class="swatch cursor-pointer" aria-label="White swatch" data-image-target="tumblerHeavenImage" data-image-src="assets/Tumbler Heaven - 40.png" data-image-alt="White Tumbler Heaven" style="background: linear-gradient(145deg,#ffffff 0%,#f5f5f5 40%,#e2e8f0 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.25), inset 0 6px 12px rgba(255,255,255,0.7);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Baby blue swatch" data-image-target="tumblerHeavenImage" data-image-src="assets/Tumbler Heaven - 40.png" data-image-alt="Baby blue Tumbler Heaven" style="background: radial-gradient(circle, #e8f4ff 0%, #b8ddff 55%, #7bb7ff 100%); box-shadow: 0 0 6px rgba(123, 183, 255, 0.5);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Pink swatch" data-image-target="tumblerHeavenImage" data-image-src="assets/Tumbler Heaven - 40.png" data-image-alt="Pink Tumbler Heaven" style="background: radial-gradient(circle, #ffd6e8 0%, #f9a8d4 55%, #ec4899 100%); box-shadow: 0 0 6px rgba(236, 72, 153, 0.45);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Metallic purple swatch" data-image-target="tumblerHeavenImage" data-image-src="assets/Tumbler Heaven - 40.png" data-image-alt="Metallic purple Tumbler Heaven" style="background: linear-gradient(135deg, #b388ff 0%, #8b5cf6 50%, #6d28d9 100%); box-shadow: 0 0 8px rgba(139, 92, 246, 0.55);"></span>
+                      </div>
+                    </div>
+                    <button type="button" class="swatch-arrow" data-swatch-next aria-label="Next color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
+                    </button>
+                  </div>
+                  <div class="flex items-center gap-2 tile-actions">
+                    <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                        <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+                    <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                        <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="product-meta">
+                  <span>40oz &bull; Stainless Steel</span>
+                  <span class="badge-new">New Arrival</span>
+                </div>
+                <h3 class="product-title">Tumbler Heaven</h3>
+                <span class="product-price">$40.00</span>
+              </article>
+
+              <article class="product-card">
+                <div class="product-media">
+                  <img id="goldTrimTumblerImage" src="assets/Gold Trim Tumbler - 40.png" alt="Gold trim stainless tumbler" />
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                  <div class="swatch-slider">
+                    <div class="swatch-slider-window" style="width:auto;">
+                      <div class="swatch-slider-track" data-swatch-track>
+                        <span class="swatch cursor-pointer" aria-label="Chocolate brown swatch" data-image-target="goldTrimTumblerImage" data-image-src="assets/Gold Trim Tumbler - 40.png" data-image-alt="Gold trim tumbler - chocolate brown" style="background: radial-gradient(circle at 30% 30%, #fbd5a8 0%, #8b4513 55%, #4a2505 100%); box-shadow: 0 0 10px rgba(139, 69, 19, 0.45); border: 1px solid rgba(139,69,19,0.35);"></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2 tile-actions">
+                    <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                        <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+                    <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                        <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="product-meta">
+                  <span>40oz &bull; Stainless Steel</span>
+                  <span class="badge-limited">Limited Edition</span>
+                </div>
+                <h3 class="product-title">Gold Trim Tumbler</h3>
                 <span class="product-price">$40.00</span>
               </article>
             </div>
@@ -740,11 +1049,11 @@
               <p class="text-xs uppercase tracking-[0.3em] text-white/60">Keep it personal</p>
               <h2 class="mt-4 text-2xl md:text-3xl font-extrabold tracking-tight text-white">Need a tumbler that matches your brand?</h2>
               <p class="mt-4 text-sm md:text-base text-white/70 leading-relaxed">
-                Lovett can match color palettes, add names, and even incorporate corporate logos. Send a note and we’ll design a tumbler that feels like it was made just for you.
+                LDC can match color palettes, add names, and incorporate business/team logos. Send us a custom order form and we’ll design a tumbler that was made just for you, your business, and/or team.
               </p>
             </div>
             <div class="flex flex-col gap-4">
-              <a class="cta-button" href="mailto:lovettsdesignsandcrafts@gmail.com">Start a custom order</a>
+              <a class="cta-button" href="mailto:lovettsdandc@gmail.com">Start a custom order</a>
               <a class="cta-button secondary" href="https://instagram.com/lovetts._ldc" target="_blank" rel="noopener">See customer favorites</a>
             </div>
           </div>
@@ -754,7 +1063,6 @@
       <footer class="footer">
         <div class="container mx-auto px-5 lg:px-12 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <span>&copy; <span id="year"></span> Lovett's Designs and Crafts</span>
-          <span>Built in Atlanta, GA</span>
         </div>
       </footer>
 
@@ -797,7 +1105,54 @@
             <button type="submit" class="support-submit" data-support-submit>Send Message</button>
           </form>
           <div class="support-footer">
-            Prefer email? <a href="mailto:lovettsdesignsandcrafts@gmail.com">lovettsdesignsandcrafts@gmail.com</a>
+            Prefer email? <a href="mailto:lovettsdandc@gmail.com">lovettsdandc@gmail.com</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="custom-overlay" data-custom-overlay aria-hidden="true">
+      <div class="custom-card" data-custom-card role="dialog" aria-modal="true" aria-labelledby="customTitle">
+        <button type="button" class="custom-close-btn" data-custom-close aria-label="Close custom request">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        <div class="custom-card-content">
+          <p class="support-eyebrow">Design My Tumbler</p>
+          <h2 class="support-title" id="customTitle">Custom Order Request</h2>
+          <p class="support-subtitle">Share your size, colors, and any notes. We’ll follow up within 1 business day.</p>
+          <form class="support-form" data-custom-form>
+            <label class="support-field" for="customName">
+              <span>Your name</span>
+              <input type="text" id="customName" class="support-input" placeholder="Your name" autocomplete="name" required />
+            </label>
+            <label class="support-field" for="customEmail">
+              <span>Email</span>
+              <input type="email" id="customEmail" class="support-input" placeholder="you@example.com" autocomplete="email" required />
+            </label>
+            <label class="support-field" for="customPhone">
+              <span>Phone (optional)</span>
+              <input type="tel" id="customPhone" class="support-input" placeholder="(555) 123-4567" />
+            </label>
+            <label class="support-field" for="customSize">
+              <span>Size</span>
+              <select id="customSize" class="support-input" required>
+                <option value="">Choose a size</option>
+                <option>20oz</option>
+                <option>30oz</option>
+                <option>40oz</option>
+              </select>
+            </label>
+            <label class="support-field" for="customQuantity">
+              <span>Quantity</span>
+              <input type="number" id="customQuantity" class="support-input" min="1" placeholder="1" />
+            </label>
+            <label class="support-field" for="customNotes">
+              <span>Style notes</span>
+              <textarea id="customNotes" class="support-input" rows="4" placeholder="Colors, trims, names, logos, or inspiration links..." required></textarea>
+            </label>
+            <button type="submit" class="support-submit" data-custom-submit>Send Request</button>
+          </form>
+          <div class="support-footer">
+            Prefer email? <a href="mailto:lovettsdandc@gmail.com">lovettsdandc@gmail.com</a>
           </div>
         </div>
       </div>
@@ -810,6 +1165,50 @@
       if (footerYear) footerYear.textContent = new Date().getFullYear();
 
       const supportOverlay = document.querySelector('[data-support-overlay]');
+      const customOverlay = document.querySelector('[data-custom-overlay]');
+      const initProductSwatches = () => {
+        document.querySelectorAll('[data-image-target][data-image-src]').forEach(swatch => {
+          if (swatch.dataset.imageSwapInit) return;
+          swatch.dataset.imageSwapInit = 'true';
+          const activate = () => {
+            const targetId = swatch.getAttribute('data-image-target');
+            const src = swatch.getAttribute('data-image-src');
+            const alt = swatch.getAttribute('data-image-alt');
+            const priceTarget = swatch.getAttribute('data-price-target');
+            const priceValue = swatch.getAttribute('data-price');
+            const limitedTarget = swatch.getAttribute('data-limited-target');
+            const limitedFlag = swatch.getAttribute('data-limited');
+            if (targetId && src) {
+              const img = document.getElementById(targetId);
+              if (img) {
+                img.setAttribute('src', src);
+                if (alt) img.setAttribute('alt', alt);
+              }
+            }
+            if (priceTarget && priceValue) {
+              const priceEl = document.getElementById(priceTarget);
+              if (priceEl) {
+                priceEl.textContent = `$${priceValue}`;
+              }
+            }
+            if (limitedTarget) {
+              const badge = document.getElementById(limitedTarget);
+              if (badge) {
+                badge.style.display = limitedFlag === 'true' ? 'inline-flex' : 'none';
+              }
+            }
+          };
+          swatch.addEventListener('click', activate);
+          swatch.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              activate();
+            }
+          });
+          swatch.setAttribute('tabindex', '0');
+          swatch.setAttribute('role', 'button');
+        });
+      };
       if (supportOverlay) {
         const supportOpeners = document.querySelectorAll('[data-support-open]');
         const supportClosers = supportOverlay.querySelectorAll('[data-support-close]');
@@ -852,6 +1251,135 @@
           closeSupport();
         });
       }
+      if (customOverlay) {
+        const customOpeners = document.querySelectorAll('[data-custom-open]');
+        const customClosers = customOverlay.querySelectorAll('[data-custom-close]');
+        const customForm = customOverlay.querySelector('[data-custom-form]');
+        const customName = document.getElementById('customName');
+        const setCustomState = isOpen => {
+          customOverlay.classList.toggle('is-open', isOpen);
+          customOverlay.setAttribute('aria-hidden', String(!isOpen));
+          document.body.classList.toggle('custom-open', isOpen);
+          if (isOpen && customName) {
+            requestAnimationFrame(() => customName.focus());
+          }
+        };
+        const closeCustom = () => setCustomState(false);
+        const openCustom = () => setCustomState(true);
+        customOpeners.forEach(trigger => {
+          trigger.addEventListener('click', event => {
+            event.preventDefault();
+            openCustom();
+          });
+        });
+        customClosers.forEach(trigger => {
+          trigger.addEventListener('click', event => {
+            event.preventDefault();
+            closeCustom();
+          });
+        });
+        customOverlay.addEventListener('click', event => {
+          if (event.target === customOverlay) {
+            closeCustom();
+          }
+        });
+        document.addEventListener('keydown', event => {
+          if (event.key === 'Escape' && customOverlay.classList.contains('is-open')) {
+            closeCustom();
+          }
+        });
+        customForm?.addEventListener('submit', event => {
+          event.preventDefault();
+          closeCustom();
+        });
+      }
+      initProductSwatches();
+
+      const initSwatchSliders = () => {
+        document.querySelectorAll('[data-swatch-slider]').forEach(slider => {
+          if (slider.dataset.sliderInit) return;
+          slider.dataset.sliderInit = 'true';
+          const track = slider.querySelector('[data-swatch-track]');
+          const prev = slider.querySelector('[data-swatch-prev]');
+          const next = slider.querySelector('[data-swatch-next]');
+          const visible = Number(slider.getAttribute('data-visible') || 3);
+          let index = 0;
+
+          const update = () => {
+            if (!track) return;
+            const swatches = Array.from(track.children);
+            const total = swatches.length;
+            const maxIndex = Math.max(0, total - visible);
+            if (maxIndex === 0) {
+              index = 0;
+            } else if (index < 0) {
+              index = maxIndex;
+            } else if (index > maxIndex) {
+              index = 0;
+            }
+            const first = swatches[0];
+            const gap = parseFloat(getComputedStyle(track).gap || '0');
+            const swatchWidth = first ? first.getBoundingClientRect().width : 0;
+            const offset = (swatchWidth + gap) * index;
+            track.style.transform = `translateX(-${offset}px)`;
+          };
+
+          const step = direction => {
+            index += direction;
+            update();
+          };
+
+          prev?.addEventListener('click', event => {
+            event.preventDefault();
+            step(-1);
+          });
+
+          next?.addEventListener('click', event => {
+            event.preventDefault();
+            step(1);
+          });
+
+          window.addEventListener('resize', update);
+          update();
+        });
+      };
+
+      const initSwatchSwaps = () => {
+        document.querySelectorAll('[data-image-target][data-image-src]').forEach(swatch => {
+          if (swatch.dataset.imageSwapInit) return;
+          swatch.dataset.imageSwapInit = 'true';
+          const activate = () => {
+            const targetId = swatch.getAttribute('data-image-target');
+            const src = swatch.getAttribute('data-image-src');
+            const alt = swatch.getAttribute('data-image-alt');
+            const priceTarget = swatch.getAttribute('data-price-target');
+            const priceValue = swatch.getAttribute('data-price');
+            if (targetId && src) {
+              const img = document.getElementById(targetId);
+              if (img) {
+                img.setAttribute('src', src);
+                if (alt) img.setAttribute('alt', alt);
+              }
+            }
+            if (priceTarget && priceValue) {
+              const priceEl = document.getElementById(priceTarget);
+              if (priceEl) priceEl.textContent = `$${priceValue}`;
+            }
+          };
+          swatch.addEventListener('click', activate);
+          swatch.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              activate();
+            }
+          });
+          swatch.setAttribute('tabindex', '0');
+          swatch.setAttribute('role', 'button');
+        });
+      };
+
+      initSwatchSliders();
+      initSwatchSwaps();
     </script>
 
   </body>
