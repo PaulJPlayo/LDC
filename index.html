@@ -204,6 +204,53 @@
         min-height: clamp(260px, 38vw, 360px);
         max-width: 380px;
       }
+      .design-preview-frame {
+        position: relative;
+      }
+      .design-preview-layer {
+        width: 100%;
+        height: 100%;
+      }
+      .design-preview-image {
+        display: block;
+      }
+      .design-preview-video {
+        display: none;
+      }
+      .design-preview-frame.is-video-active .design-preview-image {
+        display: none;
+      }
+      .design-preview-frame.is-video-active .design-preview-video {
+        display: block;
+      }
+      .design-preview-return {
+        position: absolute;
+        top: 0.65rem;
+        left: 0.65rem;
+        z-index: 2;
+        border: none;
+        background: rgba(255, 255, 255, 0.9);
+        color: #6B4A78 !important;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-weight: 700;
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
+        cursor: pointer;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 150ms ease, transform 150ms ease;
+      }
+      .design-preview-frame.is-video-active .design-preview-return {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .design-preview-return:hover,
+      .design-preview-return:focus-visible {
+        transform: translateY(-1px);
+      }
       .design-card-frame.design-video-frame {
         padding: 0;
         background: #0c0715;
@@ -227,6 +274,12 @@
       }
       .design-swatch-slider .swatch {
         flex: 0 0 auto;
+      }
+      [data-design-colors-source] .swatch,
+      [data-design-accessories-source] .swatch {
+        width: 48px;
+        height: 48px;
+        border-width: 3px;
       }
       .design-swatch-slider button svg {
         color: #6b4a7a;
@@ -312,6 +365,9 @@
         overflow: hidden;
         background: rgba(248, 245, 255, 0.8);
         width: 100%;
+        max-width: 720px;
+        margin-left: auto;
+        margin-right: auto;
       }
       .wrap-menu summary {
         list-style: none;
@@ -323,7 +379,8 @@
         font-size: 0.75rem;
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: center;
+        gap: 0.5rem;
         color: #000 !important;
         background: rgba(248, 245, 255, 0.95);
       }
@@ -510,6 +567,24 @@
       .design-notes-label {
         color: #1f0f24 !important;
         opacity: 1 !important;
+      }
+      .design-palette-title--bar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.9rem 1rem;
+        border-radius: 1rem;
+        background: rgba(248, 245, 255, 0.9);
+        border: 1px solid rgba(153, 40, 177, 0.2);
+        font-size: 0.75rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: #000 !important;
+        width: 100%;
+        max-width: 720px;
+        margin: 0 auto 0.5rem;
       }
       .design-selection-swatch {
         width: 36px;
@@ -2945,13 +3020,28 @@
               <div class="design-card-body">
                   <div class="design-palette-grid">
                   <div class="design-center">
-                    <div class="design-card-frame">
-                      <img id="homeDesignPreview" src="assets/glass-tumbler.jpeg" alt="Designed palm tree tumbler" />
+                    <div class="design-card-frame design-video-frame design-preview-frame" data-design-frame>
+                      <button type="button" class="design-preview-return" data-design-back aria-label="Return to image" hidden>Return</button>
+                      <div class="design-preview-layer design-preview-image">
+                        <img id="homeDesignPreview" data-design-image src="assets/glass-tumbler.jpeg" alt="Designed palm tree tumbler" />
+                      </div>
+                      <div class="design-preview-layer design-preview-video" aria-live="polite">
+                        <div class="design-video-message" data-design-video-prompt hidden aria-hidden="true">
+                          <div class="design-video-message-inner">
+                            <p class="design-video-message-title" data-prompt-title>Need a Special Character or Designer Wrap?</p>
+                            <p class="design-video-message-body" data-prompt-body>Share your character or designer theme with us and we will send next steps.</p>
+                            <a class="design-video-message-cta" data-prompt-cta href="mailto:lovettsdandc@gmail.com">Request Custom Wrap</a>
+                          </div>
+                        </div>
+                        <video id="designWrapVideo" data-design-video controls muted playsinline>
+                          <source data-source="hls" src="" type="application/x-mpegURL" />
+                        </video>
+                      </div>
                     </div>
                     <div class="w-full flex justify-center">
-                      <p class="design-palette-title design-palette-title--center design-palette-title--highlight" style="margin-bottom:0.35rem;">Colors</p>
+                      <p class="design-palette-title design-palette-title--center design-palette-title--bar">Colors</p>
                     </div>
-                    <div class="design-swatch-slider swatch-slider flex items-center gap-2" data-swatch-slider data-visible="10">
+                    <div class="design-swatch-slider swatch-slider flex items-center gap-2" data-swatch-slider data-visible="7">
                       <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                       </button>
@@ -3005,9 +3095,9 @@
                       </button>
                     </div>
                     <div class="w-full flex justify-center">
-                      <p class="design-palette-title design-palette-title--center design-palette-title--highlight" style="margin:0.65rem 0 0.35rem;">Accessories</p>
+                      <p class="design-palette-title design-palette-title--center design-palette-title--bar">Accessories</p>
                     </div>
-                    <div class="design-swatch-slider swatch-slider flex items-center gap-2 mt-2" data-swatch-slider data-visible="10">
+                    <div class="design-swatch-slider swatch-slider flex items-center gap-2 mt-2" data-swatch-slider data-visible="7">
                       <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous accessory">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                       </button>
@@ -3028,6 +3118,34 @@
                       <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next accessory">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                       </button>
+                    </div>
+                    <div class="wrap-menu" style="margin-top:0.75rem;" >
+                      <details>
+                        <summary style="color:#000;">
+                          Explore wrap templates
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
+                        </summary>
+                        <ul>
+                          <li data-wrap-option="seasonal-holiday" data-wrap-default="true" data-video-id="de65351aa0c825fa0c3d3a71ea6db687"><span>Seasonal / Holiday</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="women" data-video-id="281dfbc0a9072b1ee25b87ccc9d016b6"><span>Women</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li
+                            data-wrap-option="special-designers"
+                            data-video-prompt-title="Need a Special Character or Designer Wrap?"
+                            data-video-prompt="Share your character or designer theme with us and we will send next steps."
+                            data-video-prompt-cta-label="Request Custom Wrap"
+                            data-video-prompt-cta-href="mailto:lovettsdandc@gmail.com"
+                          >
+                            <span>Special Characters &amp; Designers </span><small>email for custom details</small>
+                          </li>
+                          <li><span>Drinks</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="boys-girls" data-video-id="4e6abab155e7cf1cd2810b095e8ac5db"><span>Boys &amp; Girls</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="supporting-causes" data-video-id="d9c0f246f9b66240d23e875a2ddcce99"><span>Supporting Causes</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="men" data-video-id="3b6e9b07e55512bf69b1f4bcd59489b1"><span>Men</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="careers-hobbies" data-video-id="f003a3be6d1efc71dfd7a1051ae931c1"><span>Careers &amp; Hobbies</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="sports" data-video-id="b256183a06842b86d88c6cbfb1de0225"><span>Sports</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="religion" data-video-id="9bcf826bc7560dfa80644d3f4bc37f00"><span>Religion</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                        </ul>
+                      </details>
                     </div>
                     <div class="design-notes-panel">
                       <div class="design-notes-grid">
@@ -3065,56 +3183,8 @@
                           <span class="design-price-value">$0.00</span>
                         </div>
                       </div>
-                      <div class="cta-wrap design-cta">
-                        <a href="mailto:lovettsdandc@gmail.com" class="cta-btn">
-                          Submit Your Design
-                        </a>
-                      </div>
                     </div>
                   </div>
-                </div>
-                <div class="design-media-grid">
-                  <div class="design-card-frame design-video-frame">
-                    <div class="design-video-message" data-design-video-prompt hidden aria-hidden="true">
-                      <div class="design-video-message-inner">
-                        <p class="design-video-message-title" data-prompt-title>Need a Special Character or Designer Wrap?</p>
-                        <p class="design-video-message-body" data-prompt-body>Share your character or designer theme with us and we will send next steps.</p>
-                        <a class="design-video-message-cta" data-prompt-cta href="mailto:lovettsdandc@gmail.com">Request Custom Wrap</a>
-                      </div>
-                    </div>
-                    <video id="designWrapVideo" data-design-video controls muted playsinline>
-                      <source data-source="hls" src="https://customer-3ptq6xbmg2sfpv29.cloudflarestream.com/de65351aa0c825fa0c3d3a71ea6db687/manifest/video.m3u8" type="application/x-mpegURL" />
-                    </video>
-                  </div>
-                  <div class="wrap-menu" style="margin-top:0.75rem;" >
-                    <details open>
-                      <summary style="color:#000;">
-                        Explore wrap templates
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
-                      </summary>
-                      <ul>
-                        <li data-wrap-option="seasonal-holiday" data-wrap-default="true" data-video-id="de65351aa0c825fa0c3d3a71ea6db687"><span>Seasonal / Holiday</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                        <li data-wrap-option="women" data-video-id="281dfbc0a9072b1ee25b87ccc9d016b6"><span>Women</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                        <li
-                          data-wrap-option="special-designers"
-                          data-video-prompt-title="Need a Special Character or Designer Wrap?"
-                          data-video-prompt="Share your character or designer theme with us and we will send next steps."
-                          data-video-prompt-cta-label="Request Custom Wrap"
-                          data-video-prompt-cta-href="mailto:lovettsdandc@gmail.com"
-                        >
-                          <span>Special Characters &amp; Designers </span><small>email for custom details</small>
-                        </li>
-                        <li><span>Drinks</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                        <li data-wrap-option="boys-girls" data-video-id="4e6abab155e7cf1cd2810b095e8ac5db"><span>Boys &amp; Girls</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                        <li data-wrap-option="supporting-causes" data-video-id="d9c0f246f9b66240d23e875a2ddcce99"><span>Supporting Causes</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                        <li data-wrap-option="men" data-video-id="3b6e9b07e55512bf69b1f4bcd59489b1"><span>Men</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                        <li data-wrap-option="careers-hobbies" data-video-id="f003a3be6d1efc71dfd7a1051ae931c1"><span>Careers &amp; Hobbies</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                        <li data-wrap-option="sports" data-video-id="b256183a06842b86d88c6cbfb1de0225"><span>Sports</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                        <li data-wrap-option="religion" data-video-id="9bcf826bc7560dfa80644d3f4bc37f00"><span>Religion</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                      </ul>
-                    </details>
-                  </div>
-                </div>
                 <div class="cta-wrap">
                   <a href="mailto:lovettsdandc@gmail.com" class="cta-btn">
                     Submit Your Design
@@ -4294,6 +4364,101 @@
 
       const DESIGN_SELECTION_KEY = 'ldcDesignSelection';
       const homeDesignPreview = document.getElementById('homeDesignPreview');
+      const designFrame = document.querySelector('[data-design-frame]');
+      const designImage = designFrame?.querySelector('[data-design-image]');
+      const designVideo = designFrame?.querySelector('[data-design-video]');
+      const designBackButton = designFrame?.querySelector('[data-design-back]');
+      const designVideoPrompt = designFrame?.querySelector('[data-design-video-prompt]');
+      const designVideoPromptTitle = designFrame?.querySelector('[data-prompt-title]');
+      const designVideoPromptBody = designFrame?.querySelector('[data-prompt-body]');
+      const designVideoPromptCta = designFrame?.querySelector('[data-prompt-cta]');
+      let lastImageState = designImage
+        ? {
+            src: designImage.getAttribute('src'),
+            alt: designImage.getAttribute('alt') || 'Custom design preview'
+          }
+        : null;
+
+      const rememberCurrentImage = () => {
+        if (!designImage) return;
+        const src = designImage.getAttribute('src');
+        if (!src) return;
+        lastImageState = {
+          src,
+          alt: designImage.getAttribute('alt') || 'Custom design preview'
+        };
+      };
+
+      const showImagePreview = () => {
+        if (!designFrame || !designImage) return;
+        designFrame.classList.remove('is-video-active');
+        designVideoPrompt?.setAttribute('hidden', 'true');
+        designVideoPrompt?.setAttribute('aria-hidden', 'true');
+        if (designVideo) {
+          designVideo.pause?.();
+          const sourceEl = designVideo.querySelector('source');
+          if (sourceEl) {
+            sourceEl.removeAttribute('src');
+          }
+          designVideo.load?.();
+        }
+        if (lastImageState?.src) {
+          designImage.setAttribute('src', lastImageState.src);
+          designImage.setAttribute('alt', lastImageState.alt || 'Custom design preview');
+        }
+        if (designBackButton) {
+          designBackButton.hidden = true;
+        }
+      };
+
+      const showVideoById = videoId => {
+        if (!videoId || !designFrame || !designVideo) return;
+        rememberCurrentImage();
+        const sourceUrl = `https://customer-3ptq6xbmg2sfpv29.cloudflarestream.com/${videoId}/manifest/video.m3u8`;
+        const sourceEl = designVideo.querySelector('source');
+        if (sourceEl) {
+          sourceEl.setAttribute('src', sourceUrl);
+        }
+        designVideoPrompt?.setAttribute('hidden', 'true');
+        designVideoPrompt?.setAttribute('aria-hidden', 'true');
+        designFrame.classList.add('is-video-active');
+        if (designBackButton) {
+          designBackButton.hidden = false;
+        }
+        designVideo.load?.();
+        designVideo.play?.();
+      };
+
+      const showVideoPrompt = (title, body, ctaLabel, ctaHref) => {
+        if (!designFrame || !designVideoPrompt) return;
+        rememberCurrentImage();
+        if (designVideo) {
+          designVideo.pause?.();
+          const sourceEl = designVideo.querySelector('source');
+          if (sourceEl) {
+            sourceEl.removeAttribute('src');
+          }
+          designVideo.load?.();
+        }
+        if (designVideoPromptTitle) {
+          designVideoPromptTitle.textContent = title || 'Need a Special Character or Designer Wrap?';
+        }
+        if (designVideoPromptBody) {
+          designVideoPromptBody.textContent = body || 'Share your character or designer theme with us and we will send next steps.';
+        }
+        if (designVideoPromptCta) {
+          designVideoPromptCta.textContent = ctaLabel || 'Request Custom Wrap';
+          designVideoPromptCta.setAttribute('href', ctaHref || 'mailto:lovettsdandc@gmail.com');
+        }
+        designVideoPrompt.removeAttribute('hidden');
+        designVideoPrompt.setAttribute('aria-hidden', 'false');
+        designFrame.classList.add('is-video-active');
+        if (designBackButton) {
+          designBackButton.hidden = false;
+        }
+      };
+
+      designBackButton?.addEventListener('click', showImagePreview);
 
       const getStoredDesignSelection = () => {
         try {
@@ -4316,6 +4481,10 @@
         if (!homeDesignPreview || !selection?.src) return;
         homeDesignPreview.setAttribute('src', selection.src);
         homeDesignPreview.setAttribute('alt', selection.alt || 'Custom design preview');
+        lastImageState = {
+          src: selection.src,
+          alt: selection.alt || 'Custom design preview'
+        };
       };
 
       const persistDesignSelection = selection => {
@@ -4514,6 +4683,18 @@
             const activate = event => {
               if (event) event.preventDefault();
               applyWrapSelection(getLabel());
+              const videoId = option.getAttribute('data-video-id');
+              const promptTitle = option.getAttribute('data-video-prompt-title');
+              const promptBody = option.getAttribute('data-video-prompt');
+              const promptCtaLabel = option.getAttribute('data-video-prompt-cta-label');
+              const promptCtaHref = option.getAttribute('data-video-prompt-cta-href');
+              if (videoId) {
+                showVideoById(videoId);
+              } else if (promptTitle || promptBody || promptCtaHref) {
+                showVideoPrompt(promptTitle, promptBody, promptCtaLabel, promptCtaHref);
+              } else {
+                showImagePreview();
+              }
             };
             option.addEventListener('click', activate);
             option.addEventListener('keydown', event => {
@@ -4529,15 +4710,20 @@
         bindSwatches('[data-design-accessories-source] .swatch', accessoryTarget, 'Accessory selected');
         bindWrapOptions();
 
-        const bindClear = (buttonSelector, target, placeholder) => {
+        const bindClear = (buttonSelector, target, placeholder, onClear) => {
           const button = document.querySelector(buttonSelector);
           if (!button) return;
-          button.addEventListener('click', () => clearTarget(target, placeholder));
+          button.addEventListener('click', () => {
+            clearTarget(target, placeholder);
+            if (typeof onClear === 'function') {
+              onClear();
+            }
+          });
         };
 
         bindClear('[data-clear-color]', colorTarget, 'Select a color swatch');
         bindClear('[data-clear-accessory]', accessoryTarget, 'Select an accessory');
-        bindClear('[data-clear-wrap]', wrapTarget, 'Select a wrap template');
+        bindClear('[data-clear-wrap]', wrapTarget, 'Select a wrap template', showImagePreview);
       };
 
       syncBadge();
@@ -4595,30 +4781,3 @@
     </script>
   </body>
 </html>
-      .design-wrap-row {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: end;
-        gap: 0.75rem;
-      }
-      .design-palette-title {
-        font-size: 0.75rem;
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
-        font-weight: 600;
-        color: rgba(31, 15, 36, 0.7);
-      }
-      .design-palette-title--center {
-        text-align: center;
-      }
-      .design-palette-title--highlight {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 0.95rem;
-        padding: 0.25rem 1rem;
-        border-radius: 999px;
-        background: linear-gradient(135deg, rgba(224, 176, 255, 0.25) 0%, rgba(255, 255, 255, 0.8) 100%);
-        box-shadow: inset 0 0 0 1px rgba(153, 40, 177, 0.15);
-        color: rgba(31, 15, 36, 0.8);
-      }
