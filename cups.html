@@ -138,6 +138,66 @@
         background: rgba(255, 255, 255, 0.22);
         transform: translateY(-1px);
       }
+      /* Custom request overlay (reuse support styling) */
+      .custom-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 90;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        background: rgba(15, 23, 42, 0.55);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 220ms ease;
+      }
+      .custom-overlay.is-open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .custom-card {
+        position: relative;
+        width: min(460px, 100%);
+        border-radius: 1.5rem;
+        overflow: hidden;
+        background: linear-gradient(135deg, #E0B0FF 0%, #B678F5 100%);
+        box-shadow: 0 26px 52px rgba(79, 70, 229, 0.26);
+        color: #ffffff;
+      }
+      .custom-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(17, 24, 39, 0.25);
+        pointer-events: none;
+      }
+      .custom-card-content {
+        position: relative;
+        padding: 1.5rem 1.5rem 1.75rem;
+        display: grid;
+        gap: 1rem;
+      }
+      .custom-close-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        border: none;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 180ms ease, transform 180ms ease;
+        z-index: 1;
+      }
+      .custom-close-btn:hover {
+        background: rgba(255, 255, 255, 0.22);
+        transform: translateY(-1px);
+      }
       .support-eyebrow {
         font-size: 0.7rem;
         letter-spacing: 0.32em;
@@ -331,129 +391,298 @@
           grid-template-columns: repeat(4, minmax(0, 1fr));
         }
       }
+
+      /* Updated product styling to match tumbler cards */
       .product-card {
-        background: rgba(255, 255, 255, 0.12);
-        border-radius: 1.5rem;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        box-shadow: 0 16px 32px rgba(15, 23, 42, 0.22);
+        background: linear-gradient(135deg, #E0B0FF 0%, #D8B4FE 100%);
+        border-radius: 1.25rem;
+        border: 1px solid #d8b4fe;
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
         padding: 1.5rem;
         display: flex;
         flex-direction: column;
         gap: 1rem;
         transition: transform 200ms ease, box-shadow 200ms ease;
+        color: #ffffff;
+        position: relative;
       }
       .product-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 24px 44px rgba(15, 23, 42, 0.28);
+        transform: translateY(-3px);
+        box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
       }
       .product-media {
-        width: 100%;
         aspect-ratio: 4 / 5;
-        border-radius: 1.25rem;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        background: rgba(255, 255, 255, 0.08);
+        width: 100%;
+        border-radius: 1rem;
+        border: 1px solid #d8b4fe;
+        background: linear-gradient(135deg, #E0B0FF 0%, #D8B4FE 100%);
         display: flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
+        position: relative;
       }
-      .cup-graphic {
-        width: 32%;
-        height: 78%;
-        border-radius: 0.75rem;
-        background: var(--cup-gradient);
-        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+      .badge-stack {
+        position: absolute;
+        top: 0.6rem;
+        right: 0.6rem;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.25rem;
+        z-index: 3;
+        pointer-events: none;
+      }
+      .product-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
       }
       .product-meta-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 1rem;
+        gap: 0.75rem;
         flex-wrap: wrap;
       }
-      .swatch-row {
+      .product-meta {
+        font-size: 0.85rem;
+        color: rgba(253, 247, 237, 0.85);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .product-details {
+        font-size: 0.85rem;
+        color: rgba(253, 247, 237, 0.85);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .badge {
         display: inline-flex;
         align-items: center;
-        gap: 0.4rem;
-        flex-wrap: wrap;
-        font-size: 0.72rem;
-        color: rgba(255, 255, 255, 0.75);
+        border-radius: 999px;
+        padding: 0.25rem 0.6rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+      }
+      .badge-limited {
+        background: #fbbf24;
+        color: #78350f;
+      }
+      .badge-club {
+        background: #059669;
+        color: #ecfdf3;
       }
       .swatch {
-        width: 1.15rem;
-        height: 1.15rem;
+        width: 1.25rem;
+        height: 1.25rem;
         border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.35);
-        display: inline-block;
-      }
-      .icon-button {
-        border: none;
-        background: linear-gradient(135deg, #FF9AED 0%, #FF5CA8 100%);
-        color: #ffffff;
-        border-radius: 999px;
-        width: 2.5rem;
-        height: 2.5rem;
+        border: 1px solid #e2e8f0;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 8px 16px rgba(255, 92, 168, 0.28);
-        transition: transform 180ms ease, box-shadow 180ms ease;
+      }
+      .icon-button {
+        border: none;
+        background: linear-gradient(135deg, #E0B0FF 0%, #B678F5 100%);
+        color: #ffffff;
+        border-radius: 999px;
+        box-shadow: 0 10px 20px rgba(153, 40, 177, 0.2);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
       }
       .icon-button:hover {
         transform: translateY(-1px);
-        box-shadow: 0 12px 24px rgba(255, 92, 168, 0.3);
+        box-shadow: 0 14px 28px rgba(153, 40, 177, 0.28);
       }
       .icon-button svg {
         width: 1.1rem;
         height: 1.1rem;
       }
       .product-title {
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: #fdf7ed;
+      }
+      .product-price {
         font-size: 0.95rem;
         font-weight: 700;
         letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: #ffffff;
-      }
-      .product-details {
-        font-size: 0.82rem;
-        color: rgba(255, 255, 255, 0.78);
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        flex-wrap: wrap;
+        color: #fdf7ed;
       }
       .price-line {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
+        font-weight: 700;
         letter-spacing: 0.08em;
-        text-transform: uppercase;
-        font-weight: 600;
+        color: #fdf7ed;
       }
       .price-sale {
-        color: #ff8fae;
+        color: inherit;
       }
-      .price-original {
-        color: rgba(255, 255, 255, 0.5);
-        text-decoration: line-through;
-        margin-left: 0.4rem;
+      .swatch-slider {
+        display: flex;
+        align-items: center;
+        gap: 0.1rem;
+        justify-content: center;
       }
-      .tag {
+      .swatch-slider-window {
+        position: relative;
+        overflow: hidden;
+        width: 4.6rem;
+        flex: 0 0 auto;
+      }
+      .swatch-slider-track {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        transition: transform 180ms ease;
+      }
+      .swatch {
+        display: inline-block;
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 9999px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.35);
+        flex: 0 0 auto;
+      }
+      .swatch-arrow {
+        background: transparent;
+        border: none;
+        padding: 0;
+        color: #0f172a;
+        width: 1.5rem;
+        height: 1.5rem;
         display: inline-flex;
         align-items: center;
-        padding: 0.2rem 0.6rem;
-        border-radius: 999px;
-        font-size: 0.65rem;
-        text-transform: uppercase;
-        letter-spacing: 0.14em;
-        background: rgba(255, 255, 255, 0.18);
+        justify-content: center;
+        transition: transform 0.2s ease, opacity 0.2s ease;
+      }
+      .swatch-arrow:hover {
+        transform: translateY(-2px);
+      }
+      .swatch-arrow.light-arrow {
+        color: #fdf7ed;
+      }
+      .product-card {
+        background: linear-gradient(135deg, #E0B0FF 0%, #D8B4FE 100%);
+        border-radius: 1.25rem;
+        border: 1px solid #d8b4fe;
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        transition: transform 200ms ease, box-shadow 200ms ease;
         color: #ffffff;
+        position: relative;
       }
-      .tag.sale {
-        background: rgba(255, 65, 126, 0.35);
-        color: #ff9ec7;
+      .product-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
       }
-      .tag.club {
-        background: rgba(16, 185, 129, 0.25);
-        color: #7ff3cd;
+      .product-media {
+        aspect-ratio: 4 / 5;
+        width: 100%;
+        border-radius: 1rem;
+        border: 1px solid #d8b4fe;
+        background: linear-gradient(135deg, #E0B0FF 0%, #D8B4FE 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+      }
+      .badge-stack {
+        position: absolute;
+        top: 0.6rem;
+        right: 0.6rem;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.25rem;
+        z-index: 3;
+        pointer-events: none;
+      }
+      .product-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .product-meta-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+      .swatch {
+        display: inline-block;
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 9999px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.35);
+        flex: 0 0 auto;
+      }
+      .icon-button {
+        border: none;
+        background: linear-gradient(135deg, #E0B0FF 0%, #B678F5 100%);
+        color: #ffffff;
+        border-radius: 999px;
+        box-shadow: 0 10px 20px rgba(153, 40, 177, 0.2);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      }
+      .icon-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 28px rgba(153, 40, 177, 0.28);
+      }
+      .icon-button svg {
+        width: 1.1rem;
+        height: 1.1rem;
+      }
+      .product-title {
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: #fdf7ed;
+      }
+      .swatch-slider {
+        display: flex;
+        align-items: center;
+        gap: 0.1rem;
+        justify-content: center;
+      }
+      .swatch-slider-window {
+        position: relative;
+        overflow: hidden;
+        width: 4.6rem;
+        flex: 0 0 auto;
+      }
+      .swatch-slider-track {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        transition: transform 180ms ease;
+      }
+      .swatch-slider button {
+        background: transparent;
+        border: none;
+        padding: 0;
+        color: #0f172a;
+        width: 1.5rem;
+        height: 1.5rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s ease, opacity 0.2s ease;
+      }
+      .swatch-slider button:hover {
+        transform: translateY(-2px);
       }
       .footer {
         margin-top: auto;
@@ -511,11 +740,11 @@
               <span class="hero-eyebrow">Sip in color</span>
               <h1 class="hero-heading">Cups &amp; Mugs designed for everyday sparkle.</h1>
               <p class="hero-subtext">
-                Layered gradients, shimmering finishes, and hand-selected palettes make each Lovett cup a small piece of art. Choose a ready-to-ship style or reach out for a custom color story that matches your mood.
+                Layered gradients, shimmering finishes, and hand-selected palettes make each cup a small piece of art. Choose a ready-to-ship style or fill out the request a custom order form below.
               </p>
               <div class="hero-actions">
                 <a class="cta-button" href="#cups-grid">Shop Cups &amp; Mugs</a>
-                <a class="cta-button secondary" href="mailto:lovettsdandc@gmail.com">Request a custom</a>
+                <button class="cta-button secondary" type="button" data-custom-open style="border:none;">Request a custom</button>
               </div>
             </div>
           </div>
@@ -525,8 +754,7 @@
           <div class="container mx-auto px-5 lg:px-12">
             <header class="collection-header">
               <div>
-                <p class="text-xs uppercase tracking-[0.35em] text-white/70">Limited batches</p>
-                <h2 class="mt-3 text-2xl md:text-3xl font-extrabold tracking-tight text-white">Lovett's cup &amp; mug collection</h2>
+                <h2 class="mt-3 text-2xl md:text-3xl font-extrabold tracking-tight text-white">LDC Cups &amp; Mugs</h2>
               </div>
               <p class="max-w-md text-sm md:text-base text-white/70 leading-relaxed">
                 Small runs keep the colors exclusive. Snap up the ones you love or tap the heart to save them in favorites while you browse.
@@ -536,246 +764,307 @@
             <div class="filter-bar mt-6"></div>
 
             <div class="collection-grid mt-8">
-              <article class="product-card">
+              <article class="product-card group relative">
                 <div class="product-media">
-                  <div class="cup-graphic" style="--cup-gradient: linear-gradient(180deg,#d7a8d6 0%,#c693c5 100%);"></div>
+                  <div class="badge-stack">
+                    <span id="cupsAcrylicLimited" class="badge-limited" style="display:none;">Limited Edition</span>
+                  </div>
+                  <img id="cupsAcrylicImage" src="assets/acrylic.png" alt="Acrylic cup product photo" loading="lazy" />
                 </div>
                 <div class="product-meta-row">
-                  <div class="swatch-row">
-                    <span class="swatch" style="background:#2563eb;" aria-label="Blue swatch"></span>
-                    <span class="swatch" style="background:#8b5cf6;" aria-label="Purple swatch"></span>
-                    <span class="swatch" style="background:#0d9488;" aria-label="Teal swatch"></span>
-                    <span class="swatch" style="background:#ec4899;" aria-label="Pink swatch"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                    <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
-                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                    <div class="swatch-slider-window" data-swatch-window>
+                      <div class="swatch-slider-track" data-swatch-track>
+                        <span class="swatch cursor-pointer w-5 h-5 rounded-full ring-1 ring-slate-200" aria-label="Blue swatch" data-image-target="cupsAcrylicImage" data-image-src="assets/acrylic.png" data-image-alt="Acrylic cup - blue" data-price-target="cupsAcrylicPrice" data-price="25.00" style="flex:0 0 auto; background:#2563eb;"></span>
+                        <span class="swatch cursor-pointer w-5 h-5 rounded-full ring-1 ring-slate-200" aria-label="Purple swatch" data-image-target="cupsAcrylicImage" data-image-src="assets/acrylic.png" data-image-alt="Acrylic cup - purple" data-price-target="cupsAcrylicPrice" data-price="25.00" style="flex:0 0 auto; background:#8b5cf6;"></span>
+                        <span class="swatch cursor-pointer w-5 h-5 rounded-full ring-1 ring-slate-200" aria-label="Teal swatch" data-image-target="cupsAcrylicImage" data-image-src="assets/acrylic.png" data-image-alt="Acrylic cup - teal" data-price-target="cupsAcrylicPrice" data-price="25.00" style="flex:0 0 auto; background:#0d9488;"></span>
+                        <span class="swatch cursor-pointer w-5 h-5 rounded-full ring-1 ring-slate-200" aria-label="Pink swatch" data-image-target="cupsAcrylicImage" data-image-src="assets/acrylic.png" data-image-alt="Acrylic cup - pink" data-price-target="cupsAcrylicPrice" data-price="25.00" style="flex:0 0 auto; background:#ec4899;"></span>
+                      </div>
+                    </div>
+                    <button type="button" class="swatch-arrow light-arrow" data-swatch-next aria-label="Next color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
                 </div>
-                <div class="product-details">
-                  <span>16oz | Lavender</span>
-                  <span class="tag sale">Sale</span>
+                <div class="product-meta">
+                  <span>16oz • Glass</span>
                 </div>
-                <h3 class="product-title">LDC Cup 1</h3>
-                <div class="price-line">
-                  <span class="price-sale">$20.00</span>
+                <h3 class="product-title">Acrylic</h3>
+                <span class="product-price" id="cupsAcrylicPrice">$25.00</span>
+                <div class="flex items-center gap-2 tile-actions">
+                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                  </button>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                  </button>
                 </div>
               </article>
 
-              <article class="product-card">
+              <article class="product-card group relative">
                 <div class="product-media">
-                  <div class="cup-graphic" style="--cup-gradient: linear-gradient(180deg,#c9c8c4 0%,#bdbbb6 100%);"></div>
+                  <img src="assets/snow-globe.png" alt="Snow Globe cup product photo" loading="lazy" />
                 </div>
                 <div class="product-meta-row">
-                  <div class="swatch-row">
-                    <span class="swatch" style="background:#0d9488;" aria-label="Teal swatch"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                    <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
-                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                    <div class="relative overflow-hidden swatch-slider-window" data-swatch-window>
+                      <div class="flex items-center gap-2 swatch-slider-track" data-swatch-track>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-200" style="flex:0 0 auto; background:#0d9488;" aria-label="Teal"></span>
+                      </div>
+                    </div>
+                    <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
                 </div>
                 <div class="product-details">
                   <span>16oz | Glass</span>
-                  <span class="tag sale">Sale</span>
                 </div>
                 <h3 class="product-title">Snow Globe</h3>
                 <div class="price-line">
                   <span class="price-sale">$25.00</span>
-                  <span class="price-original">$28.00</span>
+                </div>
+                <div class="flex items-center gap-2 tile-actions">
+                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                  </button>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                  </button>
                 </div>
               </article>
 
-              <article class="product-card">
+              <article class="product-card group relative">
                 <div class="product-media">
-                  <div class="cup-graphic" style="--cup-gradient: linear-gradient(180deg,#efeede 0%,#dedabf 100%);"></div>
+                  <img src="assets/frosted-sublimination.png" alt="Frosted Sublimination cup product photo" loading="lazy" />
                 </div>
                 <div class="product-meta-row">
-                  <div class="swatch-row">
-                    <span class="swatch" style="background:#8b5cf6;" aria-label="Purple swatch"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                    <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
-                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                    <div class="relative overflow-hidden swatch-slider-window" data-swatch-window>
+                      <div class="flex items-center gap-2 swatch-slider-track" data-swatch-track>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-200" style="flex:0 0 auto; background:#8b5cf6;" aria-label="Purple"></span>
+                      </div>
+                    </div>
+                    <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
                 </div>
                 <div class="product-details">
                   <span>16oz | Glass</span>
-                  <span class="tag club">Club Exclusive</span>
-                  <span class="tag sale">Sale</span>
                 </div>
                 <h3 class="product-title">Frosted Sublimination</h3>
                 <div class="price-line">
                   <span class="price-sale">$25.00</span>
-                  <span class="price-original">$30.00</span>
+                </div>
+                <div class="flex items-center gap-2 tile-actions">
+                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                  </button>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                  </button>
                 </div>
               </article>
 
-              <article class="product-card">
+              <article class="product-card group relative">
                 <div class="product-media">
-                  <div class="cup-graphic">
-                    <img src="assets/porcelain-sublimination.png" alt="LDC Cup 4 product photo" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" loading="lazy" />
-                  </div>
+                  <img src="assets/porcelain-sublimination.png" alt="Bamboo Lid Mug product photo" loading="lazy" />
                 </div>
                 <div class="product-meta-row">
-                  <div class="swatch-row">
-                    <span class="swatch" style="background:#ffffff;" aria-label="White swatch"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                    <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
-                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                    <div class="relative overflow-hidden swatch-slider-window" data-swatch-window>
+                      <div class="flex items-center gap-2 swatch-slider-track" data-swatch-track>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-200" style="flex:0 0 auto; background:#ffffff;" aria-label="White"></span>
+                      </div>
+                    </div>
+                    <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
                 </div>
                 <div class="product-details">
                   <span>15oz | Porcelain</span>
                 </div>
-                <h3 class="product-title">Porcelain Sublimination</h3>
+                <h3 class="product-title">Bamboo Lid Mug</h3>
                 <div class="price-line">
-                  <span>$15.00</span>
+                  <span class="price-sale">$20.00</span>
+                </div>
+                <div class="flex items-center gap-2 tile-actions">
+                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                  </button>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                  </button>
                 </div>
               </article>
 
-              <article class="product-card">
+              <article class="product-card group relative">
                 <div class="product-media">
-                  <div class="cup-graphic">
-                    <img src="assets/steel-sublimination.png" alt="Steel Sublimination product photo" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" loading="lazy" />
-                  </div>
+                  <img src="assets/steel-sublimination.png" alt="Steel Sublimination cup product photo" loading="lazy" />
                 </div>
                 <div class="product-meta-row">
-                  <div class="swatch-row">
-                    <span class="swatch" style="background:#ffffff;" aria-label="White swatch"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                    <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
-                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                    <div class="relative overflow-hidden swatch-slider-window" data-swatch-window>
+                      <div class="flex items-center gap-2 swatch-slider-track" data-swatch-track>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-200" style="flex:0 0 auto; background:#ffffff;" aria-label="White"></span>
+                      </div>
+                    </div>
+                    <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
                 </div>
                 <div class="product-details">
                   <span>15oz | Stainless Steel</span>
-                  <span class="tag sale">Sale</span>
                 </div>
                 <h3 class="product-title">Steel Sublimination</h3>
                 <div class="price-line">
-                  <span class="price-sale">$15.00</span>
-                  <span class="price-original">$28.00</span>
+                  <span class="price-sale">$20.00</span>
+                </div>
+                <div class="flex items-center gap-2 tile-actions">
+                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                  </button>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                  </button>
                 </div>
               </article>
 
-              <article class="product-card">
+              <article class="product-card group relative">
                 <div class="product-media">
-                  <div class="cup-graphic">
-                    <img src="assets/glass.png" alt="Glass product photo" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" loading="lazy" />
+                  <div class="badge-stack">
+                    <span class="badge badge-limited">Limited Edition</span>
                   </div>
+                  <img src="assets/glass.png" alt="Glass cup product photo" loading="lazy" />
                 </div>
                 <div class="product-meta-row">
-                  <div class="swatch-row">
-                    <span class="swatch" style="background:#2563eb;" aria-label="Blue swatch"></span>
-                    <span class="swatch" style="background:#ec4899;" aria-label="Pink swatch"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="2">
+                    <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
-                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                    <div class="relative overflow-hidden swatch-slider-window" data-swatch-window>
+                      <div class="flex items-center gap-2 swatch-slider-track" data-swatch-track>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-200" style="flex:0 0 auto; background:#2563eb;" aria-label="Blue"></span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-200" style="flex:0 0 auto; background:#ec4899;" aria-label="Pink"></span>
+                      </div>
+                    </div>
+                    <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
                 </div>
                 <div class="product-details">
                   <span>12oz | Glass</span>
-                  <span class="tag sale" style="background:#fbbf24;color:#78350f;">Limited Edition</span>
                 </div>
                 <h3 class="product-title">Glass</h3>
                 <div class="price-line">
-                  <span class="price-sale">$10.00</span>
-                  <span class="price-original">$30.00</span>
+                  <span class="price-sale">$20.00</span>
+                </div>
+                <div class="flex items-center gap-2 tile-actions">
+                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                  </button>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                  </button>
                 </div>
               </article>
 
-              <article class="product-card">
+              <article class="product-card group relative">
                 <div class="product-media">
-                  <div class="cup-graphic">
-                    <img src="assets/glass-sublimination.png" alt="Glass Sublimination product photo" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" loading="lazy" />
-                  </div>
+                  <img src="assets/glass-sublimination.png" alt="Glass Sublimination cup product photo" loading="lazy" />
                 </div>
                 <div class="product-meta-row">
-                  <div class="swatch-row">
-                    <span class="swatch" style="background:#db2777;" aria-label="Hot pink swatch"></span>
-                    <span class="swatch" style="background:#000000;" aria-label="Black swatch"></span>
-                    <span class="swatch" style="background:#ffffff;" aria-label="White swatch"></span>
-                    <span class="swatch" style="background:#0d9488;" aria-label="Teal swatch"></span>
-                    <span class="swatch" style="background:#ec4899;" aria-label="Pink swatch"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="3">
+                    <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
-                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                    <div class="relative overflow-hidden swatch-slider-window" data-swatch-window>
+                      <div class="flex items-center gap-2 swatch-slider-track" data-swatch-track>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-200" style="flex:0 0 auto; background:#db2777;" aria-label="Hot pink"></span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-200" style="flex:0 0 auto; background:#000000;" aria-label="Black"></span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-200" style="flex:0 0 auto; background:#ffffff;" aria-label="White"></span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-200" style="flex:0 0 auto; background:#0d9488;" aria-label="Teal"></span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-200" style="flex:0 0 auto; background:#ec4899;" aria-label="Pink"></span>
+                      </div>
+                    </div>
+                    <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
                 </div>
                 <div class="product-details">
                   <span>16oz | Glass</span>
-                  <span class="tag sale">Sale</span>
                 </div>
                 <h3 class="product-title">Glass Sublimination</h3>
                 <div class="price-line">
                   <span class="price-sale">$20.00</span>
                 </div>
+                <div class="flex items-center gap-2 tile-actions">
+                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                  </button>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                  </button>
+                </div>
               </article>
 
-              <article class="product-card">
+              <article class="product-card group relative">
                 <div class="product-media">
-                  <div class="cup-graphic">
-                    <img src="assets/slim-snow-globe.png" alt="Slim Snow Globe product photo" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" loading="lazy" />
-                  </div>
+                  <img src="assets/slim-snow-globe.png" alt="Slim Snow Globe cup product photo" loading="lazy" />
                 </div>
                 <div class="product-meta-row">
-                  <div class="swatch-row">
-                    <span class="swatch" style="background:#1e3a8a;" aria-label="Navy blue swatch"></span>
-                    <span class="swatch" style="background:#ef4444;" aria-label="Red swatch"></span>
-                    <span class="swatch" style="background:#ec4899;" aria-label="Pink swatch"></span>
-                    <span class="swatch" style="background:#f97316;" aria-label="Orange swatch"></span>
-                    <span class="swatch" style="background:#facc15;" aria-label="Yellow swatch"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="3">
+                    <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
-                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                  <div class="relative overflow-hidden swatch-slider-window" data-swatch-window>
+                    <div class="flex items-center gap-2 swatch-slider-track" data-swatch-track>
+                      <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-200" style="flex:0 0 auto; background:#1e3a8a;" aria-label="Navy"></span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-200" style="flex:0 0 auto; background:#ef4444;" aria-label="Red"></span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-200" style="flex:0 0 auto; background:#ec4899;" aria-label="Pink"></span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-200" style="flex:0 0 auto; background:#f97316;" aria-label="Orange"></span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-200" style="flex:0 0 auto; background:#facc15;" aria-label="Yellow"></span>
+                      </div>
+                    </div>
+                    <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
                 </div>
                 <div class="product-details">
                   <span>20oz | Acrylic</span>
-                  <span class="tag sale">Sale</span>
                 </div>
                 <h3 class="product-title">Slim Snow Globe</h3>
                 <div class="price-line">
-                  <span class="price-sale">$10.00</span>
-                  <span class="price-original">$30.00</span>
+                  <span class="price-sale">$20.00</span>
+                </div>
+                <div class="flex items-center gap-2 tile-actions">
+                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                  </button>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                  </button>
                 </div>
               </article>
             </div>
@@ -802,7 +1091,6 @@
       <footer class="footer">
         <div class="container mx-auto px-5 lg:px-12 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <span>&copy; <span id="year"></span> Lovett's Designs and Crafts</span>
-          <span>Crafted with love in Atlanta, GA</span>
         </div>
       </footer>
 
@@ -850,6 +1138,54 @@
         </div>
       </div>
     </div>
+    <div class="custom-overlay" data-custom-overlay aria-hidden="true">
+      <div class="custom-card" data-custom-card role="dialog" aria-modal="true" aria-labelledby="customTitle">
+        <button type="button" class="custom-close-btn" data-custom-close aria-label="Close custom request">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        <div class="custom-card-content">
+          <p class="support-eyebrow">Design My Cup or Mug</p>
+          <h2 class="support-title" id="customTitle">Custom Order Request</h2>
+          <p class="support-subtitle">Share your size, colors, and any notes. We’ll follow up within 1 business day.</p>
+          <form class="support-form" data-custom-form>
+            <label class="support-field" for="customCupName">
+              <span>Your name</span>
+              <input type="text" id="customCupName" class="support-input" placeholder="Your name" autocomplete="name" required />
+            </label>
+            <label class="support-field" for="customCupEmail">
+              <span>Email</span>
+              <input type="email" id="customCupEmail" class="support-input" placeholder="you@example.com" autocomplete="email" required />
+            </label>
+            <label class="support-field" for="customCupPhone">
+              <span>Phone (optional)</span>
+              <input type="tel" id="customCupPhone" class="support-input" placeholder="(555) 123-4567" />
+            </label>
+            <label class="support-field" for="customCupSize">
+              <span>Size</span>
+              <select id="customCupSize" class="support-input" required>
+                <option value="">Choose a size</option>
+                <option>12oz</option>
+                <option>15oz</option>
+                <option>16oz</option>
+                <option>20oz</option>
+              </select>
+            </label>
+            <label class="support-field" for="customCupQuantity">
+              <span>Quantity</span>
+              <input type="number" id="customCupQuantity" class="support-input" min="1" placeholder="1" />
+            </label>
+            <label class="support-field" for="customCupNotes">
+              <span>Style notes</span>
+              <textarea id="customCupNotes" class="support-input" rows="4" placeholder="Colors, finishes, lids, names, logos, or inspiration links..." required></textarea>
+            </label>
+            <button type="submit" class="support-submit" data-custom-submit>Send Request</button>
+          </form>
+          <div class="support-footer">
+            Prefer email? <a href="mailto:lovettsdandc@gmail.com">lovettsdandc@gmail.com</a>
+          </div>
+        </div>
+      </div>
+    </div>
 
     </div>
 
@@ -858,6 +1194,7 @@
       if (footerYear) footerYear.textContent = new Date().getFullYear();
 
       const supportOverlay = document.querySelector('[data-support-overlay]');
+      const customOverlay = document.querySelector('[data-custom-overlay]');
       if (supportOverlay) {
         const supportOpeners = document.querySelectorAll('[data-support-open]');
         const supportClosers = supportOverlay.querySelectorAll('[data-support-close]');
@@ -900,6 +1237,171 @@
           closeSupport();
         });
       }
+
+      if (customOverlay) {
+        const customOpeners = document.querySelectorAll('[data-custom-open]');
+        const customClosers = customOverlay.querySelectorAll('[data-custom-close]');
+        const customForm = customOverlay.querySelector('[data-custom-form]');
+        const customName = document.getElementById('customCupName');
+        const setCustomState = isOpen => {
+          customOverlay.classList.toggle('is-open', isOpen);
+          customOverlay.setAttribute('aria-hidden', String(!isOpen));
+          document.body.classList.toggle('custom-open', isOpen);
+          if (isOpen && customName) {
+            requestAnimationFrame(() => customName.focus());
+          }
+        };
+        const closeCustom = () => setCustomState(false);
+        const openCustom = () => setCustomState(true);
+        customOpeners.forEach(trigger => {
+          trigger.addEventListener('click', event => {
+            event.preventDefault();
+            openCustom();
+          });
+        });
+        customClosers.forEach(trigger => {
+          trigger.addEventListener('click', event => {
+            event.preventDefault();
+            closeCustom();
+          });
+        });
+        customOverlay.addEventListener('click', event => {
+          if (event.target === customOverlay) {
+            closeCustom();
+          }
+        });
+        document.addEventListener('keydown', event => {
+          if (event.key === 'Escape' && customOverlay.classList.contains('is-open')) {
+            closeCustom();
+          }
+        });
+        customForm?.addEventListener('submit', event => {
+          event.preventDefault();
+          closeCustom();
+        });
+      }
+
+      const initSwatchSliders = () => {
+        document.querySelectorAll('[data-swatch-slider]').forEach(slider => {
+          if (slider.dataset.sliderInit) return;
+          slider.dataset.sliderInit = 'true';
+          const track = slider.querySelector('[data-swatch-track]');
+          const windowEl = slider.querySelector('[data-swatch-window]');
+          const prev = slider.querySelector('[data-swatch-prev]');
+          const next = slider.querySelector('[data-swatch-next]');
+          const visible = Number(slider.getAttribute('data-visible') || 3);
+          let index = 0;
+
+          const setWindowWidth = () => {
+            if (!windowEl || !track) return;
+            const first = track.children[0];
+            if (!first) return;
+            const styles = getComputedStyle(track);
+            const gap = parseFloat(styles.gap || styles.columnGap || '0');
+            const swatchWidth = first.getBoundingClientRect().width;
+            const totalWidth = swatchWidth * visible + gap * (visible - 1);
+            windowEl.style.width = `${totalWidth}px`;
+          };
+
+          const update = () => {
+            if (!track) return;
+            const swatches = Array.from(track.children);
+            const total = swatches.length;
+            const maxIndex = Math.max(0, total - visible);
+            if (maxIndex === 0) {
+              index = 0;
+            } else if (index < 0) {
+              index = maxIndex;
+            } else if (index > maxIndex) {
+              index = 0;
+            }
+            const first = swatches[0];
+            const gap = parseFloat(getComputedStyle(track).gap || getComputedStyle(track).columnGap || '0');
+            const swatchWidth = first ? first.getBoundingClientRect().width : 0;
+            const offset = (swatchWidth + gap) * index;
+            track.style.transform = `translateX(-${offset}px)`;
+            const disable = maxIndex === 0;
+            if (prev) {
+              prev.classList.toggle('opacity-40', disable);
+              prev.classList.toggle('pointer-events-none', disable);
+              prev.setAttribute('aria-disabled', disable ? 'true' : 'false');
+            }
+            if (next) {
+              next.classList.toggle('opacity-40', disable);
+              next.classList.toggle('pointer-events-none', disable);
+              next.setAttribute('aria-disabled', disable ? 'true' : 'false');
+            }
+          };
+
+          const step = direction => {
+            index += direction;
+            update();
+          };
+
+          prev?.addEventListener('click', event => {
+            event.preventDefault();
+            step(-1);
+          });
+
+          next?.addEventListener('click', event => {
+            event.preventDefault();
+            step(1);
+          });
+
+          window.addEventListener('resize', update);
+          window.addEventListener('resize', setWindowWidth);
+          setWindowWidth();
+          update();
+        });
+      };
+
+      const wireProductSwatches = () => {
+        document.querySelectorAll('.swatch[data-image-target]').forEach(swatch => {
+          if (swatch.dataset.swatchInit) return;
+          swatch.dataset.swatchInit = 'true';
+          const targetImageId = swatch.getAttribute('data-image-target');
+          const imageSrc = swatch.getAttribute('data-image-src');
+          const imageAlt = swatch.getAttribute('data-image-alt');
+          const priceTargetId = swatch.getAttribute('data-price-target');
+          const priceValue = swatch.getAttribute('data-price');
+          const limitedTargetId = swatch.getAttribute('data-limited-target');
+          const limitedValue = swatch.getAttribute('data-limited');
+
+          const apply = () => {
+            if (targetImageId && imageSrc) {
+              const target = document.getElementById(targetImageId);
+              if (target) {
+                target.setAttribute('src', imageSrc);
+                if (imageAlt) target.setAttribute('alt', imageAlt);
+              }
+            }
+            if (priceTargetId && priceValue) {
+              const priceEl = document.getElementById(priceTargetId);
+              if (priceEl) {
+                priceEl.textContent = `$${parseFloat(priceValue).toFixed(2)}`;
+              }
+            }
+            if (limitedTargetId) {
+              const badge = document.getElementById(limitedTargetId);
+              if (badge) {
+                const show = limitedValue === 'true';
+                badge.style.display = show ? '' : 'none';
+              }
+            }
+          };
+
+          swatch.addEventListener('click', apply);
+          swatch.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              apply();
+            }
+          });
+        });
+      };
+
+      initSwatchSliders();
+      wireProductSwatches();
     </script>
 
   </body>

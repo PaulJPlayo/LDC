@@ -172,6 +172,18 @@
       }
       .design-swatch-slider button[data-swatch-prev],
       .design-swatch-slider button[data-swatch-next] {
+        width: 2.5rem !important;
+        height: 2.5rem !important;
+        border: 1px solid #e2e8f0 !important;
+        background: #ffffff !important;
+        border-radius: 9999px;
+        box-shadow: 0 6px 14px rgba(31, 18, 52, 0.12) !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        opacity: 1 !important;
+        visibility: visible !important;
         transition: transform 0.2s ease, opacity 0.2s ease;
       }
       .design-swatch-slider button[data-swatch-prev]:hover,
@@ -962,7 +974,7 @@
                     <div class="w-full flex justify-center">
                       <p class="design-palette-title design-palette-title--center design-palette-title--bar">Colors</p>
                     </div>
-                    <div class="design-swatch-slider swatch-slider flex items-center gap-2" data-swatch-slider data-visible="7">
+                    <div class="design-swatch-slider swatch-slider flex items-center gap-2" data-swatch-slider data-visible="7" data-visible-mobile="5">
                       <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                       </button>
@@ -971,7 +983,7 @@
                             <span class="swatch" aria-label="View white option" style="background: radial-gradient(circle, #ffffff 0%, #f7f7f7 55%, #d9d9d9 100%);"></span>
                             <span class="swatch" aria-label="View glow in the dark option" style="background: radial-gradient(circle, #ccff88 0%, #8dff3a 65%, #48ff5b 100%);"></span>
                             <span class="swatch" aria-label="Glass finish swatch" style="background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 60%), linear-gradient(135deg, rgba(226,232,240,0.7) 0%, rgba(148,163,184,0.4) 100%);"></span>
-                            <span class="swatch" aria-label="White swatch" style="background: linear-gradient(145deg,#ffffff 0%,#f5f5f5 40%,#e2e8f0 100%);"></span>
+                            <!-- Removed white swatch that blended with background -->
                             <span class="swatch" aria-label="Black swatch" style="background: #1f2937;"></span>
                             <span class="swatch" aria-label="Hot pink swatch" style="background: radial-gradient(circle at 30% 30%, #ffd1e8 0%, #ff4ba5 45%, #d9048e 100%);"></span>
                             <span class="swatch" aria-label="Two-tone pink swatch" style="background: linear-gradient(135deg, #ff6fb7 0%, #ffa8df 50%, #ffd1f1 100%);"></span>
@@ -995,13 +1007,13 @@
                             <span class="swatch" aria-label="Red swatch" style="background: #ef4444;"></span>
                             <span class="swatch" aria-label="Orange swatch" style="background: #f97316;"></span>
                             <span class="swatch" aria-label="Yellow swatch" style="background: #facc15;"></span>
-                            <span class="swatch" style="background: #ff78c4;"></span>
-                            <span class="swatch" style="background: #ff1493;"></span>
-                            <span class="swatch" style="background: #ff4d4f;"></span>
-                            <span class="swatch" style="background: #add8e6;"></span>
-                            <span class="swatch" style="background: #a855f7;"></span>
-                            <span class="swatch" style="background: #fb923c;"></span>
-                            <span class="swatch" style="background: #ff6ec7;"></span>
+                            <span class="swatch" aria-label="Pink swatch" style="background: #ff78c4;"></span>
+                            <span class="swatch" aria-label="Hot pink swatch" style="background: #ff1493;"></span>
+                            <span class="swatch" aria-label="Red swatch" style="background: #ff4d4f;"></span>
+                            <span class="swatch" aria-label="Light blue swatch" style="background: #add8e6;"></span>
+                            <span class="swatch" aria-label="Purple swatch" style="background: #a855f7;"></span>
+                            <span class="swatch" aria-label="Orange swatch" style="background: #fb923c;"></span>
+                            <span class="swatch" aria-label="Pink swatch" style="background: #ff6ec7;"></span>
                             <span class="swatch" aria-label="Glass swatch" style="background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 60%), linear-gradient(135deg, rgba(238,242,255,0.65) 0%, rgba(148,163,184,0.35) 100%);"></span>
                             <span class="swatch" aria-label="Green swatch" style="background: #22c55e;"></span>
                             <span class="swatch" aria-label="Forest green swatch" style="background: #14532d;"></span>
@@ -1018,16 +1030,17 @@
                     <div class="w-full flex justify-center">
                       <p class="design-palette-title design-palette-title--center design-palette-title--bar">Accessories</p>
                     </div>
-                    <div class="design-swatch-slider swatch-slider flex items-center gap-2 mt-2" data-swatch-slider data-visible="7">
+                    <div class="design-swatch-slider swatch-slider flex items-center gap-2 mt-2" data-swatch-slider data-visible="7" data-visible-mobile="5">
                       <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous accessory">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                       </button>
                       <div class="relative overflow-hidden design-swatch-window" data-swatch-window>
                         <div class="flex items-center design-swatch-track transition-transform duration-200" data-swatch-track data-design-accessories-source>
-                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-items:center; color:#ffffff; font-size:0.6rem; line-height:1;" aria-label="Rhinestone accessory accent">💎</span>
+                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.6rem; line-height:1;" aria-label="Rhinestone accessory accent">💎</span>
                             <span class="swatch" style="background:#5eead4; display:flex; align-items:center; justify-content:center; color:#0f172a; font-size:0.7rem; line-height:1;" aria-label="Jelly accessory accent">🪼</span>
+                            <span class="swatch" style="background: radial-gradient(circle at 35% 35%, rgba(224,242,255,0.95) 0%, rgba(96,165,250,0.35) 65%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4); display:flex; align-items:center; justify-content:center; color:#1f2937; font-size:0.7rem; line-height:1;" aria-label="Glass accessory accent">🔍</span>
                             <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.7rem; line-height:1;" aria-label="Bow accent">🎀</span>
-                            <span class="swatch" style="background:#f8d7f5; display:flex; align-items:center; justify-content:center; color:#6b21a8; font-size:0.7rem; line-height:1;" aria-label="Swirl accent">🎀</span>
+                             <span class="swatch" style="background:#dbeafe; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Swirl accent">🌀</span>
                             <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cafe accent">☕</span>
                             <span class="swatch" style="background:#f9a8d4; display:flex; align-items:center; justify-content:center; color:#7f1d1d; font-size:0.7rem; line-height:1;" aria-label="Christmas accent">⛄️</span>
                             <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cat accent">🐱</span>
@@ -1245,7 +1258,10 @@
             const windowEl = slider.querySelector('[data-swatch-window]');
             const prev = slider.querySelector('[data-swatch-prev]');
             const next = slider.querySelector('[data-swatch-next]');
-            const visible = Number(slider.getAttribute('data-visible') || 5);
+            const baseVisible = Number(slider.getAttribute('data-visible') || 5);
+            const mobileVisible = Number(slider.getAttribute('data-visible-mobile') || baseVisible);
+            const isMobile = () => window.matchMedia('(max-width: 767px)').matches;
+            const getVisible = () => (isMobile() ? mobileVisible : baseVisible);
             let index = 0;
 
             const setWindowWidth = () => {
@@ -1255,6 +1271,7 @@
               const styles = getComputedStyle(track);
               const gap = parseFloat(styles.gap || styles.columnGap || '0');
               const swatchWidth = first.getBoundingClientRect().width;
+              const visible = getVisible();
               const totalWidth = swatchWidth * visible + gap * (visible - 1);
               windowEl.style.width = `${totalWidth}px`;
             };
@@ -1263,6 +1280,7 @@
               if (!track) return;
               const swatches = Array.from(track.children);
               const total = swatches.length;
+              const visible = getVisible();
               const maxIndex = Math.max(0, total - visible);
               if (maxIndex === 0) {
                 index = 0;
@@ -1317,16 +1335,29 @@
           const wrapTarget = document.querySelector('[data-selected-wrap]');
           if (!colorTarget && !accessoryTarget && !wrapTarget) return;
 
-          const applyToTarget = (target, swatch, placeholder) => {
-            if (!target || !swatch) return;
-            const style = swatch.getAttribute('style') || '';
-            const text = (swatch.textContent || '').trim();
-            const label = swatch.getAttribute('aria-label') || placeholder;
-            const swatchNode = target.querySelector('.design-selection-swatch');
-            const labelNode = target.querySelector('.design-selection-label');
-            if (swatchNode) {
-              swatchNode.setAttribute('style', style);
-              swatchNode.textContent = text;
+        const cleanLabel = raw => {
+          if (!raw) return raw;
+          const stripped = raw
+            .replace(/\s*swatch\b/i, '')
+            .replace(/^view\s+/i, '')
+            .replace(/\s+option\b/i, '')
+            .replace(/\baccessory\b/gi, '')
+            .replace(/\baccent\b/gi, '')
+            .trim();
+          if (!stripped) return stripped;
+          return stripped.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1));
+        };
+
+        const applyToTarget = (target, swatch, placeholder) => {
+          if (!target || !swatch) return;
+          const style = swatch.getAttribute('style') || '';
+          const text = (swatch.textContent || '').trim();
+          const label = cleanLabel(swatch.getAttribute('aria-label') || placeholder);
+          const swatchNode = target.querySelector('.design-selection-swatch');
+          const labelNode = target.querySelector('.design-selection-label');
+          if (swatchNode) {
+            swatchNode.setAttribute('style', style);
+            swatchNode.textContent = text;
             }
             if (labelNode) {
               labelNode.textContent = label;
