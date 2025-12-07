@@ -148,6 +148,28 @@
         letter-spacing: 0;
         color: #ffffff;
       }
+      .checkout-item-options {
+        list-style: none;
+        padding: 0;
+        margin: 0.25rem 0 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.9rem;
+      }
+      .checkout-item-options .label,
+      .checkout-item-notes .label {
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        margin-right: 0.35rem;
+      }
+      .checkout-item-notes {
+        margin-top: 0.35rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.9rem;
+      }
       .checkout-item-price {
         font-size: 0.85rem;
         font-weight: 600;
@@ -277,15 +299,18 @@
         const fallbackPreview = 'background: linear-gradient(135deg, #d8b4fe 0%, #a855f7 100%);';
 
         const storage = (() => {
-          try {
+          const tryStore = store => {
+            if (!store) return null;
             const probeKey = '__ldc_checkout_probe__';
-            localStorage.setItem(probeKey, '1');
-            localStorage.removeItem(probeKey);
-            return localStorage;
-          } catch (error) {
-            console.warn('Checkout: localStorage is unavailable.', error);
-            return null;
-          }
+            try {
+              store.setItem(probeKey, '1');
+              store.removeItem(probeKey);
+              return store;
+            } catch (error) {
+              return null;
+            }
+          };
+          return tryStore(window.localStorage) || tryStore(window.sessionStorage);
         })();
 
         const formatCurrency = value => new Intl.NumberFormat('en-US', {
@@ -305,28 +330,137 @@
         });
 
         const loadCartState = () => {
-          if (!storage) return { items: [] };
-          const raw = storage.getItem(CART_STORAGE_KEY);
-          if (!raw) return { items: [] };
-          try {
-            const parsed = JSON.parse(raw);
-            if (parsed && Array.isArray(parsed.items)) {
-              return {
-                items: parsed.items
-                  .map(item => ({
-                    id: String(item.id ?? ''),
-                    name: String(item.name ?? 'Item'),
-                    price: Number(item.price ?? 0) || 0,
-                    quantity: Math.max(1, Number(item.quantity ?? 1) || 1),
-                    previewStyle: typeof item.previewStyle === 'string' ? item.previewStyle.trim() : ''
-                  }))
-                  .filter(item => item.id && item.quantity > 0)
+          const params = new URLSearchParams(window.location.search);
+          let paramCart = null;
+          if (params.get('cart')) {
+            try {
+              const decoded = decodeURIComponent(params.get('cart'));
+              const parsed = JSON.parse(decoded);
+              if (parsed && Array.isArray(parsed.items)) {
+                paramCart = parsed.items;
+              }
+            } catch (error) {
+              console.warn('Checkout: unable to parse cart param.', error);
+            }
+          }
+          let designItem = null;
+          if (params.has('design')) {
+            const rawParam = params.get('design');
+            if (rawParam) {
+              try {
+                const decoded = decodeURIComponent(rawParam);
+                const parsed = JSON.parse(decoded);
+                if (parsed && parsed.id) {
+                  designItem = parsed;
+                }
+              } catch (error) {
+                console.warn('Checkout: unable to parse design query payload.', error);
+              }
+            }
+            if (!designItem) {
+              const rawDesign = sessionStorage?.getItem('ldc:design:last');
+              if (rawDesign) {
+                try {
+                  const parsed = JSON.parse(rawDesign);
+                  if (parsed && parsed.id) {
+                    designItem = parsed;
+                  }
+                } catch (error) {
+                  console.warn('Checkout: unable to read design payload from session.', error);
+                }
+              }
+            }
+            if (designItem) {
+              designItem = {
+                id: String(designItem.id),
+                name: String(designItem.name ?? 'Custom Design'),
+                price: Number(designItem.price ?? 0) || 0,
+                quantity: Math.max(1, Number(designItem.quantity ?? 1) || 1),
+                previewStyle: typeof designItem.previewStyle === 'string' ? designItem.previewStyle.trim() : '',
+                options: Array.isArray(designItem.options)
+                  ? designItem.options
+                      .map(opt => ({
+                        label: String(opt?.label ?? '').trim(),
+                        value: String(opt?.value ?? '').trim(),
+                        swatchStyle: typeof opt?.swatchStyle === 'string' ? opt.swatchStyle.trim() : '',
+                        swatchGlyph: typeof opt?.swatchGlyph === 'string' ? opt.swatchGlyph : ''
+                      }))
+                      .filter(opt => opt.label || opt.value)
+                  : [],
+                notes: typeof designItem.notes === 'string' ? designItem.notes : ''
               };
             }
-          } catch (error) {
-            console.warn('Checkout: unable to parse cart payload.', error);
           }
-          return { items: [] };
+          let baseState = { items: [] };
+          if (storage) {
+            const raw = storage.getItem(CART_STORAGE_KEY);
+            if (raw) {
+              try {
+                const parsed = JSON.parse(raw);
+                if (parsed && Array.isArray(parsed.items)) {
+                  baseState = {
+                    items: parsed.items
+                      .map(item => ({
+                        id: String(item.id ?? ''),
+                        name: String(item.name ?? 'Item'),
+                        price: Number(item.price ?? 0) || 0,
+                        quantity: Math.max(1, Number(item.quantity ?? 1) || 1),
+                        previewStyle: typeof item.previewStyle === 'string' ? item.previewStyle.trim() : '',
+                        options: Array.isArray(item.options)
+                          ? item.options
+                              .map(opt => ({
+                                label: String(opt?.label ?? '').trim(),
+                                value: String(opt?.value ?? '').trim(),
+                                swatchStyle: typeof opt?.swatchStyle === 'string' ? opt.swatchStyle.trim() : '',
+                                swatchGlyph: typeof opt?.swatchGlyph === 'string' ? opt.swatchGlyph : ''
+                              }))
+                              .filter(opt => opt.label || opt.value)
+                          : [],
+                        notes: typeof item.notes === 'string' ? item.notes : ''
+                      }))
+                      .filter(item => item.id && item.quantity > 0)
+                  };
+                }
+              } catch (error) {
+                console.warn('Checkout: unable to parse cart payload.', error);
+              }
+            }
+          }
+
+          if (designItem) {
+            const existingIndex = baseState.items.findIndex(i => i.id === designItem.id);
+            if (existingIndex >= 0) {
+              baseState.items[existingIndex] = designItem;
+            } else {
+              baseState.items.push(designItem);
+            }
+            try {
+              sessionStorage?.removeItem('ldc:design:last');
+            } catch {}
+          }
+          if (paramCart && paramCart.length) {
+            baseState.items = paramCart
+              .map(item => ({
+                id: String(item.id ?? ''),
+                name: String(item.name ?? 'Item'),
+                price: Number(item.price ?? 0) || 0,
+                quantity: Math.max(1, Number(item.quantity ?? 1) || 1),
+                previewStyle: typeof item.previewStyle === 'string' ? item.previewStyle.trim() : '',
+                options: Array.isArray(item.options)
+                  ? item.options
+                      .map(opt => ({
+                        label: String(opt?.label ?? '').trim(),
+                        value: String(opt?.value ?? '').trim(),
+                        swatchStyle: typeof opt?.swatchStyle === 'string' ? opt.swatchStyle.trim() : '',
+                        swatchGlyph: typeof opt?.swatchGlyph === 'string' ? opt.swatchGlyph : ''
+                      }))
+                      .filter(opt => opt.label || opt.value)
+                  : [],
+                notes: typeof item.notes === 'string' ? item.notes : ''
+              }))
+              .filter(item => item.id && item.quantity > 0);
+          }
+          return baseState;
         };
 
         const itemsContainer = document.querySelector('[data-checkout-items]');
@@ -356,6 +490,30 @@
             const previewStyle = item.previewStyle && item.previewStyle.trim() ? item.previewStyle : fallbackPreview;
             const safePreview = previewStyle.replace(/"/g, '&quot;');
             const lineTotal = item.price * item.quantity;
+            const optionsMarkup = item.options && item.options.length
+              ? `<ul class="checkout-item-options">${item.options.map(opt => {
+                  const swatchGlyph = opt.swatchGlyph || '';
+                  const baseSwatchStyle = opt.swatchStyle && opt.swatchStyle.trim()
+                    ? opt.swatchStyle.trim()
+                    : (isAccessory ? 'background:#d8b4fe;' : '');
+                  const swatch = baseSwatchStyle
+                    ? `<span class="checkout-swatch" style="${escapeHtml(baseSwatchStyle.replace(/\"/g, '&quot;'))}; width:1rem; height:1rem; border-radius:9999px; display:inline-flex; align-items:center; justify-content:center; border:1px solid rgba(15,23,42,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5); margin-left:0.3rem; vertical-align:middle; transform: translateY(-1px);">${escapeHtml(swatchGlyph)}</span>`
+                    : '';
+                  const normalizedLabel = (opt.label || '').toLowerCase();
+                  const isColor = normalizedLabel === 'color';
+                  const isAccessory = normalizedLabel === 'accessory';
+                  if (isColor) {
+                    return `<li><span class="label">Color:</span>${swatch}</li>`;
+                  }
+                  if (isAccessory) {
+                    return `<li><span class="label">Accessory:</span>${swatch}</li>`;
+                  }
+                  return `<li><span class="label">${escapeHtml(opt.label)}:</span> <span class="value">${escapeHtml(opt.value)}</span>${swatch}</li>`;
+                }).join('')}</ul>`
+              : '';
+            const notesMarkup = item.notes
+              ? `<div class="checkout-item-notes"><span class="label">Notes:</span> <span class="value">${escapeHtml(item.notes)}</span></div>`
+              : '';
             return `
             <article class="cart-item" data-checkout-item="${escapeHtml(item.id)}">
               <div class="cart-item-main">
@@ -366,6 +524,8 @@
                     <span class="checkout-item-quantity">Quantity <span>${item.quantity}</span></span>
                     <span class="checkout-item-price">${formatCurrency(item.price)}</span>
                   </div>
+                  ${optionsMarkup}
+                  ${notesMarkup}
                 </div>
               </div>
               <div class="checkout-line-total">${formatCurrency(lineTotal)}</div>

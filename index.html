@@ -2076,7 +2076,7 @@
           <div class="flex items-center justify-between mb-6"></div>
           <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             <!-- Product card template start -->
-            <div class="group relative">
+            <div class="group relative" data-accessory-only="true">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center relative">
                 <div class="badge-stack">
                   <span class="inline-block rounded bg-emerald-600 text-white px-3 py-0.5">New Arrival</span>
@@ -2132,7 +2132,7 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative" data-accessory-only="true">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center relative">
                 <div class="badge-stack">
                   <span class="inline-block rounded bg-emerald-600 text-white px-3 py-0.5">New Arrival</span>
@@ -2140,11 +2140,11 @@
                 <img id="glassTumblerImage" src="assets/glass-tumbler.jpeg" alt="Glass tumbler with frosted finish" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="3">
+                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
-                  <div class="relative overflow-hidden" data-swatch-window style="width:calc((1.25rem * 3) + (0.5rem * 2));">
+                  <div class="relative overflow-hidden" data-swatch-window style="width:1.25rem;">
                     <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track>
                       <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" aria-label="Glass finish swatch" style="background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 60%), linear-gradient(135deg, rgba(226,232,240,0.7) 0%, rgba(148,163,184,0.4) 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.45), inset 0 8px 14px rgba(255,255,255,0.4), inset 0 -10px 18px rgba(148,163,184,0.35);"></span>
                     </div>
@@ -2945,7 +2945,7 @@
                     </button>
                     <div class="relative overflow-hidden" data-swatch-window style="width:1.25rem;">
                       <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track>
-                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" aria-label="Rhinestone accessory accent" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.6rem; line-height:1;">💎</span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" aria-label="Rhinestone" data-swatch-type="accessory" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.6rem; line-height:1;">💎</span>
                       </div>
                     </div>
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next accessory">
@@ -3005,7 +3005,7 @@
                     </button>
                     <div class="relative overflow-hidden" data-swatch-window style="width:1.25rem;">
                       <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track>
-                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" aria-label="Jelly accessory accent" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#5eead4; display:flex; align-items:center; justify-content:center; color:#0f172a; font-size:0.7rem; line-height:1;">🪼</span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" aria-label="Jelly accessory accent" data-swatch-type="accessory" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#5eead4; display:flex; align-items:center; justify-content:center; color:#0f172a; font-size:0.7rem; line-height:1;">🪼</span>
                       </div>
                     </div>
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next accessory">
@@ -3061,7 +3061,7 @@
                     </button>
                     <div class="relative overflow-hidden" data-swatch-window style="width:1.25rem;">
                       <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track>
-                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" aria-label="Glass accessory accent" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background: radial-gradient(circle at 35% 35%, rgba(224,242,255,0.95) 0%, rgba(96,165,250,0.35) 65%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4); display:flex; align-items:center; justify-content:center; color:#1f2937; font-size:0.7rem; line-height:1;">🔍</span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" aria-label="Glass accessory accent" data-swatch-type="accessory" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background: radial-gradient(circle at 35% 35%, rgba(224,242,255,0.95) 0%, rgba(96,165,250,0.35) 65%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4); display:flex; align-items:center; justify-content:center; color:#1f2937; font-size:0.7rem; line-height:1;">🔍</span>
                       </div>
                     </div>
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next accessory">
@@ -3122,7 +3122,7 @@
                     </button>
                     <div class="relative overflow-hidden" data-swatch-window style="width:1.25rem;">
                       <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track>
-                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" aria-label="Swirl accent" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#dbeafe; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;">🌀</span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" aria-label="Swirl accent" data-swatch-type="accessory" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#dbeafe; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;">🌀</span>
                       </div>
                     </div>
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next accessory">
@@ -3165,12 +3165,12 @@
                     </button>
                     <div class="relative overflow-hidden" data-swatch-window style="width:calc((1.25rem * 3) + (0.5rem * 2));">
                       <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track>
-                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cafe accent" role="button" tabindex="0" data-image-target="strawToppersImage" data-image-src="assets/Straw Toppers - cafe - 1.jpeg" data-image-alt="Straw toppers cafe set">☕</span>
-                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#f9a8d4; display:flex; align-items:center; justify-content:center; color:#7f1d1d; font-size:0.7rem; line-height:1;" aria-label="Christmas accent" role="button" tabindex="0" data-image-target="strawToppersImage" data-image-src="assets/straw toppers - christmas - 1.jpeg" data-image-alt="Straw toppers Christmas set">⛄️</span>
-                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cat accent" role="button" tabindex="0" data-image-target="strawToppersImage" data-image-src="assets/Straw Topper - Cats - 1.jpeg" data-image-alt="Straw toppers cat design">🐱</span>
-                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#86efac; display:flex; align-items:center; justify-content:center; color:#14532d; font-size:0.7rem; line-height:1;" aria-label="Cactus accent" role="button" tabindex="0" data-image-target="strawToppersImage" data-image-src="assets/Straw Toppers - Cactus - 1.png" data-image-alt="Straw toppers cactus design">🌵</span>
-                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#93c5fd; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Beach cup accent" role="button" tabindex="0" data-image-target="strawToppersImage" data-image-src="assets/straw toppers - beach cup -1.png" data-image-alt="Straw toppers beach cup design">🥤</span>
-                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#fef3c7; display:flex; align-items:center; justify-content:center; color:#92400e; font-size:0.7rem; line-height:1;" aria-label="Football accent" role="button" tabindex="0" data-image-target="strawToppersImage" data-image-src="assets/straw toppers - sports - 1.png" data-image-alt="Straw toppers sports design">🏈</span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" data-swatch-type="accessory" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cafe accent" role="button" tabindex="0" data-image-target="strawToppersImage" data-image-src="assets/Straw Toppers - cafe - 1.jpeg" data-image-alt="Straw toppers cafe set">☕</span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" data-swatch-type="accessory" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#f9a8d4; display:flex; align-items:center; justify-content:center; color:#7f1d1d; font-size:0.7rem; line-height:1;" aria-label="Christmas accent" role="button" tabindex="0" data-image-target="strawToppersImage" data-image-src="assets/straw toppers - christmas - 1.jpeg" data-image-alt="Straw toppers Christmas set">⛄️</span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" data-swatch-type="accessory" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cat accent" role="button" tabindex="0" data-image-target="strawToppersImage" data-image-src="assets/Straw Topper - Cats - 1.jpeg" data-image-alt="Straw toppers cat design">🐱</span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" data-swatch-type="accessory" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#86efac; display:flex; align-items:center; justify-content:center; color:#14532d; font-size:0.7rem; line-height:1;" aria-label="Cactus accent" role="button" tabindex="0" data-image-target="strawToppersImage" data-image-src="assets/Straw Toppers - Cactus - 1.png" data-image-alt="Straw toppers cactus design">🌵</span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" data-swatch-type="accessory" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#93c5fd; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Beach cup accent" role="button" tabindex="0" data-image-target="strawToppersImage" data-image-src="assets/straw toppers - beach cup -1.png" data-image-alt="Straw toppers beach cup design">🥤</span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" data-swatch-type="accessory" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#fef3c7; display:flex; align-items:center; justify-content:center; color:#92400e; font-size:0.7rem; line-height:1;" aria-label="Football accent" role="button" tabindex="0" data-image-target="strawToppersImage" data-image-src="assets/straw toppers - sports - 1.png" data-image-alt="Straw toppers sports design">🏈</span>
                       </div>
                     </div>
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next accessory">
@@ -3392,17 +3392,17 @@
                       </button>
                       <div class="relative overflow-hidden design-swatch-window" data-swatch-window>
                         <div class="flex items-center design-swatch-track transition-transform duration-200" data-swatch-track data-design-accessories-source>
-                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.6rem; line-height:1;" aria-label="Rhinestone accessory accent">💎</span>
-                            <span class="swatch" style="background:#5eead4; display:flex; align-items:center; justify-content:center; color:#0f172a; font-size:0.7rem; line-height:1;" aria-label="Jelly accessory accent">🪼</span>
-                            <span class="swatch" style="background: radial-gradient(circle at 35% 35%, rgba(224,242,255,0.95) 0%, rgba(96,165,250,0.35) 65%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4); display:flex; align-items:center; justify-content:center; color:#1f2937; font-size:0.7rem; line-height:1;" aria-label="Glass accessory accent">🔍</span>
-                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.7rem; line-height:1;" aria-label="Bow accent">🎀</span>
-                            <span class="swatch" style="background:#dbeafe; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Swirl accent">🌀</span>
-                            <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cafe accent">☕</span>
-                            <span class="swatch" style="background:#f9a8d4; display:flex; align-items:center; justify-content:center; color:#7f1d1d; font-size:0.7rem; line-height:1;" aria-label="Christmas accent">⛄️</span>
-                            <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cat accent">🐱</span>
-                            <span class="swatch" style="background:#86efac; display:flex; align-items:center; justify-content:center; color:#14532d; font-size:0.7rem; line-height:1;" aria-label="Cactus accent">🌵</span>
-                            <span class="swatch" style="background:#93c5fd; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Beach cup accent">🥤</span>
-                            <span class="swatch" style="background:#fef3c7; display:flex; align-items:center; justify-content:center; color:#92400e; font-size:0.7rem; line-height:1;" aria-label="Football accent">🏈</span>
+                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.6rem; line-height:1;" aria-label="Rhinestone accessory accent" data-price="5">💎</span>
+                            <span class="swatch" style="background:#5eead4; display:flex; align-items:center; justify-content:center; color:#0f172a; font-size:0.7rem; line-height:1;" aria-label="Jelly accessory accent" data-price="3">🪼</span>
+                            <span class="swatch" style="background: radial-gradient(circle at 35% 35%, rgba(224,242,255,0.95) 0%, rgba(96,165,250,0.35) 65%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4); display:flex; align-items:center; justify-content:center; color:#1f2937; font-size:0.7rem; line-height:1;" aria-label="Glass accessory accent" data-price="3">🔍</span>
+                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.7rem; line-height:1;" aria-label="Bow accent" data-price="3">🎀</span>
+                            <span class="swatch" style="background:#dbeafe; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Swirl accent" data-price="3">🌀</span>
+                            <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cafe accent" data-price="1">☕</span>
+                            <span class="swatch" style="background:#f9a8d4; display:flex; align-items:center; justify-content:center; color:#7f1d1d; font-size:0.7rem; line-height:1;" aria-label="Christmas accent" data-price="1">⛄️</span>
+                            <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cat accent" data-price="1">🐱</span>
+                            <span class="swatch" style="background:#86efac; display:flex; align-items:center; justify-content:center; color:#14532d; font-size:0.7rem; line-height:1;" aria-label="Cactus accent" data-price="1">🌵</span>
+                            <span class="swatch" style="background:#93c5fd; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Beach cup accent" data-price="1">🥤</span>
+                            <span class="swatch" style="background:#fef3c7; display:flex; align-items:center; justify-content:center; color:#92400e; font-size:0.7rem; line-height:1;" aria-label="Football accent" data-price="1">🏈</span>
                         </div>
                       </div>
                       <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next accessory">
@@ -3476,7 +3476,7 @@
                     </div>
                   </div>
                 <div class="cta-wrap">
-                  <a href="mailto:lovettsdandc@gmail.com" class="cta-btn">
+                  <a href="checkout.html" class="cta-btn" data-design-submit>
                     Submit Your Design
                   </a>
                 </div>
@@ -4133,15 +4133,18 @@
 
       const CART_STORAGE_KEY = 'ldc:cart';
       const storage = (() => {
-        try {
+        const tryStore = store => {
+          if (!store) return null;
           const testKey = '__ldc_test__';
-          localStorage.setItem(testKey, '1');
-          localStorage.removeItem(testKey);
-          return localStorage;
-        } catch (error) {
-          console.warn('Cart persistence unavailable:', error);
-          return null;
-        }
+          try {
+            store.setItem(testKey, '1');
+            store.removeItem(testKey);
+            return store;
+          } catch (error) {
+            return null;
+          }
+        };
+        return tryStore(window.localStorage) || tryStore(window.sessionStorage);
       })();
 
       const formatCurrency = value => new Intl.NumberFormat('en-US', {
@@ -4149,21 +4152,34 @@
         currency: 'USD'
       }).format(value ?? 0);
 
-      const loadCartState = () => {
-        if (!storage) return { items: [] };
-        const raw = storage.getItem(CART_STORAGE_KEY);
-        if (!raw) return { items: [] };
-        try {
-          const parsed = JSON.parse(raw);
+        const loadCartState = () => {
+          if (!storage) return { items: [] };
+          const raw = storage.getItem(CART_STORAGE_KEY);
+          if (!raw) return { items: [] };
+          try {
+            const parsed = JSON.parse(raw);
           if (parsed && Array.isArray(parsed.items)) {
             return {
-              items: parsed.items.map(item => ({
-                id: String(item.id ?? ''),
-                name: String(item.name ?? 'Item'),
-                price: Number(item.price ?? 0),
-                quantity: Math.max(1, Number(item.quantity ?? 1)),
-                previewStyle: typeof item.previewStyle === 'string' ? item.previewStyle.trim() : ''
-              }))
+              items: parsed.items
+                .map(item => ({
+                  id: String(item.id ?? ''),
+                  name: String(item.name ?? 'Item'),
+                  price: Number(item.price ?? 0),
+                  quantity: Math.max(1, Number(item.quantity ?? 1)),
+                  previewStyle: typeof item.previewStyle === 'string' ? item.previewStyle.trim() : '',
+                  options: Array.isArray(item.options)
+                    ? item.options
+                        .map(opt => ({
+                          label: String(opt?.label ?? '').trim(),
+                          value: String(opt?.value ?? '').trim(),
+                          swatchStyle: typeof opt?.swatchStyle === 'string' ? opt.swatchStyle.trim() : '',
+                          swatchGlyph: typeof opt?.swatchGlyph === 'string' ? opt.swatchGlyph : ''
+                        }))
+                        .filter(opt => opt.label || opt.value)
+                    : [],
+          notes: typeof item.notes === 'string' ? item.notes : ''
+                }))
+                .filter(item => item.id && item.quantity > 0)
             };
           }
         } catch (error) {
@@ -4212,6 +4228,27 @@
           const fallbackPreview = 'background: linear-gradient(135deg, #d8b4fe 0%, #a855f7 100%);';
           const previewStyle = (item.previewStyle && item.previewStyle.trim()) ? item.previewStyle : fallbackPreview;
           const safePreviewStyle = previewStyle.replace(/"/g, '&quot;');
+          const optionsMarkup = item.options && item.options.length
+            ? `<div class="cart-item-options">${item.options.map(opt => {
+                const normalizedLabel = (opt.label || '').toLowerCase();
+                const isColor = normalizedLabel === 'color';
+                const isAccessory = normalizedLabel === 'accessory';
+                const swatchGlyph = opt.swatchGlyph || '';
+                const baseSwatchStyle = opt.swatchStyle && opt.swatchStyle.trim()
+                  ? opt.swatchStyle.trim()
+                  : (isAccessory ? 'background:#d8b4fe;' : '');
+                const swatch = baseSwatchStyle
+                  ? `<span class="cart-item-swatch" style="${baseSwatchStyle.replace(/"/g, '&quot;')}; width:0.9rem; height:0.9rem; border-radius:9999px; display:inline-flex; align-items:center; justify-content:center; margin-left:0.28rem; vertical-align:middle; transform: translateY(-1px); border:1px solid rgba(15,23,42,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5);">${swatchGlyph}</span>`
+                  : '';
+                if (isColor) {
+                  return `<span class="cart-item-option"><span class="label">Color:</span>${swatch}</span>`;
+                }
+                if (isAccessory) {
+                  return `<span class="cart-item-option"><span class="label">Accessory:</span>${swatch}</span>`;
+                }
+                return `<span class="cart-item-option"><span class="label">${opt.label}:</span> <span class="value">${opt.value}</span>${swatch}</span>`;
+              }).join(' · ')}</div>`
+            : '';
           return `
           <div class="cart-item" data-cart-item="${item.id}">
             <div class="cart-item-main">
@@ -4219,6 +4256,7 @@
               <div class="cart-item-info">
                 <div class="cart-item-name">${item.name}</div>
                 <div class="cart-item-price">${formatCurrency(item.price)}</div>
+                ${optionsMarkup}
                 <div class="cart-item-quantity">
                   <button type="button" class="cart-qty-btn" data-cart-decrease aria-label="Decrease quantity">−</button>
                   <span>${item.quantity}</span>
@@ -4275,7 +4313,9 @@
       cartCheckoutBtn?.addEventListener('click', () => {
         if (!cartState.items.length) return;
         closeCart();
-        window.location.href = 'checkout.html';
+        const encodedCart = encodeCartState({ items: cartState.items });
+        const targetHref = encodedCart ? `checkout.html?cart=${encodedCart}` : 'checkout.html';
+        window.location.href = targetHref;
       });
 
       if (cartItemsContainer) {
@@ -4303,7 +4343,18 @@
         const id = product.id ? String(product.id) : `${name}|${price}`;
         const quantity = Math.max(1, Number(product.quantity ?? 1));
         const previewStyle = typeof product.previewStyle === 'string' ? product.previewStyle.trim() : '';
-        return { id, name, price, quantity, previewStyle };
+        const options = Array.isArray(product.options)
+          ? product.options
+              .map(opt => ({
+                label: String(opt?.label ?? '').trim(),
+                value: String(opt?.value ?? '').trim(),
+                swatchStyle: typeof opt?.swatchStyle === 'string' ? opt.swatchStyle.trim() : '',
+                swatchGlyph: typeof opt?.swatchGlyph === 'string' ? opt.swatchGlyph : ''
+              }))
+              .filter(opt => opt.label || opt.value)
+          : [];
+        const notes = typeof product.notes === 'string' ? product.notes : '';
+        return { id, name, price, quantity, previewStyle, options, notes };
       };
 
       const cartApi = {
@@ -4345,10 +4396,12 @@
           if (!product) return;
           const existing = cartState.items.find(item => item.id === product.id);
           if (existing) {
-            existing.quantity += product.quantity;
-            if (!existing.previewStyle && product.previewStyle) {
-              existing.previewStyle = product.previewStyle;
-            }
+            existing.name = product.name;
+            existing.price = product.price;
+            existing.quantity = Math.max(1, existing.quantity + Math.max(1, product.quantity || 1));
+            existing.previewStyle = product.previewStyle || existing.previewStyle;
+            existing.options = product.options && product.options.length ? product.options : existing.options;
+            existing.notes = product.notes || existing.notes;
           } else {
             cartState.items.push(product);
           }
@@ -4385,38 +4438,106 @@
 
       const getCardPreviewStyle = card => {
         if (!card) return '';
-        const media = card.querySelector('.tile-mauve');
-        if (!media) return '';
-        const activeImage = media.querySelector('img');
-        if (activeImage) {
-          const src = activeImage.getAttribute('src');
+        const media = card.querySelector('.tile-mauve, .product-media') || card.querySelector('div');
+        const image = card.querySelector('img');
+        if (image) {
+          const src = image.getAttribute('src');
           if (src) {
             return buildImagePreviewStyle(src);
           }
         }
+        if (!media) return '';
         const styledChild = media.querySelector('[style]');
         if (styledChild) {
           return styledChild.getAttribute('style') || '';
         }
-        return media.getAttribute('style') || '';
+        const background = media.getAttribute('style') || '';
+        return background;
       };
 
       const getProductDetails = button => {
-        const card = button.closest('.group');
+        const card = button.closest('.group, .product-card');
         if (!card) return null;
-        const title = card.querySelector('.tile-title');
-        const titleText = title ? title.textContent.trim() : 'Product';
+        const titleEl = card.querySelector('.tile-title, .product-title, [data-product-title]');
+        const titleText = titleEl ? titleEl.textContent.trim() : 'Product';
+
+        const priceCandidates = [
+          titleEl?.nextElementSibling || null,
+          card.querySelector('[data-price-value]'),
+          card.querySelector('.price-line'),
+          card.querySelector('.product-price'),
+          card.querySelector('.tile-price'),
+          card.querySelector('.text-sm.text-slate-700'),
+          card.querySelector('[id*=\"ProductPrice\"]'),
+          card.querySelector('.text-rose-600')
+        ].filter(Boolean);
+
         let price = 0;
-        const priceNode = title?.nextElementSibling;
-        if (priceNode) {
-          const salePrice = priceNode.querySelector('.text-rose-600');
-          const priceText = (salePrice ? salePrice.textContent : priceNode.textContent) || '';
+        for (const node of priceCandidates) {
+          const priceText = node.textContent || '';
           const numeric = priceText.replace(/[^0-9.]/g, '');
-          price = numeric ? Number(numeric) : 0;
+          if (numeric) {
+            price = Number(numeric);
+            break;
+          }
         }
+        if (!price) {
+          const attrPrice = card.getAttribute('data-price') || button.getAttribute('data-price');
+          if (attrPrice) {
+            const numeric = String(attrPrice).replace(/[^0-9.]/g, '');
+            price = numeric ? Number(numeric) : 0;
+          }
+        }
+
+        const accessoryOnly = card.dataset.accessoryOnly === 'true';
+        let colorLabel = accessoryOnly ? '' : (card.dataset.selectedColor || '');
+        if (colorLabel) {
+          colorLabel = colorLabel
+            .replace(/^\s*View\s+/i, '')
+            .replace(/\s+option\s*$/i, '')
+            .trim();
+        }
+        if (!colorLabel && !accessoryOnly) {
+          const activeImage = card.querySelector('.tile-mauve img, .product-media img, img');
+          const alt = activeImage?.getAttribute('alt') || '';
+          colorLabel = alt;
+        }
+        let colorStyle = accessoryOnly ? '' : (card.dataset.selectedColorStyle || '');
+        if (!colorStyle && !accessoryOnly) {
+          const swatchEl = card.querySelector('[data-image-target][data-image-src], .swatch');
+          if (swatchEl) {
+            colorStyle = swatchEl.getAttribute('style') || '';
+          }
+        }
+        const colorGlyph = accessoryOnly ? '' : (card.dataset.selectedColorGlyph || '');
+        let accessoryLabel = card.dataset.selectedAccessory || '';
+        if (accessoryLabel) {
+          accessoryLabel = accessoryLabel
+            .replace(/^\s*View\s+/i, '')
+            .replace(/\s*swatch\s*$/i, '')
+            .replace(/\s+option\s*$/i, '')
+            .trim();
+        }
+        let accessoryStyle = card.dataset.selectedAccessoryStyle || '';
+        if (!accessoryStyle) {
+          const accessorySwatch = card.querySelector('[data-swatch-type="accessory"]');
+          if (accessorySwatch) {
+            accessoryStyle = accessorySwatch.getAttribute('style') || '';
+          }
+        }
+        const accessoryGlyph = card.dataset.selectedAccessoryGlyph || '';
+
+        const options = [];
+        if (colorLabel && !accessoryOnly) options.push({ label: 'Color', value: colorLabel, swatchStyle: colorStyle, swatchGlyph: colorGlyph });
+        if (accessoryLabel) options.push({ label: 'Accessory', value: accessoryLabel, swatchStyle: accessoryStyle, swatchGlyph: accessoryGlyph });
+
+        const idParts = [titleText, price];
+        if (colorLabel && !accessoryOnly) idParts.push(`color:${colorLabel}`);
+        if (accessoryLabel) idParts.push(`accessory:${accessoryLabel}`);
+        const id = idParts.join('|');
         const previewStyle = getCardPreviewStyle(card);
-        const id = `${titleText}|${price}`;
-        return { id, name: titleText, price, quantity: 1, previewStyle };
+
+        return { id, name: titleText, price, quantity: 1, previewStyle, options };
       };
 
       const FAVORITES_STORAGE_KEY = 'ldc:favorites';
@@ -4655,6 +4776,26 @@
             if (swatch.dataset.imageAlt) {
               targetImage.setAttribute('alt', swatch.dataset.imageAlt);
             }
+            const card = swatch.closest('.group, .product-card');
+            const labelFromSwatch = swatch.dataset.colorLabel || swatch.getAttribute('aria-label') || swatch.dataset.imageAlt || '';
+            if (card && labelFromSwatch) {
+              const cleanedLabel = labelFromSwatch
+                .replace(/^\s*View\s+/i, '')
+                .replace(/\s+option\s*$/i, '')
+                .trim();
+              const styleVal = swatch.getAttribute('style') || '';
+              const glyph = (swatch.textContent || '').trim();
+              const type = (swatch.dataset.swatchType || '').toLowerCase();
+              if (type === 'accessory') {
+                card.dataset.selectedAccessory = cleanedLabel || labelFromSwatch;
+                if (styleVal) card.dataset.selectedAccessoryStyle = styleVal;
+                if (glyph) card.dataset.selectedAccessoryGlyph = glyph;
+              } else {
+                card.dataset.selectedColor = cleanedLabel || labelFromSwatch;
+                if (styleVal) card.dataset.selectedColorStyle = styleVal;
+                if (glyph) card.dataset.selectedColorGlyph = glyph;
+              }
+            }
             const priceTargetId = swatch.dataset.priceTarget;
             const priceValue = swatch.dataset.price;
             if (priceTargetId && priceValue) {
@@ -4682,6 +4823,62 @@
         });
       };
 
+      const wireColorOnlySwatches = () => {
+        document.querySelectorAll('.swatch').forEach(swatch => {
+          if (swatch.dataset.colorOnlyInit) return;
+          if (swatch.dataset.imageTarget) return;
+          const label = swatch.dataset.colorLabel || swatch.getAttribute('aria-label') || swatch.getAttribute('title');
+          if (!label) return;
+          swatch.dataset.colorOnlyInit = 'true';
+          const selectColor = () => {
+            const card = swatch.closest('.group, .product-card');
+            if (!card) return;
+            const cleaned = label
+              .replace(/^\s*View\s+/i, '')
+              .replace(/\s*swatch\s*$/i, '')
+              .replace(/\s+option\s*$/i, '')
+              .trim();
+            const styleVal = swatch.getAttribute('style') || '';
+            const glyph = (swatch.textContent || '').trim();
+            const type = (swatch.dataset.swatchType || '').toLowerCase();
+            if (type === 'accessory') {
+              card.dataset.selectedAccessory = cleaned || label;
+              if (styleVal) {
+                card.dataset.selectedAccessoryStyle = styleVal;
+              }
+              if (glyph) {
+                card.dataset.selectedAccessoryGlyph = glyph;
+              }
+            } else {
+              card.dataset.selectedColor = cleaned || label;
+              if (styleVal) {
+                card.dataset.selectedColorStyle = styleVal;
+              }
+              if (glyph) {
+                card.dataset.selectedColorGlyph = glyph;
+              }
+            }
+          };
+          swatch.addEventListener('click', selectColor);
+          swatch.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              selectColor();
+            }
+          });
+          const card = swatch.closest('.group, .product-card');
+          if (card) {
+            const type = (swatch.dataset.swatchType || '').toLowerCase();
+            if (type === 'accessory' && !card.dataset.selectedAccessory) {
+              selectColor();
+            }
+            if (type !== 'accessory' && !card.dataset.selectedColor) {
+              selectColor();
+            }
+          }
+        });
+      };
+
       const DESIGN_SELECTION_KEY = 'ldcDesignSelection';
       const homeDesignPreview = document.getElementById('homeDesignPreview');
       const designFrame = document.querySelector('[data-design-frame]');
@@ -4692,12 +4889,52 @@
       const designVideoPromptTitle = designFrame?.querySelector('[data-prompt-title]');
       const designVideoPromptBody = designFrame?.querySelector('[data-prompt-body]');
       const designVideoPromptCta = designFrame?.querySelector('[data-prompt-cta]');
+      const designPriceValue = document.querySelector('[data-design-price] .design-price-value');
+      let accessoryPrice = 0;
+      let wrapPrice = 0;
+      let selectedAccessoryLabel = '';
+      let selectedColorLabel = '';
+      let selectedWrapLabel = '';
+      let selectedDesignName = '';
+      const formatPrice = value => {
+        const num = typeof value === 'number' && !Number.isNaN(value) ? value : 0;
+        return `$${num.toFixed(2)}`;
+      };
+      const setDesignPrice = value => {
+        if (!designPriceValue) return;
+        designPriceValue.textContent = formatPrice(value);
+      };
+      const encodeDesignPayload = payload => {
+        try {
+          const json = JSON.stringify(payload || {});
+          return encodeURIComponent(json);
+        } catch (error) {
+          console.warn('Unable to encode design payload', error);
+          return '';
+        }
+      };
+      const encodeCartState = state => {
+        try {
+          const json = JSON.stringify(state || cartState);
+          return encodeURIComponent(json);
+        } catch (error) {
+          console.warn('Unable to encode cart payload', error);
+          return '';
+        }
+      };
+      const DESIGN_SESSION_KEY = 'ldc:design:last';
+      const updateDesignTotal = () => {
+        const base = typeof lastPrice?.amount === 'number' ? lastPrice.amount : 0;
+        setDesignPrice(base + accessoryPrice + wrapPrice);
+      };
       let lastImageState = designImage
         ? {
             src: designImage.getAttribute('src'),
             alt: designImage.getAttribute('alt') || 'Custom design preview'
           }
         : null;
+      let lastPrice = { amount: 0 };
+      updateDesignTotal();
 
       const rememberCurrentImage = () => {
         if (!designImage) return;
@@ -4788,7 +5025,8 @@
           if (parsed && typeof parsed === 'object' && parsed.src) {
             return {
               src: parsed.src,
-              alt: parsed.alt || 'Custom design preview'
+              alt: parsed.alt || 'Custom design preview',
+              price: typeof parsed.price === 'number' ? parsed.price : undefined
             };
           }
         } catch (error) {
@@ -4797,15 +5035,26 @@
         return null;
       };
 
-     const applyHomeDesignPreview = selection => {
-       if (!homeDesignPreview || !selection?.src) return;
-       homeDesignPreview.setAttribute('src', selection.src);
-       homeDesignPreview.setAttribute('alt', selection.alt || 'Custom design preview');
-       lastImageState = {
-         src: selection.src,
-         alt: selection.alt || 'Custom design preview'
-       };
-     };
+      const applyHomeDesignPreview = selection => {
+        if (!homeDesignPreview || !selection?.src) return;
+        homeDesignPreview.setAttribute('src', selection.src);
+        homeDesignPreview.setAttribute('alt', selection.alt || 'Custom design preview');
+        lastImageState = {
+          src: selection.src,
+          alt: selection.alt || 'Custom design preview'
+        };
+        if (selection.name) {
+          selectedDesignName = selection.name;
+        }
+        if (typeof selection.price === 'number') {
+          lastPrice = { amount: selection.price };
+          accessoryPrice = 0;
+          wrapPrice = 0;
+          updateDesignTotal();
+        } else {
+          updateDesignTotal();
+        }
+      };
 
       const upgradeLegacySwatchesToSlider = () => {
         const svgPrev = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>';
@@ -4957,6 +5206,17 @@
         if (stored) {
           applyHomeDesignPreview(stored);
         }
+        const extractPrice = card => {
+          if (!card) return null;
+          const priceEl =
+            card.querySelector('.product-price') ||
+            card.querySelector('.price-line') ||
+            card.querySelector('.text-sm.text-slate-700');
+          if (!priceEl) return null;
+          const match = priceEl.textContent.replace(/[, ]/g, '').match(/(\d+(\.\d{1,2})?)/);
+          if (!match) return null;
+          return parseFloat(match[1]);
+        };
         document.querySelectorAll('[data-design-source]').forEach(btn => {
           if (btn.dataset.designInit) return;
           btn.dataset.designInit = 'true';
@@ -4970,8 +5230,27 @@
               alt: sourceImage.getAttribute('alt') || 'Custom design preview'
             };
             if (!selection.src) return;
+            const card = btn.closest('.product-card, .group.relative');
+            const price = extractPrice(card);
+            const nameNode = card?.querySelector('.product-title, .tile-title');
+            if (nameNode) {
+              selection.name = nameNode.textContent.trim();
+              selectedDesignName = selection.name;
+            }
+            if (typeof price === 'number') {
+              selection.price = price;
+              lastPrice = { amount: price };
+            }
+            accessoryPrice = 0;
+            wrapPrice = 0;
+            selectedAccessoryLabel = '';
+            selectedWrapLabel = '';
+            selectedColorLabel = '';
+            updateDesignTotal();
             applyHomeDesignPreview(selection);
             persistDesignSelection(selection);
+            // Add/replace selected item in cart immediately so it is retained across pages.
+            syncDesignCart();
           });
         });
       };
@@ -5010,6 +5289,17 @@
             labelNode.textContent = label;
           }
           target.classList.add('has-selection');
+          if (target === accessoryTarget) {
+            const priceAttr = swatch.getAttribute('data-price');
+            const parsedPrice = priceAttr ? parseFloat(priceAttr) : 0;
+            accessoryPrice = Number.isFinite(parsedPrice) ? parsedPrice : 0;
+            selectedAccessoryLabel = label;
+            updateDesignTotal();
+            syncDesignCart();
+          } else if (target === colorTarget) {
+            selectedColorLabel = label;
+            syncDesignCart();
+          }
         };
 
         const clearTarget = (target, placeholder) => {
@@ -5024,6 +5314,14 @@
             labelNode.textContent = placeholder;
           }
           target.classList.remove('has-selection');
+          if (target === accessoryTarget) {
+            accessoryPrice = 0;
+            updateDesignTotal();
+            syncDesignCart();
+          } else if (target === colorTarget) {
+            selectedColorLabel = '';
+            syncDesignCart();
+          }
         };
 
         const bindSwatches = (selector, target, placeholder) => {
@@ -5060,9 +5358,15 @@
           }
           if (label) {
             wrapTarget.classList.add('has-selection');
+            wrapPrice = 2.5;
+            selectedWrapLabel = label;
           } else {
             wrapTarget.classList.remove('has-selection');
+            wrapPrice = 0;
+            selectedWrapLabel = '';
           }
+          updateDesignTotal();
+          syncDesignCart();
         };
 
         const bindWrapOptions = () => {
@@ -5117,7 +5421,13 @@
 
         bindClear('[data-clear-color]', colorTarget, 'Select a color swatch');
         bindClear('[data-clear-accessory]', accessoryTarget, 'Select an accessory');
-        bindClear('[data-clear-wrap]', wrapTarget, 'Select a wrap template', showImagePreview);
+        bindClear('[data-clear-wrap]', wrapTarget, 'Select a wrap template', () => {
+          wrapPrice = 0;
+          selectedWrapLabel = '';
+          updateDesignTotal();
+          showImagePreview();
+          syncDesignCart();
+        });
       };
 
       const moveBadgesToImages = () => {
@@ -5170,9 +5480,98 @@
       upgradeLegacySwatchesToSlider();
       initSwatchSliders();
       wireProductSwatches();
+      wireColorOnlySwatches();
       wireDesignButtons();
       initDesignSelections();
       moveBadgesToImages();
+
+      const buildDesignProduct = (idOverride) => {
+        const basePrice = typeof lastPrice?.amount === 'number' ? lastPrice.amount : 0;
+        const totalPrice = basePrice + accessoryPrice + wrapPrice;
+        const nameParts = [];
+        if (selectedDesignName) nameParts.push(selectedDesignName);
+        if (selectedColorLabel) nameParts.push(`Color: ${selectedColorLabel}`);
+        if (selectedAccessoryLabel) nameParts.push(`Accessory: ${selectedAccessoryLabel}`);
+        if (selectedWrapLabel) nameParts.push(`Wrap: ${selectedWrapLabel}`);
+        const cartName = nameParts.length ? `Custom Design – ${nameParts.join(' · ')}` : 'Custom Design';
+        const previewSrc = lastImageState?.src || designImage?.getAttribute('src') || '';
+        const previewStyle = buildImagePreviewStyle(previewSrc);
+        const notesEl = document.getElementById('design-notes-home');
+        return {
+          id: idOverride || `design-${Date.now()}`,
+          name: cartName,
+          price: totalPrice,
+          quantity: 1,
+          previewStyle,
+          options: [
+            selectedColorLabel ? { label: 'Color', value: selectedColorLabel } : null,
+            selectedAccessoryLabel ? { label: 'Accessory', value: selectedAccessoryLabel } : null,
+            selectedWrapLabel ? { label: 'Wrap', value: selectedWrapLabel } : null
+          ].filter(Boolean),
+          notes: notesEl ? notesEl.value.trim() : ''
+        };
+      };
+
+      const addDesignToCart = (product) => {
+        if (!product) return;
+        try {
+          if (cartApi?.addProduct) {
+            cartApi.addProduct(product);
+          } else if (storage) {
+            // minimal fallback if cartApi unavailable
+            const raw = storage.getItem(CART_STORAGE_KEY);
+            let state = { items: [] };
+            if (raw) {
+              try {
+                const parsed = JSON.parse(raw);
+                if (parsed && Array.isArray(parsed.items)) state.items = parsed.items;
+              } catch {}
+            }
+            state.items.push(product);
+            storage.setItem(CART_STORAGE_KEY, JSON.stringify(state));
+          }
+        } catch (error) {
+          console.warn('Design cart add failed', error);
+        }
+      };
+
+      const syncDesignCart = () => {
+        const product = buildDesignProduct('design-custom');
+        addDesignToCart(product);
+        try {
+          sessionStorage?.setItem(DESIGN_SESSION_KEY, JSON.stringify(product));
+        } catch {}
+      };
+
+      const designSubmitBtn = document.querySelector('[data-design-submit]');
+      if (designSubmitBtn) {
+        designSubmitBtn.addEventListener('click', event => {
+          event.preventDefault();
+          try {
+            syncDesignCart();
+            const product = buildDesignProduct('design-custom');
+            const encoded = encodeDesignPayload(product);
+            const encodedCart = encodeCartState({ items: cartState.items });
+            try {
+              sessionStorage?.setItem(DESIGN_SESSION_KEY, JSON.stringify(product));
+            } catch {}
+            let targetHref = designSubmitBtn.getAttribute('href') || 'checkout.html';
+            if (encoded || encodedCart) {
+              const params = [];
+              if (encoded) params.push(`design=${encoded}`);
+              if (encodedCart) params.push(`cart=${encodedCart}`);
+              targetHref = `checkout.html?${params.join('&')}`;
+            }
+            setTimeout(() => {
+              window.location.href = targetHref;
+            }, 0);
+          } catch (error) {
+            console.warn('Design submit failed to add to cart', error);
+            const fallbackHref = designSubmitBtn.getAttribute('href') || 'checkout.html';
+            window.location.href = fallbackHref;
+          }
+        });
+      }
       window.addEventListener('load', moveBadgesToImages);
       document.addEventListener('DOMContentLoaded', moveBadgesToImages);
       window.addEventListener('resize', moveBadgesToImages);
