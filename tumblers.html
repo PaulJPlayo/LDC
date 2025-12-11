@@ -25,8 +25,12 @@
       }
       .top-bar {
         border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-        background: rgba(15, 23, 42, 0.55);
+        background: rgba(15, 23, 42, 0.72);
         backdrop-filter: blur(14px);
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
       }
       .nav-link {
         position: relative;
@@ -74,6 +78,242 @@
       .nav-icon-link svg {
         width: 1rem;
         height: 1rem;
+      }
+      .icon-badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 999px;
+        background: #f97316;
+        color: #0f172a;
+        font-size: 0.7rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+      }
+      .cart-drawer {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        pointer-events: none;
+      }
+      .cart-drawer.is-open {
+        pointer-events: auto;
+      }
+      .cart-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        opacity: 0;
+        transition: opacity 240ms ease;
+      }
+      .cart-drawer.is-open .cart-overlay {
+        opacity: 1;
+      }
+      .cart-panel {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 100%;
+        width: min(384px, 92vw);
+        background: linear-gradient(135deg, #E0B0FF 0%, #B678F5 100%);
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+        box-shadow: -12px 0 32px rgba(15, 23, 42, 0.25);
+      }
+      .cart-drawer.is-open .cart-panel {
+        transform: translateX(0);
+      }
+      .cart-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+      .cart-title {
+        font-family: inherit;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #ffffff;
+      }
+      .cart-close-btn {
+        border: none;
+        background: transparent;
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.8);
+        transition: background-color 200ms ease;
+      }
+      .cart-close-btn:hover {
+        background-color: rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+      }
+      .cart-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .cart-empty {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 0.95rem;
+        margin-top: 2rem;
+      }
+      .cart-item {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+      }
+      .cart-item-thumb {
+        width: 3.1rem;
+        height: 3.1rem;
+        border-radius: 0.9rem;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-color: #fff;
+        overflow: hidden;
+        flex-shrink: 0;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28), 0 6px 16px rgba(15, 23, 42, 0.25);
+      }
+      .cart-item-thumb img {
+        width: 3.1rem;
+        height: 3.1rem;
+        border-radius: 0.9rem;
+        object-fit: cover;
+        background: #fff;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28), 0 6px 16px rgba(15, 23, 42, 0.25);
+      }
+      .cart-item-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        flex: 1 1 auto;
+      }
+      .cart-item-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+      }
+      .cart-item-title {
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #ffffff;
+      }
+      .cart-item-options {
+        display: grid;
+        gap: 0.4rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.9rem;
+      }
+      .cart-option {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+      .cart-option-label {
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.8);
+      }
+      .cart-option-value {
+        color: #ffffff;
+        font-weight: 600;
+      }
+      .cart-item-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+      }
+      .cart-item-qty {
+        font-size: 0.82rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.85);
+      }
+      .cart-item-price {
+        font-weight: 700;
+        color: #ffffff;
+      }
+      .cart-item-remove {
+        border: none;
+        background: rgba(255, 255, 255, 0.16);
+        color: #ffffff;
+        border-radius: 999px;
+        width: 1.9rem;
+        height: 1.9rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+      .cart-footer {
+        padding: 1.25rem 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .cart-summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #ffffff;
+        font-weight: 600;
+      }
+      .checkout-btn {
+        border: none;
+        border-radius: 999px;
+        height: 2.75rem;
+        background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+        color: #fff;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 160ms ease, box-shadow 160ms ease;
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+      }
+      .checkout-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(168, 85, 247, 0.25);
+      }
+      .checkout-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
       }
 
       body.support-open,
@@ -561,7 +801,7 @@
       .swatch-slider button:hover {
         transform: translateY(-2px);
       }
-      /* Light arrows for Sublimination tile */
+      /* Light arrows for Sublimation tile */
       .swatch-arrow.light-arrow {
         color: #fdf7ed;
       }
@@ -573,6 +813,150 @@
         font-size: 0.8rem;
         letter-spacing: 0.18em;
         text-transform: uppercase;
+      }
+      .favorites-drawer {
+        position: fixed;
+        inset: 0;
+        z-index: 55;
+        pointer-events: none;
+      }
+      .favorites-drawer.is-open {
+        pointer-events: auto;
+      }
+      .favorites-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        opacity: 0;
+        transition: opacity 240ms ease;
+      }
+      .favorites-drawer.is-open .favorites-overlay {
+        opacity: 1;
+      }
+      .favorites-panel {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 100%;
+        width: min(360px, 92vw);
+        background: linear-gradient(135deg, #ff9aed 0%, #ff5ca8 100%);
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+        box-shadow: -12px 0 32px rgba(15, 23, 42, 0.25);
+      }
+      .favorites-drawer.is-open .favorites-panel {
+        transform: translateX(0);
+      }
+      .favorites-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+      .favorites-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      .favorites-close-btn {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .favorites-body {
+        padding: 1rem 1.25rem;
+        flex: 1 1 auto;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .favorites-empty {
+        padding: 2rem 1.25rem;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.1);
+        text-align: center;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.85);
+      }
+      .favorite-item {
+        display: grid;
+        grid-template-columns: 72px 1fr;
+        gap: 0.75rem;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        padding: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(8px);
+      }
+      .favorite-thumb {
+        width: 72px;
+        height: 72px;
+        border-radius: 12px;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-color: #fff;
+        overflow: hidden;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28), 0 6px 16px rgba(15, 23, 42, 0.25);
+      }
+      .favorite-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 12px;
+        background: #fff;
+      }
+      .favorite-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        margin: 0 0 0.25rem;
+      }
+      .favorite-meta {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.9);
+      }
+      .favorite-actions {
+        margin-top: 0.5rem;
+        display: flex;
+        gap: 0.5rem;
+      }
+      .favorites-btn {
+        border: none;
+        border-radius: 12px;
+        height: 2.75rem;
+        background: rgba(255, 255, 255, 0.14);
+        color: #ffffff;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+      }
+      .favorites-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(255, 92, 168, 0.25);
+        background: rgba(255, 255, 255, 0.18);
+      }
+      body.favorites-open,
+      body.cart-open {
+        overflow: hidden;
       }
     </style>
   </head>
@@ -594,15 +978,17 @@
             <a class="nav-link" href="accessories.html">Accessories</a>
             <a class="nav-link" href="attire.html">Attire</a>
             <div class="nav-icon-cluster">
-              <a class="nav-icon-link" href="favorites.html" aria-label="Favorites">
+              <a class="nav-icon-link relative" href="#" aria-label="Favorites" data-favorites-open>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                   <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                 </svg>
+                <span class="icon-badge" data-favorites-count hidden>0</span>
               </a>
-              <a class="nav-icon-link" href="checkout.html" aria-label="Checkout">
+              <a class="nav-icon-link relative" href="#" aria-label="Cart" data-open-cart data-cart-open>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
                 </svg>
+                <span class="icon-badge" data-cart-count hidden>0</span>
               </a>
               <a class="nav-icon-link" href="#" aria-label="Contact" data-support-open>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -621,7 +1007,7 @@
               <span class="hero-eyebrow">Stainless Steel</span>
               <h1 class="hero-heading">Tumblers customized to your style.</h1>
               <p class="hero-subtext">
-                Every Lovett tumbler keeps drinks at the perfect temperature while showing off your style. Grab a ready-to-ship favorite or request a custom palette.
+                Every LDC tumbler keeps drinks at the perfect temperature while showing off your style. Grab a ready-to-ship favorite or request a custom palette.
               </p>
               <div class="hero-actions">
                 <a class="cta-button" href="#tumblers-grid">Shop Tumblers</a>
@@ -656,7 +1042,7 @@
                 </div>
                 <div class="flex items-center justify-between gap-2">
                   <div class="swatch-slider" data-swatch-slider data-visible="3">
-                    <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
+                  <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
                     <div class="swatch-slider-window">
@@ -676,7 +1062,7 @@
                 <div class="product-meta">
                   <span>20oz &bull; Slim Stainless Steel</span>
                 </div>
-                <h3 class="product-title">Sublimination</h3>
+                <h3 class="product-title">Sublimation</h3>
                 <span class="product-price" id="tumblersSlimPrice">$25.00</span>
                 <div class="flex items-center gap-2 tile-actions">
                   <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
@@ -684,7 +1070,61 @@
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                     </svg>
                   </button>
-                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-design-source="tumblersSlimImage" data-open-cart>
+                    <input type="hidden" name="design-source" value="tumblersSlimImage" data-design-source="tumblersSlimImage" />
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+                    </svg>
+                  </button>
+                </div>
+              </article>
+
+              <article class="product-card">
+                <div class="product-media">
+                  <div class="badge-stack">
+                    <span id="sipCupLimited" class="badge-limited">Limited Edition</span>
+                  </div>
+                  <img id="sipCupImage" src="assets/Sip Cup - 40.png" alt="Sip Cup stainless steel tumbler" />
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                  <div class="swatch-slider" data-swatch-slider data-visible="1">
+                    <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
+                    </button>
+                    <div class="swatch-slider-window" data-swatch-window style="width:auto;">
+                      <div class="swatch-slider-track" data-swatch-track>
+                        <span
+                          class="swatch cursor-pointer"
+                          aria-label="Coffee color"
+                          data-image-target="sipCupImage"
+                          data-image-src="assets/Sip Cup - 40.png"
+                          data-image-alt="Sip Cup coffee color tumbler"
+                          data-price-target="sipCupPrice"
+                          data-price="40.00"
+                          data-limited-target="sipCupLimited"
+                          data-limited="true"
+                          style="background: radial-gradient(circle at 35% 35%, #f3e2c5 0%, #c58d5a 55%, #8b5a2b 100%); box-shadow: 0 0 8px rgba(139,90,43,0.4); border-color: rgba(139,90,43,0.35);"
+                        ></span>
+                      </div>
+                    </div>
+                    <button type="button" class="swatch-arrow light-arrow" data-swatch-next aria-label="Next color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="product-meta">
+                  <span>40oz | Stainless Steel</span>
+                </div>
+                <h3 class="product-title">Sip Cup</h3>
+                <span class="product-price" id="sipCupPrice">$40.00</span>
+                <div class="flex items-center gap-2 tile-actions">
+                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-open-cart data-design-source="sipCupImage">
+                    <input type="hidden" name="design-source" value="sipCupImage" data-design-source="sipCupImage" />
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
                       <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
                     </svg>
@@ -726,6 +1166,51 @@
                     </svg>
                   </button>
                   <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+                    </svg>
+                  </button>
+                </div>
+              </article>
+
+              <article class="product-card">
+                <div class="product-media">
+                  <div class="badge-stack">
+                    <span class="badge-new">New Arrival</span>
+                  </div>
+                  <img id="macaronSublimationImage" src="assets/Macaron Sublimation - 40.png" alt="Macaron Sublimation stainless steel tumbler" />
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                  <div class="swatch-slider" data-swatch-slider data-visible="2">
+                    <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
+                    </button>
+                    <div class="swatch-slider-window" data-swatch-window>
+                      <div class="swatch-slider-track" data-swatch-track>
+                        <span class="swatch cursor-pointer" aria-label="White cream" data-image-target="macaronSublimationImage" data-image-src="assets/Macaron Sublimation - 40.png" data-image-alt="Macaron Sublimation tumbler - white cream" data-price-target="macaronSublimationPrice" data-price="40.00" style="background: radial-gradient(circle, #fff9f0 0%, #f5e6d2 55%, #e7caa1 100%); box-shadow: 0 0 6px rgba(231,202,161,0.5); border-color: rgba(231,202,161,0.45);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Light pink" data-image-target="macaronSublimationImage" data-image-src="assets/Macaron Sublimation - 40.png" data-image-alt="Macaron Sublimation tumbler - light pink" data-price-target="macaronSublimationPrice" data-price="40.00" style="background: radial-gradient(circle, #ffe6f2 0%, #fbcfe8 55%, #f472b6 100%); box-shadow: 0 0 6px rgba(244,114,182,0.45); border-color: rgba(244,114,182,0.35);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Light teal" data-image-target="macaronSublimationImage" data-image-src="assets/Macaron Sublimation - 40.png" data-image-alt="Macaron Sublimation tumbler - light teal" data-price-target="macaronSublimationPrice" data-price="40.00" style="background: radial-gradient(circle, #e0fffb 0%, #a5f3fc 55%, #38bdf8 100%); box-shadow: 0 0 6px rgba(56,189,248,0.45); border-color: rgba(56,189,248,0.35);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Lavender" data-image-target="macaronSublimationImage" data-image-src="assets/Macaron Sublimation - 40.png" data-image-alt="Macaron Sublimation tumbler - lavender" data-price-target="macaronSublimationPrice" data-price="40.00" style="background: radial-gradient(circle, #f3e8ff 0%, #d8b4fe 55%, #a855f7 100%); box-shadow: 0 0 6px rgba(168,85,247,0.45); border-color: rgba(168,85,247,0.35);"></span>
+                      </div>
+                    </div>
+                    <button type="button" class="swatch-arrow light-arrow" data-swatch-next aria-label="Next color">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="product-meta">
+                  <span>40oz | Stainless Steel</span>
+                </div>
+                <h3 class="product-title">Macaron Sublimation</h3>
+                <span class="product-price" id="macaronSublimationPrice">$40.00</span>
+                <div class="flex items-center gap-2 tile-actions">
+                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                      <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-open-cart data-design-source="macaronSublimationImage">
+                    <input type="hidden" name="design-source" value="macaronSublimationImage" data-design-source="macaronSublimationImage" />
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
                       <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
                     </svg>
@@ -990,7 +1475,7 @@
 
               <article class="product-card">
                 <div class="product-media">
-                  <img id="subliminationTumblersImage" src="assets/Sublimination Tumblers - 40.png" alt="Sublimination tumblers stainless" />
+                  <img id="subliminationTumblersImage" src="assets/Sublimination Tumblers - 40.png" alt="Sublimation tumblers stainless" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
                   <div class="swatch-slider" data-swatch-slider data-visible="3">
@@ -999,10 +1484,10 @@
                     </button>
                     <div class="swatch-slider-window">
                       <div class="swatch-slider-track" data-swatch-track>
-                        <span class="swatch cursor-pointer" aria-label="Cream white swatch" data-image-target="subliminationTumblersImage" data-image-src="assets/Sublimination Tumblers - 40.png" data-image-alt="Cream white sublimination tumbler" style="background: radial-gradient(circle, #fff7eb 0%, #fbe8c7 55%, #f3d7a6 100%); box-shadow: 0 0 6px rgba(243, 215, 166, 0.45);"></span>
-                        <span class="swatch cursor-pointer" aria-label="Pearl white swatch" data-image-target="subliminationTumblersImage" data-image-src="assets/Sublimination Tumblers - 40.png" data-image-alt="Pearl white sublimination tumbler" style="background: linear-gradient(145deg,#ffffff 0%,#f5f5f5 40%,#e2e8f0 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.25), inset 0 6px 12px rgba(255,255,255,0.7);"></span>
-                        <span class="swatch cursor-pointer" aria-label="Cream pink swatch" data-image-target="subliminationTumblersImage" data-image-src="assets/Sublimination Tumblers - 40.png" data-image-alt="Cream pink sublimination tumbler" style="background: radial-gradient(circle, #ffe6f2 0%, #f9a8d4 55%, #f472b6 100%); box-shadow: 0 0 6px rgba(244, 114, 182, 0.45);"></span>
-                        <span class="swatch cursor-pointer" aria-label="Cream peach swatch" data-image-target="subliminationTumblersImage" data-image-src="assets/Sublimination Tumblers - 40.png" data-image-alt="Cream peach sublimination tumbler" style="background: radial-gradient(circle, #ffe9c7 0%, #ffc17a 55%, #ffad55 100%); box-shadow: 0 0 6px rgba(255, 193, 122, 0.6);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Cream white swatch" data-image-target="subliminationTumblersImage" data-image-src="assets/Sublimination Tumblers - 40.png" data-image-alt="Cream white sublimation tumbler" style="background: radial-gradient(circle, #fff7eb 0%, #fbe8c7 55%, #f3d7a6 100%); box-shadow: 0 0 6px rgba(243, 215, 166, 0.45);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Pearl white swatch" data-image-target="subliminationTumblersImage" data-image-src="assets/Sublimination Tumblers - 40.png" data-image-alt="Pearl white sublimation tumbler" style="background: linear-gradient(145deg,#ffffff 0%,#f5f5f5 40%,#e2e8f0 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.25), inset 0 6px 12px rgba(255,255,255,0.7);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Cream pink swatch" data-image-target="subliminationTumblersImage" data-image-src="assets/Sublimination Tumblers - 40.png" data-image-alt="Cream pink sublimation tumbler" style="background: radial-gradient(circle, #ffe6f2 0%, #f9a8d4 55%, #f472b6 100%); box-shadow: 0 0 6px rgba(244, 114, 182, 0.45);"></span>
+                        <span class="swatch cursor-pointer" aria-label="Cream peach swatch" data-image-target="subliminationTumblersImage" data-image-src="assets/Sublimination Tumblers - 40.png" data-image-alt="Cream peach sublimation tumbler" style="background: radial-gradient(circle, #ffe9c7 0%, #ffc17a 55%, #ffad55 100%); box-shadow: 0 0 6px rgba(255, 193, 122, 0.6);"></span>
                       </div>
                     </div>
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-next aria-label="Next color">
@@ -1013,7 +1498,7 @@
                 <div class="product-meta">
                   <span>40oz &bull; Stainless Steel</span>
                 </div>
-                <h3 class="product-title">Sublimination Tumblers</h3>
+                <h3 class="product-title">Sublimation Tumblers</h3>
                 <span class="product-price">$40.00</span>
                 <div class="flex items-center gap-2 tile-actions">
                   <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
@@ -1128,12 +1613,56 @@
               </p>
             </div>
             <div class="flex flex-col gap-4">
-              <a class="cta-button" href="mailto:lovettsdandc@gmail.com">Start a custom order</a>
+              <a class="cta-button" href="customization.html">Start a custom order</a>
               <a class="cta-button secondary" href="https://instagram.com/lovetts._ldc" target="_blank" rel="noopener">See customer favorites</a>
             </div>
           </div>
         </section>
       </main>
+
+      <div class="favorites-drawer" data-favorites-drawer>
+        <div class="favorites-overlay" data-favorites-overlay></div>
+        <aside class="favorites-panel" data-favorites-panel role="dialog" aria-modal="true" aria-label="Favorites list">
+          <div class="favorites-header">
+            <h2 class="favorites-title">Your Favorites</h2>
+            <button type="button" class="favorites-close-btn" data-favorites-close aria-label="Close favorites">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="favorites-body" data-favorites-items>
+            <div class="favorites-empty">No favorites yet.</div>
+          </div>
+          <div class="favorites-footer">
+            <button type="button" class="favorites-btn" data-favorites-cta>Favorites</button>
+          </div>
+        </aside>
+      </div>
+
+      <div class="cart-drawer" data-cart-drawer>
+        <div class="cart-overlay" data-cart-overlay></div>
+        <aside class="cart-panel" data-cart-panel role="dialog" aria-modal="true" aria-label="Shopping cart">
+          <div class="cart-header">
+            <h2 class="cart-title">Your Cart</h2>
+            <button type="button" class="cart-close-btn" data-cart-close aria-label="Close cart">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="cart-body" data-cart-items>
+            <div class="cart-empty">Your cart is empty.</div>
+          </div>
+          <div class="cart-footer">
+            <div class="cart-summary">
+              <span>Subtotal</span>
+              <span data-cart-total>$0.00</span>
+            </div>
+            <button type="button" class="checkout-btn" data-cart-checkout>Proceed to Checkout</button>
+          </div>
+        </aside>
+      </div>
 
       <footer class="footer">
         <div class="container mx-auto px-5 lg:px-12 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -1236,225 +1765,548 @@
     </div>
 
     <script>
-      const footerYear = document.getElementById('year');
-      if (footerYear) footerYear.textContent = new Date().getFullYear();
+      (() => {
+        const footerYear = document.getElementById('year');
+        if (footerYear) footerYear.textContent = new Date().getFullYear();
 
-      const supportOverlay = document.querySelector('[data-support-overlay]');
-      const customOverlay = document.querySelector('[data-custom-overlay]');
-      const initProductSwatches = () => {
-        document.querySelectorAll('[data-image-target][data-image-src]').forEach(swatch => {
-          if (swatch.dataset.imageSwapInit) return;
-          swatch.dataset.imageSwapInit = 'true';
-          const activate = () => {
-            const targetId = swatch.getAttribute('data-image-target');
-            const src = swatch.getAttribute('data-image-src');
-            const alt = swatch.getAttribute('data-image-alt');
-            const priceTarget = swatch.getAttribute('data-price-target');
-            const priceValue = swatch.getAttribute('data-price');
-            const limitedTarget = swatch.getAttribute('data-limited-target');
-            const limitedFlag = swatch.getAttribute('data-limited');
-            if (targetId && src) {
-              const img = document.getElementById(targetId);
-              if (img) {
-                img.setAttribute('src', src);
-                if (alt) img.setAttribute('alt', alt);
-              }
+        const supportOverlay = document.querySelector('[data-support-overlay]');
+        const customOverlay = document.querySelector('[data-custom-overlay]');
+
+        const CART_STORAGE_KEY = 'ldc:cart';
+        const FAVORITES_STORAGE_KEY = 'ldc:favorites';
+        const cartDrawer = document.querySelector('[data-cart-drawer]');
+        const cartOverlay = document.querySelector('[data-cart-overlay]');
+        const cartPanel = document.querySelector('[data-cart-panel]');
+        const cartItemsEl = document.querySelector('[data-cart-items]');
+        const cartTotalEl = document.querySelector('[data-cart-total]');
+        const checkoutBtn = document.querySelector('[data-cart-checkout]');
+        const favoritesDrawer = document.querySelector('[data-favorites-drawer]');
+        const favoritesOverlay = document.querySelector('[data-favorites-overlay]');
+        const favoritesPanel = document.querySelector('[data-favorites-panel]');
+        const favoritesItemsEl = document.querySelector('[data-favorites-items]');
+        const favoritesCta = document.querySelector('[data-favorites-cta]');
+        const cartCountEl = document.querySelector('[data-cart-count]');
+        const favoritesCountEl = document.querySelector('[data-favorites-count]');
+
+        const buildPreviewStyle = src => {
+          if (!src) return '';
+          return `background-color: #ffffff; background-image: url("${src}"); background-size: cover; background-position: center; background-repeat: no-repeat;`;
+        };
+        const extractImageFromStyle = style => {
+          if (!style) return '';
+          const match = style.match(/url\(["']?(.*?)["']?\)/i);
+          return match ? match[1] : '';
+        };
+
+        const loadCartState = () => {
+          try {
+            return JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || { items: [] };
+          } catch {
+            return { items: [] };
+          }
+        };
+        const loadFavoritesState = () => {
+          try {
+            return JSON.parse(localStorage.getItem(FAVORITES_STORAGE_KEY)) || { items: [] };
+          } catch {
+            return { items: [] };
+          }
+        };
+
+        const formatCurrency = amount => `$${(amount || 0).toFixed(2)}`;
+
+        const saveCart = () => {
+          localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartState));
+        };
+        const saveFavorites = () => {
+          localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favoritesState));
+        };
+
+        let cartState = loadCartState();
+        const normalizeCartItem = item => {
+          if (!item) return null;
+          const name = item.name || item.title || 'Item';
+          let image = item.image || item.previewImage || '';
+          const previewStyle = item.previewStyle || buildPreviewStyle(image) || '';
+          if (!image && previewStyle) {
+            image = extractImageFromStyle(previewStyle);
+          }
+          return { ...item, name, title: item.title || name, image, previewImage: image, previewStyle, options: Array.isArray(item.options) ? item.options : [] };
+        };
+        cartState.items = (cartState.items || []).map(normalizeCartItem).filter(Boolean);
+        saveCart();
+
+        let favoritesState = loadFavoritesState();
+        const normalizeFavorite = item => {
+          if (!item) return null;
+          const name = item.name || item.title || 'Favorite';
+          let image = item.image || item.previewImage || '';
+          const previewStyle = item.previewStyle || buildPreviewStyle(image) || '';
+          if (!image && previewStyle) {
+            image = extractImageFromStyle(previewStyle);
+          }
+          return { ...item, name, title: item.title || name, image, previewImage: image, previewStyle };
+        };
+        favoritesState.items = (favoritesState.items || []).map(normalizeFavorite).filter(Boolean);
+        saveFavorites();
+        const syncBadges = () => {
+          const cartCount = cartState.items?.length || 0;
+          const favCount = favoritesState.items?.length || 0;
+          if (cartCountEl) {
+            cartCountEl.textContent = cartCount;
+            cartCountEl.hidden = cartCount === 0;
+          }
+          if (favoritesCountEl) {
+            favoritesCountEl.textContent = favCount;
+            favoritesCountEl.hidden = favCount === 0;
+          }
+        };
+
+        const openCart = () => {
+          cartDrawer?.classList.add('is-open');
+          cartOverlay?.classList.add('is-open');
+          document.body.classList.add('cart-open');
+          cartPanel?.removeAttribute('aria-hidden');
+          cartPanel?.focus({ preventScroll: true });
+        };
+
+        const closeCart = () => {
+          cartDrawer?.classList.remove('is-open');
+          cartOverlay?.classList.remove('is-open');
+          document.body.classList.remove('cart-open');
+          cartPanel?.setAttribute('aria-hidden', 'true');
+        };
+
+        const removeItem = id => {
+          cartState.items = cartState.items.filter(item => item.id !== id);
+          saveCart();
+          syncBadges();
+          renderCart();
+        };
+
+        const renderCart = () => {
+          if (!cartItemsEl) return;
+          const items = cartState.items || [];
+          if (!items.length) {
+            cartItemsEl.innerHTML = '<div class="cart-empty">Your cart is empty.</div>';
+            if (cartTotalEl) cartTotalEl.textContent = '$0.00';
+            syncBadges();
+            return;
+          }
+          cartItemsEl.innerHTML = '';
+          let total = 0;
+          items.forEach(item => {
+            const lineTotal = (item.price || 0) * (item.quantity || 1);
+            total += lineTotal;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'cart-item';
+            // Ensure preview/image are present for persistence across pages
+            const ensuredThumb = item.previewStyle || buildPreviewStyle(item.image || '') || '';
+            if (!item.previewStyle && ensuredThumb) {
+              item.previewStyle = ensuredThumb;
+              saveCart();
             }
-            if (priceTarget && priceValue) {
-              const priceEl = document.getElementById(priceTarget);
-              if (priceEl) {
-                priceEl.textContent = `$${priceValue}`;
-              }
-            }
-            if (limitedTarget) {
-              const badge = document.getElementById(limitedTarget);
-              if (badge) {
-                badge.style.display = limitedFlag === 'true' ? 'inline-flex' : 'none';
-              }
-            }
+            const optsArray = Array.isArray(item.options) ? item.options : [];
+            const findOpt = label =>
+              optsArray.find(opt => (opt.label || '').toLowerCase() === label);
+            const colorOpt = findOpt('color');
+            const accessoryOpt = findOpt('accessory');
+            const wrapOpt = findOpt('wrap');
+            const notesOpt = findOpt('notes');
+            const colorSwatch = colorOpt
+              ? `<span class="swatch swatch-pill" title="${colorOpt.value || colorOpt.label || 'Color'}" style="${colorOpt.swatchStyle || ''}">${colorOpt.swatchGlyph || ''}</span>`
+              : '';
+            const displayTitle = item.name || item.title || 'Custom Design';
+            const thumbStyle = item.previewStyle || buildPreviewStyle(item.image || '');
+            wrapper.innerHTML = `
+              <div class="cart-item-thumb" style="${thumbStyle}">
+                ${item.image ? `<img src="${item.image}" alt="${displayTitle}" />` : ''}
+              </div>
+              <div class="cart-item-info">
+                <div class="cart-item-header">
+                  <span class="cart-item-title">${displayTitle}</span>
+                  <button type="button" class="cart-item-remove" data-remove="${item.id}" aria-label="Remove item">×</button>
+                </div>
+                <div class="cart-item-options">
+                  ${colorSwatch ? `<div class="cart-option"><span class="cart-option-label">Color</span>${colorSwatch}</div>` : ''}
+                  ${accessoryOpt ? `<div class="cart-option"><span class="cart-option-label">Accessory</span><span class="cart-option-value">${accessoryOpt.value || accessoryOpt.label}</span></div>` : ''}
+                  ${wrapOpt ? `<div class="cart-option"><span class="cart-option-label">Wrap</span><span class="cart-option-value">${wrapOpt.value || wrapOpt.label}</span></div>` : ''}
+                  ${notesOpt ? `<div class="cart-option"><span class="cart-option-label">Notes</span><span class="cart-option-value">${notesOpt.value || notesOpt.label}</span></div>` : ''}
+                </div>
+                <div class="cart-item-meta">
+                  <span class="cart-item-qty">Qty ${item.quantity || 1}</span>
+                  <span class="cart-item-price">${formatCurrency(lineTotal)}</span>
+                </div>
+              </div>
+            `;
+            cartItemsEl.appendChild(wrapper);
+          });
+          if (cartTotalEl) cartTotalEl.textContent = formatCurrency(total);
+          cartItemsEl.querySelectorAll('[data-remove]').forEach(btn => {
+            btn.addEventListener('click', () => removeItem(btn.getAttribute('data-remove')));
+          });
+          syncBadges();
+        };
+
+        const addProduct = product => {
+          const normalized = {
+            ...product,
+            id: product.id || `${product.title || 'item'}-${Date.now()}`
           };
-          swatch.addEventListener('click', activate);
-          swatch.addEventListener('keydown', event => {
-            if (event.key === 'Enter' || event.key === ' ') {
+          cartState.items = [...(cartState.items || []), normalized];
+          saveCart();
+          syncBadges();
+          renderCart();
+          openCart();
+        };
+
+        cartOverlay?.addEventListener('click', closeCart);
+        document.querySelectorAll('[data-cart-close]').forEach(btn =>
+          btn.addEventListener('click', closeCart)
+        );
+        window.addEventListener('keydown', event => {
+          if (event.key === 'Escape') closeCart();
+        });
+        checkoutBtn?.addEventListener('click', () => {
+          window.location.href = 'checkout.html';
+        });
+        document.querySelectorAll('[data-open-cart],[data-cart-open]').forEach(trigger => {
+          trigger.addEventListener('click', event => {
+            event.preventDefault();
+            openCart();
+          });
+        });
+
+        const openFavorites = () => {
+          favoritesDrawer?.classList.add('is-open');
+          favoritesOverlay?.classList.add('is-open');
+          document.body.classList.add('favorites-open');
+          favoritesPanel?.removeAttribute('aria-hidden');
+          favoritesPanel?.focus({ preventScroll: true });
+        };
+        const closeFavorites = () => {
+          favoritesDrawer?.classList.remove('is-open');
+          favoritesOverlay?.classList.remove('is-open');
+          document.body.classList.remove('favorites-open');
+          favoritesPanel?.setAttribute('aria-hidden', 'true');
+        };
+
+        const renderFavorites = () => {
+          if (!favoritesItemsEl) return;
+          const items = favoritesState.items || [];
+          if (!items.length) {
+            favoritesItemsEl.innerHTML = '<div class="favorites-empty">No favorites yet.</div>';
+            syncBadges();
+            return;
+          }
+          favoritesItemsEl.innerHTML = '';
+          items.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'favorite-item';
+            const thumbStyle = item.previewStyle || buildPreviewStyle(item.image || '') || '';
+            if (!item.previewStyle && thumbStyle) {
+              item.previewStyle = thumbStyle;
+              saveFavorites();
+            }
+            const imgTag = item.image ? `<img src="${item.image}" alt="${item.title || item.name || 'Favorite'}" />` : '';
+            const preview = `<div class="favorite-thumb" style="${thumbStyle}">${imgTag}</div>`;
+            row.innerHTML = `
+              ${preview}
+              <div>
+                <div class="favorite-title">${item.name || item.title || 'Favorite'}</div>
+                <div class="favorite-meta">${formatCurrency(item.price || 0)}</div>
+                <div class="favorite-actions">
+                  <button type="button" class="favorites-btn" data-fav-remove="${item.id}">Remove</button>
+                </div>
+              </div>
+            `;
+            favoritesItemsEl.appendChild(row);
+          });
+          favoritesItemsEl.querySelectorAll('[data-fav-remove]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const id = btn.getAttribute('data-fav-remove');
+              favoritesState.items = (favoritesState.items || []).filter(entry => entry.id !== id);
+              saveFavorites();
+              renderFavorites();
+            });
+          });
+          syncBadges();
+        };
+
+        const toggleFavorite = product => {
+          if (!product) return;
+          const favId = product.favoriteId || product.id;
+          const normalized = { ...product, id: favId };
+          const exists = (favoritesState.items || []).some(item => item.id === favId);
+          if (exists) {
+            favoritesState.items = favoritesState.items.filter(item => item.id !== favId);
+          } else {
+            favoritesState.items = [...(favoritesState.items || []), normalized];
+          }
+          saveFavorites();
+          renderFavorites();
+          if (!exists) openFavorites();
+        };
+
+        favoritesOverlay?.addEventListener('click', closeFavorites);
+        document.querySelectorAll('[data-favorites-close]').forEach(btn =>
+          btn.addEventListener('click', closeFavorites)
+        );
+        document.querySelectorAll('[data-favorites-open]').forEach(btn =>
+          btn.addEventListener('click', event => {
+            event.preventDefault();
+            openFavorites();
+          })
+        );
+        window.addEventListener('keydown', event => {
+          if (event.key === 'Escape') {
+            closeFavorites();
+          }
+        });
+        favoritesCta?.addEventListener('click', closeFavorites);
+
+        const getProductDetails = trigger => {
+          const card = trigger.closest('.product-card');
+          if (!card) return null;
+          const title = card.querySelector('.product-title')?.textContent?.trim() || 'Custom Design';
+          const priceText = card.querySelector('.product-price')?.textContent || '';
+          const price = Number(priceText.replace(/[^0-9.]/g, '')) || 0;
+          const image = card.querySelector('img')?.getAttribute('src') || '';
+          const previewStyle = buildPreviewStyle(image);
+
+          const fallbackSwatch = card.querySelector('[data-image-target][data-image-src]');
+          const colorLabel = card.dataset.selectedColorLabel || fallbackSwatch?.getAttribute('aria-label') || '';
+          const colorStyle = card.dataset.selectedColorStyle || fallbackSwatch?.getAttribute('style') || '';
+
+          const options = [];
+          if (colorLabel) options.push({ label: 'Color', value: colorLabel, swatchStyle: colorStyle });
+          if (card.dataset.selectedAccessory) options.push({ label: 'Accessory', value: card.dataset.selectedAccessory });
+          if (card.dataset.selectedWrap) options.push({ label: 'Wrap', value: card.dataset.selectedWrap });
+          if (card.dataset.selectedNotes) options.push({ label: 'Notes', value: card.dataset.selectedNotes });
+
+          const baseId = `${title}-${colorLabel || 'default'}-${price}`;
+
+          return {
+            id: `${baseId}-${Date.now()}`,
+            favoriteId: baseId,
+            name: title,
+            title,
+            price,
+            image,
+            quantity: 1,
+            previewStyle,
+            options
+          };
+        };
+
+        document.querySelectorAll('[data-add-to-cart]').forEach(button => {
+          if (button.dataset.cartInit) return;
+          button.dataset.cartInit = 'true';
+          button.addEventListener('click', () => {
+            const product = getProductDetails(button);
+            if (product) addProduct(product);
+          });
+        });
+
+        document.querySelectorAll('.tile-action-favorite').forEach(button => {
+          if (button.dataset.favInit) return;
+          button.dataset.favInit = 'true';
+          button.addEventListener('click', () => {
+            const product = getProductDetails(button);
+            if (!product) return;
+            toggleFavorite(product);
+          });
+        });
+
+        const initSwatchSliders = () => {
+          document.querySelectorAll('[data-swatch-slider]').forEach(slider => {
+            if (slider.dataset.sliderInit) return;
+            slider.dataset.sliderInit = 'true';
+            const track = slider.querySelector('[data-swatch-track]');
+            const prev = slider.querySelector('[data-swatch-prev]');
+            const next = slider.querySelector('[data-swatch-next]');
+            const visible = Number(slider.getAttribute('data-visible') || 3);
+            let index = 0;
+
+            const update = () => {
+              if (!track) return;
+              const swatches = Array.from(track.children);
+              const total = swatches.length;
+              const maxIndex = Math.max(0, total - visible);
+              if (maxIndex === 0) {
+                index = 0;
+              } else if (index < 0) {
+                index = maxIndex;
+              } else if (index > maxIndex) {
+                index = 0;
+              }
+              const first = swatches[0];
+              const gap = parseFloat(getComputedStyle(track).gap || '0');
+              const swatchWidth = first ? first.getBoundingClientRect().width : 0;
+              const offset = (swatchWidth + gap) * index;
+              track.style.transform = `translateX(-${offset}px)`;
+            };
+
+            const step = direction => {
+              index += direction;
+              update();
+            };
+
+            prev?.addEventListener('click', event => {
               event.preventDefault();
-              activate();
-            }
-          });
-          swatch.setAttribute('tabindex', '0');
-          swatch.setAttribute('role', 'button');
-        });
-      };
-      if (supportOverlay) {
-        const supportOpeners = document.querySelectorAll('[data-support-open]');
-        const supportClosers = supportOverlay.querySelectorAll('[data-support-close]');
-        const supportForm = supportOverlay.querySelector('[data-support-form]');
-        const supportName = document.getElementById('supportName');
-        const setSupportState = isOpen => {
-          supportOverlay.classList.toggle('is-open', isOpen);
-          supportOverlay.setAttribute('aria-hidden', String(!isOpen));
-          document.body.classList.toggle('support-open', isOpen);
-          if (isOpen && supportName) {
-            requestAnimationFrame(() => supportName.focus());
-          }
-        };
-        const closeSupport = () => setSupportState(false);
-        const openSupport = () => setSupportState(true);
-        supportOpeners.forEach(trigger => {
-          trigger.addEventListener('click', event => {
-            event.preventDefault();
-            openSupport();
-          });
-        });
-        supportClosers.forEach(trigger => {
-          trigger.addEventListener('click', event => {
-            event.preventDefault();
-            closeSupport();
-          });
-        });
-        supportOverlay.addEventListener('click', event => {
-          if (event.target === supportOverlay) {
-            closeSupport();
-          }
-        });
-        document.addEventListener('keydown', event => {
-          if (event.key === 'Escape' && supportOverlay.classList.contains('is-open')) {
-            closeSupport();
-          }
-        });
-        supportForm?.addEventListener('submit', event => {
-          event.preventDefault();
-          closeSupport();
-        });
-      }
-      if (customOverlay) {
-        const customOpeners = document.querySelectorAll('[data-custom-open]');
-        const customClosers = customOverlay.querySelectorAll('[data-custom-close]');
-        const customForm = customOverlay.querySelector('[data-custom-form]');
-        const customName = document.getElementById('customName');
-        const setCustomState = isOpen => {
-          customOverlay.classList.toggle('is-open', isOpen);
-          customOverlay.setAttribute('aria-hidden', String(!isOpen));
-          document.body.classList.toggle('custom-open', isOpen);
-          if (isOpen && customName) {
-            requestAnimationFrame(() => customName.focus());
-          }
-        };
-        const closeCustom = () => setCustomState(false);
-        const openCustom = () => setCustomState(true);
-        customOpeners.forEach(trigger => {
-          trigger.addEventListener('click', event => {
-            event.preventDefault();
-            openCustom();
-          });
-        });
-        customClosers.forEach(trigger => {
-          trigger.addEventListener('click', event => {
-            event.preventDefault();
-            closeCustom();
-          });
-        });
-        customOverlay.addEventListener('click', event => {
-          if (event.target === customOverlay) {
-            closeCustom();
-          }
-        });
-        document.addEventListener('keydown', event => {
-          if (event.key === 'Escape' && customOverlay.classList.contains('is-open')) {
-            closeCustom();
-          }
-        });
-        customForm?.addEventListener('submit', event => {
-          event.preventDefault();
-          closeCustom();
-        });
-      }
-      initProductSwatches();
+              step(-1);
+            });
 
-      const initSwatchSliders = () => {
-        document.querySelectorAll('[data-swatch-slider]').forEach(slider => {
-          if (slider.dataset.sliderInit) return;
-          slider.dataset.sliderInit = 'true';
-          const track = slider.querySelector('[data-swatch-track]');
-          const prev = slider.querySelector('[data-swatch-prev]');
-          const next = slider.querySelector('[data-swatch-next]');
-          const visible = Number(slider.getAttribute('data-visible') || 3);
-          let index = 0;
+            next?.addEventListener('click', event => {
+              event.preventDefault();
+              step(1);
+            });
 
-          const update = () => {
-            if (!track) return;
-            const swatches = Array.from(track.children);
-            const total = swatches.length;
-            const maxIndex = Math.max(0, total - visible);
-            if (maxIndex === 0) {
-              index = 0;
-            } else if (index < 0) {
-              index = maxIndex;
-            } else if (index > maxIndex) {
-              index = 0;
-            }
-            const first = swatches[0];
-            const gap = parseFloat(getComputedStyle(track).gap || '0');
-            const swatchWidth = first ? first.getBoundingClientRect().width : 0;
-            const offset = (swatchWidth + gap) * index;
-            track.style.transform = `translateX(-${offset}px)`;
-          };
-
-          const step = direction => {
-            index += direction;
+            window.addEventListener('resize', update);
             update();
-          };
-
-          prev?.addEventListener('click', event => {
-            event.preventDefault();
-            step(-1);
           });
+        };
 
-          next?.addEventListener('click', event => {
-            event.preventDefault();
-            step(1);
-          });
+        const initSwatchSwaps = () => {
+          document.querySelectorAll('[data-image-target][data-image-src]').forEach(swatch => {
+            if (swatch.dataset.imageSwapInit) return;
+            swatch.dataset.imageSwapInit = 'true';
+            const activate = () => {
+              const targetId = swatch.getAttribute('data-image-target');
+              const src = swatch.getAttribute('data-image-src');
+              const alt = swatch.getAttribute('data-image-alt');
+              const priceTarget = swatch.getAttribute('data-price-target');
+              const priceValue = swatch.getAttribute('data-price');
+              const limitedTarget = swatch.getAttribute('data-limited-target');
+              const limitedFlag = swatch.getAttribute('data-limited');
 
-          window.addEventListener('resize', update);
-          update();
-        });
-      };
-
-      const initSwatchSwaps = () => {
-        document.querySelectorAll('[data-image-target][data-image-src]').forEach(swatch => {
-          if (swatch.dataset.imageSwapInit) return;
-          swatch.dataset.imageSwapInit = 'true';
-          const activate = () => {
-            const targetId = swatch.getAttribute('data-image-target');
-            const src = swatch.getAttribute('data-image-src');
-            const alt = swatch.getAttribute('data-image-alt');
-            const priceTarget = swatch.getAttribute('data-price-target');
-            const priceValue = swatch.getAttribute('data-price');
-            if (targetId && src) {
-              const img = document.getElementById(targetId);
-              if (img) {
-                img.setAttribute('src', src);
-                if (alt) img.setAttribute('alt', alt);
+              if (targetId && src) {
+                const img = document.getElementById(targetId);
+                if (img) {
+                  img.setAttribute('src', src);
+                  if (alt) img.setAttribute('alt', alt);
+                }
               }
-            }
-            if (priceTarget && priceValue) {
-              const priceEl = document.getElementById(priceTarget);
-              if (priceEl) priceEl.textContent = `$${priceValue}`;
+              if (priceTarget && priceValue) {
+                const priceEl = document.getElementById(priceTarget);
+                if (priceEl) priceEl.textContent = `$${priceValue}`;
+              }
+              if (limitedTarget) {
+                const badge = document.getElementById(limitedTarget);
+                if (badge) badge.style.display = limitedFlag === 'true' ? 'inline-flex' : 'none';
+              }
+
+              const card = swatch.closest('.product-card');
+              if (card) {
+                card.dataset.selectedColorLabel = swatch.getAttribute('aria-label') || '';
+                card.dataset.selectedColorStyle = swatch.getAttribute('style') || '';
+              }
+            };
+
+            swatch.addEventListener('click', activate);
+            swatch.addEventListener('keydown', event => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                activate();
+              }
+            });
+            swatch.setAttribute('tabindex', '0');
+            swatch.setAttribute('role', 'button');
+          });
+        };
+
+        if (supportOverlay) {
+          const supportOpeners = document.querySelectorAll('[data-support-open]');
+          const supportClosers = supportOverlay.querySelectorAll('[data-support-close]');
+          const supportForm = supportOverlay.querySelector('[data-support-form]');
+          const supportName = document.getElementById('supportName');
+          const setSupportState = isOpen => {
+            supportOverlay.classList.toggle('is-open', isOpen);
+            supportOverlay.setAttribute('aria-hidden', String(!isOpen));
+            document.body.classList.toggle('support-open', isOpen);
+            if (isOpen && supportName) {
+              requestAnimationFrame(() => supportName.focus());
             }
           };
-          swatch.addEventListener('click', activate);
-          swatch.addEventListener('keydown', event => {
-            if (event.key === 'Enter' || event.key === ' ') {
+          const closeSupport = () => setSupportState(false);
+          const openSupport = () => setSupportState(true);
+          supportOpeners.forEach(trigger => {
+            trigger.addEventListener('click', event => {
               event.preventDefault();
-              activate();
+              openSupport();
+            });
+          });
+          supportClosers.forEach(trigger => {
+            trigger.addEventListener('click', event => {
+              event.preventDefault();
+              closeSupport();
+            });
+          });
+          supportOverlay.addEventListener('click', event => {
+            if (event.target === supportOverlay) {
+              closeSupport();
             }
           });
-          swatch.setAttribute('tabindex', '0');
-          swatch.setAttribute('role', 'button');
-        });
-      };
+          document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && supportOverlay.classList.contains('is-open')) {
+              closeSupport();
+            }
+          });
+          supportForm?.addEventListener('submit', event => {
+            event.preventDefault();
+            closeSupport();
+          });
+        }
 
-      initSwatchSliders();
-      initSwatchSwaps();
+        if (customOverlay) {
+          const customOpeners = document.querySelectorAll('[data-custom-open]');
+          const customClosers = customOverlay.querySelectorAll('[data-custom-close]');
+          const customForm = customOverlay.querySelector('[data-custom-form]');
+          const customName = document.getElementById('customName');
+          const setCustomState = isOpen => {
+            customOverlay.classList.toggle('is-open', isOpen);
+            customOverlay.setAttribute('aria-hidden', String(!isOpen));
+            document.body.classList.toggle('custom-open', isOpen);
+            if (isOpen && customName) {
+              requestAnimationFrame(() => customName.focus());
+            }
+          };
+          const closeCustom = () => setCustomState(false);
+          const openCustom = () => setCustomState(true);
+          customOpeners.forEach(trigger => {
+            trigger.addEventListener('click', event => {
+              event.preventDefault();
+              openCustom();
+            });
+          });
+          customClosers.forEach(trigger => {
+            trigger.addEventListener('click', event => {
+              event.preventDefault();
+              closeCustom();
+            });
+          });
+          customOverlay.addEventListener('click', event => {
+            if (event.target === customOverlay) {
+              closeCustom();
+            }
+          });
+          document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && customOverlay.classList.contains('is-open')) {
+              closeCustom();
+            }
+          });
+          customForm?.addEventListener('submit', event => {
+            event.preventDefault();
+            closeCustom();
+          });
+        }
+
+        initSwatchSliders();
+        initSwatchSwaps();
+        renderCart();
+        renderFavorites();
+        syncBadges();
+      })();
     </script>
 
   </body>

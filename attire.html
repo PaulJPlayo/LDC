@@ -24,6 +24,9 @@
         flex-direction: column;
       }
       .top-bar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
         border-bottom: 1px solid rgba(255, 255, 255, 0.12);
         background: rgba(15, 23, 42, 0.55);
         backdrop-filter: blur(14px);
@@ -211,6 +214,166 @@
       .support-submit:hover {
         transform: translateY(-2px);
         box-shadow: 0 16px 32px rgba(249, 115, 22, 0.28);
+      }
+      .attire-layout {
+        padding: clamp(3.5rem, 8vw, 6rem) 0;
+        background: #f5f1eb;
+        color: #0f172a;
+      }
+      .attire-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: clamp(1.75rem, 4vw, 2.5rem);
+        align-items: start;
+      }
+      .attire-gallery {
+        display: grid;
+        gap: 1rem;
+      }
+      .attire-hero-image {
+        position: relative;
+        overflow: hidden;
+        border-radius: 1.25rem;
+        background: #d8d3cb;
+        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.18);
+        min-height: 320px;
+        display: grid;
+        place-items: center;
+      }
+      .attire-hero-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .attire-hero-image .badge-limited {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        padding: 0.4rem 0.75rem;
+        border-radius: 999px;
+        background: #0f172a;
+        color: #fef3c7;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+      }
+      .attire-thumbs {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 0.65rem;
+      }
+      .attire-thumbs img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 0.85rem;
+        background: #e5e7eb;
+        box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+        cursor: pointer;
+        transition: transform 160ms ease, box-shadow 160ms ease;
+      }
+      .attire-thumbs img:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18);
+      }
+      .attire-form {
+        background: #ffffff;
+        color: #0f172a;
+        border-radius: 1.5rem;
+        padding: clamp(1.5rem, 3vw, 2rem);
+        box-shadow: 0 18px 36px rgba(15, 23, 42, 0.12);
+        display: grid;
+        gap: 1rem;
+      }
+      .attire-form .price-main {
+        font-size: 1.35rem;
+        font-weight: 800;
+        margin: 0;
+        color: #0f172a;
+      }
+      .attire-form .price-note {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #6b7280;
+      }
+      .attire-form .lead-copy {
+        margin: 0;
+        color: #374151;
+        line-height: 1.6;
+        font-size: 0.98rem;
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.85rem;
+      }
+      .field {
+        display: grid;
+        gap: 0.35rem;
+        font-weight: 600;
+        color: #111827;
+      }
+      .field select,
+      .field input,
+      .field textarea {
+        width: 100%;
+        border-radius: 0.85rem;
+        border: 1px solid #e5e7eb;
+        padding: 0.85rem 0.9rem;
+        font: inherit;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+      .field textarea {
+        resize: vertical;
+      }
+      .cta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+      .cta-icon-btn {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(135deg, #3b82f6 0%, #22d3ee 100%);
+        color: #0b1120;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 16px 30px rgba(34, 211, 238, 0.25);
+        transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+      }
+      .cta-icon-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 18px 36px rgba(34, 211, 238, 0.28);
+        filter: brightness(1.02);
+      }
+      .price-table {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 1rem;
+        padding: 1rem;
+        display: grid;
+        gap: 0.6rem;
+      }
+      .price-table h3 {
+        margin: 0;
+        font-size: 1rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .price-table ul {
+        margin: 0;
+        padding-left: 1.1rem;
+        display: grid;
+        gap: 0.3rem;
+        color: #374151;
+        line-height: 1.5;
       }
       .page-hero {
         position: relative;
@@ -437,6 +600,385 @@
         letter-spacing: 0.18em;
         text-transform: uppercase;
       }
+      .cart-drawer {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        pointer-events: none;
+      }
+      .cart-drawer.is-open {
+        pointer-events: auto;
+      }
+      .cart-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        opacity: 0;
+        transition: opacity 240ms ease;
+      }
+      .cart-drawer.is-open .cart-overlay {
+        opacity: 1;
+      }
+      .cart-panel {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 100%;
+        width: min(384px, 92vw);
+        background: linear-gradient(135deg, #E0B0FF 0%, #B678F5 100%);
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+        box-shadow: -12px 0 32px rgba(15, 23, 42, 0.25);
+      }
+      .cart-drawer.is-open .cart-panel {
+        transform: translateX(0);
+      }
+      .cart-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+      .cart-title {
+        font-family: inherit;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #ffffff;
+      }
+      .cart-close-btn {
+        border: none;
+        background: transparent;
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.8);
+        transition: background-color 200ms ease;
+      }
+      .cart-close-btn:hover {
+        background-color: rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+      }
+      .cart-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .cart-empty {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 0.95rem;
+        margin-top: 2rem;
+      }
+      .cart-item {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+      }
+      .cart-item-thumb {
+        width: 3.1rem;
+        height: 3.1rem;
+        border-radius: 0.9rem;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-color: #fff;
+        overflow: hidden;
+        flex-shrink: 0;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28), 0 6px 16px rgba(15, 23, 42, 0.25);
+      }
+      .cart-item-thumb img {
+        width: 3.1rem;
+        height: 3.1rem;
+        border-radius: 0.9rem;
+        object-fit: cover;
+        background: #fff;
+      }
+      .cart-item-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        flex: 1 1 auto;
+      }
+      .cart-item-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+      }
+      .cart-item-title {
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #ffffff;
+      }
+      .cart-item-options {
+        display: grid;
+        gap: 0.4rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.9rem;
+      }
+      .cart-option {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+      .cart-option-label {
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.8);
+      }
+      .cart-option-value {
+        color: #ffffff;
+        font-weight: 600;
+      }
+      .cart-item-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+      }
+      .cart-item-qty {
+        font-size: 0.82rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.85);
+      }
+      .cart-item-price {
+        font-weight: 700;
+        color: #ffffff;
+      }
+      .swatch {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.05rem;
+        height: 1.05rem;
+        border-radius: 999px;
+        background: #fff;
+        border: 1px solid rgba(226, 232, 240, 0.65);
+        box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.25), inset 0 6px 12px rgba(255, 255, 255, 0.7);
+        font-size: 0.75rem;
+        line-height: 1;
+      }
+      .swatch-pill {
+        width: 1rem;
+        height: 1rem;
+      }
+      .cart-item-remove {
+        border: none;
+        background: rgba(255, 255, 255, 0.16);
+        color: #ffffff;
+        border-radius: 999px;
+        width: 1.9rem;
+        height: 1.9rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+      .cart-footer {
+        padding: 1.25rem 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .cart-summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #ffffff;
+        font-weight: 600;
+      }
+      .checkout-btn {
+        border: none;
+        border-radius: 999px;
+        height: 2.75rem;
+        background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+        color: #fff;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 160ms ease, box-shadow 160ms ease;
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+      }
+      .checkout-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(168, 85, 247, 0.25);
+      }
+      .checkout-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+      }
+      .favorites-drawer {
+        position: fixed;
+        inset: 0;
+        z-index: 55;
+        pointer-events: none;
+      }
+      .favorites-drawer.is-open {
+        pointer-events: auto;
+      }
+      .favorites-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        opacity: 0;
+        transition: opacity 240ms ease;
+      }
+      .favorites-drawer.is-open .favorites-overlay {
+        opacity: 1;
+      }
+      .favorites-panel {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 100%;
+        width: min(360px, 92vw);
+        background: linear-gradient(135deg, #ff9aed 0%, #ff5ca8 100%);
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+        box-shadow: -12px 0 32px rgba(15, 23, 42, 0.25);
+      }
+      .favorites-drawer.is-open .favorites-panel {
+        transform: translateX(0);
+      }
+      .favorites-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+      .favorites-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      .favorites-close-btn {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .favorites-body {
+        padding: 1rem 1.25rem;
+        flex: 1 1 auto;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .favorites-empty {
+        padding: 2rem 1.25rem;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.1);
+        text-align: center;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.85);
+      }
+      .favorite-item {
+        display: grid;
+        grid-template-columns: 72px 1fr;
+        gap: 0.75rem;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        padding: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(8px);
+      }
+      .favorite-thumb {
+        width: 72px;
+        height: 72px;
+        border-radius: 12px;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-color: #fff;
+        overflow: hidden;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28), 0 6px 16px rgba(15, 23, 42, 0.25);
+      }
+      .favorite-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 12px;
+        background: #fff;
+      }
+      .favorite-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        margin: 0 0 0.25rem;
+      }
+      .favorite-meta {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.9);
+      }
+      .favorite-actions {
+        margin-top: 0.5rem;
+        display: flex;
+        gap: 0.5rem;
+      }
+      .favorites-btn {
+        border: none;
+        border-radius: 12px;
+        height: 2.75rem;
+        background: rgba(255, 255, 255, 0.14);
+        color: #ffffff;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+      }
+      .favorites-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(255, 92, 168, 0.25);
+        background: rgba(255, 255, 255, 0.18);
+      }
+      body.favorites-open,
+      body.cart-open {
+        overflow: hidden;
+      }
     </style>
   </head>
   <body>
@@ -457,15 +999,17 @@
             <a class="nav-link" href="accessories.html">Accessories</a>
             <span class="nav-link is-active">Attire</span>
             <div class="nav-icon-cluster">
-              <a class="nav-icon-link" href="favorites.html" aria-label="Favorites">
+              <a class="nav-icon-link relative" href="#" aria-label="Favorites" data-favorites-open>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                   <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                 </svg>
+                <span class="icon-badge" data-favorites-count hidden>0</span>
               </a>
-              <a class="nav-icon-link" href="checkout.html" aria-label="Checkout">
+              <a class="nav-icon-link relative" href="#" aria-label="Cart" data-open-cart data-cart-open>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
                 </svg>
+                <span class="icon-badge" data-cart-count hidden>0</span>
               </a>
               <a class="nav-icon-link" href="#" aria-label="Contact" data-support-open>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -478,244 +1022,110 @@
       </header>
 
       <main>
-        <section class="page-hero">
+        <section class="attire-layout">
           <div class="container mx-auto px-5 lg:px-12">
-            <div class="hero-card">
-              <span class="hero-eyebrow">Wear the glow</span>
-              <h1 class="hero-heading">Attire made to match your favorite tumbler.</h1>
-              <p class="hero-subtext">
-                Soft fabrics, bold gradients, and custom lettering—Lovett’s apparel collection is crafted to complement our drinkware drops. Pair your hoodie or tee with the pieces you already love.
-              </p>
-              <div class="hero-actions">
-                <a class="cta-button" href="#attire-grid">Shop Attire</a>
-                <a class="cta-button secondary" href="mailto:lovettsdandc@gmail.com">Request a custom</a>
+            <div class="attire-grid">
+              <div class="attire-gallery">
+                <div class="attire-hero-image">
+                  <img src="assets/LAW attire 1.png" alt="L.A.W. Attire sweat suit" />
+                  <span class="badge badge-limited">Limited Edition</span>
+                </div>
+                <div class="attire-thumbs">
+                  <img src="assets/LAW attire 1.png" alt="L.A.W. Attire sweat suit" data-hero-thumb />
+                  <img src="assets/LAW camo logo with jay pic for website.png" alt="LAW camo logo" />
+                  <img src="assets/Blue LAW sweat suit front.png" alt="Blue LAW sweatsuit front" />
+                  <img src="assets/LAW pink sweat suit kids.png" alt="Pink kids sweatsuit" />
+                  <img src="assets/LAW cream sweat suit camo.png" alt="Cream camo sweatsuit" />
+                  <img src="assets/LAW CAMO GREEN sweat suit.png" alt="Green camo sweatsuit" />
+                  <img src="assets/Hoodie - red.png" alt="Red hoodie" />
+                  <img src="assets/Hoodie - red - 2.png" alt="Red hoodie alternate view" />
+                  <img src="assets/Tshirt - white.png" alt="White t-shirt" />
+                  <img src="assets/Tshirt - grey - black - white.png" alt="Grey black white t-shirt" />
+                </div>
               </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="attire-grid" class="collection-section">
-          <div class="container mx-auto px-5 lg:px-12">
-            <header class="collection-header">
-              <div>
-                <p class="text-xs uppercase tracking-[0.35em] text-white/70">Limited runs</p>
-                <h2 class="mt-3 text-2xl md:text-3xl font-extrabold tracking-tight text-white">Lovett's attire lineup</h2>
+              <div class="attire-form">
+                <p class="hero-eyebrow" style="color:#0f172a;">L.A.W. Attire</p>
+                <h1 class="hero-heading" style="color:#0f172a;">Custom Sweat Suits &amp; Tees</h1>
+                <p class="price-main">$40 and up <span class="price-note">(varies by style &amp; size)</span></p>
+                <p class="lead-copy">
+                  100% Cotton or 50/50 mix. Sizes XS–3XL. Choose your color, style, and add notes—our team will craft your fit and confirm details before shipping.
+                </p>
+                <div class="form-grid">
+                  <label class="field">
+                    <span>Style</span>
+                    <select id="attireStyle">
+                      <option>T-Shirt</option>
+                      <option>Long Sleeve</option>
+                      <option>Crewneck</option>
+                      <option>Hoodie</option>
+                      <option>Sweatsuit</option>
+                      <option>Onesie</option>
+                      <option>Youth Tee</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Color</span>
+                    <select id="attireColor">
+                      <option>Black</option>
+                      <option>White</option>
+                      <option>Tan</option>
+                      <option>Green</option>
+                      <option>Red</option>
+                      <option>Grey</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Size</span>
+                    <select id="attireSize">
+                      <option>XS</option>
+                      <option>S</option>
+                      <option>M</option>
+                      <option>L</option>
+                      <option>XL</option>
+                      <option>2XL</option>
+                      <option>3XL</option>
+                      <option>4XL</option>
+                      <option>YS</option>
+                      <option>YM</option>
+                      <option>YL</option>
+                      <option>YXL</option>
+                      <option>Onesie 0-3M</option>
+                      <option>Onesie 3-6M</option>
+                      <option>Onesie 6-9M</option>
+                      <option>Onesie 9-12M</option>
+                      <option>Onesie 12-18M</option>
+                      <option>Onesie 18-24M</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Quantity</span>
+                    <input type="number" min="1" value="1" />
+                  </label>
+                </div>
+                <label class="field">
+                  <span>Custom Design Notes</span>
+                  <textarea rows="3" placeholder="Logos, colors, placement, timelines..."></textarea>
+                </label>
+                <div class="cta-row">
+                  <button class="cta-icon-btn" type="button" aria-label="Add to favorites" data-favorites-open>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                      <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <button class="cta-button" data-add-to-cart>Add to Cart</button>
+                </div>
+                <div class="price-table">
+                  <h3>Pricing Guide</h3>
+                  <ul>
+                    <li><strong>T-Shirts:</strong> XS-L $20 · XL-2XL $25 · 3XL-4XL $30</li>
+                    <li><strong>Long Sleeve:</strong> XS-L $25 · XL-2XL $30 · 3XL-4XL $35</li>
+                    <li><strong>Crewnecks:</strong> XS-L $35 · XL-2XL $40 · 3XL-4XL $45</li>
+                    <li><strong>Hoodies:</strong> XS-L $35 · XL-2XL $45 · 3XL-4XL $50</li>
+                    <li><strong>Sweatsuits:</strong> XS-L $45 · XL-2XL $55 · 3XL-4XL $65</li>
+                    <li><strong>Children &amp; Youth:</strong> Onesies up to 24M $20 · YS-YL $20 · YXL $25</li>
+                  </ul>
+                </div>
               </div>
-              <p class="max-w-md text-sm md:text-base text-white/70 leading-relaxed">
-                Produced in small batches so every drop stays special. Tap the heart to save favorites or add your size to the cart—custom colors are always just an email away.
-              </p>
-            </header>
-
-            <div class="filter-bar mt-6"></div>
-
-            <div class="collection-grid mt-8">
-              <article class="product-card">
-                <div class="product-media">
-                  <div class="attire-graphic" style="--attire-gradient: linear-gradient(180deg,#cfd2ff 0%,#a8afff 100%);"></div>
-                </div>
-                <div class="product-meta-row">
-                  <div class="swatch-row">
-                    <span class="swatch" style="background:#e5e7eb;"></span>
-                    <span class="swatch" style="background:#1f2937;"></span>
-                    <span class="swatch" style="background:#9ca3af;"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
-                    </button>
-                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
-                    </button>
-                  </div>
-                </div>
-                <div class="product-details">Crewneck Tee · XS–3XL · Cotton blend</div>
-                <h3 class="product-title">LDC Attire 1</h3>
-                <div class="price-line">$20.00</div>
-              </article>
-
-              <article class="product-card">
-                <div class="product-media">
-                  <div class="attire-graphic" style="--attire-gradient: linear-gradient(180deg,#ffd6e7 0%,#ffb3cf 100%);"></div>
-                </div>
-                <div class="product-meta-row">
-                  <div class="swatch-row">
-                    <span class="swatch" style="background:#fde2e7;"></span>
-                    <span class="swatch" style="background:#e5e7eb;"></span>
-                    <span class="swatch" style="background:#1f2937;"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
-                    </button>
-                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
-                    </button>
-                  </div>
-                </div>
-                <div class="product-details">Oversized Tee · S–2XL · Signature pink</div>
-                <h3 class="product-title">LDC Attire 2</h3>
-                <div class="price-line">$22.00</div>
-              </article>
-
-              <article class="product-card">
-                <div class="product-media">
-                  <div class="attire-graphic" style="--attire-gradient: linear-gradient(180deg,#c7f0e6 0%,#93e2cf 100%);"></div>
-                </div>
-                <div class="product-meta-row">
-                  <div class="swatch-row">
-                    <span class="swatch" style="background:#10b981;"></span>
-                    <span class="swatch" style="background:#6b7280;"></span>
-                    <span class="swatch" style="background:#e5e7eb;"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
-                    </button>
-                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
-                    </button>
-                  </div>
-                </div>
-                <div class="product-details">Relaxed Tank · XS–XXL · Mint gradient</div>
-                <h3 class="product-title">LDC Attire 3</h3>
-                <div class="price-line">$18.00</div>
-              </article>
-
-              <article class="product-card">
-                <div class="product-media">
-                  <div class="attire-graphic" style="--attire-gradient: linear-gradient(180deg,#fde68a 0%,#fbbf24 100%);"></div>
-                </div>
-                <div class="product-meta-row">
-                  <div class="swatch-row">
-                    <span class="swatch" style="background:#f59e0b;"></span>
-                    <span class="swatch" style="background:#1f2937;"></span>
-                    <span class="swatch" style="background:#e5e7eb;"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
-                    </button>
-                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
-                    </button>
-                  </div>
-                </div>
-                <div class="product-details">Colorblock Hoodie · XS–XXL · Sunset gold</div>
-                <h3 class="product-title">LDC Attire 4</h3>
-                <div class="price-line">$24.00</div>
-              </article>
-
-              <article class="product-card">
-                <div class="product-media">
-                  <div class="attire-graphic" style="--attire-gradient: linear-gradient(180deg,#fbcfe8 0%,#f472b6 100%);"></div>
-                </div>
-                <div class="product-meta-row">
-                  <div class="swatch-row">
-                    <span class="swatch" style="background:#f472b6;"></span>
-                    <span class="swatch" style="background:#6b7280;"></span>
-                    <span class="swatch" style="background:#e5e7eb;"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
-                    </button>
-                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
-                    </button>
-                  </div>
-                </div>
-                <div class="product-details">Event Tee · S–XXL · Coral glow</div>
-                <h3 class="product-title">LDC Attire 5</h3>
-                <div class="price-line">$21.00</div>
-              </article>
-
-              <article class="product-card">
-                <div class="product-media">
-                  <div class="attire-graphic" style="--attire-gradient: linear-gradient(180deg,#bae6fd 0%,#60a5fa 100%);"></div>
-                </div>
-                <div class="product-meta-row">
-                  <div class="swatch-row">
-                    <span class="swatch" style="background:#60a5fa;"></span>
-                    <span class="swatch" style="background:#6b7280;"></span>
-                    <span class="swatch" style="background:#e5e7eb;"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
-                    </button>
-                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
-                    </button>
-                  </div>
-                </div>
-                <div class="product-details">Gradient Tee · XS–XXL · Sky blue</div>
-                <h3 class="product-title">LDC Attire 6</h3>
-                <div class="price-line">$19.00</div>
-              </article>
-
-              <article class="product-card">
-                <div class="product-media">
-                  <div class="attire-graphic" style="--attire-gradient: linear-gradient(180deg,#e9d5ff 0%,#c084fc 100%);"></div>
-                </div>
-                <div class="product-meta-row">
-                  <div class="swatch-row">
-                    <span class="swatch" style="background:#c084fc;"></span>
-                    <span class="swatch" style="background:#6b7280;"></span>
-                    <span class="swatch" style="background:#e5e7eb;"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
-                    </button>
-                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
-                    </button>
-                  </div>
-                </div>
-                <div class="product-details">Fleece Hoodie · S–XXL · Lavender pop</div>
-                <h3 class="product-title">LDC Attire 7</h3>
-                <div class="price-line">$23.00</div>
-              </article>
-
-              <article class="product-card">
-                <div class="product-media">
-                  <div class="attire-graphic" style="--attire-gradient: linear-gradient(180deg,#d1fae5 0%,#34d399 100%);"></div>
-                </div>
-                <div class="product-meta-row">
-                  <div class="swatch-row">
-                    <span class="swatch" style="background:#34d399;"></span>
-                    <span class="swatch" style="background:#6b7280;"></span>
-                    <span class="swatch" style="background:#e5e7eb;"></span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
-                    </button>
-                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
-                    </button>
-                  </div>
-                </div>
-                <div class="product-details">Sport Tee · XS–XXL · Evergreen</div>
-                <h3 class="product-title">LDC Attire 8</h3>
-                <div class="price-line">$22.00</div>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section class="py-12 md:py-16 bg-white/5">
-          <div class="container mx-auto px-5 lg:px-12 grid gap-12 md:grid-cols-2 items-center">
-            <div>
-              <p class="text-xs uppercase tracking-[0.3em] text-white/60">Bundle builder</p>
-              <h2 class="mt-4 text-2xl md:text-3xl font-extrabold tracking-tight text-white">Need apparel to match a custom tumbler?</h2>
-              <p class="mt-4 text-sm md:text-base text-white/70 leading-relaxed">
-                Send us your color palette and we’ll create tees, hoodies, or hats that complement your drinkware order. Perfect for team gifts, events, or boutique drops.
-              </p>
-            </div>
-            <div class="flex flex-col gap-4">
-              <a class="cta-button" href="mailto:lovettsdandc@gmail.com">Start a custom apparel order</a>
-              <a class="cta-button secondary" href="https://instagram.com/lovetts._ldc" target="_blank" rel="noopener">See finished fits</a>
             </div>
           </div>
         </section>
@@ -724,9 +1134,52 @@
       <footer class="footer">
         <div class="container mx-auto px-5 lg:px-12 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <span>&copy; <span id="year"></span> Lovett's Designs and Crafts</span>
-          <span>Styled with love in Atlanta, GA</span>
         </div>
       </footer>
+
+      <div class="favorites-drawer" data-favorites-drawer>
+        <div class="favorites-overlay" data-favorites-overlay></div>
+        <aside class="favorites-panel" data-favorites-panel role="dialog" aria-modal="true" aria-label="Favorites list">
+          <div class="favorites-header">
+            <h2 class="favorites-title">Your Favorites</h2>
+            <button type="button" class="favorites-close-btn" data-favorites-close aria-label="Close favorites">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="favorites-body" data-favorites-items>
+            <div class="favorites-empty">No favorites yet.</div>
+          </div>
+          <div class="favorites-footer">
+            <button type="button" class="favorites-btn" data-favorites-cta>Favorites</button>
+          </div>
+        </aside>
+      </div>
+
+      <div class="cart-drawer" data-cart-drawer>
+        <div class="cart-overlay" data-cart-overlay></div>
+        <aside class="cart-panel" data-cart-panel role="dialog" aria-modal="true" aria-label="Shopping cart">
+          <div class="cart-header">
+            <h2 class="cart-title">Your Cart</h2>
+            <button type="button" class="cart-close-btn" data-cart-close aria-label="Close cart">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="cart-body" data-cart-items>
+            <div class="cart-empty">Your cart is empty.</div>
+          </div>
+          <div class="cart-footer">
+            <div class="cart-summary">
+              <span>Subtotal</span>
+              <span data-cart-total>$0.00</span>
+            </div>
+            <button type="button" class="checkout-btn" data-cart-checkout>Proceed to Checkout</button>
+          </div>
+        </aside>
+      </div>
 
       <div class="support-overlay" data-support-overlay aria-hidden="true">
       <div class="support-card" data-support-card role="dialog" aria-modal="true" aria-labelledby="supportTitle">
@@ -778,6 +1231,318 @@
     <script>
       const footerYear = document.getElementById('year');
       if (footerYear) footerYear.textContent = new Date().getFullYear();
+
+      (() => {
+        const CART_STORAGE_KEY = 'ldc:cart';
+        const FAVORITES_STORAGE_KEY = 'ldc:favorites';
+        const storage = (() => {
+          const tryStore = store => {
+            if (!store) return null;
+            const testKey = '__ldc_test__';
+            try {
+              store.setItem(testKey, '1');
+              store.removeItem(testKey);
+              return store;
+            } catch {
+              return null;
+            }
+          };
+          return tryStore(window.localStorage) || tryStore(window.sessionStorage);
+        })();
+
+        const loadState = key => {
+          if (!storage) return { items: [] };
+          try {
+            return JSON.parse(storage.getItem(key)) || { items: [] };
+          } catch {
+            return { items: [] };
+          }
+        };
+        const saveState = (key, state) => {
+          if (!storage) return;
+          storage.setItem(key, JSON.stringify(state));
+        };
+
+        const form = document.querySelector('.attire-form');
+        const cartDrawer = document.querySelector('[data-cart-drawer]');
+        const cartOverlay = document.querySelector('[data-cart-overlay]');
+        const cartPanel = document.querySelector('[data-cart-panel]');
+        const cartItemsEl = document.querySelector('[data-cart-items]');
+        const cartTotalEl = document.querySelector('[data-cart-total]');
+        const cartCountEl = document.querySelector('[data-cart-count]');
+        const favoritesDrawer = document.querySelector('[data-favorites-drawer]');
+        const favoritesOverlay = document.querySelector('[data-favorites-overlay]');
+        const favoritesPanel = document.querySelector('[data-favorites-panel]');
+        const favoritesItemsEl = document.querySelector('[data-favorites-items]');
+        const favoritesCountEl = document.querySelector('[data-favorites-count]');
+        const favoritesCta = document.querySelector('[data-favorites-cta]');
+        const checkoutBtn = document.querySelector('[data-cart-checkout]');
+
+        let cartState = loadState(CART_STORAGE_KEY);
+        let favoritesState = loadState(FAVORITES_STORAGE_KEY);
+
+        const formatCurrency = amt => `$${(amt || 0).toFixed(2)}`;
+
+        const syncBadges = () => {
+          const cartCount = cartState.items?.length || 0;
+          const favCount = favoritesState.items?.length || 0;
+          if (cartCountEl) {
+            cartCountEl.textContent = cartCount;
+            cartCountEl.hidden = cartCount === 0;
+          }
+          if (favoritesCountEl) {
+            favoritesCountEl.textContent = favCount;
+            favoritesCountEl.hidden = favCount === 0;
+          }
+        };
+
+        const openCart = () => {
+          cartDrawer?.classList.add('is-open');
+          cartOverlay?.classList.add('is-open');
+          document.body.classList.add('cart-open');
+          cartPanel?.removeAttribute('aria-hidden');
+          cartPanel?.focus({ preventScroll: true });
+        };
+        const closeCart = () => {
+          cartDrawer?.classList.remove('is-open');
+          cartOverlay?.classList.remove('is-open');
+          document.body.classList.remove('cart-open');
+          cartPanel?.setAttribute('aria-hidden', 'true');
+        };
+        cartOverlay?.addEventListener('click', closeCart);
+        document.querySelectorAll('[data-cart-close]').forEach(btn => btn.addEventListener('click', closeCart));
+        document.querySelectorAll('[data-cart-open],[data-open-cart]').forEach(btn => btn.addEventListener('click', e => { e.preventDefault(); openCart(); }));
+        window.addEventListener('keydown', e => { if (e.key === 'Escape') closeCart(); });
+        checkoutBtn?.addEventListener('click', () => { window.location.href = 'checkout.html'; });
+
+        const fallbackPreview = 'background: linear-gradient(135deg, #d8b4fe 0%, #a855f7 100%);';
+        const buildPreviewStyle = img => {
+          if (img) return `background-image:url('${img}'); background-size:cover; background-position:center;`;
+          return fallbackPreview;
+        };
+
+        const buildSwatch = opt => {
+          const baseStyle = (opt?.swatchStyle || '').trim();
+          const glyph = opt?.swatchGlyph || '';
+          if (!baseStyle && !glyph) return '';
+          const style = (baseStyle || '') + ';';
+          return `<span class="swatch swatch-pill" style="${style.replace(/"/g, '&quot;')}">${glyph}</span>`;
+        };
+
+        const renderCart = () => {
+          if (!cartItemsEl) return;
+          const items = cartState.items || [];
+          if (!items.length) {
+            cartItemsEl.innerHTML = '<div class="cart-empty">Your cart is empty.</div>';
+            if (cartTotalEl) cartTotalEl.textContent = '$0.00';
+            syncBadges();
+            return;
+          }
+          cartItemsEl.innerHTML = '';
+          let total = 0;
+          items.forEach(item => {
+            const lineTotal = (item.price || 0) * (item.quantity || 1);
+            total += lineTotal;
+            const opts = Array.isArray(item.options) ? item.options : [];
+            const findOpt = label => opts.find(opt => (opt.label || '').toLowerCase() === label);
+            const styleOpt = findOpt('style');
+            const colorOpt = findOpt('color');
+            const accessoryOpt = findOpt('accessory');
+            const sizeOpt = findOpt('size');
+            const notesOpt = findOpt('notes');
+            let thumbStyle = (item.previewStyle && item.previewStyle.trim())
+              ? item.previewStyle.trim()
+              : buildPreviewStyle(item.image || '');
+            if (!item.previewStyle && thumbStyle) {
+              item.previewStyle = thumbStyle;
+              saveState(CART_STORAGE_KEY, cartState);
+            }
+            const ordered = ['color', 'accessory', 'style', 'size', 'notes'];
+            const remaining = opts.filter(opt => !ordered.includes((opt.label || '').toLowerCase()));
+            const orderedOpts = [
+              colorOpt,
+              accessoryOpt,
+              styleOpt,
+              sizeOpt,
+              notesOpt,
+              ...remaining
+            ].filter(Boolean);
+            const node = document.createElement('div');
+            node.className = 'cart-item';
+            node.innerHTML = `
+              <div class="cart-item-thumb" style="${thumbStyle}">
+                ${item.image ? `<img src="${item.image}" alt="${item.name || 'Item'}" />` : ''}
+              </div>
+              <div class="cart-item-info">
+                <div class="cart-item-header">
+                  <span class="cart-item-title">${item.name || 'Item'}</span>
+                  <button type="button" class="cart-item-remove" data-remove="${item.id}" aria-label="Remove item">×</button>
+                </div>
+                <div class="cart-item-options">
+                  ${orderedOpts.map(opt => {
+                    const label = (opt.label || 'Option').replace(/:$/, '');
+                    const swatch = buildSwatch(opt);
+                    const value = opt.value || '';
+                    return `<div class="cart-option"><span class="cart-option-label">${label}</span><span class="cart-option-value">${swatch}${value}</span></div>`;
+                  }).join('')}
+                </div>
+                <div class="cart-item-meta">
+                  <span class="cart-item-qty">Qty ${item.quantity || 1}</span>
+                  <span class="cart-item-price">${formatCurrency(lineTotal)}</span>
+                </div>
+              </div>
+            `;
+            cartItemsEl.appendChild(node);
+          });
+          if (cartTotalEl) cartTotalEl.textContent = formatCurrency(total);
+          cartItemsEl.querySelectorAll('[data-remove]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const id = btn.getAttribute('data-remove');
+              cartState.items = (cartState.items || []).filter(it => it.id !== id);
+              saveState(CART_STORAGE_KEY, cartState);
+              renderCart();
+            });
+          });
+          syncBadges();
+        };
+
+        const renderFavorites = () => {
+          if (!favoritesItemsEl) return;
+          const items = favoritesState.items || [];
+          if (!items.length) {
+            favoritesItemsEl.innerHTML = '<div class="favorites-empty">No favorites yet.</div>';
+            syncBadges();
+            return;
+          }
+          favoritesItemsEl.innerHTML = '';
+          items.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'favorite-item';
+            const thumbStyle = item.previewStyle || (item.image ? `background-image:url('${item.image}'); background-size:cover; background-position:center;` : '');
+            const opts = Array.isArray(item.options) ? item.options : [];
+            const colorOpt = opts.find(opt => (opt.label || '').toLowerCase() === 'color');
+            const accessoryOpt = opts.find(opt => (opt.label || '').toLowerCase() === 'accessory');
+            const swatch = buildSwatch(colorOpt || accessoryOpt || {});
+            row.innerHTML = `
+              <div class="favorite-thumb" style="${thumbStyle}">
+                ${item.image ? `<img src="${item.image}" alt="${item.name || 'Favorite'}" />` : ''}
+              </div>
+              <div>
+                <div class="favorite-title">${item.name || 'Favorite'}</div>
+                <div class="favorite-meta">${swatch}${colorOpt?.value || accessoryOpt?.value || ''}</div>
+                <div class="favorite-meta">${formatCurrency(item.price || 0)}</div>
+                <div class="favorite-actions">
+                  <button type="button" class="favorites-btn" data-fav-remove="${item.id}">Remove</button>
+                </div>
+              </div>
+            `;
+            favoritesItemsEl.appendChild(row);
+          });
+          favoritesItemsEl.querySelectorAll('[data-fav-remove]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const id = btn.getAttribute('data-fav-remove');
+              favoritesState.items = (favoritesState.items || []).filter(it => it.id !== id);
+              saveState(FAVORITES_STORAGE_KEY, favoritesState);
+              renderFavorites();
+            });
+          });
+          syncBadges();
+        };
+
+        const openFavorites = () => {
+          favoritesDrawer?.classList.add('is-open');
+          favoritesOverlay?.classList.add('is-open');
+          document.body.classList.add('favorites-open');
+          favoritesPanel?.removeAttribute('aria-hidden');
+          favoritesPanel?.focus({ preventScroll: true });
+        };
+        const closeFavorites = () => {
+          favoritesDrawer?.classList.remove('is-open');
+          favoritesOverlay?.classList.remove('is-open');
+          document.body.classList.remove('favorites-open');
+          favoritesPanel?.setAttribute('aria-hidden', 'true');
+        };
+        favoritesOverlay?.addEventListener('click', closeFavorites);
+        document.querySelectorAll('[data-favorites-close]').forEach(btn => btn.addEventListener('click', closeFavorites));
+        document.querySelectorAll('[data-favorites-open]').forEach(btn => btn.addEventListener('click', e => { e.preventDefault(); openFavorites(); }));
+        window.addEventListener('keydown', e => { if (e.key === 'Escape') closeFavorites(); });
+        favoritesCta?.addEventListener('click', closeFavorites);
+
+        const buildOptions = () => {
+          const options = [];
+          const val = el => {
+            if (!el) return '';
+            const direct = (el.value || '').trim();
+            if (direct) return direct;
+            const sel = el.selectedOptions?.[0]?.textContent?.trim();
+            return sel || '';
+          };
+          const notesEl = form?.querySelector('textarea');
+          const styleEl = document.getElementById('attireStyle');
+          const colorEl = document.getElementById('attireColor');
+          const sizeEl = document.getElementById('attireSize');
+          const push = (label, value) => { if (value) options.push({ label, value }); };
+          push('Style', val(styleEl));
+          push('Color', val(colorEl));
+          push('Size', val(sizeEl));
+          push('Notes', notesEl?.value?.trim() || '');
+          return options;
+        };
+
+        const addProduct = isFavorite => {
+          const qtyEl = form?.querySelector('input[type="number"]');
+          const heroImg = document.querySelector('.attire-hero-image img');
+          const qty = Math.max(1, Number(qtyEl?.value || 1));
+          const item = {
+            id: `law-attire-${Date.now()}`,
+            name: 'L.A.W. Attire',
+            price: 40,
+            quantity: qty,
+            image: heroImg?.getAttribute('src') || '',
+            previewStyle: heroImg ? `background-image:url('${heroImg.src}'); background-size:cover; background-position:center;` : '',
+            options: buildOptions()
+          };
+          if (isFavorite) {
+            favoritesState.items = [...(favoritesState.items || []), { ...item }];
+            saveState(FAVORITES_STORAGE_KEY, favoritesState);
+            renderFavorites();
+            openFavorites();
+          } else {
+            cartState.items = [...(cartState.items || []), item];
+            saveState(CART_STORAGE_KEY, cartState);
+            renderCart();
+            openCart();
+          }
+        };
+
+        form?.querySelector('[data-add-to-cart]')?.addEventListener('click', e => {
+          e.preventDefault();
+          addProduct(false);
+        });
+        form?.querySelector('[data-favorites-open]')?.addEventListener('click', e => {
+          e.preventDefault();
+          addProduct(true);
+        });
+
+        // Thumbnail gallery swap for attire hero image
+        const heroImg = document.querySelector('.attire-hero-image img');
+        const thumbImages = document.querySelectorAll('.attire-thumbs img');
+        if (heroImg && thumbImages.length) {
+          thumbImages.forEach(img => {
+            img.addEventListener('click', () => {
+              const newSrc = img.getAttribute('src');
+              const newAlt = img.getAttribute('alt') || heroImg.getAttribute('alt') || '';
+              if (!newSrc) return;
+              heroImg.setAttribute('src', newSrc);
+              heroImg.setAttribute('alt', newAlt);
+            });
+          });
+        }
+
+        renderCart();
+        renderFavorites();
+        syncBadges();
+      })();
 
       const supportOverlay = document.querySelector('[data-support-overlay]');
       if (supportOverlay) {
