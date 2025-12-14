@@ -73,6 +73,7 @@
         border: 3px solid #fff;
         box-shadow: 0 14px 20px rgba(81, 56, 105, 0.16);
         display: inline-block;
+        transform-origin: center;
       }
       .design-feature .design-palette .swatch {
         width: 40px;
@@ -107,6 +108,23 @@
       .swatch-slider button[data-swatch-prev]:hover,
       .swatch-slider button[data-swatch-next]:hover {
         transform: translateY(-2px);
+      }
+      .swatch-slider .overflow-hidden {
+        overflow: hidden !important;
+        padding: 0.45rem 0.45rem;
+        box-sizing: content-box;
+      }
+      .swatch.is-active {
+        box-shadow: 0 0 0 3px rgba(168, 139, 208, 0.35), 0 8px 16px rgba(168, 139, 208, 0.28) !important;
+        border-color: #A88BD0 !important;
+        outline: 2px solid #A88BD0 !important;
+        outline-offset: 2px;
+        transform: translateY(-1px);
+        scale: 1.08;
+      }
+      [data-swatch-window] {
+        overflow: visible !important;
+        padding: 0.5rem 0;
       }
       @media (max-width: 767px) {
         .palette-menu summary {
@@ -283,6 +301,8 @@
       .design-swatch-window {
         width: auto;
         max-width: 100%;
+        overflow: visible !important;
+        padding: 0.5rem 0;
       }
       .design-swatch-track {
         gap: 0.5rem;
@@ -1731,6 +1751,29 @@
         text-transform: uppercase;
         color: rgba(255, 255, 255, 0.95);
       }
+      .favorites-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+      .favorites-add-cart {
+        border: none;
+        background: #8a6aa6;
+        color: #ffffff;
+        width: 2.4rem;
+        height: 2.4rem;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 12px 24px rgba(138, 106, 166, 0.3);
+        cursor: pointer;
+        transition: transform 150ms ease, box-shadow 150ms ease;
+      }
+      .favorites-add-cart:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 16px 28px rgba(138, 106, 166, 0.35);
+      }
       .favorites-remove-btn {
         border: none;
         background: transparent;
@@ -2089,7 +2132,7 @@
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
-                  <div class="relative overflow-hidden" style="width:calc((1.25rem * 3) + (0.5rem * 2));">
+                  <div class="relative overflow-hidden" data-swatch-window style="width:4.5rem; overflow:hidden !important;">
                     <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track>
                       <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background: radial-gradient(circle, #ffffff 0%, #f7f7f7 55%, #d9d9d9 100%); box-shadow: 0 0 6px rgba(217, 217, 217, 0.6);" role="button" tabindex="0" aria-label="View white option" data-image-target="slimProductImage" data-image-src="assets/sublimination.jpeg" data-image-alt="Slim tumbler - white" data-price-target="slimProductPrice" data-price="25.00" data-limited-target="slimLimitedBadge" data-limited="false"></span>
                       <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background: radial-gradient(circle, #ccff88 0%, #8dff3a 65%, #48ff5b 100%); box-shadow: 0 0 8px rgba(141, 255, 58, 0.65);" role="button" tabindex="0" aria-label="View glow in the dark option" data-image-target="slimProductImage" data-image-src="assets/sublimination-glow-in-the-dark.jpeg" data-image-alt="Slim tumbler - glow in the dark" data-price-target="slimProductPrice" data-price="35.00" data-limited-target="slimLimitedBadge" data-limited="true"></span>
@@ -2192,7 +2235,7 @@
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
-                  <div class="relative overflow-hidden" style="width:calc((1.25rem * 3) + (0.5rem * 2));">
+                  <div class="relative overflow-hidden" data-swatch-window style="width:calc((1.25rem * 3) + (0.5rem * 2));">
                     <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track>
                       <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background: linear-gradient(145deg,#ffffff 0%,#f5f5f5 40%,#e2e8f0 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.25), inset 0 6px 12px rgba(255,255,255,0.7);" aria-label="White swatch" data-image-target="kidsWaterBottleImage" data-image-src="assets/kids-water-bottle.jpeg" data-image-alt="Kids water bottle tumbler - white"></span>
                       <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background: radial-gradient(circle, #d8ecff 0%, #8fc7ff 55%, #4da3ff 100%); box-shadow: 0 0 6px rgba(79, 163, 255, 0.6);" aria-label="Blue swatch" data-image-target="kidsWaterBottleImage" data-image-src="assets/kids water bottle - 12oz - 20.png" data-image-alt="Kids water bottle tumbler - blue"></span>
@@ -2244,7 +2287,7 @@
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
-                  <div class="relative overflow-hidden" style="width:calc((1.25rem * 3) + (0.5rem * 2));">
+                  <div class="relative overflow-hidden" data-swatch-window style="width:calc((1.25rem * 3) + (0.5rem * 2));">
                     <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track>
                       <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#1f2937;" aria-label="Black swatch" data-image-target="waterBottleTumblerImage" data-image-src="assets/water-bottle-tumbler.jpeg" data-image-alt="Black water bottle tumbler"></span>
                       <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background: radial-gradient(circle at 30% 30%, #ffd1e8 0%, #ff4ba5 45%, #d9048e 100%);" aria-label="Hot pink swatch" data-image-target="waterBottleTumblerImage" data-image-src="assets/Water Bottle Tumbler - 40.png" data-image-alt="Hot pink water bottle tumbler"></span>
@@ -2299,7 +2342,7 @@
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
-                  <div class="relative overflow-hidden" style="width:calc((1.25rem * 3) + (0.5rem * 2));">
+                  <div class="relative overflow-hidden" data-swatch-window style="width:calc((1.25rem * 3) + (0.5rem * 2));">
                     <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track>
                       <span class="swatch w-5 h-5 rounded-full ring-2 ring-rose-400 cursor-pointer" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background: radial-gradient(circle at 30% 30%, #ffd1e8 0%, #ff4ba5 45%, #d9048e 100%); box-shadow: 0 0 10px rgba(255, 75, 165, 0.55);" aria-label="Hot pink swatch" data-image-target="ldcTumbler5Image" data-image-src="assets/ldc-tumbler-5.jpeg" data-image-alt="Hot pink Barbie tumbler"></span>
                       <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background: radial-gradient(circle, #ffe6f2 0%, #f9a8d4 55%, #f472b6 100%);" aria-label="Light pink swatch" data-image-target="ldcTumbler5Image" data-image-src="assets/Silver Trim Tumbler - 40.png" data-image-alt="Light pink Barbie tumbler"></span>
@@ -2519,7 +2562,7 @@
                   </button>
                   <div class="relative overflow-hidden" data-swatch-window style="width:calc((1.25rem * 3) + (0.5rem * 2));">
                     <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track>
-                      <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#2563eb;" aria-label="Blue swatch" role="button" tabindex="0"></span>
+                      <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer is-active" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#2563eb;" aria-label="Blue swatch" role="button" tabindex="0"></span>
                       <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#8b5cf6;" aria-label="Purple swatch" role="button" tabindex="0"></span>
                       <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#0d9488;" aria-label="Teal swatch" role="button" tabindex="0"></span>
                       <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 cursor-pointer" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#ec4899;" aria-label="Pink swatch" role="button" tabindex="0"></span>
@@ -3047,8 +3090,7 @@
                     </button>
                     <div class="relative overflow-hidden" data-swatch-window style="width:1.25rem;">
                       <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track>
-                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" aria-label="Glass swatch" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 60%), linear-gradient(135deg, rgba(238,242,255,0.65) 0%, rgba(148,163,184,0.35) 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4), inset 0 7px 12px rgba(255,255,255,0.45), inset 0 -8px 16px rgba(148,163,184,0.3);"></span>
-                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" aria-label="Bow accent" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.7rem; line-height:1;">🎀</span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300 is-active" aria-label="Glass swatch" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 60%), linear-gradient(135deg, rgba(238,242,255,0.65) 0%, rgba(148,163,184,0.35) 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4), inset 0 7px 12px rgba(255,255,255,0.45), inset 0 -8px 16px rgba(148,163,184,0.3);"></span>
                       </div>
                     </div>
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next color">
@@ -3059,9 +3101,10 @@
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous accessory">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
-                    <div class="relative overflow-hidden" data-swatch-window style="width:1.25rem;">
+                    <div class="relative overflow-hidden" data-swatch-window style="width:calc((1.25rem * 2) + 0.5rem);">
                       <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track>
                         <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" aria-label="Glass accessory accent" data-swatch-type="accessory" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background: radial-gradient(circle at 35% 35%, rgba(224,242,255,0.95) 0%, rgba(96,165,250,0.35) 65%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4); display:flex; align-items:center; justify-content:center; color:#1f2937; font-size:0.7rem; line-height:1;">🔍</span>
+                        <span class="swatch w-5 h-5 rounded-full ring-1 ring-slate-300" aria-label="Bow accent" data-swatch-type="accessory" style="flex:0 0 auto; width:1.25rem; height:1.25rem; border-radius:9999px; background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.7rem; line-height:1;">🎀</span>
                       </div>
                     </div>
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next accessory">
@@ -4568,7 +4611,15 @@
                 id: String(item.id ?? ''),
                 name: String(item.name ?? 'Item'),
                 price: Number(item.price ?? 0),
-                previewStyle: typeof item.previewStyle === 'string' ? item.previewStyle.trim() : ''
+                previewStyle: typeof item.previewStyle === 'string' ? item.previewStyle.trim() : '',
+                options: Array.isArray(item.options)
+                  ? item.options.map(opt => ({
+                      label: String(opt?.label ?? '').trim(),
+                      value: String(opt?.value ?? '').trim(),
+                      swatchStyle: typeof opt?.swatchStyle === 'string' ? opt.swatchStyle.trim() : '',
+                      swatchGlyph: typeof opt?.swatchGlyph === 'string' ? opt.swatchGlyph : ''
+                    }))
+                  : []
               }))
             };
           }
@@ -4595,6 +4646,38 @@
           storage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favoritesState));
         }
       };
+      const activateSwatchVisual = swatch => {
+        if (!swatch) return;
+        const group = swatch.closest('[data-swatch-track]') || swatch.closest('.swatch-slider') || swatch.closest('.group, .product-card');
+        if (group) {
+          group.querySelectorAll('.swatch.is-active').forEach(el => {
+            if (el !== swatch) el.classList.remove('is-active');
+          });
+        }
+        swatch.classList.add('is-active');
+      };
+      const ensureDefaultSwatchActive = () => {
+        document.querySelectorAll('[data-swatch-track]').forEach(track => {
+          const hasActive = track.querySelector('.swatch.is-active');
+          if (!hasActive) {
+            const first = track.querySelector('.swatch');
+            if (first) first.classList.add('is-active');
+          }
+        });
+      };
+      const wireSwatchActiveFallback = () => {
+        document.querySelectorAll('.swatch').forEach(swatch => {
+          if (swatch.dataset.activeInit) return;
+          swatch.dataset.activeInit = 'true';
+          swatch.addEventListener('click', () => activateSwatchVisual(swatch));
+          swatch.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              activateSwatchVisual(swatch);
+            }
+          });
+        });
+      };
 
       const renderFavorites = () => {
         if (!favoritesItemsContainer) return;
@@ -4619,7 +4702,12 @@
                 <div class="favorites-item-price">${formatCurrency(item.price)}</div>
               </div>
             </div>
-            <button type="button" class="favorites-remove-btn" data-favorite-remove aria-label="Remove ${item.name}">×</button>
+            <div class="favorites-actions">
+              <button type="button" class="favorites-add-cart" data-favorite-add-cart aria-label="Add ${item.name} to cart">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l1 7h12l1-4H6" /><circle cx="9" cy="19" r="1.25" /><circle cx="17" cy="19" r="1.25" /></svg>
+              </button>
+              <button type="button" class="favorites-remove-btn" data-favorite-remove aria-label="Remove ${item.name}">×</button>
+            </div>
           </div>`;
         }).join('');
         favoritesItemsContainer.innerHTML = itemsMarkup;
@@ -4692,9 +4780,8 @@
       });
 
       const normalizeFavoriteProduct = product => {
-        if (!product) return null;
         const normalized = normalizeProduct(product);
-        return normalized ? { id: normalized.id, name: normalized.name, price: normalized.price, previewStyle: normalized.previewStyle } : null;
+        return normalized ? { ...normalized, quantity: 1 } : null;
       };
 
       const favoritesApi = {
@@ -4728,6 +4815,17 @@
       window.ldcFavorites = favoritesApi;
       if (favoritesItemsContainer) {
         favoritesItemsContainer.addEventListener('click', event => {
+          const addBtn = event.target.closest('[data-favorite-add-cart]');
+          if (addBtn) {
+            const row = addBtn.closest('[data-favorite-item]');
+            const id = row?.getAttribute('data-favorite-item');
+            const item = id ? favoritesState.items.find(it => it.id === id) : null;
+            if (item) {
+              cartApi.addProduct({ ...item, quantity: 1 });
+              openCart();
+            }
+            return;
+          }
           const removeBtn = event.target.closest('[data-favorite-remove]');
           if (!removeBtn) return;
           const row = removeBtn.closest('[data-favorite-item]');
@@ -4819,6 +4917,7 @@
                 limitedEl.style.display = showLimited ? 'inline-block' : 'none';
               }
             }
+            activateSwatchVisual(swatch);
           };
           swatch.addEventListener('click', activateSwap);
           swatch.addEventListener('keydown', event => {
@@ -4828,6 +4927,7 @@
             }
           });
         });
+        ensureDefaultSwatchActive();
       };
 
       const wireColorOnlySwatches = () => {
@@ -4865,6 +4965,7 @@
                 card.dataset.selectedColorGlyph = glyph;
               }
             }
+            activateSwatchVisual(swatch);
           };
           swatch.addEventListener('click', selectColor);
           swatch.addEventListener('keydown', event => {
@@ -4884,6 +4985,7 @@
             }
           }
         });
+        ensureDefaultSwatchActive();
       };
 
       const DESIGN_SELECTION_KEY = 'ldcDesignSelection';
@@ -5575,6 +5677,7 @@
       initSwatchSliders();
       wireProductSwatches();
       wireColorOnlySwatches();
+      wireSwatchActiveFallback();
       wireDesignButtons();
       initDesignSelections();
       moveBadgesToImages();

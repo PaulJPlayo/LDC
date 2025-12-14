@@ -165,6 +165,15 @@
         border-radius: 999px;
         border: 3px solid #fff;
         box-shadow: 0 14px 20px rgba(81, 56, 105, 0.16);
+        transition: transform 0.18s ease, box-shadow 0.18s ease, outline-color 0.18s ease;
+      }
+      .swatch.is-active {
+        box-shadow: 0 0 0 3px rgba(168, 139, 208, 0.35), 0 8px 16px rgba(168, 139, 208, 0.28);
+        border-color: #A88BD0 !important;
+        outline: 2px solid #A88BD0 !important;
+        outline-offset: 2px;
+        transform: translateY(-1px);
+        scale: 1.08;
       }
       .design-swatch-slider {
         justify-content: center;
@@ -193,9 +202,13 @@
       .design-swatch-window {
         width: auto;
         max-width: 100%;
+        overflow: hidden;
+        padding: 0.55rem 0.35rem;
+        box-sizing: content-box;
       }
       .design-swatch-track {
         gap: 0.5rem;
+        align-items: center;
       }
       .design-swatch-slider .swatch {
         flex: 0 0 auto;
@@ -1379,6 +1392,21 @@
           });
         };
 
+        const activateSwatchVisual = swatch => {
+          if (!swatch) return;
+          const track = swatch.closest('[data-swatch-track]');
+          if (track) {
+            track.querySelectorAll('.swatch.is-active').forEach(el => {
+              if (el !== swatch) el.classList.remove('is-active');
+            });
+          }
+          swatch.classList.add('is-active');
+        };
+
+        const clearActiveSwatches = selector => {
+          document.querySelectorAll(selector).forEach(el => el.classList.remove('is-active'));
+        };
+
         const initDesignSelections = () => {
           const colorTarget = document.querySelector('[data-selected-color]');
           const accessoryTarget = document.querySelector('[data-selected-accessory]');
@@ -1409,6 +1437,7 @@
             swatchNode.setAttribute('style', style);
             swatchNode.textContent = text;
           }
+          activateSwatchVisual(swatch);
           if (labelNode) {
               labelNode.textContent = label;
             }
@@ -1441,11 +1470,13 @@
           }
           target.classList.remove('has-selection');
           if (target === accessoryTarget) {
+            clearActiveSwatches('[data-design-accessories-source] .swatch.is-active');
             accessoryPrice = 0;
             selectedAccessoryStyle = '';
             selectedAccessoryGlyph = '';
             updateDesignTotal();
           } else if (target === colorTarget) {
+            clearActiveSwatches('[data-design-colors-source] .swatch.is-active');
             selectedColorLabel = '';
             selectedColorStyle = '';
             selectedColorGlyph = '';
@@ -1461,6 +1492,7 @@
               swatch.setAttribute('tabindex', '0');
               const activate = event => {
                 if (event) event.preventDefault();
+                activateSwatchVisual(swatch);
                 applyToTarget(target, swatch, placeholder);
               };
               swatch.addEventListener('click', activate);
@@ -1534,6 +1566,19 @@
           bindSwatches('[data-design-colors-source] .swatch', colorTarget, 'Color selected');
           bindSwatches('[data-design-accessories-source] .swatch', accessoryTarget, 'Accessory selected');
           bindWrapOptions();
+
+          const ensureDefaultSelection = (selector, target, placeholder) => {
+            if (!target) return;
+            const hasSelection = target.classList.contains('has-selection');
+            const active = document.querySelector(`${selector}.is-active`);
+            const first = document.querySelector(selector);
+            if (!hasSelection && !active && first) {
+              activateSwatchVisual(first);
+            }
+          };
+
+          ensureDefaultSelection('[data-design-colors-source] .swatch', colorTarget, 'Color selected');
+          ensureDefaultSelection('[data-design-accessories-source] .swatch', accessoryTarget, 'Accessory selected');
         const bindClear = (buttonSelector, target, placeholder, onClear) => {
           const button = document.querySelector(buttonSelector);
           if (!button) return;

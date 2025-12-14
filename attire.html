@@ -332,7 +332,46 @@
       .cta-row {
         display: flex;
         flex-wrap: wrap;
+        align-items: center;
         gap: 0.75rem;
+      }
+      .design-price-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-top: 1rem;
+        margin-bottom: 0.25rem;
+      }
+      .design-price-bubble {
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(153, 40, 177, 0.25);
+        padding: 0.35rem 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+      }
+      .design-price-value {
+        font-size: 1.05rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: #15803d;
+      }
+      .attire-price-wrapper {
+        margin: 0;
+        justify-content: flex-start;
+        align-items: center;
+      }
+      .attire-price-bubble {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-color: rgba(59, 130, 246, 0.25);
+      }
+      .attire-price-meta {
+        font-size: 0.85rem;
+        color: #1f2937;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
       }
       .cta-icon-btn {
         width: 3rem;
@@ -954,6 +993,20 @@
         display: flex;
         gap: 0.5rem;
       }
+      .favorite-actions .favorites-btn {
+        flex: 1 1 0;
+        width: auto;
+      }
+      .favorite-cart-btn {
+        background: linear-gradient(135deg, #22d3ee 0%, #3b82f6 100%);
+        color: #0b1120;
+        box-shadow: 0 12px 22px rgba(34, 211, 238, 0.25);
+      }
+      .favorite-cart-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 24px rgba(34, 211, 238, 0.3);
+        background: linear-gradient(135deg, #38bdf8 0%, #60a5fa 100%);
+      }
       .favorites-btn {
         border: none;
         border-radius: 12px;
@@ -1113,6 +1166,12 @@
                     </svg>
                   </button>
                   <button class="cta-button" data-add-to-cart>Add to Cart</button>
+                  <div class="design-price-wrapper attire-price-wrapper" aria-live="polite" role="status">
+                    <div class="design-price-bubble attire-price-bubble" data-attire-price-bubble>
+                      <span class="design-price-value" data-attire-price-total>$0.00</span>
+                      <span class="attire-price-meta" data-attire-price-meta>$0.00 ea · Qty 1</span>
+                    </div>
+                  </div>
                 </div>
                 <div class="price-table">
                   <h3>Pricing Guide</h3>
@@ -1277,11 +1336,56 @@
         const favoritesCountEl = document.querySelector('[data-favorites-count]');
         const favoritesCta = document.querySelector('[data-favorites-cta]');
         const checkoutBtn = document.querySelector('[data-cart-checkout]');
+        const styleEl = document.getElementById('attireStyle');
+        const colorEl = document.getElementById('attireColor');
+        const sizeEl = document.getElementById('attireSize');
+        const qtyEl = form?.querySelector('input[type="number"]');
+        const priceTotalEl = document.querySelector('[data-attire-price-total]');
+        const priceMetaEl = document.querySelector('[data-attire-price-meta]');
 
         let cartState = loadState(CART_STORAGE_KEY);
         let favoritesState = loadState(FAVORITES_STORAGE_KEY);
 
         const formatCurrency = amt => `$${(amt || 0).toFixed(2)}`;
+        const getSizeBucket = size => {
+          const norm = (size || '').trim().toLowerCase();
+          if (norm.includes('onesie')) return 'onesie';
+          if (norm === 'yxl') return 'youthXL';
+          if (['ys', 'ym', 'yl'].includes(norm)) return 'youth';
+          if (norm === '3xl' || norm === '4xl') return 'adultExtended';
+          if (norm === 'xl' || norm === '2xl') return 'adultPlus';
+          return 'adultBase';
+        };
+        const getBasePrice = (style, size) => {
+          const bucket = getSizeBucket(size);
+          const normStyle = (style || '').trim().toLowerCase();
+          if (bucket === 'onesie') return 20;
+          if (bucket === 'youth' || bucket === 'youthXL' || normStyle.includes('youth')) {
+            return bucket === 'youthXL' ? 25 : 20;
+          }
+          const table = {
+            't-shirt': { adultBase: 20, adultPlus: 25, adultExtended: 30 },
+            'long sleeve': { adultBase: 25, adultPlus: 30, adultExtended: 35 },
+            crewneck: { adultBase: 35, adultPlus: 40, adultExtended: 45 },
+            hoodie: { adultBase: 35, adultPlus: 45, adultExtended: 50 },
+            sweatsuit: { adultBase: 45, adultPlus: 55, adultExtended: 65 }
+          };
+          const row = table[normStyle] || table['t-shirt'];
+          const base = row?.[bucket];
+          if (typeof base === 'number') return base;
+          return 40;
+        };
+        const updatePriceBubble = () => {
+          const qty = Math.max(1, Math.round(Number(qtyEl?.value || 1)));
+          if (qtyEl) qtyEl.value = qty;
+          const style = styleEl?.value || '';
+          const size = sizeEl?.value || '';
+          const basePrice = getBasePrice(style, size);
+          const total = basePrice * qty;
+          if (priceTotalEl) priceTotalEl.textContent = formatCurrency(total);
+          if (priceMetaEl) priceMetaEl.textContent = `${formatCurrency(basePrice)} ea · Qty ${qty}`;
+          return { basePrice, total, qty };
+        };
 
         const syncBadges = () => {
           const cartCount = cartState.items?.length || 0;
@@ -1432,11 +1536,25 @@
                 <div class="favorite-meta">${swatch}${colorOpt?.value || accessoryOpt?.value || ''}</div>
                 <div class="favorite-meta">${formatCurrency(item.price || 0)}</div>
                 <div class="favorite-actions">
+                  <button type="button" class="favorites-btn favorite-cart-btn" data-fav-add-cart="${item.id}">Add to Cart</button>
                   <button type="button" class="favorites-btn" data-fav-remove="${item.id}">Remove</button>
                 </div>
               </div>
             `;
             favoritesItemsEl.appendChild(row);
+          });
+          favoritesItemsEl.querySelectorAll('[data-fav-add-cart]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const id = btn.getAttribute('data-fav-add-cart');
+              const favItem = (favoritesState.items || []).find(it => it.id === id);
+              if (favItem) {
+                const qty = Math.max(1, Number(favItem.quantity || 1));
+                cartState.items = [...(cartState.items || []), { ...favItem, quantity: qty }];
+                saveState(CART_STORAGE_KEY, cartState);
+                renderCart();
+                openCart();
+              }
+            });
           });
           favoritesItemsEl.querySelectorAll('[data-fav-remove]').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -1478,9 +1596,6 @@
             return sel || '';
           };
           const notesEl = form?.querySelector('textarea');
-          const styleEl = document.getElementById('attireStyle');
-          const colorEl = document.getElementById('attireColor');
-          const sizeEl = document.getElementById('attireSize');
           const push = (label, value) => { if (value) options.push({ label, value }); };
           push('Style', val(styleEl));
           push('Color', val(colorEl));
@@ -1490,13 +1605,14 @@
         };
 
         const addProduct = isFavorite => {
-          const qtyEl = form?.querySelector('input[type="number"]');
           const heroImg = document.querySelector('.attire-hero-image img');
-          const qty = Math.max(1, Number(qtyEl?.value || 1));
+          const priceCalc = updatePriceBubble();
+          const qty = priceCalc?.qty ?? Math.max(1, Number(qtyEl?.value || 1));
+          const unitPrice = priceCalc?.basePrice ?? getBasePrice(styleEl?.value || '', sizeEl?.value || '');
           const item = {
             id: `law-attire-${Date.now()}`,
             name: 'L.A.W. Attire',
-            price: 40,
+            price: unitPrice,
             quantity: qty,
             image: heroImg?.getAttribute('src') || '',
             previewStyle: heroImg ? `background-image:url('${heroImg.src}'); background-size:cover; background-position:center;` : '',
@@ -1523,6 +1639,10 @@
           e.preventDefault();
           addProduct(true);
         });
+        styleEl?.addEventListener('change', updatePriceBubble);
+        sizeEl?.addEventListener('change', updatePriceBubble);
+        qtyEl?.addEventListener('input', updatePriceBubble);
+        qtyEl?.addEventListener('change', updatePriceBubble);
 
         // Thumbnail gallery swap for attire hero image
         const heroImg = document.querySelector('.attire-hero-image img');
@@ -1539,6 +1659,7 @@
           });
         }
 
+        updatePriceBubble();
         renderCart();
         renderFavorites();
         syncBadges();
