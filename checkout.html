@@ -467,7 +467,8 @@
                               label: String(opt?.label ?? '').trim(),
                               value: String(opt?.value ?? '').trim(),
                               swatchStyle: typeof opt?.swatchStyle === 'string' ? opt.swatchStyle.trim() : '',
-                              swatchGlyph: typeof opt?.swatchGlyph === 'string' ? opt.swatchGlyph : ''
+                              swatchGlyph: typeof opt?.swatchGlyph === 'string' ? opt.swatchGlyph : '',
+                              attachmentData: typeof opt?.attachmentData === 'string' ? opt.attachmentData : ''
                             }))
                             .filter(opt => opt.label || opt.value)
                         : [],
@@ -523,7 +524,8 @@
                         label: String(opt?.label ?? '').trim(),
                         value: String(opt?.value ?? '').trim(),
                         swatchStyle: typeof opt?.swatchStyle === 'string' ? opt.swatchStyle.trim() : '',
-                        swatchGlyph: typeof opt?.swatchGlyph === 'string' ? opt.swatchGlyph : ''
+                        swatchGlyph: typeof opt?.swatchGlyph === 'string' ? opt.swatchGlyph : '',
+                        attachmentData: typeof opt?.attachmentData === 'string' ? opt.attachmentData : ''
                       }))
                       .filter(opt => opt.label || opt.value)
                   : [],
@@ -569,6 +571,7 @@
                   const normalizedLabel = (opt.label || '').toLowerCase();
                   const isColor = normalizedLabel === 'color';
                   const isAccessory = normalizedLabel === 'accessory';
+                  const isAttachment = normalizedLabel === 'attachment';
                   const baseSwatchStyle = (opt.swatchStyle || '').trim();
                   const hasSwatch = !!baseSwatchStyle;
                   const swatch = hasSwatch
@@ -579,6 +582,13 @@
                   }
                   if (isAccessory) {
                     return `<li><span class="label">Accessory:</span>${swatch} <span class="value">${escapeHtml(opt.value || '')}</span></li>`;
+                  }
+                  if (isAttachment) {
+                    const badge = opt.attachmentData ? ' (attached)' : '';
+                    const viewLink = opt.attachmentData
+                      ? `<a href="${escapeHtml(opt.attachmentData.replace(/\"/g, '&quot;'))}" target="_blank" rel="noopener">View</a>`
+                      : '';
+                    return `<li><span class="label">Attachment:</span> <span class="value">${escapeHtml(opt.value || 'Attached file')}${badge} ${viewLink}</span></li>`;
                   }
                   return `<li><span class="label">${escapeHtml(opt.label)}:</span> <span class="value">${escapeHtml(opt.value)}</span>${swatch}</li>`;
                 }).join('')}</ul>`

@@ -497,6 +497,42 @@
       .support-footer a {
         text-decoration: underline;
       }
+      .support-upload {
+        display: grid;
+        gap: 0.4rem;
+        margin-top: 0.35rem;
+      }
+      .support-upload-trigger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        border-radius: 0.9rem;
+        padding: 0.85rem 1rem;
+        border: 1px dashed rgba(255, 255, 255, 0.7);
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+      }
+      .support-upload-trigger:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 22px rgba(17, 24, 39, 0.25);
+        border-color: rgba(255, 255, 255, 0.9);
+      }
+      .support-upload-help {
+        margin: 0;
+        font-size: 0.85rem;
+        opacity: 0.9;
+        text-align: center;
+      }
+      .support-upload-input {
+        display: none;
+      }
       .support-submit {
         border: none;
         border-radius: 999px;
@@ -1037,7 +1073,7 @@
               </p>
               <div class="hero-actions">
                 <a class="cta-button" href="#tumblers-grid">Shop Tumblers</a>
-                <button class="cta-button secondary" type="button" data-custom-open style="border:none;">Request a custom</button>
+                <button class="cta-button secondary" type="button" data-custom-open style="border:none;">Request A Sublimation</button>
               </div>
             </div>
           </div>
@@ -1048,10 +1084,10 @@
             <header class="arrivals-header">
               <div>
                 <p class="text-xs uppercase tracking-[0.35em] text-white/70">Best sellers</p>
-                <h2 class="mt-3 text-2xl md:text-3xl font-extrabold tracking-tight text-white">Lovett's curated tumbler lineup</h2>
+                <h2 class="mt-3 text-2xl md:text-3xl font-extrabold tracking-tight text-white">LDC curated tumbler lineup</h2>
               </div>
               <p class="max-w-md text-sm md:text-base text-white/70 leading-relaxed">
-                Tap any card to explore color swatches, read specs, and add to your cart. Each piece is sealed for durability and hand finished in our Atlanta studio.
+                Tap any card to explore color swatches, read specs, and add to your cart. Each piece is sealed for durability and hand finished.
               </p>
             </header>
 
@@ -1312,24 +1348,62 @@
                     </button>
                   </div>
                 </div>
-                <div class="product-meta">
-                  <span>40oz &bull; Stainless Steel</span>
-                </div>
-                <h3 class="product-title">Water Bottle Tumbler</h3>
-                <span class="product-price">$40.00</span>
-                <div class="flex items-center gap-2 tile-actions">
-                  <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
-                      <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
-                    </svg>
+              <div class="product-meta">
+                <span>40oz &bull; Stainless Steel</span>
+              </div>
+              <h3 class="product-title">Water Bottle Tumbler</h3>
+              <span class="product-price">$40.00</span>
+              <div class="flex items-center gap-2 tile-actions">
+                <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                    <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+                <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                    <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+                  </svg>
+                </button>
+              </div>
+            </article>
+
+            <article class="product-card">
+              <div class="product-media">
+                <img id="sublimationWaterBottleImage" src="assets/Sublimation Water Bottle - 30.jpg" alt="Sublimation water bottle in pink" />
+              </div>
+              <div class="flex items-center justify-between gap-2">
+                <div class="swatch-slider" data-swatch-slider data-visible="3">
+                  <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
-                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
-                      <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
-                    </svg>
+                  <div class="swatch-slider-window" data-swatch-window>
+                    <div class="swatch-slider-track" data-swatch-track>
+                      <span class="swatch cursor-pointer" aria-label="Pink swatch" data-image-target="sublimationWaterBottleImage" data-image-src="assets/Sublimation Water Bottle - 30.jpg" data-image-alt="Sublimation water bottle in pink" style="background: #ec4899;"></span>
+                    </div>
+                  </div>
+                  <button type="button" class="swatch-arrow light-arrow" data-swatch-next aria-label="Next color">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                   </button>
                 </div>
-              </article>
+              </div>
+              <div class="product-meta">
+                <span>24oz &bull; Stainless Steel</span>
+              </div>
+              <h3 class="product-title">Sublimation Water Bottle</h3>
+              <span class="product-price">$30.00</span>
+              <div class="flex items-center gap-2 tile-actions">
+                <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                    <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+                <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                    <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+                  </svg>
+                </button>
+              </div>
+            </article>
 
               <article class="product-card">
                 <div class="product-media">
@@ -1779,6 +1853,14 @@
               <span>Style notes</span>
               <textarea id="customNotes" class="support-input" rows="4" placeholder="Colors, trims, names, logos, or inspiration links..." required></textarea>
             </label>
+            <div class="support-upload">
+              <input type="file" id="customAttachment" class="support-upload-input" accept="image/*,.pdf,.ai,.psd" />
+              <label for="customAttachment" class="support-upload-trigger">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15.172 7.757-6.364 6.364a2.5 2.5 0 1 0 3.536 3.536l6.364-6.364a4.5 4.5 0 0 0-6.364-6.364l-6.364 6.364a6.5 6.5 0 1 0 9.192 9.192l5.657-5.657"/></svg>
+                <span>Upload inspiration</span>
+              </label>
+              <p class="support-upload-help">Optional: share an image or PDF for your design.</p>
+            </div>
             <button type="submit" class="support-submit" data-custom-submit>Send Request</button>
           </form>
           <div class="support-footer">
@@ -1813,6 +1895,20 @@
         const favoritesCta = document.querySelector('[data-favorites-cta]');
         const cartCountEl = document.querySelector('[data-cart-count]');
         const favoritesCountEl = document.querySelector('[data-favorites-count]');
+        const bindUploadLabels = () => {
+          document.querySelectorAll('.support-upload-input').forEach(input => {
+            if (input.dataset.uploadInit) return;
+            input.dataset.uploadInit = 'true';
+            const labelSpan = input.closest('.support-upload')?.querySelector('.support-upload-trigger span');
+            if (!labelSpan) return;
+            const defaultText = labelSpan.textContent.trim();
+            labelSpan.dataset.defaultText = defaultText;
+            input.addEventListener('change', () => {
+              const file = input.files?.[0];
+              labelSpan.textContent = file ? file.name : labelSpan.dataset.defaultText || defaultText;
+            });
+          });
+        };
 
         const buildPreviewStyle = src => {
           if (!src) return '';
@@ -1838,6 +1934,8 @@
             return { items: [] };
           }
         };
+
+        bindUploadLabels();
 
         const formatCurrency = amount => `$${(amount || 0).toFixed(2)}`;
 

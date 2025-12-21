@@ -222,6 +222,68 @@
         min-height: clamp(260px, 38vw, 360px);
         max-width: 380px;
       }
+      .design-preview-row {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.25rem;
+      }
+      @media (min-width: 900px) {
+        .design-preview-row {
+          flex-direction: row;
+          align-items: center;
+        }
+      }
+      .design-preview-tile {
+        width: 180px;
+        height: 180px;
+        border-radius: 1.5rem;
+        border: 1px solid rgba(153, 40, 177, 0.18) !important;
+        background: rgba(248, 245, 255, 0.85) !important;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .design-preview-fill {
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at 35% 35%, rgba(238, 242, 255, 0.9) 0%, rgba(148, 163, 184, 0.35) 100%);
+        transition: transform 160ms ease;
+        position: relative;
+      }
+      .design-preview-tile.has-selection .design-preview-fill {
+        transform: scale(1.01);
+      }
+      .design-preview-placeholder {
+        font-size: 0.75rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #6b4a78 !important;
+        text-align: center;
+        padding: 0 1rem;
+        line-height: 1.4;
+      }
+      .design-preview-tile.has-selection .design-preview-placeholder {
+        opacity: 0;
+      }
+      .design-preview-glyph {
+        position: absolute;
+        font-size: 1.8rem;
+        line-height: 1;
+        color: #1f0f24 !important;
+      }
+      .design-preview-tile:not(.has-selection) .design-preview-glyph {
+        opacity: 0;
+      }
       .design-preview-frame {
         position: relative;
       }
@@ -381,6 +443,43 @@
         text-decoration: none !important;
       }
       .design-video-message[hidden] {
+        display: none;
+      }
+      .support-upload {
+        display: grid;
+        gap: 0.4rem;
+        margin-top: 0.5rem;
+      }
+      .support-upload-trigger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        border-radius: 0.9rem;
+        padding: 0.85rem 1rem;
+        border: 1px dashed rgba(153, 40, 177, 0.45);
+        background: rgba(248, 245, 255, 0.75);
+        color: #1f0f24;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+      }
+      .support-upload-trigger:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 22px rgba(17, 24, 39, 0.18);
+        border-color: rgba(153, 40, 177, 0.7);
+      }
+      .support-upload-help {
+        margin: 0;
+        font-size: 0.85rem;
+        opacity: 0.85;
+        text-align: center;
+        color: #1f0f24;
+      }
+      .support-upload-input {
         display: none;
       }
       .design-media-grid {
@@ -3352,22 +3451,36 @@
               <div class="design-card-body">
                   <div class="design-palette-grid">
                   <div class="design-center">
-                    <div class="design-card-frame design-video-frame design-preview-frame" data-design-frame>
-                      <button type="button" class="design-preview-return" data-design-back aria-label="Return to image" hidden>Return</button>
-                      <div class="design-preview-layer design-preview-image">
-                        <img id="homeDesignPreview" data-design-image src="assets/glass-tumbler.jpeg" alt="Designed palm tree tumbler" />
-                      </div>
-                      <div class="design-preview-layer design-preview-video" aria-live="polite">
-                        <div class="design-video-message" data-design-video-prompt hidden aria-hidden="true">
-                          <div class="design-video-message-inner">
-                            <p class="design-video-message-title" data-prompt-title>Need a Special Character or Designer Wrap?</p>
-                            <p class="design-video-message-body" data-prompt-body>Share your character or designer theme with us and we will send next steps.</p>
-                            <a class="design-video-message-cta" data-prompt-cta href="mailto:lovettsdandc@gmail.com">Request Custom Wrap</a>
-                          </div>
+                    <div class="design-preview-row">
+                      <div class="design-preview-tile design-preview-tile--color" aria-live="polite">
+                        <div class="design-preview-fill" data-color-preview>
+                          <span class="design-preview-placeholder">Color preview</span>
+                          <span class="design-preview-glyph" aria-hidden="true"></span>
                         </div>
-                        <video id="designWrapVideo" data-design-video controls muted playsinline>
-                          <source data-source="hls" src="" type="application/x-mpegURL" />
-                        </video>
+                      </div>
+                      <div class="design-card-frame design-video-frame design-preview-frame" data-design-frame>
+                        <button type="button" class="design-preview-return" data-design-back aria-label="Return to image" hidden>Return</button>
+                        <div class="design-preview-layer design-preview-image">
+                          <img id="homeDesignPreview" data-design-image src="assets/glass-tumbler.jpeg" alt="Designed palm tree tumbler" />
+                        </div>
+                        <div class="design-preview-layer design-preview-video" aria-live="polite">
+                          <div class="design-video-message" data-design-video-prompt hidden aria-hidden="true">
+                            <div class="design-video-message-inner">
+                              <p class="design-video-message-title" data-prompt-title>Need a Special Character or Designer Wrap?</p>
+                              <p class="design-video-message-body" data-prompt-body>Share your character or designer theme with us and we will send next steps.</p>
+                              <a class="design-video-message-cta" data-prompt-cta href="mailto:lovettsdandc@gmail.com">Request Custom Wrap</a>
+                            </div>
+                          </div>
+                          <video id="designWrapVideo" data-design-video controls muted playsinline>
+                            <source data-source="hls" src="" type="application/x-mpegURL" />
+                          </video>
+                        </div>
+                      </div>
+                      <div class="design-preview-tile design-preview-tile--accessory" aria-live="polite">
+                        <div class="design-preview-fill" data-accessory-preview>
+                          <span class="design-preview-placeholder">Accessory preview</span>
+                          <span class="design-preview-glyph" aria-hidden="true"></span>
+                        </div>
                       </div>
                     </div>
                     <div class="w-full flex justify-center">
@@ -3517,6 +3630,14 @@
                       <label class="design-notes-label" for="design-notes-home" style="color:#000;">Customer Notes</label>
                       <div class="design-notes-field">
                         <textarea id="design-notes-home" name="design-notes" placeholder="Share favorite color combos, accessory ideas, or special instructions..." style="color:#000 !important;"></textarea>
+                      </div>
+                      <div class="support-upload">
+                        <input type="file" id="designUploadHome" class="support-upload-input" accept="image/*,.pdf,.ai,.psd" />
+                        <label for="designUploadHome" class="support-upload-trigger">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15.172 7.757-6.364 6.364a2.5 2.5 0 1 0 3.536 3.536l6.364-6.364a4.5 4.5 0 0 0-6.364-6.364l-6.364 6.364a6.5 6.5 0 1 0 9.192 9.192l5.657-5.657"/></svg>
+                          <span>Upload Inspiration</span>
+                        </label>
+                        <p class="support-upload-help">Optional: include an image or PDF for your design.</p>
                       </div>
                       <div class="design-price-wrapper">
                         <div class="design-price-bubble" data-design-price>
@@ -4283,11 +4404,12 @@
                 const normalizedLabel = (opt.label || '').toLowerCase();
                 const isColor = normalizedLabel === 'color';
                 const isAccessory = normalizedLabel === 'accessory';
+                const isAttachment = normalizedLabel === 'attachment';
                 const swatchGlyph = opt.swatchGlyph || '';
                 const baseSwatchStyle = opt.swatchStyle && opt.swatchStyle.trim()
                   ? opt.swatchStyle.trim()
                   : (isAccessory ? 'background:#d8b4fe;' : 'background:#e2e8f0;');
-                const swatch = baseSwatchStyle
+                const swatch = baseSwatchStyle && !isAttachment
                   ? `<span class="cart-item-swatch" style="${baseSwatchStyle.replace(/"/g, '&quot;')}; width:0.9rem; height:0.9rem; border-radius:9999px; display:inline-flex; align-items:center; justify-content:center; margin-left:0.28rem; vertical-align:middle; transform: translateY(-1px); border:1px solid rgba(15,23,42,0.25); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.65);">${swatchGlyph}</span>`
                   : '';
                 if (isColor) {
@@ -4295,6 +4417,11 @@
                 }
                 if (isAccessory) {
                   return `<span class="cart-item-option"><span class="label">Accessory:</span>${swatch} <span class="value">${opt.value || ''}</span></span>`;
+                }
+                if (isAttachment) {
+                  const badge = opt.attachmentData ? ' (attached)' : '';
+                  const viewLink = opt.attachmentData ? `<a href="${opt.attachmentData.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="cart-attachment-link">View</a>` : '';
+                  return `<span class="cart-item-option"><span class="label">Attachment:</span> <span class="value">${opt.value || 'Attached file'}${badge}</span> ${viewLink}</span>`;
                 }
                 return `<span class="cart-item-option"><span class="label">${opt.label}:</span> <span class="value">${opt.value}</span>${swatch}</span>`;
               }).join(' · ')}</div>`
@@ -4999,6 +5126,41 @@
       const designVideoPromptBody = designFrame?.querySelector('[data-prompt-body]');
       const designVideoPromptCta = designFrame?.querySelector('[data-prompt-cta]');
       const designPriceValue = document.querySelector('[data-design-price] .design-price-value');
+      const designAttachmentInput = document.getElementById('designUploadHome');
+      const bindUploadLabels = () => {
+        document.querySelectorAll('.support-upload-input').forEach(input => {
+          if (input.dataset.uploadInit) return;
+          input.dataset.uploadInit = 'true';
+          const labelSpan = input.closest('.support-upload')?.querySelector('.support-upload-trigger span');
+          if (!labelSpan) return;
+          const defaultText = labelSpan.textContent.trim();
+          labelSpan.dataset.defaultText = defaultText;
+          input.addEventListener('change', () => {
+            const file = input.files?.[0];
+            labelSpan.textContent = file ? file.name : labelSpan.dataset.defaultText || defaultText;
+          });
+        });
+      };
+
+      const readDesignAttachment = () => {
+        return new Promise(resolve => {
+          const file = designAttachmentInput?.files?.[0];
+          if (!file) return resolve(null);
+          const maxBytes = 1.5 * 1024 * 1024;
+          const info = { name: file.name, type: file.type, size: file.size };
+          if (file.size > maxBytes) return resolve({ ...info, dataUrl: '' });
+          const reader = new FileReader();
+          reader.onload = () => resolve({ ...info, dataUrl: typeof reader.result === 'string' ? reader.result : '' });
+          reader.onerror = () => resolve({ ...info, dataUrl: '' });
+          reader.readAsDataURL(file);
+        });
+      };
+      const designColorPreview = document.querySelector('[data-color-preview]');
+      const designColorPreviewWrap = designColorPreview?.closest('.design-preview-tile');
+      const designColorPreviewGlyph = designColorPreview?.querySelector('.design-preview-glyph');
+      const designAccessoryPreview = document.querySelector('[data-accessory-preview]');
+      const designAccessoryPreviewWrap = designAccessoryPreview?.closest('.design-preview-tile');
+      const designAccessoryPreviewGlyph = designAccessoryPreview?.querySelector('.design-preview-glyph');
       let accessoryPrice = 0;
       let wrapPrice = 0;
       let selectedAccessoryLabel = '';
@@ -5040,6 +5202,47 @@
         const base = typeof lastPrice?.amount === 'number' ? lastPrice.amount : 0;
         setDesignPrice(base + accessoryPrice + wrapPrice);
       };
+
+      function updateColorPreview(style, label, glyph = '') {
+        if (!designColorPreview) return;
+        if (style) {
+          designColorPreview.setAttribute('style', `${style};`);
+          designColorPreview.setAttribute('aria-label', label ? `Selected color ${label}` : 'Selected color');
+          designColorPreviewWrap?.classList.add('has-selection');
+          if (designColorPreviewGlyph) {
+            designColorPreviewGlyph.textContent = glyph || '';
+          }
+        } else {
+          designColorPreview.removeAttribute('style');
+          designColorPreview.setAttribute('aria-label', 'No color selected');
+          designColorPreviewWrap?.classList.remove('has-selection');
+          if (designColorPreviewGlyph) {
+            designColorPreviewGlyph.textContent = '';
+          }
+        }
+      }
+
+      function updateAccessoryPreview(style, label, glyph = '') {
+        if (!designAccessoryPreview) return;
+        if (style) {
+          designAccessoryPreview.setAttribute('style', `${style};`);
+          designAccessoryPreview.setAttribute('aria-label', label ? `Selected accessory ${label}` : 'Selected accessory');
+          designAccessoryPreviewWrap?.classList.add('has-selection');
+          if (designAccessoryPreviewGlyph) {
+            designAccessoryPreviewGlyph.textContent = glyph || '';
+          }
+        } else {
+          designAccessoryPreview.removeAttribute('style');
+          designAccessoryPreview.setAttribute('aria-label', 'No accessory selected');
+          designAccessoryPreviewWrap?.classList.remove('has-selection');
+          if (designAccessoryPreviewGlyph) {
+            designAccessoryPreviewGlyph.textContent = '';
+          }
+        }
+      }
+
+      updateColorPreview('', '');
+      updateAccessoryPreview('', '');
       let lastImageState = designImage
         ? {
             src: designImage.getAttribute('src'),
@@ -5359,6 +5562,12 @@
             selectedAccessoryLabel = '';
             selectedWrapLabel = '';
             selectedColorLabel = '';
+            selectedAccessoryStyle = '';
+            selectedAccessoryGlyph = '';
+            selectedColorStyle = '';
+            selectedColorGlyph = '';
+            updateColorPreview('', '');
+            updateAccessoryPreview('', '');
             updateDesignTotal();
             applyHomeDesignPreview(selection);
             persistDesignSelection(selection);
@@ -5407,11 +5616,13 @@
             selectedAccessoryLabel = label;
             selectedAccessoryStyle = style;
             selectedAccessoryGlyph = text;
+            updateAccessoryPreview(style, label, text);
             updateDesignTotal();
           } else if (target === colorTarget) {
             selectedColorLabel = label;
             selectedColorStyle = style;
             selectedColorGlyph = text;
+            updateColorPreview(style, label, text);
           }
         };
 
@@ -5432,10 +5643,12 @@
             updateDesignTotal();
             selectedAccessoryStyle = '';
             selectedAccessoryGlyph = '';
+            updateAccessoryPreview('', '');
           } else if (target === colorTarget) {
             selectedColorLabel = '';
             selectedColorStyle = '';
             selectedColorGlyph = '';
+            updateColorPreview('', '');
           }
         };
 
@@ -5588,7 +5801,7 @@
         });
       };
 
-      const buildDesignProduct = (idOverride) => {
+      const buildDesignProduct = async (idOverride) => {
         const basePrice = typeof lastPrice?.amount === 'number' ? lastPrice.amount : 0;
         const totalPrice = basePrice + accessoryPrice + wrapPrice;
         const nameParts = [];
@@ -5600,6 +5813,7 @@
         const previewSrc = lastImageState?.src || designImage?.getAttribute('src') || '';
         const previewStyle = buildImagePreviewStyle(previewSrc);
         const notesEl = document.getElementById('design-notes-home');
+        const attachment = await readDesignAttachment();
         return {
           id: idOverride || `design-${Date.now()}`,
           name: cartName,
@@ -5618,7 +5832,10 @@
                   swatchGlyph: selectedAccessoryGlyph
                 }
               : null,
-            selectedWrapLabel ? { label: 'Wrap', value: selectedWrapLabel } : null
+            selectedWrapLabel ? { label: 'Wrap', value: selectedWrapLabel } : null,
+            attachment?.name
+              ? { label: 'Attachment', value: attachment.name + (attachment.dataUrl ? '' : ' (file reference)'), attachmentData: attachment.dataUrl || '' }
+              : null
           ].filter(Boolean),
           notes: notesEl ? notesEl.value.trim() : ''
         };
@@ -5647,8 +5864,8 @@
         }
       };
 
-      const syncDesignCart = () => {
-        const product = buildDesignProduct('design-custom');
+      const syncDesignCart = async () => {
+        const product = await buildDesignProduct('design-custom');
         const state = cartState && Array.isArray(cartState.items) ? cartState : { items: [] };
         const normalized = normalizeProduct(product);
         const filtered = state.items.filter(item => item?.id !== normalized.id);
@@ -5674,6 +5891,7 @@
       wireCartButtons();
       wireFavoriteButtons();
       upgradeLegacySwatchesToSlider();
+      bindUploadLabels();
       initSwatchSliders();
       wireProductSwatches();
       wireColorOnlySwatches();
@@ -5682,9 +5900,9 @@
       initDesignSelections();
       moveBadgesToImages();
 
-      const submitDesign = () => {
+      const submitDesign = async () => {
         const designId = `design-${Date.now()}`;
-        const product = buildDesignProduct(designId);
+        const product = await buildDesignProduct(designId);
         const normalized = normalizeProduct(product);
         // Update cart via API if available
         if (cartApi && typeof cartApi.addProduct === 'function') {
@@ -5710,36 +5928,23 @@
           sessionStorage?.setItem(DESIGN_SESSION_KEY, JSON.stringify(normalized));
         } catch {}
 
-        // Build checkout payload
-        const checkoutCart = (() => {
-          const items = Array.isArray(cartState?.items) ? [...cartState.items] : [normalized];
-          const existing = items.findIndex(item => item?.id === normalized.id);
-          if (existing >= 0) items[existing] = normalized;
-          else items.push(normalized);
-          return { items };
-        })();
-
         // Also persist checkout cart in storage
         if (storage) {
           try {
-            storage.setItem(CART_STORAGE_KEY, JSON.stringify(checkoutCart));
+            storage.setItem(CART_STORAGE_KEY, JSON.stringify(cartState));
           } catch {}
         }
 
-        console.debug('Design submit payload', { normalized, checkoutCart });
-
-        const encodedDesign = encodeURIComponent(JSON.stringify(normalized));
-        const encodedCart = encodeURIComponent(JSON.stringify(checkoutCart));
-        const targetHref = `checkout.html?design=${encodedDesign}&cart=${encodedCart}`;
-        window.location.href = targetHref;
+        console.debug('Design submit payload', { normalized });
+        window.location.href = 'checkout.html';
       };
 
       const designSubmitBtn = document.querySelector('[data-design-submit]');
       if (designSubmitBtn) {
-        designSubmitBtn.addEventListener('click', event => {
+        designSubmitBtn.addEventListener('click', async event => {
           event.preventDefault();
           try {
-            submitDesign();
+            await submitDesign();
           } catch (error) {
             console.warn('Design submit failed to add to cart', error);
             const fallbackHref = designSubmitBtn.getAttribute('href') || 'checkout.html';

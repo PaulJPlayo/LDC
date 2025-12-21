@@ -566,6 +566,43 @@
       .design-video-message[hidden] {
         display: none;
       }
+      .support-upload {
+        display: grid;
+        gap: 0.4rem;
+        margin-top: 0.5rem;
+      }
+      .support-upload-trigger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        border-radius: 0.9rem;
+        padding: 0.85rem 1rem;
+        border: 1px dashed rgba(153, 40, 177, 0.45);
+        background: rgba(248, 245, 255, 0.75);
+        color: #1f0f24;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+      }
+      .support-upload-trigger:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 22px rgba(17, 24, 39, 0.18);
+        border-color: rgba(153, 40, 177, 0.7);
+      }
+      .support-upload-help {
+        margin: 0;
+        font-size: 0.85rem;
+        opacity: 0.85;
+        text-align: center;
+        color: #1f0f24;
+      }
+      .support-upload-input {
+        display: none;
+      }
       .design-media-grid {
         margin-top: 1.5rem;
         display: flex;
@@ -774,6 +811,67 @@
         min-height: clamp(260px, 38vw, 360px);
         max-width: 380px;
       }
+      .design-preview-row {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.25rem;
+      }
+      @media (min-width: 900px) {
+        .design-preview-row {
+          flex-direction: row;
+          align-items: center;
+        }
+      }
+      .design-preview-tile {
+        width: 180px;
+        height: 180px;
+        border-radius: 1.5rem;
+        border: 1px solid rgba(153, 40, 177, 0.18);
+        background: rgba(248, 245, 255, 0.85);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .design-preview-fill {
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at 35% 35%, rgba(238, 242, 255, 0.9) 0%, rgba(148, 163, 184, 0.35) 100%);
+        transition: transform 160ms ease;
+        position: relative;
+      }
+      .design-preview-tile.has-selection .design-preview-fill {
+        transform: scale(1.01);
+      }
+      .design-preview-placeholder {
+        font-size: 0.75rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #6b4a78;
+        text-align: center;
+        padding: 0 1rem;
+        line-height: 1.4;
+      }
+      .design-preview-tile.has-selection .design-preview-placeholder {
+        opacity: 0;
+      }
+      .design-preview-glyph {
+        position: absolute;
+        font-size: 1.8rem;
+        line-height: 1;
+      }
+      .design-preview-tile:not(.has-selection) .design-preview-glyph {
+        opacity: 0;
+      }
       .design-preview-frame {
         position: relative;
       }
@@ -792,6 +890,18 @@
       }
       .design-preview-frame.is-video-active .design-preview-video {
         display: block;
+      }
+      .design-preview-frame.is-prompt-active .design-preview-video {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at 20% 20%, rgba(224, 176, 255, 0.2), rgba(12, 7, 21, 0.9));
+      }
+      .design-preview-frame.is-prompt-active .design-preview-video video {
+        display: none;
+      }
+      .design-preview-frame.is-prompt-active .design-video-message {
+        display: flex !important;
       }
       .design-preview-return {
         position: absolute;
@@ -869,6 +979,13 @@
         letter-spacing: 0.06em;
         text-transform: uppercase;
       }
+      .flow-skip-note {
+        display: block;
+        text-align: center;
+        margin-top: 0.5rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
       .cta-wrap {
         margin-top: 0.75rem;
         text-align: center;
@@ -938,15 +1055,21 @@
                 </div>
                 <div class="flow-step">
                   <h3>2. Personalize Every Detail</h3>
-                  <p>Layer on colors, lids, handles, and hardware accents. Add names, monograms, or event dates with premium engraving.</p>
+                  <p>
+                    Layer on colors, lids, handles, and hardware accents. Add names, monograms, pick your design.
+                    <span class="flow-skip-note">(Skip to step 4 if you are not ordering a sublimatable cup)</span>
+                  </p>
                 </div>
                 <div class="flow-step">
                   <h3>3. Preview & Approve</h3>
-                  <p>Review a mock-up from our design studio and request tweaks until it matches your vision perfectly.</p>
+                  <p>
+                    Review a mock-up and request tweaks until it matches your vision perfectly.
+                    <span class="flow-skip-note">(Sublimation cups only)</span>
+                  </p>
                 </div>
                 <div class="flow-step">
                   <h3>4. Crafted & Delivered</h3>
-                  <p>Your bespoke Lovett’s creation is produced with care, inspected by hand, and prepared for pickup or shipping.</p>
+                  <p>Your LDC creation is produced with care, inspected by hand, and prepared for pickup or shipping.</p>
                 </div>
               </div>
             </div>
@@ -966,22 +1089,36 @@
               <div class="design-card-body">
                 <div class="design-palette-grid">
                   <div class="design-center">
-                    <div class="design-card-frame design-video-frame design-preview-frame" data-design-frame>
-                      <button type="button" class="design-preview-return" data-design-back aria-label="Return to image" hidden>Return</button>
-                      <div class="design-preview-layer design-preview-image">
-                        <img id="designPagePreview" data-design-image src="assets/glass-tumbler.jpeg" alt="Designed palm tree tumbler" />
-                      </div>
-                      <div class="design-preview-layer design-preview-video" aria-live="polite">
-                        <div class="design-video-message" data-design-video-prompt hidden aria-hidden="true">
-                          <div class="design-video-message-inner">
-                            <p class="design-video-message-title" data-prompt-title>Need a Special Character or Designer Wrap?</p>
-                            <p class="design-video-message-body" data-prompt-body>Share your character or designer theme with us and we will send next steps.</p>
-                            <a class="design-video-message-cta" data-prompt-cta href="mailto:lovettsdandc@gmail.com">Request Custom Wrap</a>
-                          </div>
+                    <div class="design-preview-row">
+                      <div class="design-preview-tile design-preview-tile--color" aria-live="polite">
+                        <div class="design-preview-fill" data-color-preview>
+                          <span class="design-preview-placeholder">Color preview</span>
+                          <span class="design-preview-glyph" aria-hidden="true"></span>
                         </div>
-                        <video id="designWrapVideo" data-design-video controls muted playsinline>
-                          <source data-source="hls" src="" type="application/x-mpegURL" />
-                        </video>
+                      </div>
+                      <div class="design-card-frame design-video-frame design-preview-frame" data-design-frame>
+                        <button type="button" class="design-preview-return" data-design-back aria-label="Return to image" hidden>Return</button>
+                        <div class="design-preview-layer design-preview-image">
+                          <img id="designPagePreview" data-design-image src="assets/glass-tumbler.jpeg" alt="Designed palm tree tumbler" />
+                        </div>
+                        <div class="design-preview-layer design-preview-video" aria-live="polite">
+                          <div class="design-video-message" data-design-video-prompt hidden aria-hidden="true">
+                            <div class="design-video-message-inner">
+                              <p class="design-video-message-title" data-prompt-title>Need a Special Character or Designer Wrap?</p>
+                              <p class="design-video-message-body" data-prompt-body>Share your character or designer theme with us and we will send next steps.</p>
+                              <a class="design-video-message-cta" data-prompt-cta href="mailto:lovettsdandc@gmail.com">Request Custom Wrap</a>
+                            </div>
+                          </div>
+                          <video id="designWrapVideo" data-design-video controls muted playsinline>
+                            <source data-source="hls" src="" type="application/x-mpegURL" />
+                          </video>
+                        </div>
+                      </div>
+                      <div class="design-preview-tile design-preview-tile--accessory" aria-live="polite">
+                        <div class="design-preview-fill" data-accessory-preview>
+                          <span class="design-preview-placeholder">Accessory preview</span>
+                          <span class="design-preview-glyph" aria-hidden="true"></span>
+                        </div>
                       </div>
                     </div>
                     <div class="w-full flex justify-center">
@@ -1132,6 +1269,14 @@
                       <div class="design-notes-field">
                         <textarea id="design-notes-customization" name="design-notes" placeholder="Share favorite color combos, accessory ideas, or special instructions..." style="color:#000 !important;"></textarea>
                       </div>
+                      <div class="support-upload">
+                        <input type="file" id="designUploadCustomization" class="support-upload-input" accept="image/*,.pdf,.ai,.psd" />
+                        <label for="designUploadCustomization" class="support-upload-trigger">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15.172 7.757-6.364 6.364a2.5 2.5 0 1 0 3.536 3.536l6.364-6.364a4.5 4.5 0 0 0-6.364-6.364l-6.364 6.364a6.5 6.5 0 1 0 9.192 9.192l5.657-5.657"/></svg>
+                          <span>Upload Inspiration</span>
+                        </label>
+                        <p class="support-upload-help">Optional: include an image or PDF for your design.</p>
+                      </div>
                       <div class="design-price-wrapper">
                         <div class="design-price-bubble" data-design-price>
                           <span class="design-price-value">$0.00</span>
@@ -1167,6 +1312,40 @@
         const designVideoPromptBody = designFrame?.querySelector('[data-prompt-body]');
         const designVideoPromptCta = designFrame?.querySelector('[data-prompt-cta]');
         const designPriceValue = document.querySelector('[data-design-price] .design-price-value');
+        const designAttachmentInput = document.getElementById('designUploadCustomization');
+        const bindUploadLabels = () => {
+          document.querySelectorAll('.support-upload-input').forEach(input => {
+            if (input.dataset.uploadInit) return;
+            input.dataset.uploadInit = 'true';
+            const labelSpan = input.closest('.support-upload')?.querySelector('.support-upload-trigger span');
+            if (!labelSpan) return;
+            const defaultText = labelSpan.textContent.trim();
+            labelSpan.dataset.defaultText = defaultText;
+            input.addEventListener('change', () => {
+              const file = input.files?.[0];
+              labelSpan.textContent = file ? file.name : labelSpan.dataset.defaultText || defaultText;
+            });
+          });
+        };
+        const readDesignAttachment = () => {
+          return new Promise(resolve => {
+            const file = designAttachmentInput?.files?.[0];
+            if (!file) return resolve(null);
+            const maxBytes = 1.5 * 1024 * 1024;
+            const info = { name: file.name, type: file.type, size: file.size };
+            if (file.size > maxBytes) return resolve({ ...info, dataUrl: '' });
+            const reader = new FileReader();
+            reader.onload = () => resolve({ ...info, dataUrl: typeof reader.result === 'string' ? reader.result : '' });
+            reader.onerror = () => resolve({ ...info, dataUrl: '' });
+            reader.readAsDataURL(file);
+          });
+        };
+        const designColorPreview = document.querySelector('[data-color-preview]');
+        const designColorPreviewWrap = designColorPreview?.closest('.design-preview-tile');
+        const designColorPreviewGlyph = designColorPreview?.querySelector('.design-preview-glyph');
+        const designAccessoryPreview = document.querySelector('[data-accessory-preview]');
+        const designAccessoryPreviewWrap = designAccessoryPreview?.closest('.design-preview-tile');
+        const designAccessoryPreviewGlyph = designAccessoryPreview?.querySelector('.design-preview-glyph');
         let accessoryPrice = 0;
         let wrapPrice = 0;
         let selectedAccessoryLabel = '';
@@ -1200,6 +1379,48 @@
           setDesignPrice(base + accessoryPrice + wrapPrice);
         };
 
+        function updateColorPreview(style, label, glyph = '') {
+          if (!designColorPreview) return;
+          if (style) {
+            designColorPreview.setAttribute('style', `${style};`);
+            designColorPreview.setAttribute('aria-label', label ? `Selected color ${label}` : 'Selected color');
+            designColorPreviewWrap?.classList.add('has-selection');
+            if (designColorPreviewGlyph) {
+              designColorPreviewGlyph.textContent = glyph || '';
+            }
+          } else {
+            designColorPreview.removeAttribute('style');
+            designColorPreview.setAttribute('aria-label', 'No color selected');
+            designColorPreviewWrap?.classList.remove('has-selection');
+            if (designColorPreviewGlyph) {
+              designColorPreviewGlyph.textContent = '';
+            }
+          }
+        }
+
+        updateColorPreview('', '');
+
+        function updateAccessoryPreview(style, label, glyph = '') {
+          if (!designAccessoryPreview) return;
+          if (style) {
+            designAccessoryPreview.setAttribute('style', `${style};`);
+            designAccessoryPreview.setAttribute('aria-label', label ? `Selected accessory ${label}` : 'Selected accessory');
+            designAccessoryPreviewWrap?.classList.add('has-selection');
+            if (designAccessoryPreviewGlyph) {
+              designAccessoryPreviewGlyph.textContent = glyph || '';
+            }
+          } else {
+            designAccessoryPreview.removeAttribute('style');
+            designAccessoryPreview.setAttribute('aria-label', 'No accessory selected');
+            designAccessoryPreviewWrap?.classList.remove('has-selection');
+            if (designAccessoryPreviewGlyph) {
+              designAccessoryPreviewGlyph.textContent = '';
+            }
+          }
+        }
+
+        updateAccessoryPreview('', '');
+
         const initBasePrice = () => {
           if (!designPriceValue) return;
           const raw = designPriceValue.textContent || '';
@@ -1220,7 +1441,7 @@
 
         const showImagePreview = () => {
           if (!designFrame || !designImage) return;
-          designFrame.classList.remove('is-video-active');
+          designFrame.classList.remove('is-video-active', 'is-prompt-active');
           designVideoPrompt?.setAttribute('hidden', 'true');
           designVideoPrompt?.setAttribute('aria-hidden', 'true');
           if (designVideo) {
@@ -1242,6 +1463,7 @@
 
         const showVideoById = videoId => {
           if (!videoId || !designFrame || !designVideo) return;
+          designFrame.classList.remove('is-prompt-active');
           rememberCurrentImage();
           const sourceUrl = `https://customer-3ptq6xbmg2sfpv29.cloudflarestream.com/${videoId}/manifest/video.m3u8`;
           const sourceEl = designVideo.querySelector('source');
@@ -1260,6 +1482,7 @@
 
         const showVideoPrompt = (title, body, ctaLabel, ctaHref) => {
           if (!designFrame || !designVideoPrompt) return;
+          designFrame.classList.add('is-prompt-active');
           rememberCurrentImage();
           if (designVideo) {
             designVideo.pause?.();
@@ -1449,11 +1672,13 @@
             selectedAccessoryLabel = label;
             selectedAccessoryStyle = style;
             selectedAccessoryGlyph = text;
+            updateAccessoryPreview(style, label, text);
             updateDesignTotal();
           } else if (target === colorTarget) {
             selectedColorLabel = label;
             selectedColorStyle = style;
             selectedColorGlyph = text;
+            updateColorPreview(style, label, text);
           }
         };
 
@@ -1474,12 +1699,14 @@
             accessoryPrice = 0;
             selectedAccessoryStyle = '';
             selectedAccessoryGlyph = '';
+            updateAccessoryPreview('', '');
             updateDesignTotal();
           } else if (target === colorTarget) {
             clearActiveSwatches('[data-design-colors-source] .swatch.is-active');
             selectedColorLabel = '';
             selectedColorStyle = '';
             selectedColorGlyph = '';
+            updateColorPreview('', '');
           }
         };
 
@@ -1605,7 +1832,7 @@
           return `background-color: #ffffff; background-image: url("${src}"); background-size: cover; background-position: center; background-repeat: no-repeat;`;
         };
 
-        const buildDesignProduct = (idOverride) => {
+        const buildDesignProduct = async (idOverride) => {
           const basePrice = typeof lastPrice?.amount === 'number' ? lastPrice.amount : 0;
           const totalPrice = basePrice + accessoryPrice + wrapPrice;
           const nameParts = [];
@@ -1617,6 +1844,7 @@
           const previewSrc = lastImageState?.src || designImage?.getAttribute('src') || '';
           const previewStyle = buildImagePreviewStyle(previewSrc);
           const notesEl = document.getElementById('design-notes-customization');
+          const attachment = await readDesignAttachment();
           return {
             id: idOverride || `design-${Date.now()}`,
             name: cartName,
@@ -1635,7 +1863,10 @@
                     swatchGlyph: selectedAccessoryGlyph
                   }
                 : null,
-              selectedWrapLabel ? { label: 'Wrap', value: selectedWrapLabel } : null
+              selectedWrapLabel ? { label: 'Wrap', value: selectedWrapLabel } : null,
+              attachment?.name
+                ? { label: 'Attachment', value: attachment.name + (attachment.dataUrl ? '' : ' (file reference)'), attachmentData: attachment.dataUrl || '' }
+                : null
             ].filter(Boolean),
             notes: notesEl ? notesEl.value.trim() : ''
           };
@@ -1653,9 +1884,9 @@
           return { items: [] };
         };
 
-        const submitDesign = () => {
+        const submitDesign = async () => {
           const designId = `design-${Date.now()}`;
-          const product = buildDesignProduct(designId);
+          const product = await buildDesignProduct(designId);
           const existingCart = readCartFromStorage();
           const items = Array.isArray(existingCart.items) ? [...existingCart.items] : [];
           items.push(product);
@@ -1666,19 +1897,18 @@
           try {
             sessionStorage.setItem('ldc:design:last', JSON.stringify(product));
           } catch {}
-          const encodedDesign = encodeURIComponent(JSON.stringify(product));
-          const encodedCart = encodeURIComponent(JSON.stringify(checkoutCart));
-          window.location.href = `checkout.html?design=${encodedDesign}&cart=${encodedCart}`;
+          window.location.href = 'checkout.html';
         };
 
         const designSubmitBtn = document.querySelector('[data-design-submit]');
         if (designSubmitBtn) {
-          designSubmitBtn.addEventListener('click', event => {
+          designSubmitBtn.addEventListener('click', async event => {
             event.preventDefault();
-            submitDesign();
+            await submitDesign();
           });
         }
 
+        bindUploadLabels();
         initSwatchSliders();
         initDesignSelections();
         initBasePrice();

@@ -392,6 +392,43 @@
         box-shadow: 0 18px 36px rgba(34, 211, 238, 0.28);
         filter: brightness(1.02);
       }
+      .support-upload {
+        display: grid;
+        gap: 0.35rem;
+        margin-top: 0.5rem;
+      }
+      .support-upload-trigger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        border-radius: 0.9rem;
+        padding: 0.85rem 1rem;
+        border: 1px dashed rgba(59, 130, 246, 0.4);
+        background: rgba(248, 250, 252, 0.9);
+        color: #0f172a;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+      }
+      .support-upload-trigger:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.18);
+        border-color: rgba(59, 130, 246, 0.7);
+      }
+      .support-upload-help {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #1f2937;
+        opacity: 0.85;
+        text-align: center;
+      }
+      .support-upload-input {
+        display: none;
+      }
       .price-table {
         background: #f8fafc;
         border: 1px solid #e5e7eb;
@@ -600,6 +637,31 @@
         justify-content: center;
         box-shadow: 0 8px 16px rgba(59, 130, 246, 0.28);
         transition: transform 180ms ease, box-shadow 180ms ease;
+      }
+      .attire-banner {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto 1.75rem;
+        border-radius: 1.5rem;
+        overflow: hidden;
+        box-shadow: 0 28px 48px rgba(15, 23, 42, 0.18);
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+      .attire-banner img {
+        display: block;
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+        object-position: center;
+      }
+      @media (min-width: 1024px) {
+        .attire-banner {
+          margin-bottom: 2rem;
+        }
       }
       .icon-button:hover {
         transform: translateY(-1px);
@@ -1077,6 +1139,9 @@
       <main>
         <section class="attire-layout">
           <div class="container mx-auto px-5 lg:px-12">
+            <div class="attire-banner">
+              <img src="assets/Attire Page Heading Image.png" alt="Lovett Attire collection showcase" />
+            </div>
             <div class="attire-grid">
               <div class="attire-gallery">
                 <div class="attire-hero-image">
@@ -1087,6 +1152,8 @@
                   <img src="assets/LAW attire 1.png" alt="L.A.W. Attire sweat suit" data-hero-thumb />
                   <img src="assets/LAW camo logo with jay pic for website.png" alt="LAW camo logo" />
                   <img src="assets/Blue LAW sweat suit front.png" alt="Blue LAW sweatsuit front" />
+                  <img src="assets/Blue Sweatsuit Design - 1.png" alt="Blue sweatsuit design 1" />
+                  <img src="assets/Blue Sweatsuit Design - 2.png" alt="Blue sweatsuit design 2" />
                   <img src="assets/LAW pink sweat suit kids.png" alt="Pink kids sweatsuit" />
                   <img src="assets/LAW cream sweat suit camo.png" alt="Cream camo sweatsuit" />
                   <img src="assets/LAW CAMO GREEN sweat suit.png" alt="Green camo sweatsuit" />
@@ -1159,6 +1226,14 @@
                   <span>Custom Design Notes</span>
                   <textarea rows="3" placeholder="Logos, colors, placement, timelines..."></textarea>
                 </label>
+                <div class="support-upload">
+                  <input type="file" id="attireUpload" class="support-upload-input" accept="image/*,.pdf,.ai,.psd" />
+                  <label for="attireUpload" class="support-upload-trigger">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15.172 7.757-6.364 6.364a2.5 2.5 0 1 0 3.536 3.536l6.364-6.364a4.5 4.5 0 0 0-6.364-6.364l-6.364 6.364a6.5 6.5 0 1 0 9.192 9.192l5.657-5.657"/></svg>
+                    <span>Upload Inspiration</span>
+                  </label>
+                  <p class="support-upload-help">Optional: include an image or PDF for your custom attire.</p>
+                </div>
                 <div class="cta-row">
                   <button class="cta-icon-btn" type="button" aria-label="Add to favorites" data-favorites-open>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
@@ -1340,8 +1415,23 @@
         const colorEl = document.getElementById('attireColor');
         const sizeEl = document.getElementById('attireSize');
         const qtyEl = form?.querySelector('input[type="number"]');
+        const attachmentInput = document.getElementById('attireUpload');
         const priceTotalEl = document.querySelector('[data-attire-price-total]');
         const priceMetaEl = document.querySelector('[data-attire-price-meta]');
+        const bindUploadLabels = () => {
+          document.querySelectorAll('.support-upload-input').forEach(input => {
+            if (input.dataset.uploadInit) return;
+            input.dataset.uploadInit = 'true';
+            const labelSpan = input.closest('.support-upload')?.querySelector('.support-upload-trigger span');
+            if (!labelSpan) return;
+            const defaultText = labelSpan.textContent.trim();
+            labelSpan.dataset.defaultText = defaultText;
+            input.addEventListener('change', () => {
+              const file = input.files?.[0];
+              labelSpan.textContent = file ? file.name : labelSpan.dataset.defaultText || defaultText;
+            });
+          });
+        };
 
         let cartState = loadState(CART_STORAGE_KEY);
         let favoritesState = loadState(FAVORITES_STORAGE_KEY);
@@ -1453,6 +1543,7 @@
             const colorOpt = findOpt('color');
             const accessoryOpt = findOpt('accessory');
             const sizeOpt = findOpt('size');
+            const attachmentOpt = findOpt('attachment');
             const notesOpt = findOpt('notes');
             let thumbStyle = (item.previewStyle && item.previewStyle.trim())
               ? item.previewStyle.trim()
@@ -1461,20 +1552,22 @@
               item.previewStyle = thumbStyle;
               saveState(CART_STORAGE_KEY, cartState);
             }
-            const ordered = ['color', 'accessory', 'style', 'size', 'notes'];
+            const safeThumbStyle = (thumbStyle || '').replace(/"/g, '&quot;');
+            const ordered = ['color', 'accessory', 'style', 'size', 'attachment', 'notes'];
             const remaining = opts.filter(opt => !ordered.includes((opt.label || '').toLowerCase()));
             const orderedOpts = [
               colorOpt,
               accessoryOpt,
               styleOpt,
               sizeOpt,
+              attachmentOpt,
               notesOpt,
               ...remaining
             ].filter(Boolean);
             const node = document.createElement('div');
             node.className = 'cart-item';
             node.innerHTML = `
-              <div class="cart-item-thumb" style="${thumbStyle}">
+              <div class="cart-item-thumb" style="${safeThumbStyle}">
                 ${item.image ? `<img src="${item.image}" alt="${item.name || 'Item'}" />` : ''}
               </div>
               <div class="cart-item-info">
@@ -1487,6 +1580,11 @@
                     const label = (opt.label || 'Option').replace(/:$/, '');
                     const swatch = buildSwatch(opt);
                     const value = opt.value || '';
+                    if (label.toLowerCase() === 'attachment') {
+                      const badge = opt.attachmentData ? ' (attached)' : '';
+                      const viewLink = opt.attachmentData ? `<a href="${opt.attachmentData.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="cart-attachment-link">View</a>` : '';
+                      return `<div class="cart-option"><span class="cart-option-label">${label}</span><span class="cart-option-value">${value}${badge} ${viewLink}</span></div>`;
+                    }
                     return `<div class="cart-option"><span class="cart-option-label">${label}</span><span class="cart-option-value">${swatch}${value}</span></div>`;
                   }).join('')}
                 </div>
@@ -1523,12 +1621,13 @@
             const row = document.createElement('div');
             row.className = 'favorite-item';
             const thumbStyle = item.previewStyle || (item.image ? `background-image:url('${item.image}'); background-size:cover; background-position:center;` : '');
+            const safeThumbStyle = thumbStyle ? thumbStyle.replace(/"/g, '&quot;') : '';
             const opts = Array.isArray(item.options) ? item.options : [];
             const colorOpt = opts.find(opt => (opt.label || '').toLowerCase() === 'color');
             const accessoryOpt = opts.find(opt => (opt.label || '').toLowerCase() === 'accessory');
             const swatch = buildSwatch(colorOpt || accessoryOpt || {});
             row.innerHTML = `
-              <div class="favorite-thumb" style="${thumbStyle}">
+              <div class="favorite-thumb" style="${safeThumbStyle}">
                 ${item.image ? `<img src="${item.image}" alt="${item.name || 'Favorite'}" />` : ''}
               </div>
               <div>
@@ -1586,7 +1685,21 @@
         window.addEventListener('keydown', e => { if (e.key === 'Escape') closeFavorites(); });
         favoritesCta?.addEventListener('click', closeFavorites);
 
-        const buildOptions = () => {
+        const readAttachment = () => {
+          return new Promise(resolve => {
+            const file = attachmentInput?.files?.[0];
+            if (!file) return resolve(null);
+            const maxBytes = 1.5 * 1024 * 1024; // guard to keep storage reasonable
+            const info = { name: file.name, type: file.type, size: file.size };
+            if (file.size > maxBytes) return resolve({ ...info, dataUrl: '' });
+            const reader = new FileReader();
+            reader.onload = () => resolve({ ...info, dataUrl: typeof reader.result === 'string' ? reader.result : '' });
+            reader.onerror = () => resolve({ ...info, dataUrl: '' });
+            reader.readAsDataURL(file);
+          });
+        };
+
+        const buildOptions = async () => {
           const options = [];
           const val = el => {
             if (!el) return '';
@@ -1596,19 +1709,25 @@
             return sel || '';
           };
           const notesEl = form?.querySelector('textarea');
-          const push = (label, value) => { if (value) options.push({ label, value }); };
+          const push = (label, value, extra = {}) => { if (value) options.push({ label, value, ...extra }); };
           push('Style', val(styleEl));
           push('Color', val(colorEl));
           push('Size', val(sizeEl));
           push('Notes', notesEl?.value?.trim() || '');
+          const attachment = await readAttachment();
+          if (attachment?.name) {
+            const note = attachment.dataUrl ? '' : ' (file reference)';
+            push('Attachment', `${attachment.name}${note}`, { attachmentData: attachment.dataUrl || '' });
+          }
           return options;
         };
 
-        const addProduct = isFavorite => {
+        const addProduct = async isFavorite => {
           const heroImg = document.querySelector('.attire-hero-image img');
           const priceCalc = updatePriceBubble();
           const qty = priceCalc?.qty ?? Math.max(1, Number(qtyEl?.value || 1));
           const unitPrice = priceCalc?.basePrice ?? getBasePrice(styleEl?.value || '', sizeEl?.value || '');
+          const options = await buildOptions();
           const item = {
             id: `law-attire-${Date.now()}`,
             name: 'L.A.W. Attire',
@@ -1616,7 +1735,7 @@
             quantity: qty,
             image: heroImg?.getAttribute('src') || '',
             previewStyle: heroImg ? `background-image:url('${heroImg.src}'); background-size:cover; background-position:center;` : '',
-            options: buildOptions()
+            options
           };
           if (isFavorite) {
             favoritesState.items = [...(favoritesState.items || []), { ...item }];
@@ -1631,13 +1750,13 @@
           }
         };
 
-        form?.querySelector('[data-add-to-cart]')?.addEventListener('click', e => {
+        form?.querySelector('[data-add-to-cart]')?.addEventListener('click', async e => {
           e.preventDefault();
-          addProduct(false);
+          await addProduct(false);
         });
-        form?.querySelector('[data-favorites-open]')?.addEventListener('click', e => {
+        form?.querySelector('[data-favorites-open]')?.addEventListener('click', async e => {
           e.preventDefault();
-          addProduct(true);
+          await addProduct(true);
         });
         styleEl?.addEventListener('change', updatePriceBubble);
         sizeEl?.addEventListener('change', updatePriceBubble);
@@ -1659,6 +1778,7 @@
           });
         }
 
+        bindUploadLabels();
         updatePriceBubble();
         renderCart();
         renderFavorites();
