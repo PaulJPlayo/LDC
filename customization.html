@@ -206,6 +206,20 @@
         padding: 0.55rem 0.35rem;
         box-sizing: content-box;
       }
+      @media (max-width: 767px) {
+        .design-swatch-window {
+          padding-left: 0.25rem;
+          padding-right: 0.25rem;
+          box-sizing: border-box;
+          width: calc((48px * 4) + (0.5rem * 3) + 0.5rem) !important;
+          max-width: calc((48px * 4) + (0.5rem * 3) + 0.5rem) !important;
+        }
+        .design-swatch-slider .swatch.is-active {
+          scale: 1;
+          transform: none;
+          outline-offset: 0;
+        }
+      }
       .design-swatch-track {
         gap: 0.5rem;
         align-items: center;
@@ -327,6 +341,14 @@
         color: rgba(31, 15, 36, 0.75);
         letter-spacing: 0.04em;
         text-align: left;
+      }
+      @media (max-width: 767px) {
+        .design-selection-label {
+          line-height: 1.2;
+          min-height: 2.4em;
+          display: flex;
+          align-items: center;
+        }
       }
       .design-price-wrapper {
         display: flex;
@@ -813,21 +835,35 @@
       }
       .design-preview-row {
         width: 100%;
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+          "preview preview"
+          "color accessory";
         align-items: center;
-        justify-content: center;
+        justify-items: center;
         gap: 1.25rem;
+      }
+      .design-preview-row .design-preview-frame {
+        grid-area: preview;
+      }
+      .design-preview-row .design-preview-tile--color {
+        grid-area: color;
+      }
+      .design-preview-row .design-preview-tile--accessory {
+        grid-area: accessory;
       }
       @media (min-width: 900px) {
         .design-preview-row {
+          display: flex;
           flex-direction: row;
           align-items: center;
+          justify-content: center;
         }
       }
       .design-preview-tile {
-        width: 180px;
-        height: 180px;
+        width: min(40vw, 180px);
+        height: min(40vw, 180px);
         border-radius: 1.5rem;
         border: 1px solid rgba(153, 40, 177, 0.18);
         background: rgba(248, 245, 255, 0.85);
@@ -860,6 +896,12 @@
         text-align: center;
         padding: 0 1rem;
         line-height: 1.4;
+      }
+      @media (max-width: 899px) {
+        .design-preview-tile--color .design-preview-placeholder {
+          display: inline-block;
+          max-width: 7rem;
+        }
       }
       .design-preview-tile.has-selection .design-preview-placeholder {
         opacity: 0;
@@ -1124,7 +1166,7 @@
                     <div class="w-full flex justify-center">
                       <p class="design-palette-title design-palette-title--center design-palette-title--bar">Colors</p>
                     </div>
-                    <div class="design-swatch-slider swatch-slider flex items-center gap-2" data-swatch-slider data-visible="7" data-visible-mobile="5">
+                    <div class="design-swatch-slider swatch-slider flex items-center gap-2" data-swatch-slider data-visible="7" data-visible-mobile="4">
                       <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                       </button>
@@ -1186,24 +1228,24 @@
                     <div class="w-full flex justify-center">
                       <p class="design-palette-title design-palette-title--center design-palette-title--bar">Accessories</p>
                     </div>
-                    <div class="design-swatch-slider swatch-slider flex items-center gap-2 mt-2" data-swatch-slider data-visible="7" data-visible-mobile="5">
+                    <div class="design-swatch-slider swatch-slider flex items-center gap-2 mt-2" data-swatch-slider data-visible="7" data-visible-mobile="4">
                       <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous accessory">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                       </button>
                       <div class="relative overflow-hidden design-swatch-window" data-swatch-window>
                         <div class="flex items-center design-swatch-track transition-transform duration-200" data-swatch-track data-design-accessories-source>
-                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.6rem; line-height:1;" aria-label="Rhinestone accessory accent" data-price="5">💎</span>
-                            <span class="swatch" style="background:#5eead4; display:flex; align-items:center; justify-content:center; color:#0f172a; font-size:0.7rem; line-height:1;" aria-label="Jelly accessory accent" data-price="3">🪼</span>
-                            <span class="swatch" style="background: radial-gradient(circle at 35% 35%, rgba(224,242,255,0.95) 0%, rgba(96,165,250,0.35) 65%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4); display:flex; align-items:center; justify-content:center; color:#1f2937; font-size:0.7rem; line-height:1;" aria-label="Glass accessory accent" data-price="3">🔍</span>
-                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.7rem; line-height:1;" aria-label="Bow accent" data-price="3">🎀</span>
-                            <span class="swatch" style="background:#dbeafe; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Swirl accent" data-price="3">🌀</span>
-                            <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cafe accent" data-price="1">☕</span>
-                            <span class="swatch" style="background:#f9a8d4; display:flex; align-items:center; justify-content:center; color:#7f1d1d; font-size:0.7rem; line-height:1;" aria-label="Christmas accent" data-price="1">⛄️</span>
-                            <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cat accent" data-price="1">🐱</span>
-                            <span class="swatch" style="background:#86efac; display:flex; align-items:center; justify-content:center; color:#14532d; font-size:0.7rem; line-height:1;" aria-label="Cactus accent" data-price="1">🌵</span>
-                            <span class="swatch" style="background:#93c5fd; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Beach cup accent" data-price="1">🥤</span>
-                            <span class="swatch" style="background:#fef3c7; display:flex; align-items:center; justify-content:center; color:#92400e; font-size:0.7rem; line-height:1;" aria-label="Football accent" data-price="1">🏈</span>
-                            <span class="swatch" style="background: radial-gradient(circle at 40% 40%, #fdf6e3 0%, #f3d9a6 55%, #d3a464 100%); box-shadow: inset 0 0 0 1px rgba(128,82,29,0.25); display:flex; align-items:center; justify-content:center; color:#2f2414; font-size:0.8rem; line-height:1;" aria-label="Cowboy hat accessory" data-price="3">🤠</span>
+                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.6rem; line-height:1;" aria-label="Rhinestone accessory accent" data-price="5" data-image-src="assets/rhinestone-lids-5.png" data-image-alt="Rhinestone lids">💎</span>
+                            <span class="swatch" style="background:#5eead4; display:flex; align-items:center; justify-content:center; color:#0f172a; font-size:0.7rem; line-height:1;" aria-label="Jelly accessory accent" data-price="3" data-image-src="assets/Jelly Lids - 33.png" data-image-alt="Jelly lids">🪼</span>
+                            <span class="swatch" style="background: radial-gradient(circle at 35% 35%, rgba(224,242,255,0.95) 0%, rgba(96,165,250,0.35) 65%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4); display:flex; align-items:center; justify-content:center; color:#1f2937; font-size:0.7rem; line-height:1;" aria-label="Glass bow straws" data-price="3" data-image-src="assets/Glass-Bow-Straws.png" data-image-alt="Glass bow straws">🔍</span>
+                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.7rem; line-height:1;" aria-label="Bow accent" data-price="3" data-image-src="assets/Glass-Bow-Straws.png" data-image-alt="Bow straws">🎀</span>
+                            <span class="swatch" style="background:#dbeafe; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Swirl accent" data-price="3" data-image-src="assets/Glass Twist Straws - 3.png" data-image-alt="Twist straws">🌀</span>
+                            <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cafe accent" data-price="1" data-image-src="assets/Straw Toppers - cafe - 1.jpeg" data-image-alt="Cafe straw toppers">☕</span>
+                            <span class="swatch" style="background:#f9a8d4; display:flex; align-items:center; justify-content:center; color:#7f1d1d; font-size:0.7rem; line-height:1;" aria-label="Christmas accent" data-price="1" data-image-src="assets/Straw Toppers - Christmas - 1.jpeg" data-image-alt="Christmas straw toppers">⛄️</span>
+                            <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cat accent" data-price="1" data-image-src="assets/Straw Topper - Cats - 1.jpeg" data-image-alt="Cat straw toppers">🐱</span>
+                            <span class="swatch" style="background:#86efac; display:flex; align-items:center; justify-content:center; color:#14532d; font-size:0.7rem; line-height:1;" aria-label="Cactus accent" data-price="1" data-image-src="assets/Straw Toppers - Cactus - 1.png" data-image-alt="Cactus straw toppers">🌵</span>
+                            <span class="swatch" style="background:#93c5fd; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Beach cup accent" data-price="1" data-image-src="assets/straw toppers - beach cup -1.png" data-image-alt="Beach cup straw toppers">🥤</span>
+                            <span class="swatch" style="background:#fef3c7; display:flex; align-items:center; justify-content:center; color:#92400e; font-size:0.7rem; line-height:1;" aria-label="Football accent" data-price="1" data-image-src="assets/straw toppers - sports - 1.png" data-image-alt="Sports straw toppers">🏈</span>
+                            <span class="swatch" style="background: radial-gradient(circle at 40% 40%, #fdf6e3 0%, #f3d9a6 55%, #d3a464 100%); box-shadow: inset 0 0 0 1px rgba(128,82,29,0.25); display:flex; align-items:center; justify-content:center; color:#2f2414; font-size:0.8rem; line-height:1;" aria-label="Cowboy hat accessory" data-price="3" data-image-src="assets/Cowboy Glass Straws - 3.jpg" data-image-alt="Cowboy hat straw">🤠</span>
                         </div>
                       </div>
                       <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next accessory">
@@ -1244,7 +1286,7 @@
                           <p class="design-palette-title design-palette-title--center design-palette-title--highlight">Color</p>
                           <div class="design-selection-target" data-selected-color>
                             <div class="design-selection-swatch" aria-hidden="true"></div>
-                            <span class="design-selection-label">Select a color option</span>
+                            <span class="design-selection-label">Select a color</span>
                             <button type="button" class="design-selection-clear" data-clear-color aria-label="Clear color selection">&times;</button>
                           </div>
                         </div>
@@ -1313,6 +1355,21 @@
         const designVideoPromptCta = designFrame?.querySelector('[data-prompt-cta]');
         const designPriceValue = document.querySelector('[data-design-price] .design-price-value');
         const designAttachmentInput = document.getElementById('designUploadCustomization');
+        let designScrollPending = false;
+        const scrollDesignPreviewIntoView = () => {
+          if (!designFrame || designScrollPending) return;
+          designScrollPending = true;
+          requestAnimationFrame(() => {
+            designScrollPending = false;
+            const rect = designFrame.getBoundingClientRect();
+            const targetTop = rect.top + window.pageYOffset - (window.innerHeight - rect.height) / 2;
+            const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            window.scrollTo({
+              top: Math.max(0, targetTop),
+              behavior: prefersReduced ? 'auto' : 'smooth'
+            });
+          });
+        };
         const bindUploadLabels = () => {
           document.querySelectorAll('.support-upload-input').forEach(input => {
             if (input.dataset.uploadInit) return;
@@ -1351,6 +1408,8 @@
         let selectedAccessoryLabel = '';
         let selectedAccessoryStyle = '';
         let selectedAccessoryGlyph = '';
+        let selectedAccessoryImageSrc = '';
+        let selectedAccessoryImageAlt = '';
         let selectedColorLabel = '';
         let selectedColorStyle = '';
         let selectedColorGlyph = '';
@@ -1400,14 +1459,33 @@
 
         updateColorPreview('', '');
 
-        function updateAccessoryPreview(style, label, glyph = '') {
+        const buildAccessoryPreviewStyle = (baseStyle, imageSrc) => {
+          const parts = [];
+          if (baseStyle) parts.push(baseStyle.trim().replace(/;$/, ''));
+          if (imageSrc) {
+            parts.push(
+              `background-image: url("${imageSrc}"); background-size: contain; background-position: center; background-repeat: no-repeat;`
+            );
+          }
+          return parts.filter(Boolean).join('; ');
+        };
+
+        function updateAccessoryPreview(style, label, glyph = '', imageSrc = '', imageAlt = '') {
           if (!designAccessoryPreview) return;
-          if (style) {
-            designAccessoryPreview.setAttribute('style', `${style};`);
-            designAccessoryPreview.setAttribute('aria-label', label ? `Selected accessory ${label}` : 'Selected accessory');
+          const resolvedImageSrc = typeof imageSrc === 'string' ? imageSrc : '';
+          const resolvedImageAlt = typeof imageAlt === 'string' ? imageAlt : '';
+          if (style || resolvedImageSrc) {
+            const previewStyle = buildAccessoryPreviewStyle(style, resolvedImageSrc);
+            if (previewStyle) {
+              designAccessoryPreview.setAttribute('style', `${previewStyle};`);
+            } else {
+              designAccessoryPreview.removeAttribute('style');
+            }
+            const labelText = label || resolvedImageAlt;
+            designAccessoryPreview.setAttribute('aria-label', labelText ? `Selected accessory ${labelText}` : 'Selected accessory');
             designAccessoryPreviewWrap?.classList.add('has-selection');
             if (designAccessoryPreviewGlyph) {
-              designAccessoryPreviewGlyph.textContent = glyph || '';
+              designAccessoryPreviewGlyph.textContent = resolvedImageSrc ? '' : (glyph || '');
             }
           } else {
             designAccessoryPreview.removeAttribute('style');
@@ -1420,6 +1498,137 @@
         }
 
         updateAccessoryPreview('', '');
+
+        const designColorTrack = document.querySelector('[data-design-colors-source]');
+        const normalizeSwatchLabel = raw => {
+          if (!raw) return '';
+          return raw
+            .replace(/\s*swatch\b/i, '')
+            .replace(/^view\s+/i, '')
+            .replace(/\s+option\b/i, '')
+            .replace(/\baccessory\b/gi, '')
+            .replace(/\baccent\b/gi, '')
+            .trim();
+        };
+        const sanitizeSwatchStyle = style => {
+          if (!style) return '';
+          return style
+            .replace(/(^|;)\s*(width|height|min-width|max-width|min-height|max-height|flex)\s*:\s*[^;]+;?/gi, ';')
+            .replace(/(^|;)\s*padding(?:-(?:left|right|top|bottom))?\s*:\s*[^;]+;?/gi, ';')
+            .replace(/(^|;)\s*border-radius\s*:\s*[^;]+;?/gi, ';')
+            .replace(/;{2,}/g, ';')
+            .replace(/^\s*;\s*|\s*;\s*$/g, '')
+            .trim();
+        };
+        const readSwatchData = swatch => {
+          if (!swatch) return null;
+          const rawLabel = swatch.getAttribute('aria-label') || swatch.getAttribute('title') || '';
+          return {
+            style: sanitizeSwatchStyle(swatch.getAttribute('style') || ''),
+            label: normalizeSwatchLabel(rawLabel),
+            glyph: (swatch.textContent || '').trim(),
+            imageSrc: swatch.getAttribute('data-image-src') || '',
+            imageAlt: swatch.getAttribute('data-image-alt') || ''
+          };
+        };
+        const defaultDesignSwatches = designColorTrack
+          ? Array.from(designColorTrack.querySelectorAll('.swatch'))
+              .map(readSwatchData)
+              .filter(Boolean)
+          : [];
+        const buildDesignSwatch = data => {
+          const swatch = document.createElement('span');
+          swatch.className = 'swatch';
+          if (data?.style) swatch.setAttribute('style', sanitizeSwatchStyle(data.style));
+          if (data?.label) swatch.setAttribute('aria-label', data.label);
+          if (data?.glyph) swatch.textContent = data.glyph;
+          if (data?.imageSrc) swatch.setAttribute('data-image-src', data.imageSrc);
+          if (data?.imageAlt) swatch.setAttribute('data-image-alt', data.imageAlt);
+          return swatch;
+        };
+        const resetDesignColorSelection = () => {
+          document.querySelectorAll('[data-selected-color]').forEach(colorTarget => {
+            const swatchNode = colorTarget.querySelector('.design-selection-swatch');
+            const labelNode = colorTarget.querySelector('.design-selection-label');
+            if (swatchNode) {
+              swatchNode.removeAttribute('style');
+              swatchNode.textContent = '';
+            }
+            if (labelNode) {
+              labelNode.textContent = 'Select a color';
+            }
+            colorTarget.classList.remove('has-selection');
+          });
+          selectedColorLabel = '';
+          selectedColorStyle = '';
+          selectedColorGlyph = '';
+          updateColorPreview('', '');
+          document
+            .querySelectorAll('[data-design-colors-source] .swatch.is-active')
+            .forEach(el => el.classList.remove('is-active'));
+        };
+        const resetDesignAccessorySelection = () => {
+          document.querySelectorAll('[data-selected-accessory]').forEach(accessoryTarget => {
+            const swatchNode = accessoryTarget.querySelector('.design-selection-swatch');
+            const labelNode = accessoryTarget.querySelector('.design-selection-label');
+            if (swatchNode) {
+              swatchNode.removeAttribute('style');
+              swatchNode.textContent = '';
+            }
+            if (labelNode) {
+              labelNode.textContent = 'Select an accessory';
+            }
+            accessoryTarget.classList.remove('has-selection');
+          });
+          selectedAccessoryLabel = '';
+          selectedAccessoryStyle = '';
+          selectedAccessoryGlyph = '';
+          selectedAccessoryImageSrc = '';
+          selectedAccessoryImageAlt = '';
+          accessoryPrice = 0;
+          updateAccessoryPreview('', '');
+          document
+            .querySelectorAll('[data-design-accessories-source] .swatch.is-active')
+            .forEach(el => el.classList.remove('is-active'));
+        };
+        const resetDesignWrapSelection = () => {
+          document.querySelectorAll('[data-selected-wrap]').forEach(wrapTarget => {
+            const swatchNode = wrapTarget.querySelector('.design-selection-swatch');
+            const labelNode = wrapTarget.querySelector('.design-selection-label');
+            if (swatchNode) {
+              swatchNode.removeAttribute('style');
+              swatchNode.textContent = '';
+            }
+            if (labelNode) {
+              labelNode.textContent = 'Select a wrap template';
+            }
+            wrapTarget.classList.remove('has-selection');
+          });
+          selectedWrapLabel = '';
+          wrapPrice = 0;
+        };
+        const resetDesignSelections = () => {
+          resetDesignColorSelection();
+          resetDesignAccessorySelection();
+          resetDesignWrapSelection();
+          updateDesignTotal();
+        };
+        const resetDesignSwatchSlider = () => {
+          if (!designColorTrack) return;
+          const slider = designColorTrack.closest('[data-swatch-slider]');
+          if (slider) slider.dataset.sliderIndex = '0';
+          designColorTrack.style.transform = 'translateX(0px)';
+          window.dispatchEvent(new Event('resize'));
+        };
+        const setDesignColorSwatches = swatches => {
+          if (!designColorTrack) return;
+          const next = Array.isArray(swatches) && swatches.length ? swatches : defaultDesignSwatches;
+          designColorTrack.innerHTML = '';
+          next.forEach(item => designColorTrack.appendChild(buildDesignSwatch(item)));
+          designColorTrack.querySelectorAll('.swatch.is-active').forEach(el => el.classList.remove('is-active'));
+          resetDesignColorSelection();
+          resetDesignSwatchSlider();
+        };
 
         const initBasePrice = () => {
           if (!designPriceValue) return;
@@ -1517,6 +1726,13 @@
           if (storedValue && designImage) {
             const parsed = JSON.parse(storedValue);
             if (parsed && typeof parsed === 'object' && parsed.src) {
+              const storedSwatches = Array.isArray(parsed.swatches)
+                ? parsed.swatches.filter(item => item && (item.style || item.glyph || item.imageSrc))
+                : [];
+              if (storedSwatches.length) {
+                setDesignColorSwatches(storedSwatches);
+              }
+              resetDesignSelections();
               designImage.setAttribute('src', parsed.src);
               designImage.setAttribute('alt', parsed.alt || 'Custom design preview');
               lastImageState = {
@@ -1547,8 +1763,13 @@
             const baseVisible = Number(slider.getAttribute('data-visible') || 5);
             const mobileVisible = Number(slider.getAttribute('data-visible-mobile') || baseVisible);
             const isMobile = () => window.matchMedia('(max-width: 767px)').matches;
-            const getVisible = () => (isMobile() ? mobileVisible : baseVisible);
-            let index = 0;
+            const getVisible = () => {
+              const requested = isMobile() ? mobileVisible : baseVisible;
+              const total = track ? track.children.length : 0;
+              return total ? Math.min(requested, total) : requested;
+            };
+            let index = Number.parseInt(slider.dataset.sliderIndex || '0', 10);
+            if (!Number.isFinite(index)) index = 0;
 
             const setWindowWidth = () => {
               if (!windowEl || !track) return;
@@ -1556,14 +1777,24 @@
               if (!first) return;
               const styles = getComputedStyle(track);
               const gap = parseFloat(styles.gap || styles.columnGap || '0');
-              const swatchWidth = first.getBoundingClientRect().width;
+              const swatchWidth = first.offsetWidth || first.getBoundingClientRect().width;
               const visible = getVisible();
               const totalWidth = swatchWidth * visible + gap * (visible - 1);
-              windowEl.style.width = `${totalWidth}px`;
+              const windowStyles = getComputedStyle(windowEl);
+              const paddingX =
+                parseFloat(windowStyles.paddingLeft || '0') +
+                parseFloat(windowStyles.paddingRight || '0');
+              const isDesignSlider = slider.classList.contains('design-swatch-slider');
+              const inset = isDesignSlider && isMobile() ? 1 : 0;
+              windowEl.style.width = `${totalWidth + paddingX - inset}px`;
             };
 
             const update = () => {
               if (!track) return;
+              const storedIndex = Number.parseInt(slider.dataset.sliderIndex || '', 10);
+              if (!Number.isNaN(storedIndex)) {
+                index = storedIndex;
+              }
               const swatches = Array.from(track.children);
               const total = swatches.length;
               const visible = getVisible();
@@ -1575,10 +1806,11 @@
               } else if (index > maxIndex) {
                 index = 0;
               }
+              slider.dataset.sliderIndex = String(index);
               const first = swatches[0];
               const styles = getComputedStyle(track);
               const gap = parseFloat(styles.gap || styles.columnGap || '0');
-              const swatchWidth = first ? first.getBoundingClientRect().width : 0;
+              const swatchWidth = first ? (first.offsetWidth || first.getBoundingClientRect().width) : 0;
               const offset = (swatchWidth + gap) * index;
               track.style.transform = `translateX(-${offset}px)`;
               const disable = maxIndex === 0;
@@ -1596,6 +1828,7 @@
 
             const step = direction => {
               index += direction;
+              slider.dataset.sliderIndex = String(index);
               update();
             };
 
@@ -1672,14 +1905,25 @@
             selectedAccessoryLabel = label;
             selectedAccessoryStyle = style;
             selectedAccessoryGlyph = text;
-            updateAccessoryPreview(style, label, text);
+            selectedAccessoryImageSrc = swatch.getAttribute('data-image-src') || '';
+            selectedAccessoryImageAlt = swatch.getAttribute('data-image-alt') || '';
+            updateAccessoryPreview(style, label, text, selectedAccessoryImageSrc, selectedAccessoryImageAlt);
             updateDesignTotal();
           } else if (target === colorTarget) {
             selectedColorLabel = label;
             selectedColorStyle = style;
             selectedColorGlyph = text;
             updateColorPreview(style, label, text);
+            const imageSrc = swatch.getAttribute('data-image-src');
+            if (imageSrc) {
+              lastImageState = {
+                src: imageSrc,
+                alt: swatch.getAttribute('data-image-alt') || label || 'Custom design preview'
+              };
+              showImagePreview();
+            }
           }
+          scrollDesignPreviewIntoView();
         };
 
           const clearTarget = (target, placeholder) => {
@@ -1699,6 +1943,8 @@
             accessoryPrice = 0;
             selectedAccessoryStyle = '';
             selectedAccessoryGlyph = '';
+            selectedAccessoryImageSrc = '';
+            selectedAccessoryImageAlt = '';
             updateAccessoryPreview('', '');
             updateDesignTotal();
           } else if (target === colorTarget) {
@@ -1753,6 +1999,7 @@
             selectedWrapLabel = '';
           }
           updateDesignTotal();
+          scrollDesignPreviewIntoView();
         };
 
           const bindWrapOptions = () => {
@@ -1808,7 +2055,8 @@
           ensureDefaultSelection('[data-design-accessories-source] .swatch', accessoryTarget, 'Accessory selected');
         const bindClear = (buttonSelector, target, placeholder, onClear) => {
           const button = document.querySelector(buttonSelector);
-          if (!button) return;
+          if (!button || button.dataset.designClearInit) return;
+          button.dataset.designClearInit = 'true';
           button.addEventListener('click', () => {
             clearTarget(target, placeholder);
             if (typeof onClear === 'function') {
@@ -1817,7 +2065,7 @@
           });
         };
 
-        bindClear('[data-clear-color]', colorTarget, 'Select a color swatch');
+        bindClear('[data-clear-color]', colorTarget, 'Select a color');
         bindClear('[data-clear-accessory]', accessoryTarget, 'Select an accessory');
         bindClear('[data-clear-wrap]', wrapTarget, 'Select a wrap template', () => {
           wrapPrice = 0;

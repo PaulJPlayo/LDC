@@ -114,6 +114,10 @@
         padding: 0.45rem 0.45rem;
         box-sizing: content-box;
       }
+      .swatch-slider:not(.design-swatch-slider) .overflow-hidden {
+        padding: 0.45rem 0.25rem !important;
+        box-sizing: border-box;
+      }
       .swatch.is-active {
         box-shadow: 0 0 0 3px rgba(168, 139, 208, 0.35), 0 8px 16px rgba(168, 139, 208, 0.28) !important;
         border-color: #A88BD0 !important;
@@ -122,9 +126,17 @@
         transform: translateY(-1px);
         scale: 1.08;
       }
+      .swatch-slider:not(.design-swatch-slider) .swatch.is-active {
+        scale: 1;
+      }
       [data-swatch-window] {
-        overflow: visible !important;
+        overflow: hidden !important;
         padding: 0.5rem 0;
+      }
+      .swatch-slider:not(.design-swatch-slider) [data-swatch-window] {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
       }
       @media (max-width: 767px) {
         .palette-menu summary {
@@ -139,6 +151,50 @@
         }
         .palette-label--desktop {
           display: none;
+        }
+        .product-card .swatch-slider {
+          width: 100%;
+          justify-content: center;
+        }
+        .product-card .swatch-slider.ml-8 {
+          margin-left: 0 !important;
+        }
+        .product-card .swatch-slider button[data-swatch-prev],
+        .product-card .swatch-slider button[data-swatch-next] {
+          width: 1.5rem;
+          height: 1.5rem;
+        }
+        .product-card .swatch-slider button[data-swatch-prev] svg,
+        .product-card .swatch-slider button[data-swatch-next] svg {
+          width: 0.85rem;
+          height: 0.85rem;
+        }
+        .product-card [data-swatch-track] {
+          gap: 0.35rem;
+        }
+        .product-card .swatch.w-5,
+        .product-card .swatch.h-5 {
+          width: 1rem !important;
+          height: 1rem !important;
+        }
+        .product-card > .mt-4 {
+          margin-top: 0.75rem !important;
+        }
+        .product-card > .text-xs {
+          margin-top: 0.55rem !important;
+        }
+        .product-card > .mt-2,
+        .product-card > .tile-title {
+          margin-top: 0.4rem !important;
+        }
+        .product-card > .text-sm {
+          margin-top: 0.25rem !important;
+        }
+        .product-card > .rating {
+          margin-top: 0.35rem !important;
+        }
+        .product-card > .mt-3.flex.items-center.gap-2 {
+          margin-top: 0.6rem !important;
         }
       }
       @media (min-width: 768px) {
@@ -224,21 +280,35 @@
       }
       .design-preview-row {
         width: 100%;
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+          "preview preview"
+          "color accessory";
         align-items: center;
-        justify-content: center;
+        justify-items: center;
         gap: 1.25rem;
+      }
+      .design-preview-row .design-preview-frame {
+        grid-area: preview;
+      }
+      .design-preview-row .design-preview-tile--color {
+        grid-area: color;
+      }
+      .design-preview-row .design-preview-tile--accessory {
+        grid-area: accessory;
       }
       @media (min-width: 900px) {
         .design-preview-row {
+          display: flex;
           flex-direction: row;
           align-items: center;
+          justify-content: center;
         }
       }
       .design-preview-tile {
-        width: 180px;
-        height: 180px;
+        width: min(40vw, 180px);
+        height: min(40vw, 180px);
         border-radius: 1.5rem;
         border: 1px solid rgba(153, 40, 177, 0.18) !important;
         background: rgba(248, 245, 255, 0.85) !important;
@@ -271,6 +341,12 @@
         text-align: center;
         padding: 0 1rem;
         line-height: 1.4;
+      }
+      @media (max-width: 899px) {
+        .design-preview-tile--color .design-preview-placeholder {
+          display: inline-block;
+          max-width: 7rem;
+        }
       }
       .design-preview-tile.has-selection .design-preview-placeholder {
         opacity: 0;
@@ -365,6 +441,13 @@
         max-width: 100%;
         overflow: visible !important;
         padding: 0.5rem 0;
+      }
+      @media (max-width: 900px) {
+        .design-swatch-window {
+          overflow: hidden !important;
+          width: calc((48px * 4) + (0.5rem * 3)) !important;
+          max-width: calc((48px * 4) + (0.5rem * 3)) !important;
+        }
       }
       .design-swatch-track {
         gap: 0.5rem;
@@ -746,6 +829,14 @@
         letter-spacing: 0.04em;
         text-align: left;
       }
+      @media (max-width: 767px) {
+        .design-selection-label {
+          line-height: 1.2;
+          min-height: 2.4em;
+          display: flex;
+          align-items: center;
+        }
+      }
       .design-price-wrapper {
         display: flex;
         justify-content: center;
@@ -904,9 +995,9 @@
       .header-menu-collapsible.is-open .header-menu-toggle-link svg {
         transform: rotate(180deg);
       }
-      /* Give single-swatch sliders a consistent footprint */
-      .swatch-slider[data-visible="1"] .swatch-slider-window {
-        min-width: calc((1.25rem * 3) + (0.5rem * 2));
+      /* Give swatch sliders a consistent 4-slot footprint */
+      .swatch-slider[data-visible="4"] .swatch-slider-window {
+        min-width: calc((1.25rem * 4) + (0.5rem * 3));
         margin: 0 auto;
       }
       .header-menu-submenu {
@@ -1137,12 +1228,12 @@
       }
       @media (max-width: 640px) {
         .badge-stack {
-          top: 0.35rem;
-          right: 0.65rem;
+          top: 0.25rem;
+          right: 0.5rem;
         }
         .badge-stack span,
         .badge-stack .inline-block {
-          transform: scale(0.8);
+          transform: scale(0.7);
         }
       }
       .rating {
@@ -1391,8 +1482,23 @@
         transform: translateY(-2px);
         box-shadow: 0 16px 32px rgba(249, 115, 22, 0.28);
       }
+      :root {
+        --tile-mauve-bg: linear-gradient(135deg, #E0B0FF 0%, #D8B4FE 100%);
+        --tile-cream-text: #fff7e6;
+      }
       .tile-mauve {
-        background: linear-gradient(135deg, #E0B0FF 0%, #D8B4FE 100%);
+        background: var(--tile-mauve-bg);
+      }
+      .product-card {
+        background: var(--tile-mauve-bg);
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        border-radius: 1.25rem;
+        box-shadow: 0 12px 24px rgba(94, 62, 138, 0.12);
+        padding: 1.25rem;
+      }
+      .product-card,
+      .product-card * {
+        color: var(--tile-cream-text) !important;
       }
       .tile-action-favorite.is-active {
         background: linear-gradient(135deg, #FF9AED 0%, #FF5CA8 100%);
@@ -1508,7 +1614,7 @@
         height: 100%;
         width: min(384px, 92vw);
         background: linear-gradient(135deg, #E0B0FF 0%, #B678F5 100%);
-        color: #ffffff;
+        color: var(--tile-cream-text);
         display: flex;
         flex-direction: column;
         transform: translateX(100%);
@@ -1530,7 +1636,7 @@
         font-family: inherit;
         font-size: 1.125rem;
         font-weight: 600;
-        color: #ffffff;
+        color: var(--tile-cream-text);
       }
       .cart-close-btn {
         border: none;
@@ -1541,12 +1647,12 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        color: rgba(255, 255, 255, 0.8);
+        color: var(--tile-cream-text);
         transition: background-color 200ms ease;
       }
       .cart-close-btn:hover {
         background-color: rgba(255, 255, 255, 0.18);
-        color: #ffffff;
+        color: var(--tile-cream-text);
       }
       .cart-body {
         flex: 1 1 auto;
@@ -1558,7 +1664,7 @@
       }
       .cart-empty {
         text-align: center;
-        color: rgba(255, 255, 255, 0.75);
+        color: var(--tile-cream-text);
         font-size: 0.95rem;
         margin-top: 2rem;
       }
@@ -1598,14 +1704,14 @@
         font-weight: 700;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: #ffffff;
+        color: var(--tile-cream-text);
       }
       .cart-item-price {
         font-size: 0.85rem;
         font-weight: 600;
         letter-spacing: 0.18em;
         text-transform: uppercase;
-        color: #ffffff;
+        color: var(--tile-cream-text);
       }
       .cart-item-quantity {
         display: inline-flex;
@@ -1615,13 +1721,13 @@
         font-weight: 600;
         letter-spacing: 0.18em;
         text-transform: uppercase;
-        color: rgba(255, 255, 255, 0.82);
+        color: var(--tile-cream-text);
       }
       .cart-item-quantity span {
         letter-spacing: 0;
         font-size: 0.95rem;
         font-weight: 700;
-        color: #ffffff;
+        color: var(--tile-cream-text);
       }
       .cart-qty-btn {
         width: 2rem;
@@ -1629,7 +1735,7 @@
         border-radius: 999px;
         border: none;
         background: rgba(255, 255, 255, 0.18);
-        color: #ffffff;
+        color: var(--tile-cream-text);
         font-size: 1.1rem;
         font-weight: 600;
         line-height: 1;
@@ -1643,7 +1749,7 @@
       .cart-remove-btn {
         border: none;
         background: transparent;
-        color: rgba(255, 255, 255, 0.8);
+        color: var(--tile-cream-text);
         font-size: 1.25rem;
         line-height: 1;
         padding: 0.25rem;
@@ -1651,7 +1757,7 @@
       }
       .cart-remove-btn:hover {
         background: rgba(255, 255, 255, 0.22);
-        color: #ffffff;
+        color: var(--tile-cream-text);
       }
       .cart-footer {
         padding: 1.5rem;
@@ -1664,7 +1770,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        color: #ffffff;
+        color: var(--tile-cream-text);
         font-weight: 600;
       }
       .checkout-btn {
@@ -1672,7 +1778,7 @@
         border-radius: 999px;
         height: 2.75rem;
         background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-        color: #fff;
+        color: var(--tile-cream-text);
         font-size: 0.95rem;
         font-weight: 600;
         cursor: pointer;
@@ -1722,12 +1828,15 @@
         height: 100%;
         width: min(360px, 92vw);
         background: linear-gradient(135deg, #ff9aed 0%, #ff5ca8 100%);
-        color: #ffffff;
+        color: var(--tile-cream-text) !important;
         display: flex;
         flex-direction: column;
         transform: translateX(100%);
         transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
         box-shadow: -12px 0 32px rgba(15, 23, 42, 0.25);
+      }
+      .favorites-panel * {
+        color: var(--tile-cream-text) !important;
       }
       .favorites-drawer.is-open .favorites-panel {
         transform: translateX(0);
@@ -1745,6 +1854,7 @@
         font-weight: 700;
         letter-spacing: 0.14em;
         text-transform: uppercase;
+        color: var(--tile-cream-text) !important;
       }
       .favorites-close-btn {
         border: none;
@@ -1755,12 +1865,12 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        color: rgba(255, 255, 255, 0.85);
+        color: var(--tile-cream-text) !important;
         transition: background-color 200ms ease;
       }
       .favorites-close-btn:hover {
         background: rgba(255, 255, 255, 0.2);
-        color: #ffffff;
+        color: var(--tile-cream-text) !important;
       }
       .favorites-body {
         flex: 1 1 auto;
@@ -1780,7 +1890,7 @@
         border-radius: 999px;
         height: 2.75rem;
         background: rgba(255, 255, 255, 0.14);
-        color: #fff;
+        color: var(--tile-cream-text) !important;
         font-size: 0.95rem;
         font-weight: 600;
         cursor: pointer;
@@ -1800,7 +1910,7 @@
       }
       .favorites-empty {
         text-align: center;
-        color: rgba(255, 255, 255, 0.8);
+        color: var(--tile-cream-text) !important;
         font-size: 0.95rem;
         margin-top: 2rem;
         text-transform: uppercase;
@@ -1842,13 +1952,13 @@
         font-weight: 700;
         letter-spacing: 0.12em;
         text-transform: uppercase;
-        color: #ffffff;
+        color: var(--tile-cream-text) !important;
       }
       .favorites-item-price {
         font-size: 0.85rem;
         letter-spacing: 0.18em;
         text-transform: uppercase;
-        color: rgba(255, 255, 255, 0.95);
+        color: var(--tile-cream-text) !important;
       }
       .favorites-actions {
         display: flex;
@@ -1857,7 +1967,7 @@
       }
       .favorites-add-cart {
         border: none;
-        background: #8a6aa6;
+        background: linear-gradient(135deg, #E0B0FF 0%, #B678F5 100%);
         color: #ffffff;
         width: 2.4rem;
         height: 2.4rem;
@@ -1865,18 +1975,18 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 12px 24px rgba(138, 106, 166, 0.3);
+        box-shadow: 0 10px 20px rgba(153, 40, 177, 0.2);
         cursor: pointer;
         transition: transform 150ms ease, box-shadow 150ms ease;
       }
       .favorites-add-cart:hover {
         transform: translateY(-1px);
-        box-shadow: 0 16px 28px rgba(138, 106, 166, 0.35);
+        box-shadow: 0 14px 28px rgba(153, 40, 177, 0.28);
       }
       .favorites-remove-btn {
         border: none;
         background: transparent;
-        color: rgba(255, 255, 255, 0.85);
+        color: var(--tile-cream-text) !important;
         font-size: 1.25rem;
         line-height: 1;
         padding: 0.25rem;
@@ -1965,6 +2075,7 @@
                         <a href="cups.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Cups &amp; Mugs</a>
                         <a href="accessories.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Accessories</a>
                         <a href="attire.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Attire</a>
+                        <a href="doormats.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Doormats</a>
                       </div>
                     </div>
                     <div class="header-menu-collapsible" data-menu-collapsible>
@@ -2005,6 +2116,7 @@
                     <a href="cups.html" class="block px-3 py-2 rounded hover:bg-white">Cups &amp; Mugs</a>
                     <a href="accessories.html" class="block px-3 py-2 rounded hover:bg-white">Accessories</a>
                     <a href="attire.html" class="block px-3 py-2 rounded hover:bg-white">Attire</a>
+                    <a href="doormats.html" class="block px-3 py-2 rounded hover:bg-white">Doormats</a>
                   </div>
                 </div>
               </div>
@@ -2053,7 +2165,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
                       <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
                     </svg>
-                    <span class="icon-badge" data-cart-count hidden>0</span>
+                    <span class="icon-badge" data-cart-count hidden></span>
                   </a>
                 </div>
               </div>
@@ -2218,7 +2330,7 @@
           <div class="flex items-center justify-between mb-6"></div>
           <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             <!-- Product card template start -->
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center relative">
                 <div class="badge-stack">
                   <span class="inline-block rounded bg-emerald-600 text-white px-3 py-0.5">New Arrival</span>
@@ -2227,7 +2339,7 @@
                 <img id="slimProductImage" src="assets/sublimination.jpeg" alt="Slim tumbler product photo" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="3">
+                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
@@ -2274,7 +2386,7 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center relative">
                 <div class="badge-stack">
                   <span class="inline-block rounded bg-emerald-600 text-white px-3 py-0.5">New Arrival</span>
@@ -2282,7 +2394,7 @@
                 <img id="glassTumblerImage" src="assets/glass-tumbler.jpeg" alt="Glass tumbler with frosted finish" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
@@ -2325,12 +2437,12 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <img id="kidsWaterBottleImage" src="assets/kids-water-bottle.jpeg" alt="Kids water bottle tumbler" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="3">
+                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
@@ -2377,12 +2489,12 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <img id="waterBottleTumblerImage" src="assets/water-bottle-tumbler.jpeg" alt="Stainless water bottle tumbler" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="3">
+                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
@@ -2432,12 +2544,12 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <img id="ldcTumbler5Image" src="assets/ldc-tumbler-5.jpeg" alt="Mauve and gold tumbler" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="3">
+                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
@@ -2484,7 +2596,7 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center relative">
                 <div class="badge-stack">
                   <span class="inline-block rounded bg-emerald-600 text-white px-3 py-0.5">New Arrival</span>
@@ -2492,7 +2604,7 @@
                 <img id="ldcTumbler6Image" src="assets/ldc-tumbler-6.jpeg" alt="Pink glitter tumbler" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
@@ -2535,7 +2647,7 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center relative">
                 <div class="badge-stack">
                   <span class="inline-block rounded px-3 py-0.5" style="background:#fbbf24;color:#78350f;">Limited Edition</span>
@@ -2543,7 +2655,7 @@
                 <img id="ldcTumbler7Image" src="assets/ldc-tumbler-7.jpeg" alt="Blue handled tumbler" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
@@ -2586,7 +2698,7 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center relative">
                 <div class="badge-stack">
                   <span class="inline-block rounded px-3 py-0.5" style="background:#fbbf24;color:#78350f;">Limited Edition</span>
@@ -2594,7 +2706,7 @@
                 <img id="ldcTumbler8Image" src="assets/ldc-tumbler-8.jpeg" alt="Matte brown tumbler with handle" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
@@ -2650,12 +2762,12 @@
           <div class="mb-6"></div>
           <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             <!-- Row 1 -->
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center overflow-hidden">
                 <img id="cupsAcrylicImage" src="assets/acrylic.png" alt="LDC Cup 1 product photo" class="h-full w-full object-cover" loading="lazy" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="3">
+                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
@@ -2703,12 +2815,12 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center overflow-hidden">
                 <img id="cupsSnowGlobeImage" src="assets/snow-globe.png" alt="LDC Cup 2 product photo" class="h-full w-full object-cover" loading="lazy" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
@@ -2751,12 +2863,12 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center overflow-hidden">
                 <img id="cupsFrostedImage" src="assets/frosted-sublimination.png" alt="LDC Cup 3 product photo" class="h-full w-full object-cover" loading="lazy" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
@@ -2800,12 +2912,12 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center overflow-hidden">
                 <img id="cupsPorcelainImage" src="assets/porcelain-sublimination.png" alt="LDC Cup 4 product photo" class="h-full w-full object-cover" loading="lazy" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
@@ -2849,12 +2961,12 @@
               </div>
             </div>
             <!-- Row 2 -->
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center overflow-hidden">
                 <img id="cupsSteelImage" src="assets/steel-sublimination.png" alt="Steel Sublimation product photo" class="h-full w-full object-cover" loading="lazy" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
@@ -2897,7 +3009,7 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center overflow-hidden relative">
                 <div class="badge-stack">
                   <span class="inline-block rounded px-3 py-0.5" style="background:#fbbf24;color:#78350f;">Limited Edition</span>
@@ -2939,12 +3051,12 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center overflow-hidden">
                 <img id="cupsGlassSubliminationImage" src="assets/glass-sublimination.png" alt="Glass Sublimation product photo" class="h-full w-full object-cover" loading="lazy" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="3">
+                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
@@ -2991,12 +3103,12 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg bg-[rgb(245,245,245)] border border-slate-200 flex items-center justify-center overflow-hidden">
                 <img id="cupsSlimSnowGlobeImage" src="assets/slim-snow-globe.png" alt="Slim Snow Globe product photo" class="h-full w-full object-cover" loading="lazy" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="3">
+                <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                   <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
@@ -3056,13 +3168,13 @@
           <div class="mb-6"></div>
           <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             <!-- Row 1 -->
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <img src="assets/rhinestone-lids-5.png" alt="LDC accessory rhinestone tumbler lids" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
                 <div class="flex flex-col gap-2">
-                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="3">
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -3081,7 +3193,7 @@
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
-                  <div class="flex items-center gap-1 swatch-slider ml-8 mt-1" data-swatch-slider data-visible="1">
+                  <div class="flex items-center gap-1 swatch-slider ml-8 mt-1" data-swatch-slider data-visible="4">
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous accessory">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -3117,13 +3229,13 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <img id="jellyLidsImage" src="assets/Jelly Lids - 33.png" alt="LDC accessory jelly tumbler lids" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
                 <div class="flex flex-col gap-2">
-                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="3">
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -3141,7 +3253,7 @@
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
-                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous accessory">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -3177,13 +3289,13 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
                 <img src="assets/Glass-Bow-Straws.png" alt="Glass bow straw accessory" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
                 <div class="flex flex-col gap-2">
-                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -3196,7 +3308,7 @@
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
-                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous accessory">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -3233,13 +3345,13 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center overflow-hidden">
                 <img src="assets/Glass Twist Straws - 3.png" alt="Glass twist straws accessory set" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
                 <div class="flex flex-col gap-2">
-                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="3">
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -3258,7 +3370,7 @@
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
-                  <div class="flex items-center gap-1 swatch-slider ml-8 mt-1" data-swatch-slider data-visible="1">
+                  <div class="flex items-center gap-1 swatch-slider ml-8 mt-1" data-swatch-slider data-visible="4">
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous accessory">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -3295,13 +3407,13 @@
               </div>
             </div>
             <!-- Row 2 -->
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center overflow-hidden">
                 <img id="strawToppersImage" src="assets/Straw Toppers - cafe - 1.jpeg" alt="Straw toppers cafe set" class="h-full w-full object-contain" />
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
                 <div class="flex flex-col gap-2">
-                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="3">
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous accessory">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -3342,7 +3454,7 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center overflow-hidden relative">
                 <div class="badge-stack">
                   <span class="inline-block rounded px-3 py-0.5" style="background:#fbbf24;color:#78350f;">Limited Edition</span>
@@ -3354,7 +3466,7 @@
                   <span class="swatch px-3 py-1 rounded-full ring-1 ring-slate-300 text-[0.65rem] font-semibold flex items-center justify-center uppercase tracking-wide" aria-label="Diamond package" style="color:#000000; background: radial-gradient(circle at 35% 35%, rgba(255,255,255,1) 0%, rgba(248,250,252,0.95) 45%, rgba(224,231,255,0.75) 100%), linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(209,213,219,0.7) 100%); box-shadow: inset 0 0 6px rgba(255,255,255,0.9), inset 0 8px 14px rgba(255,255,255,0.7), inset 0 -8px 18px rgba(148,163,184,0.35); min-width: 4.5rem;">Diamond</span>
                 </div>
               </div>
-              <div class="mt-1 text-xs text-slate-600">Diamond | 40oz &amp; 30oz Tumblers</div>
+              <div class="mt-1 text-xs text-slate-600">Diamond | 40oz &amp; 30oz</div>
               <a class="block mt-2 font-semibold tile-title">Christmas Diamond</a>
               <div class="text-sm text-slate-700">$20.00</div>
               <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
@@ -3375,7 +3487,7 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center overflow-hidden">
                 <img src="assets/Flower Premium - 15.png" alt="Flower premium accessory set" class="h-full w-full object-contain" />
               </div>
@@ -3384,7 +3496,7 @@
                   <span class="swatch px-3 py-1 rounded-full ring-1 ring-slate-300 text-[0.65rem] font-semibold flex items-center justify-center uppercase tracking-wide" aria-label="Premium package" style="color:#3b2209; background: linear-gradient(135deg,#f7e0c3 0%,#d6a96a 60%,#b6813f 100%); box-shadow: inset 0 0 0 1px rgba(120,64,14,0.25); min-width: 4.5rem;">Premium</span>
                 </div>
               </div>
-              <div class="mt-1 text-xs text-slate-600">Premium | 40oz &amp; 30oz Tumblers</div>
+              <div class="mt-1 text-xs text-slate-600">Premium | 40oz &amp; 30oz</div>
               <a class="block mt-2 font-semibold tile-title">Flower Premium</a>
               <div class="text-sm text-slate-700">$15.00</div>
               <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
@@ -3405,7 +3517,7 @@
                 </button>
               </div>
             </div>
-            <div class="group relative">
+            <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center overflow-hidden">
                 <img src="assets/Flower Deluxe - 10.png" alt="Flower deluxe accessory set" class="h-full w-full object-contain" />
               </div>
@@ -3414,7 +3526,7 @@
                   <span class="swatch px-3 py-1 rounded-full ring-1 ring-slate-300 text-[0.65rem] font-semibold flex items-center justify-center uppercase tracking-wide" aria-label="Deluxe package" style="color:#3a2c1a; background: linear-gradient(135deg,#fffaf2 0%,#f5e6d2 60%,#ebd3b1 100%); min-width: 4.5rem;">Deluxe</span>
                 </div>
               </div>
-              <div class="mt-1 text-xs text-slate-600">Deluxe | 40oz &amp; 30oz Tumblers</div>
+              <div class="mt-1 text-xs text-slate-600">Deluxe | 40oz &amp; 30oz</div>
               <a class="block mt-2 font-semibold tile-title">Flower Deluxe</a>
               <div class="text-sm text-slate-700">$10.00</div>
               <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
@@ -3486,7 +3598,7 @@
                     <div class="w-full flex justify-center">
                       <p class="design-palette-title design-palette-title--center design-palette-title--bar">Colors</p>
                     </div>
-                    <div class="design-swatch-slider swatch-slider flex items-center gap-2" data-swatch-slider data-visible="7" data-visible-mobile="5">
+                    <div class="design-swatch-slider swatch-slider flex items-center gap-2" data-swatch-slider data-visible="7" data-visible-mobile="4">
                       <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                       </button>
@@ -3548,24 +3660,24 @@
                     <div class="w-full flex justify-center">
                       <p class="design-palette-title design-palette-title--center design-palette-title--bar">Accessories</p>
                     </div>
-                    <div class="design-swatch-slider swatch-slider flex items-center gap-2 mt-2" data-swatch-slider data-visible="7" data-visible-mobile="5">
+                    <div class="design-swatch-slider swatch-slider flex items-center gap-2 mt-2" data-swatch-slider data-visible="7" data-visible-mobile="4">
                       <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous accessory">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                       </button>
                       <div class="relative overflow-hidden design-swatch-window" data-swatch-window>
                         <div class="flex items-center design-swatch-track transition-transform duration-200" data-swatch-track data-design-accessories-source>
-                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.6rem; line-height:1;" aria-label="Rhinestone accessory accent" data-price="5">💎</span>
-                            <span class="swatch" style="background:#5eead4; display:flex; align-items:center; justify-content:center; color:#0f172a; font-size:0.7rem; line-height:1;" aria-label="Jelly accessory accent" data-price="3">🪼</span>
-                            <span class="swatch" style="background: radial-gradient(circle at 35% 35%, rgba(224,242,255,0.95) 0%, rgba(96,165,250,0.35) 65%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4); display:flex; align-items:center; justify-content:center; color:#1f2937; font-size:0.7rem; line-height:1;" aria-label="Glass accessory accent" data-price="3">🔍</span>
-                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.7rem; line-height:1;" aria-label="Bow accent" data-price="3">🎀</span>
-                            <span class="swatch" style="background:#dbeafe; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Swirl accent" data-price="3">🌀</span>
-                            <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cafe accent" data-price="1">☕</span>
-                            <span class="swatch" style="background:#f9a8d4; display:flex; align-items:center; justify-content:center; color:#7f1d1d; font-size:0.7rem; line-height:1;" aria-label="Christmas accent" data-price="1">⛄️</span>
-                            <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cat accent" data-price="1">🐱</span>
-                            <span class="swatch" style="background:#86efac; display:flex; align-items:center; justify-content:center; color:#14532d; font-size:0.7rem; line-height:1;" aria-label="Cactus accent" data-price="1">🌵</span>
-                            <span class="swatch" style="background:#93c5fd; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Beach cup accent" data-price="1">🥤</span>
-                            <span class="swatch" style="background:#fef3c7; display:flex; align-items:center; justify-content:center; color:#92400e; font-size:0.7rem; line-height:1;" aria-label="Football accent" data-price="1">🏈</span>
-                            <span class="swatch" style="background: radial-gradient(circle at 40% 40%, #fdf6e3 0%, #f3d9a6 55%, #d3a464 100%); box-shadow: inset 0 0 0 1px rgba(128,82,29,0.25); display:flex; align-items:center; justify-content:center; color:#2f2414; font-size:0.8rem; line-height:1;" aria-label="Cowboy hat accessory" data-price="3">🤠</span>
+                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.6rem; line-height:1;" aria-label="Rhinestone accessory accent" data-price="5" data-image-src="assets/rhinestone-lids-5.png" data-image-alt="Rhinestone lids">💎</span>
+                            <span class="swatch" style="background:#5eead4; display:flex; align-items:center; justify-content:center; color:#0f172a; font-size:0.7rem; line-height:1;" aria-label="Jelly accessory accent" data-price="3" data-image-src="assets/Jelly Lids - 33.png" data-image-alt="Jelly lids">🪼</span>
+                            <span class="swatch" style="background: radial-gradient(circle at 35% 35%, rgba(224,242,255,0.95) 0%, rgba(96,165,250,0.35) 65%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4); display:flex; align-items:center; justify-content:center; color:#1f2937; font-size:0.7rem; line-height:1;" aria-label="Glass accessory accent" data-price="3" data-image-src="assets/Glass-Bow-Straws.png" data-image-alt="Glass bow straws">🔍</span>
+                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.7rem; line-height:1;" aria-label="Bow accent" data-price="3" data-image-src="assets/Glass-Bow-Straws.png" data-image-alt="Bow straws">🎀</span>
+                            <span class="swatch" style="background:#dbeafe; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Swirl accent" data-price="3" data-image-src="assets/Glass Twist Straws - 3.png" data-image-alt="Twist straws">🌀</span>
+                            <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cafe accent" data-price="1" data-image-src="assets/Straw Toppers - cafe - 1.jpeg" data-image-alt="Cafe straw toppers">☕</span>
+                            <span class="swatch" style="background:#f9a8d4; display:flex; align-items:center; justify-content:center; color:#7f1d1d; font-size:0.7rem; line-height:1;" aria-label="Christmas accent" data-price="1" data-image-src="assets/Straw Toppers - Christmas - 1.jpeg" data-image-alt="Christmas straw toppers">⛄️</span>
+                            <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cat accent" data-price="1" data-image-src="assets/Straw Topper - Cats - 1.jpeg" data-image-alt="Cat straw toppers">🐱</span>
+                            <span class="swatch" style="background:#86efac; display:flex; align-items:center; justify-content:center; color:#14532d; font-size:0.7rem; line-height:1;" aria-label="Cactus accent" data-price="1" data-image-src="assets/Straw Toppers - Cactus - 1.png" data-image-alt="Cactus straw toppers">🌵</span>
+                            <span class="swatch" style="background:#93c5fd; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Beach cup accent" data-price="1" data-image-src="assets/straw toppers - beach cup -1.png" data-image-alt="Beach cup straw toppers">🥤</span>
+                            <span class="swatch" style="background:#fef3c7; display:flex; align-items:center; justify-content:center; color:#92400e; font-size:0.7rem; line-height:1;" aria-label="Football accent" data-price="1" data-image-src="assets/straw toppers - sports - 1.png" data-image-alt="Sports straw toppers">🏈</span>
+                            <span class="swatch" style="background: radial-gradient(circle at 40% 40%, #fdf6e3 0%, #f3d9a6 55%, #d3a464 100%); box-shadow: inset 0 0 0 1px rgba(128,82,29,0.25); display:flex; align-items:center; justify-content:center; color:#2f2414; font-size:0.8rem; line-height:1;" aria-label="Cowboy hat accessory" data-price="3" data-image-src="assets/Cowboy Glass Straws - 3.jpg" data-image-alt="Cowboy hat straw">🤠</span>
                         </div>
                       </div>
                       <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next accessory">
@@ -3606,7 +3718,7 @@
                           <p class="design-palette-title design-palette-title--center design-palette-title--highlight">Color</p>
                           <div class="design-selection-target" data-selected-color>
                             <div class="design-selection-swatch" aria-hidden="true"></div>
-                            <span class="design-selection-label">Select a color option</span>
+                            <span class="design-selection-label">Select a color</span>
                             <button type="button" class="design-selection-clear" data-clear-color aria-label="Clear color selection">&times;</button>
                           </div>
                         </div>
@@ -4378,7 +4490,7 @@
           cartBadge.textContent = count;
           cartBadge.removeAttribute('hidden');
         } else {
-          cartBadge.textContent = '0';
+          cartBadge.textContent = '';
           cartBadge.setAttribute('hidden', '');
         }
       };
@@ -5127,6 +5239,21 @@
       const designVideoPromptCta = designFrame?.querySelector('[data-prompt-cta]');
       const designPriceValue = document.querySelector('[data-design-price] .design-price-value');
       const designAttachmentInput = document.getElementById('designUploadHome');
+      let designScrollPending = false;
+      const scrollDesignPreviewIntoView = () => {
+        if (!designFrame || designScrollPending) return;
+        designScrollPending = true;
+        requestAnimationFrame(() => {
+          designScrollPending = false;
+          const rect = designFrame.getBoundingClientRect();
+          const targetTop = rect.top + window.pageYOffset - (window.innerHeight - rect.height) / 2;
+          const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          window.scrollTo({
+            top: Math.max(0, targetTop),
+            behavior: prefersReduced ? 'auto' : 'smooth'
+          });
+        });
+      };
       const bindUploadLabels = () => {
         document.querySelectorAll('.support-upload-input').forEach(input => {
           if (input.dataset.uploadInit) return;
@@ -5166,6 +5293,8 @@
       let selectedAccessoryLabel = '';
       let selectedAccessoryStyle = '';
       let selectedAccessoryGlyph = '';
+      let selectedAccessoryImageSrc = '';
+      let selectedAccessoryImageAlt = '';
       let selectedColorLabel = '';
       let selectedColorStyle = '';
       let selectedColorGlyph = '';
@@ -5222,14 +5351,33 @@
         }
       }
 
-      function updateAccessoryPreview(style, label, glyph = '') {
+      const buildAccessoryPreviewStyle = (baseStyle, imageSrc) => {
+        const parts = [];
+        if (baseStyle) parts.push(baseStyle.trim().replace(/;$/, ''));
+        if (imageSrc) {
+          parts.push(
+            `background-image: url("${imageSrc}"); background-size: contain; background-position: center; background-repeat: no-repeat;`
+          );
+        }
+        return parts.filter(Boolean).join('; ');
+      };
+
+      function updateAccessoryPreview(style, label, glyph = '', imageSrc = '', imageAlt = '') {
         if (!designAccessoryPreview) return;
-        if (style) {
-          designAccessoryPreview.setAttribute('style', `${style};`);
-          designAccessoryPreview.setAttribute('aria-label', label ? `Selected accessory ${label}` : 'Selected accessory');
+        const resolvedImageSrc = typeof imageSrc === 'string' ? imageSrc : '';
+        const resolvedImageAlt = typeof imageAlt === 'string' ? imageAlt : '';
+        if (style || resolvedImageSrc) {
+          const previewStyle = buildAccessoryPreviewStyle(style, resolvedImageSrc);
+          if (previewStyle) {
+            designAccessoryPreview.setAttribute('style', `${previewStyle};`);
+          } else {
+            designAccessoryPreview.removeAttribute('style');
+          }
+          const labelText = label || resolvedImageAlt;
+          designAccessoryPreview.setAttribute('aria-label', labelText ? `Selected accessory ${labelText}` : 'Selected accessory');
           designAccessoryPreviewWrap?.classList.add('has-selection');
           if (designAccessoryPreviewGlyph) {
-            designAccessoryPreviewGlyph.textContent = glyph || '';
+            designAccessoryPreviewGlyph.textContent = resolvedImageSrc ? '' : (glyph || '');
           }
         } else {
           designAccessoryPreview.removeAttribute('style');
@@ -5240,6 +5388,154 @@
           }
         }
       }
+
+      const designColorTrack = document.querySelector('[data-design-colors-source]');
+      const normalizeSwatchLabel = raw => {
+        if (!raw) return '';
+        return raw
+          .replace(/\s*swatch\b/i, '')
+          .replace(/^view\s+/i, '')
+          .replace(/\s+option\b/i, '')
+          .replace(/\baccessory\b/gi, '')
+          .replace(/\baccent\b/gi, '')
+          .trim();
+      };
+      const sanitizeSwatchStyle = style => {
+        if (!style) return '';
+        return style
+          .replace(/(^|;)\s*(width|height|min-width|max-width|min-height|max-height|flex)\s*:\s*[^;]+;?/gi, ';')
+          .replace(/(^|;)\s*padding(?:-(?:left|right|top|bottom))?\s*:\s*[^;]+;?/gi, ';')
+          .replace(/(^|;)\s*border-radius\s*:\s*[^;]+;?/gi, ';')
+          .replace(/;{2,}/g, ';')
+          .replace(/^\s*;\s*|\s*;\s*$/g, '')
+          .trim();
+      };
+      const readSwatchData = swatch => {
+        if (!swatch) return null;
+        const rawLabel = swatch.getAttribute('aria-label') || swatch.getAttribute('title') || '';
+        return {
+          style: sanitizeSwatchStyle(swatch.getAttribute('style') || ''),
+          label: normalizeSwatchLabel(rawLabel),
+          glyph: (swatch.textContent || '').trim(),
+          imageSrc: swatch.getAttribute('data-image-src') || '',
+          imageAlt: swatch.getAttribute('data-image-alt') || ''
+        };
+      };
+      const defaultDesignSwatches = designColorTrack
+        ? Array.from(designColorTrack.querySelectorAll('.swatch'))
+            .map(readSwatchData)
+            .filter(Boolean)
+        : [];
+      let activeDesignSwatches = defaultDesignSwatches;
+      const isDesignSwatchCandidate = swatch => {
+        if (!swatch) return false;
+        if (swatch.classList.contains('px-3') || swatch.classList.contains('py-1')) return false;
+        const inSlider = swatch.closest('[data-swatch-track]') || swatch.closest('[data-swatch-slider]');
+        const hasSizeClass = swatch.classList.contains('w-5') || swatch.classList.contains('h-5');
+        const hasInlineSize = Boolean(swatch.style.width || swatch.style.height);
+        return inSlider || hasSizeClass || hasInlineSize;
+      };
+      const extractCardSwatches = card => {
+        if (!card) return [];
+        return Array.from(card.querySelectorAll('.swatch'))
+          .filter(isDesignSwatchCandidate)
+          .map(readSwatchData)
+          .filter(item => item && (item.style || item.glyph || item.imageSrc));
+      };
+      const buildDesignSwatch = data => {
+        const swatch = document.createElement('span');
+        swatch.className = 'swatch';
+        if (data?.style) swatch.setAttribute('style', sanitizeSwatchStyle(data.style));
+        if (data?.label) swatch.setAttribute('aria-label', data.label);
+        if (data?.glyph) swatch.textContent = data.glyph;
+        if (data?.imageSrc) swatch.setAttribute('data-image-src', data.imageSrc);
+        if (data?.imageAlt) swatch.setAttribute('data-image-alt', data.imageAlt);
+        return swatch;
+      };
+      const resetDesignColorSelection = () => {
+        document.querySelectorAll('[data-selected-color]').forEach(colorTarget => {
+          const swatchNode = colorTarget.querySelector('.design-selection-swatch');
+          const labelNode = colorTarget.querySelector('.design-selection-label');
+          if (swatchNode) {
+            swatchNode.removeAttribute('style');
+            swatchNode.textContent = '';
+          }
+          if (labelNode) {
+            labelNode.textContent = 'Select a color';
+          }
+          colorTarget.classList.remove('has-selection');
+        });
+        selectedColorLabel = '';
+        selectedColorStyle = '';
+        selectedColorGlyph = '';
+        updateColorPreview('', '');
+        document
+          .querySelectorAll('[data-design-colors-source] .swatch.is-active')
+          .forEach(el => el.classList.remove('is-active'));
+      };
+      const resetDesignAccessorySelection = () => {
+        document.querySelectorAll('[data-selected-accessory]').forEach(accessoryTarget => {
+          const swatchNode = accessoryTarget.querySelector('.design-selection-swatch');
+          const labelNode = accessoryTarget.querySelector('.design-selection-label');
+          if (swatchNode) {
+            swatchNode.removeAttribute('style');
+            swatchNode.textContent = '';
+          }
+          if (labelNode) {
+            labelNode.textContent = 'Select an accessory';
+          }
+          accessoryTarget.classList.remove('has-selection');
+        });
+        selectedAccessoryLabel = '';
+        selectedAccessoryStyle = '';
+        selectedAccessoryGlyph = '';
+        selectedAccessoryImageSrc = '';
+        selectedAccessoryImageAlt = '';
+        accessoryPrice = 0;
+        updateAccessoryPreview('', '');
+        document
+          .querySelectorAll('[data-design-accessories-source] .swatch.is-active')
+          .forEach(el => el.classList.remove('is-active'));
+      };
+      const resetDesignWrapSelection = () => {
+        document.querySelectorAll('[data-selected-wrap]').forEach(wrapTarget => {
+          const swatchNode = wrapTarget.querySelector('.design-selection-swatch');
+          const labelNode = wrapTarget.querySelector('.design-selection-label');
+          if (swatchNode) {
+            swatchNode.removeAttribute('style');
+            swatchNode.textContent = '';
+          }
+          if (labelNode) {
+            labelNode.textContent = 'Select a wrap template';
+          }
+          wrapTarget.classList.remove('has-selection');
+        });
+        selectedWrapLabel = '';
+        wrapPrice = 0;
+      };
+      const resetDesignSelections = () => {
+        resetDesignColorSelection();
+        resetDesignAccessorySelection();
+        resetDesignWrapSelection();
+        updateDesignTotal();
+      };
+      const resetDesignSwatchSlider = () => {
+        if (!designColorTrack) return;
+        const slider = designColorTrack.closest('[data-swatch-slider]');
+        if (slider) slider.dataset.sliderIndex = '0';
+        designColorTrack.style.transform = 'translateX(0px)';
+        window.dispatchEvent(new Event('resize'));
+      };
+      const setDesignColorSwatches = swatches => {
+        if (!designColorTrack) return;
+        const next = Array.isArray(swatches) && swatches.length ? swatches : defaultDesignSwatches;
+        activeDesignSwatches = next;
+        designColorTrack.innerHTML = '';
+        next.forEach(item => designColorTrack.appendChild(buildDesignSwatch(item)));
+        designColorTrack.querySelectorAll('.swatch.is-active').forEach(el => el.classList.remove('is-active'));
+        resetDesignColorSelection();
+        resetDesignSwatchSlider();
+      };
 
       updateColorPreview('', '');
       updateAccessoryPreview('', '');
@@ -5339,10 +5635,15 @@
           if (!storedValue) return null;
           const parsed = JSON.parse(storedValue);
           if (parsed && typeof parsed === 'object' && parsed.src) {
+            const swatches = Array.isArray(parsed.swatches)
+              ? parsed.swatches.filter(item => item && (item.style || item.glyph || item.imageSrc))
+              : [];
             return {
               src: parsed.src,
               alt: parsed.alt || 'Custom design preview',
-              price: typeof parsed.price === 'number' ? parsed.price : undefined
+              price: typeof parsed.price === 'number' ? parsed.price : undefined,
+              name: typeof parsed.name === 'string' ? parsed.name : undefined,
+              swatches: swatches.length ? swatches : undefined
             };
           }
         } catch (error) {
@@ -5384,7 +5685,7 @@
           const slider = document.createElement('div');
           slider.className = 'flex items-center gap-1 swatch-slider';
           slider.setAttribute('data-swatch-slider', '');
-          slider.setAttribute('data-visible', Math.min(3, swatches.length).toString());
+          slider.setAttribute('data-visible', '4');
 
           const prev = document.createElement('button');
           prev.type = 'button';
@@ -5442,13 +5743,18 @@
           const windowEl = slider.querySelector('[data-swatch-window]');
           const prev = slider.querySelector('[data-swatch-prev]');
           const next = slider.querySelector('[data-swatch-next]');
-          let index = 0;
+          let index = Number.parseInt(slider.dataset.sliderIndex || '0', 10);
+          if (!Number.isFinite(index)) index = 0;
 
           const getVisibleCount = () => {
-            const desktopVisible = Number(slider.getAttribute('data-visible') || 3);
+            const desktopVisible = Number(slider.getAttribute('data-visible') || 4);
             const mobileVisible = Number(slider.getAttribute('data-visible-mobile') || desktopVisible);
             const isMobile = window.matchMedia('(max-width: 900px)').matches;
-            return isMobile ? mobileVisible : desktopVisible;
+            const requested = isMobile ? mobileVisible : desktopVisible;
+            const isDesignSlider = slider.classList.contains('design-swatch-slider');
+            if (!isDesignSlider) return requested || 4;
+            const total = track ? track.children.length : 0;
+            return total ? Math.min(requested, total) : requested;
           };
 
           const setWindowWidth = () => {
@@ -5457,14 +5763,25 @@
             if (!first) return;
             const styles = getComputedStyle(track);
             const gap = parseFloat(styles.gap || styles.columnGap || '0');
-            const swatchWidth = first.getBoundingClientRect().width;
+            const swatchWidth = first.offsetWidth || first.getBoundingClientRect().width;
             const visibleCount = getVisibleCount();
             const totalWidth = swatchWidth * visibleCount + gap * (visibleCount - 1);
-            windowEl.style.width = `${totalWidth}px`;
+            const windowStyles = getComputedStyle(windowEl);
+            const paddingX =
+              parseFloat(windowStyles.paddingLeft || '0') +
+              parseFloat(windowStyles.paddingRight || '0');
+            const isDesignSlider = slider.classList.contains('design-swatch-slider');
+            const isMobile = window.matchMedia('(max-width: 900px)').matches;
+            const inset = isDesignSlider && isMobile ? 1 : 0;
+            windowEl.style.width = `${totalWidth + paddingX - inset}px`;
           };
 
           const update = () => {
             if (!track) return;
+            const storedIndex = Number.parseInt(slider.dataset.sliderIndex || '', 10);
+            if (!Number.isNaN(storedIndex)) {
+              index = storedIndex;
+            }
             const swatches = Array.from(track.children);
             const total = swatches.length;
             const visibleCount = getVisibleCount();
@@ -5476,9 +5793,10 @@
             } else if (index > maxIndex) {
               index = 0;
             }
+            slider.dataset.sliderIndex = String(index);
             const first = swatches[0];
             const gap = parseFloat(getComputedStyle(track).gap || getComputedStyle(track).columnGap || '0');
-            const swatchWidth = first ? first.getBoundingClientRect().width : 0;
+            const swatchWidth = first ? (first.offsetWidth || first.getBoundingClientRect().width) : 0;
             const offset = (swatchWidth + gap) * index;
             track.style.transform = `translateX(-${offset}px)`;
             const disablePrev = maxIndex === 0;
@@ -5497,6 +5815,7 @@
 
           const step = direction => {
             index += direction;
+            slider.dataset.sliderIndex = String(index);
             update();
           };
 
@@ -5521,6 +5840,9 @@
         const stored = getStoredDesignSelection();
         if (stored) {
           applyHomeDesignPreview(stored);
+          if (Array.isArray(stored.swatches) && stored.swatches.length) {
+            setDesignColorSwatches(stored.swatches);
+          }
         }
         const extractPrice = card => {
           if (!card) return null;
@@ -5553,23 +5875,19 @@
               selection.name = nameNode.textContent.trim();
               selectedDesignName = selection.name;
             }
+            const swatches = extractCardSwatches(card);
+            if (swatches.length) {
+              selection.swatches = swatches;
+            }
             if (typeof price === 'number') {
               selection.price = price;
               lastPrice = { amount: price };
             }
-            accessoryPrice = 0;
-            wrapPrice = 0;
-            selectedAccessoryLabel = '';
-            selectedWrapLabel = '';
-            selectedColorLabel = '';
-            selectedAccessoryStyle = '';
-            selectedAccessoryGlyph = '';
-            selectedColorStyle = '';
-            selectedColorGlyph = '';
-            updateColorPreview('', '');
-            updateAccessoryPreview('', '');
-            updateDesignTotal();
+            setDesignColorSwatches(swatches);
+            initDesignSelections();
             applyHomeDesignPreview(selection);
+            showImagePreview();
+            resetDesignSelections();
             persistDesignSelection(selection);
           });
         });
@@ -5609,6 +5927,7 @@
             labelNode.textContent = label;
           }
           target.classList.add('has-selection');
+          activateSwatchVisual(swatch);
           if (target === accessoryTarget) {
             const priceAttr = swatch.getAttribute('data-price');
             const parsedPrice = priceAttr ? parseFloat(priceAttr) : 0;
@@ -5616,14 +5935,25 @@
             selectedAccessoryLabel = label;
             selectedAccessoryStyle = style;
             selectedAccessoryGlyph = text;
-            updateAccessoryPreview(style, label, text);
+            selectedAccessoryImageSrc = swatch.getAttribute('data-image-src') || '';
+            selectedAccessoryImageAlt = swatch.getAttribute('data-image-alt') || '';
+            updateAccessoryPreview(style, label, text, selectedAccessoryImageSrc, selectedAccessoryImageAlt);
             updateDesignTotal();
           } else if (target === colorTarget) {
             selectedColorLabel = label;
             selectedColorStyle = style;
             selectedColorGlyph = text;
             updateColorPreview(style, label, text);
+            const imageSrc = swatch.getAttribute('data-image-src');
+            if (imageSrc) {
+              lastImageState = {
+                src: imageSrc,
+                alt: swatch.getAttribute('data-image-alt') || label || 'Custom design preview'
+              };
+              showImagePreview();
+            }
           }
+          scrollDesignPreviewIntoView();
         };
 
         const clearTarget = (target, placeholder) => {
@@ -5643,6 +5973,8 @@
             updateDesignTotal();
             selectedAccessoryStyle = '';
             selectedAccessoryGlyph = '';
+            selectedAccessoryImageSrc = '';
+            selectedAccessoryImageAlt = '';
             updateAccessoryPreview('', '');
           } else if (target === colorTarget) {
             selectedColorLabel = '';
@@ -5694,6 +6026,7 @@
             selectedWrapLabel = '';
           }
           updateDesignTotal();
+          scrollDesignPreviewIntoView();
         };
 
         const bindWrapOptions = () => {
@@ -5737,7 +6070,8 @@
 
         const bindClear = (buttonSelector, target, placeholder, onClear) => {
           const button = document.querySelector(buttonSelector);
-          if (!button) return;
+          if (!button || button.dataset.designClearInit) return;
+          button.dataset.designClearInit = 'true';
           button.addEventListener('click', () => {
             clearTarget(target, placeholder);
             if (typeof onClear === 'function') {
@@ -5746,7 +6080,7 @@
           });
         };
 
-        bindClear('[data-clear-color]', colorTarget, 'Select a color swatch');
+        bindClear('[data-clear-color]', colorTarget, 'Select a color');
         bindClear('[data-clear-accessory]', accessoryTarget, 'Select an accessory');
         bindClear('[data-clear-wrap]', wrapTarget, 'Select a wrap template', () => {
           wrapPrice = 0;
@@ -5998,21 +6332,48 @@
           if (!target || !swatch) return;
           const swatchNode = target.querySelector('.design-selection-swatch');
           const labelNode = target.querySelector('.design-selection-label');
-          const label = swatch.getAttribute('aria-label') || placeholder;
+          const rawLabel = swatch.getAttribute('aria-label') || placeholder;
+          const cleanedLabel = normalizeSwatchLabel(rawLabel) || rawLabel;
+          const label = cleanedLabel
+            ? cleanedLabel.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1))
+            : cleanedLabel;
+          const style = swatch.getAttribute('style') || '';
+          const glyph = (swatch.textContent || '').trim();
           if (swatchNode) {
-            swatchNode.setAttribute('style', swatch.getAttribute('style') || '');
-            swatchNode.textContent = (swatch.textContent || '').trim();
+            swatchNode.setAttribute('style', style);
+            swatchNode.textContent = glyph;
           }
           if (labelNode) {
             labelNode.textContent = label;
           }
           target.classList.add('has-selection');
+          activateSwatchVisual(swatch);
           if (target === accessoryTarget && typeof updateDesignTotal === 'function') {
             const priceAttr = swatch.getAttribute('data-price');
             const parsedPrice = priceAttr ? parseFloat(priceAttr) : 0;
             accessoryPrice = Number.isFinite(parsedPrice) ? parsedPrice : 0;
+            selectedAccessoryLabel = label;
+            selectedAccessoryStyle = style;
+            selectedAccessoryGlyph = glyph;
+            selectedAccessoryImageSrc = swatch.getAttribute('data-image-src') || '';
+            selectedAccessoryImageAlt = swatch.getAttribute('data-image-alt') || '';
+            updateAccessoryPreview(style, label, glyph, selectedAccessoryImageSrc, selectedAccessoryImageAlt);
             updateDesignTotal();
+          } else if (target === colorTarget) {
+            selectedColorLabel = label;
+            selectedColorStyle = style;
+            selectedColorGlyph = glyph;
+            updateColorPreview(style, label, glyph);
+            const imageSrc = swatch.getAttribute('data-image-src');
+            if (imageSrc) {
+              lastImageState = {
+                src: imageSrc,
+                alt: swatch.getAttribute('data-image-alt') || label || 'Custom design preview'
+              };
+              showImagePreview();
+            }
           }
+          scrollDesignPreviewIntoView();
         };
 
         const bind = (selector, target, placeholder) => {
@@ -6064,7 +6425,11 @@
           if (!target || !swatch) return;
           const swatchNode = target.querySelector('.design-selection-swatch');
           const labelNode = target.querySelector('.design-selection-label');
-          const label = swatch.getAttribute('aria-label') || placeholder;
+          const rawLabel = swatch.getAttribute('aria-label') || placeholder;
+          const cleanedLabel = normalizeSwatchLabel(rawLabel) || rawLabel;
+          const label = cleanedLabel
+            ? cleanedLabel.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1))
+            : cleanedLabel;
           const style = swatch.getAttribute('style') || '';
           const glyph = (swatch.textContent || '').trim();
           if (swatchNode) {
@@ -6082,12 +6447,25 @@
             selectedAccessoryLabel = label;
             selectedAccessoryStyle = style;
             selectedAccessoryGlyph = glyph;
+            selectedAccessoryImageSrc = swatch.getAttribute('data-image-src') || '';
+            selectedAccessoryImageAlt = swatch.getAttribute('data-image-alt') || '';
+            updateAccessoryPreview(style, label, glyph, selectedAccessoryImageSrc, selectedAccessoryImageAlt);
             if (typeof updateDesignTotal === 'function') updateDesignTotal();
           } else if (target === colorTarget) {
             selectedColorLabel = label;
             selectedColorStyle = style;
             selectedColorGlyph = glyph;
+            updateColorPreview(style, label, glyph);
+            const imageSrc = swatch.getAttribute('data-image-src');
+            if (imageSrc) {
+              lastImageState = {
+                src: imageSrc,
+                alt: swatch.getAttribute('data-image-alt') || label || 'Custom design preview'
+              };
+              showImagePreview();
+            }
           }
+          scrollDesignPreviewIntoView();
         };
 
         const clearTarget = (target, placeholder) => {
@@ -6107,10 +6485,14 @@
             updateDesignTotal();
             selectedAccessoryStyle = '';
             selectedAccessoryGlyph = '';
+            selectedAccessoryImageSrc = '';
+            selectedAccessoryImageAlt = '';
+            updateAccessoryPreview('', '');
           } else if (target === colorTarget) {
             selectedColorLabel = '';
             selectedColorStyle = '';
             selectedColorGlyph = '';
+            updateColorPreview('', '');
           }
         };
 
@@ -6146,7 +6528,7 @@
           });
         };
 
-        bindClear('[data-clear-color]', colorTarget, 'Select a color option');
+        bindClear('[data-clear-color]', colorTarget, 'Select a color');
         bindClear('[data-clear-accessory]', accessoryTarget, 'Select an accessory');
       })();
     </script>
