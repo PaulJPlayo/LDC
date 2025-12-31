@@ -796,29 +796,41 @@
         box-shadow: 0 14px 28px rgba(153, 40, 177, 0.28);
       }
       .swatch-slider {
+        --swatch-size: 1.25rem;
+        --swatch-gap: 0.35rem;
+        --swatch-visible: 4;
+        --swatch-edge: 0.125rem;
         display: flex;
         align-items: center;
-        gap: 0.1rem;
+        gap: 0.35rem;
         justify-content: center;
+        width: auto;
       }
       .swatch-slider-window {
         position: relative;
         overflow: hidden;
-        width: calc((1.5rem * 3) + (0.6rem * 2));
+        width: calc((var(--swatch-size) * var(--swatch-visible)) + (var(--swatch-gap) * (var(--swatch-visible) - 1)) + (var(--swatch-edge) * 2));
         flex: 0 0 auto;
-        padding: 0.65rem 0.35rem;
-        box-sizing: content-box;
+        padding: 0.5rem var(--swatch-edge);
+        box-sizing: border-box;
+        margin: 0 auto;
       }
       .swatch-slider-track {
         display: flex;
         align-items: center;
-        gap: 0.35rem;
+        gap: var(--swatch-gap);
+        justify-content: flex-start;
+        min-width: 0;
         transition: transform 180ms ease;
+      }
+      .swatch-slider.is-centered .swatch-slider-track {
+        justify-content: center;
+        min-width: 100%;
       }
       .swatch {
         display: inline-block;
-        width: 1.25rem;
-        height: 1.25rem;
+        width: var(--swatch-size);
+        height: var(--swatch-size);
         border-radius: 9999px;
         border: 1px solid rgba(255, 255, 255, 0.35);
         box-shadow: 0 10px 20px rgba(15, 23, 42, 0.35);
@@ -841,6 +853,9 @@
       .swatch-slider button:hover {
         transform: translateY(-2px);
       }
+      .product-card > .flex.items-center.justify-between {
+        justify-content: center;
+      }
       .swatch.is-active {
         box-shadow: 0 0 0 2px rgba(107, 74, 120, 0.35), 0 10px 18px rgba(107, 74, 120, 0.3);
         border-color: rgba(107, 74, 120, 0.8) !important;
@@ -848,6 +863,10 @@
         outline-offset: 2px;
         transform: translateY(-1px);
         scale: 1.08;
+      }
+      .swatch-slider .swatch.is-active {
+        scale: 1;
+        outline-offset: 0;
       }
       /* Light arrows for Sublimation tile */
       .swatch-arrow.light-arrow {
@@ -1104,7 +1123,7 @@
                   <img id="tumblersSlimImage" src="assets/sublimination.jpeg" alt="Slim tumbler product photo" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                   <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1150,7 +1169,7 @@
                   <img id="sipCupImage" src="assets/Sip Cup - 40.png" alt="Sip Cup stainless steel tumbler" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1203,16 +1222,16 @@
                   <img id="glassTumblerPageImage" src="assets/glass-tumbler.jpeg" alt="Glass tumbler with frosted finish" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="swatch-slider">
-                    <button type="button" class="swatch-arrow light-arrow" aria-label="Previous color">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
+                    <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
-                <div class="swatch-slider-window" data-swatch-window>
+                    <div class="swatch-slider-window" data-swatch-window>
                       <div class="swatch-slider-track" data-swatch-track>
                         <span class="swatch cursor-pointer" aria-label="Glass finish swatch" data-image-target="glassTumblerPageImage" data-image-src="assets/glass-tumbler.jpeg" data-image-alt="Glass tumbler with frosted finish" style="background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 60%), linear-gradient(135deg, rgba(226,232,240,0.7) 0%, rgba(148,163,184,0.4) 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.45), inset 0 8px 14px rgba(255,255,255,0.4), inset 0 -10px 18px rgba(148,163,184,0.35);"></span>
                       </div>
                     </div>
-                    <button type="button" class="swatch-arrow light-arrow" aria-label="Next color">
+                    <button type="button" class="swatch-arrow light-arrow" data-swatch-next aria-label="Next color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
@@ -1244,7 +1263,7 @@
                   <img id="macaronSublimationImage" src="assets/Macaron Sublimation - 40.png" alt="Macaron Sublimation stainless steel tumbler" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1286,7 +1305,7 @@
                   <img id="kidsWaterBottlePageImage" src="assets/kids-water-bottle.jpeg" alt="Kids water bottle tumbler" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1328,7 +1347,7 @@
                   <img id="waterBottleTumblerPageImage" src="assets/water-bottle-tumbler.jpeg" alt="Stainless water bottle tumbler" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1373,7 +1392,7 @@
                 <img id="sublimationWaterBottleImage" src="assets/Sublimation Water Bottle - 30.jpg" alt="Sublimation water bottle in pink" />
               </div>
               <div class="flex items-center justify-between gap-2">
-                <div class="swatch-slider" data-swatch-slider data-visible="3">
+                <div class="swatch-slider" data-swatch-slider data-visible="4">
                   <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                   </button>
@@ -1414,7 +1433,7 @@
                   <img id="ldcTumbler5PageImage" src="assets/ldc-tumbler-5.jpeg" alt="Hot pink silver trim tumbler" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1459,7 +1478,7 @@
                   <img id="ldcTumbler6PageImage" src="assets/ldc-tumbler-6.jpeg" alt="Pink glitter tumbler" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="swatch-slider" data-swatch-slider data-visible="1">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1500,7 +1519,7 @@
                   <img id="ldcTumbler7PageImage" src="assets/ldc-tumbler-7.jpeg" alt="Pumpkin silver-rim tumbler" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="swatch-slider" data-swatch-slider data-visible="1">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1541,7 +1560,7 @@
                   <img id="ldcTumbler8PageImage" src="assets/ldc-tumbler-8.jpeg" alt="Matte brown tumbler with handle" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="swatch-slider" data-swatch-slider data-visible="1">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1579,7 +1598,7 @@
                   <img id="subliminationTumblersImage" src="assets/Sublimination Tumblers - 40.png" alt="Sublimation tumblers stainless" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1623,7 +1642,7 @@
                   <img id="tumblerHeavenImage" src="assets/Tumbler Heaven - 40.png" alt="Tumbler Heaven stainless tumbler" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1668,16 +1687,16 @@
                   <img id="goldTrimTumblerImage" src="assets/Gold Trim Tumbler - 40.png" alt="Gold trim stainless tumbler" />
                 </div>
                 <div class="flex items-center justify-between gap-2">
-                  <div class="swatch-slider">
-                    <button type="button" class="swatch-arrow light-arrow" aria-label="Previous color">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
+                    <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
-                  <div class="swatch-slider-window" data-swatch-window>
+                    <div class="swatch-slider-window" data-swatch-window>
                       <div class="swatch-slider-track" data-swatch-track>
                         <span class="swatch cursor-pointer" aria-label="Chocolate brown swatch" data-image-target="goldTrimTumblerImage" data-image-src="assets/Gold Trim Tumbler - 40.png" data-image-alt="Gold trim tumbler - chocolate brown" style="background: radial-gradient(circle at 30% 30%, #fbd5a8 0%, #8b4513 55%, #4a2505 100%); box-shadow: 0 0 10px rgba(139, 69, 19, 0.45); border: 1px solid rgba(139,69,19,0.35);"></span>
                       </div>
                     </div>
-                    <button type="button" class="swatch-arrow light-arrow" aria-label="Next color">
+                    <button type="button" class="swatch-arrow light-arrow" data-swatch-next aria-label="Next color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
@@ -2288,7 +2307,7 @@
             const track = slider.querySelector('[data-swatch-track]');
             const prev = slider.querySelector('[data-swatch-prev]');
             const next = slider.querySelector('[data-swatch-next]');
-            const visible = Number(slider.getAttribute('data-visible') || 3);
+            const visible = Number(slider.getAttribute('data-visible') || 4);
             let index = 0;
 
             const update = () => {
@@ -2296,6 +2315,7 @@
               const swatches = Array.from(track.children);
               const total = swatches.length;
               const maxIndex = Math.max(0, total - visible);
+              slider.classList.toggle('is-centered', total <= visible);
               if (maxIndex === 0) {
                 index = 0;
               } else if (index < 0) {

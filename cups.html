@@ -838,9 +838,9 @@
       .product-meta-row {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: center;
         gap: 0.75rem;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
       }
       .product-meta {
         font-size: 0.85rem;
@@ -875,13 +875,15 @@
         color: #ecfdf3;
       }
       .swatch {
-        width: 1.25rem;
-        height: 1.25rem;
-        border-radius: 999px;
-        border: 1px solid #e2e8f0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+        display: inline-block;
+        width: var(--swatch-size, 1.25rem);
+        height: var(--swatch-size, 1.25rem);
+        border-radius: 9999px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.35);
+        flex: 0 0 auto;
+        transform-origin: center;
+        box-sizing: border-box;
       }
       .icon-button {
         border: none;
@@ -921,34 +923,36 @@
         color: inherit;
       }
       .swatch-slider {
+        --swatch-size: 1.25rem;
+        --swatch-gap: 0.35rem;
+        --swatch-visible: 4;
+        --swatch-edge: 0.125rem;
         display: flex;
         align-items: center;
-        gap: 0.1rem;
+        gap: 0.35rem;
         justify-content: center;
+        width: auto;
       }
       .swatch-slider-window {
         position: relative;
         overflow: hidden;
-        width: calc((1.5rem * 3) + (0.6rem * 2));
+        width: calc((var(--swatch-size) * var(--swatch-visible)) + (var(--swatch-gap) * (var(--swatch-visible) - 1)) + (var(--swatch-edge) * 2));
         flex: 0 0 auto;
-        padding: 0.65rem 0.35rem;
-        box-sizing: content-box;
+        padding: 0.5rem var(--swatch-edge);
+        box-sizing: border-box;
+        margin: 0 auto;
       }
       .swatch-slider-track {
         display: flex;
         align-items: center;
-        gap: 0.35rem;
+        justify-content: flex-start;
+        gap: var(--swatch-gap);
+        min-width: 0;
         transition: transform 180ms ease;
       }
-      .swatch {
-        display: inline-block;
-        width: 1.25rem;
-        height: 1.25rem;
-        border-radius: 9999px;
-        border: 1px solid rgba(255, 255, 255, 0.35);
-        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.35);
-        flex: 0 0 auto;
-        transform-origin: center;
+      .swatch-slider.is-centered .swatch-slider-track {
+        justify-content: center;
+        min-width: 100%;
       }
       .swatch.is-active {
         box-shadow: 0 0 0 2px rgba(107, 74, 120, 0.35), 0 10px 18px rgba(107, 74, 120, 0.3);
@@ -957,6 +961,10 @@
         outline-offset: 2px;
         transform: translateY(-1px);
         scale: 1.08;
+      }
+      .swatch-slider .swatch.is-active {
+        scale: 1;
+        outline-offset: 0;
       }
       .swatch-arrow {
         background: transparent;
@@ -1024,18 +1032,20 @@
       .product-meta-row {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: center;
         gap: 0.75rem;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
       }
       .swatch {
         display: inline-block;
-        width: 1.25rem;
-        height: 1.25rem;
+        width: var(--swatch-size, 1.25rem);
+        height: var(--swatch-size, 1.25rem);
         border-radius: 9999px;
         border: 1px solid rgba(255, 255, 255, 0.35);
         box-shadow: 0 10px 20px rgba(15, 23, 42, 0.35);
         flex: 0 0 auto;
+        transform-origin: center;
+        box-sizing: border-box;
       }
       .icon-button {
         border: none;
@@ -1060,30 +1070,42 @@
         color: #fdf7ed;
       }
       .swatch-slider {
+        --swatch-size: 1.25rem;
+        --swatch-gap: 0.35rem;
+        --swatch-visible: 4;
+        --swatch-edge: 0.125rem;
         display: flex;
         align-items: center;
-        gap: 0.1rem;
+        gap: 0.35rem;
         justify-content: center;
+        width: auto;
       }
       .swatch-slider-window {
         position: relative;
         overflow: hidden;
-        width: calc((1.5rem * 3) + (0.6rem * 2));
+        width: calc((var(--swatch-size) * var(--swatch-visible)) + (var(--swatch-gap) * (var(--swatch-visible) - 1)) + (var(--swatch-edge) * 2));
         flex: 0 0 auto;
-        padding: 0.65rem 0.35rem;
-        box-sizing: content-box;
+        padding: 0.5rem var(--swatch-edge);
+        box-sizing: border-box;
+        margin: 0 auto;
       }
       .swatch-slider-track {
         display: flex;
         align-items: center;
-        gap: 0.35rem;
+        justify-content: flex-start;
+        gap: var(--swatch-gap);
+        min-width: 0;
         transition: transform 180ms ease;
+      }
+      .swatch-slider.is-centered .swatch-slider-track {
+        justify-content: center;
+        min-width: 100%;
       }
       .swatch-slider button {
         background: transparent;
         border: none;
         padding: 0;
-        color: #0f172a;
+        color: #fdf7ed;
         width: 1.5rem;
         height: 1.5rem;
         display: inline-flex;
@@ -1185,7 +1207,7 @@
                   <img id="cupsAcrylicImage" src="assets/acrylic.png" alt="Acrylic cup product photo" loading="lazy" />
                 </div>
                 <div class="product-meta-row">
-                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1221,8 +1243,8 @@
                 <div class="product-media">
                   <img id="macaronMugImage" src="assets/Macaron Mug - 20.png" alt="Macaron Mug stainless steel cup" loading="lazy" />
                 </div>
-                <div class="product-meta-row" style="flex-direction:column; align-items:flex-start; gap:0.5rem;">
-                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                <div class="product-meta-row" style="flex-direction:column; align-items:center; gap:0.5rem;">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1258,8 +1280,8 @@
                 <div class="product-media">
                   <img id="mugSpoonImage" src="assets/Mug & Spoon - Black - 20.jpg" alt="Mug & Spoon in black" loading="lazy" />
                 </div>
-                <div class="product-meta-row" style="flex-direction:column; align-items:flex-start; gap:0.5rem;">
-                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                <div class="product-meta-row" style="flex-direction:column; align-items:center; gap:0.5rem;">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1295,7 +1317,7 @@
                   <img src="assets/snow-globe.png" alt="Snow Globe cup product photo" loading="lazy" />
                 </div>
                 <div class="product-meta-row">
-                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1329,7 +1351,7 @@
                   <img src="assets/frosted-sublimination.png" alt="Frosted Sublimation cup product photo" loading="lazy" />
                 </div>
                 <div class="product-meta-row">
-                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1363,7 +1385,7 @@
                   <img src="assets/porcelain-sublimination.png" alt="Bamboo Lid Mug product photo" loading="lazy" />
                 </div>
                 <div class="product-meta-row">
-                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1397,7 +1419,7 @@
                   <img id="steelSubliminationImage" src="assets/steel-sublimination.png" alt="Steel Sublimation cup product photo" loading="lazy" />
                 </div>
                 <div class="product-meta-row">
-                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="1">
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1434,7 +1456,7 @@
                   <img id="glassCupImage" src="assets/glass.png" alt="Glass cup product photo" loading="lazy" />
                 </div>
                 <div class="product-meta-row">
-                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="2">
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1469,7 +1491,7 @@
                   <img id="glassSubliminationCupImage" src="assets/glass-sublimination.png" alt="Glass Sublimation cup product photo" loading="lazy" />
                 </div>
                 <div class="product-meta-row">
-                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="3">
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1507,7 +1529,7 @@
                   <img id="slimSnowGlobeImage" src="assets/slim-snow-globe.png" alt="Slim Snow Globe cup product photo" loading="lazy" />
                 </div>
                 <div class="product-meta-row">
-                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="3">
+                  <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -2094,7 +2116,8 @@
             const windowEl = slider.querySelector('[data-swatch-window]');
             const prev = slider.querySelector('[data-swatch-prev]');
             const next = slider.querySelector('[data-swatch-next]');
-            const visible = Number(slider.getAttribute('data-visible') || 3);
+            const visible = Number(slider.getAttribute('data-visible') || 4);
+            slider.style.setProperty('--swatch-visible', visible);
             let index = 0;
 
             const setWindowWidth = () => {
@@ -2104,7 +2127,10 @@
               const styles = getComputedStyle(track);
               const gap = parseFloat(styles.gap || styles.columnGap || '0');
               const swatchWidth = first.getBoundingClientRect().width;
-              const totalWidth = swatchWidth * visible + gap * (visible - 1);
+              const windowStyles = getComputedStyle(windowEl);
+              const paddingLeft = parseFloat(windowStyles.paddingLeft || '0');
+              const paddingRight = parseFloat(windowStyles.paddingRight || '0');
+              const totalWidth = swatchWidth * visible + gap * (visible - 1) + paddingLeft + paddingRight;
               windowEl.style.width = `${totalWidth}px`;
             };
 
@@ -2113,6 +2139,7 @@
               const swatches = Array.from(track.children);
               const total = swatches.length;
               const maxIndex = Math.max(0, total - visible);
+              slider.classList.toggle('is-centered', total <= visible);
               if (maxIndex === 0) {
                 index = 0;
               } else if (index < 0) {
@@ -2125,17 +2152,6 @@
               const swatchWidth = first ? first.getBoundingClientRect().width : 0;
               const offset = (swatchWidth + gap) * index;
               track.style.transform = `translateX(-${offset}px)`;
-              const disable = maxIndex === 0;
-              if (prev) {
-                prev.classList.toggle('opacity-40', disable);
-                prev.classList.toggle('pointer-events-none', disable);
-                prev.setAttribute('aria-disabled', disable ? 'true' : 'false');
-              }
-              if (next) {
-                next.classList.toggle('opacity-40', disable);
-                next.classList.toggle('pointer-events-none', disable);
-                next.setAttribute('aria-disabled', disable ? 'true' : 'false');
-              }
             };
 
             const step = direction => {

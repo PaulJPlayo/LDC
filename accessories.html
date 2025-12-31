@@ -468,9 +468,10 @@
       }
       .product-meta-row {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
+        justify-content: center;
+        gap: 0.5rem;
         flex-wrap: wrap;
       }
       .product-details {
@@ -495,13 +496,14 @@
       }
       .swatch {
         display: inline-block;
-        width: 1.25rem;
-        height: 1.25rem;
+        width: var(--swatch-size, 1.25rem);
+        height: var(--swatch-size, 1.25rem);
         border-radius: 9999px;
         border: 1px solid rgba(255, 255, 255, 0.35);
         box-shadow: 0 10px 20px rgba(15, 23, 42, 0.35);
         flex: 0 0 auto;
         transform-origin: center;
+        box-sizing: border-box;
       }
       .swatch.is-active {
         box-shadow: 0 0 0 2px rgba(107, 74, 120, 0.35), 0 10px 18px rgba(107, 74, 120, 0.3);
@@ -510,6 +512,10 @@
         outline-offset: 2px;
         transform: translateY(-1px);
         scale: 1.08;
+      }
+      .swatch-slider .swatch.is-active {
+        scale: 1;
+        outline-offset: 0;
       }
       .icon-button {
         border: none;
@@ -543,24 +549,36 @@
         color: inherit;
       }
       .swatch-slider {
+        --swatch-size: 1.25rem;
+        --swatch-gap: 0.35rem;
+        --swatch-visible: 4;
+        --swatch-edge: 0.125rem;
         display: flex;
         align-items: center;
-        gap: 0.1rem;
+        gap: 0.35rem;
         justify-content: center;
+        width: auto;
       }
       .swatch-slider-window {
         position: relative;
         overflow: hidden;
-        width: calc((1.5rem * 3) + (0.6rem * 2));
+        width: calc((var(--swatch-size) * var(--swatch-visible)) + (var(--swatch-gap) * (var(--swatch-visible) - 1)) + (var(--swatch-edge) * 2));
         flex: 0 0 auto;
-        padding: 0.65rem 0.35rem;
-        box-sizing: content-box;
+        padding: 0.5rem var(--swatch-edge);
+        box-sizing: border-box;
+        margin: 0 auto;
       }
       .swatch-slider-track {
         display: flex;
         align-items: center;
-        gap: 0.35rem;
+        justify-content: flex-start;
+        gap: var(--swatch-gap);
+        min-width: 0;
         transition: transform 180ms ease;
+      }
+      .swatch-slider.is-centered .swatch-slider-track {
+        justify-content: center;
+        min-width: 100%;
       }
       .swatch-arrow {
         background: transparent;
@@ -1045,7 +1063,7 @@
                   <img src="assets/rhinestone-lids-5.png" alt="LDC accessory rhinestone tumbler lids" loading="lazy" />
                 </div>
                 <div class="product-meta-row">
-                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1064,11 +1082,11 @@
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
-                    <div class="swatch-slider mt-2 justify-start" data-swatch-slider data-visible="1">
+                    <div class="swatch-slider mt-2" data-swatch-slider data-visible="4">
                       <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous accent">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                       </button>
-                      <div class="swatch-slider-window" data-swatch-window style="width:1.25rem;">
+                      <div class="swatch-slider-window" data-swatch-window>
                         <div class="swatch-slider-track" data-swatch-track>
                         <span class="swatch" aria-label="Rhinestone" data-swatch-type="accessory" data-accessory-label="Rhinestone" style="display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.6rem; line-height:1; background:#B678F5;">💎</span>
                         </div>
@@ -1095,8 +1113,8 @@
                 <div class="product-media">
                   <img id="accessoryJellyLidsImage" src="assets/Jelly Lids - 33.png" alt="LDC accessory jelly tumbler lids" loading="lazy" />
                 </div>
-                <div class="product-meta-row" style="flex-direction:column; align-items:flex-start; gap:0.5rem;">
-                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                <div class="product-meta-row" style="flex-direction:column; align-items:center; gap:0.5rem;">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1114,11 +1132,11 @@
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
-                  <div class="swatch-slider mt-2 justify-start" data-swatch-slider data-visible="1">
+                  <div class="swatch-slider mt-2" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous accent">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
-                    <div class="swatch-slider-window" data-swatch-window style="width:1.25rem;">
+                    <div class="swatch-slider-window" data-swatch-window>
                       <div class="swatch-slider-track" data-swatch-track>
                         <span class="swatch" aria-label="Jelly accent" style="display:flex; align-items:center; justify-content:center; color:#0f172a; font-size:0.7rem; line-height:1; background:#5eead4;">🪼</span>
                       </div>
@@ -1145,12 +1163,12 @@
                 <div class="product-media">
                   <img src="assets/Glass-Bow-Straws.png" alt="Glass bow straw accessory" loading="lazy" />
                 </div>
-                <div class="product-meta-row" style="flex-direction:column; align-items:flex-start; gap:0.5rem;">
-                  <div class="swatch-slider" data-swatch-slider data-visible="1">
+                <div class="product-meta-row" style="flex-direction:column; align-items:center; gap:0.5rem;">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
-                    <div class="swatch-slider-window" data-swatch-window style="width:1.5rem;">
+                    <div class="swatch-slider-window" data-swatch-window>
                       <div class="swatch-slider-track" data-swatch-track>
                         <span class="swatch" aria-label="Glass swatch" style="background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 60%), linear-gradient(135deg, rgba(238,242,255,0.65) 0%, rgba(148,163,184,0.35) 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4), inset 0 7px 12px rgba(255,255,255,0.45), inset 0 -8px 16px rgba(148,163,184,0.3);"></span>
                       </div>
@@ -1159,11 +1177,11 @@
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
-                  <div class="swatch-slider" data-swatch-slider data-visible="2">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous accent">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
-                    <div class="swatch-slider-window" data-swatch-window style="width:calc((1.5rem * 2) + 0.35rem);">
+                    <div class="swatch-slider-window" data-swatch-window>
                       <div class="swatch-slider-track" data-swatch-track>
                         <span class="swatch" aria-label="Bow accent" data-swatch-type="accessory" data-accessory-label="Ribbon" style="display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.7rem; line-height:1; background:#d8b4fe;">🎀</span>
                         <span class="swatch" aria-label="Glass accessory accent" style="display:flex; align-items:center; justify-content:center; color:#1f2937; font-size:0.7rem; line-height:1; background: radial-gradient(circle at 35% 35%, rgba(224,242,255,0.95) 0%, rgba(96,165,250,0.35) 65%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4);">🔍</span>
@@ -1191,12 +1209,12 @@
                 <div class="product-media">
                   <img id="cowboyGlassStrawsImage" src="assets/Cowboy Glass Straws - 3.jpg" alt="Cowboy glass straws with hat accents" loading="lazy" />
                 </div>
-                <div class="product-meta-row" style="flex-direction:column; align-items:flex-start; gap:0.5rem;">
-                  <div class="swatch-slider" data-swatch-slider data-visible="1">
+                <div class="product-meta-row" style="flex-direction:column; align-items:center; gap:0.5rem;">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
-                    <div class="swatch-slider-window" data-swatch-window style="width:1.5rem;">
+                    <div class="swatch-slider-window" data-swatch-window>
                       <div class="swatch-slider-track" data-swatch-track>
                         <span class="swatch cursor-pointer" aria-label="Glass" data-image-target="cowboyGlassStrawsImage" data-image-src="assets/Cowboy Glass Straws - 3.jpg" data-image-alt="Cowboy glass straws" data-price-target="cowboyGlassStrawsPrice" data-price="3.00" style="background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 60%), linear-gradient(135deg, rgba(238,242,255,0.65) 0%, rgba(148,163,184,0.35) 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4), inset 0 7px 12px rgba(255,255,255,0.45), inset 0 -8px 16px rgba(148,163,184,0.3);"></span>
                       </div>
@@ -1205,11 +1223,11 @@
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
-                  <div class="swatch-slider mt-2 justify-start" data-swatch-slider data-visible="1">
+                  <div class="swatch-slider mt-2" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous accessory">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
-                    <div class="swatch-slider-window" data-swatch-window style="width:1.5rem;">
+                    <div class="swatch-slider-window" data-swatch-window>
                       <div class="swatch-slider-track" data-swatch-track>
                         <span class="swatch cursor-pointer" aria-label="Cowboy hat accessory" data-swatch-type="accessory" data-accessory-label="Cowboy hat" style="display:flex; align-items:center; justify-content:center; color:#2f2414; font-size:0.8rem; line-height:1; background: radial-gradient(circle at 40% 40%, #fdf6e3 0%, #f3d9a6 55%, #d3a464 100%); box-shadow: inset 0 0 0 1px rgba(128,82,29,0.25);">🤠</span>
                       </div>
@@ -1236,8 +1254,8 @@
                 <div class="product-media">
                   <img src="assets/Glass Twist Straws - 3.png" alt="Glass twist straws accessory set" loading="lazy" />
                 </div>
-                <div class="product-meta-row" style="flex-direction:column; align-items:flex-start; gap:0.5rem;">
-                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                <div class="product-meta-row" style="flex-direction:column; align-items:center; gap:0.5rem;">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous color">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1256,11 +1274,11 @@
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
                     </button>
                   </div>
-                  <div class="swatch-slider mt-2 justify-start" data-swatch-slider data-visible="1">
+                  <div class="swatch-slider mt-2" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous accent">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
-                    <div class="swatch-slider-window" data-swatch-window style="width:1.25rem;">
+                    <div class="swatch-slider-window" data-swatch-window>
                       <div class="swatch-slider-track" data-swatch-track>
                         <span class="swatch" aria-label="Swirl accent" style="display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1; background:#dbeafe;">🌀</span>
                       </div>
@@ -1287,8 +1305,8 @@
                 <div class="product-media">
                   <img id="accessoryStrawToppersImage" src="assets/Straw Toppers - cafe - 1.jpeg" alt="Straw toppers cafe set" loading="lazy" />
                 </div>
-                <div class="product-meta-row" style="flex-direction:column; align-items:flex-start; gap:0.5rem;">
-                  <div class="swatch-slider" data-swatch-slider data-visible="3">
+                <div class="product-meta-row" style="flex-direction:column; align-items:center; gap:0.5rem;">
+                  <div class="swatch-slider" data-swatch-slider data-visible="4">
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-prev aria-label="Previous accessory">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                     </button>
@@ -1327,9 +1345,9 @@
                   </div>
                   <img src="assets/Christmas Diamond - 20.png" alt="Christmas diamond accessory set" loading="lazy" />
                 </div>
-                <div class="product-meta-row" style="flex-direction:column; align-items:flex-start; gap:0.5rem;">
-                  <div class="swatch-slider" data-swatch-slider data-visible="1" style="justify-content:flex-start;">
-                    <div class="swatch-slider-window" data-swatch-window style="width:4.5rem; display:flex; justify-content:center;">
+                <div class="product-meta-row" style="flex-direction:column; align-items:center; gap:0.5rem;">
+                  <div class="swatch-slider" data-swatch-slider data-visible="1">
+                    <div class="swatch-slider-window" data-swatch-window>
                       <div class="swatch-slider-track" data-swatch-track>
                         <span class="swatch px-3 py-1 rounded-full ring-1 ring-slate-300 text-[0.65rem] font-semibold flex items-center justify-center uppercase tracking-wide" aria-label="Diamond package" style="color:#000000; background: radial-gradient(circle at 35% 35%, rgba(255,255,255,1) 0%, rgba(248,250,252,0.95) 45%, rgba(224,231,255,0.75) 100%), linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(209,213,219,0.7) 100%); box-shadow: inset 0 0 6px rgba(255,255,255,0.9), inset 0 8px 14px rgba(255,255,255,0.7), inset 0 -8px 18px rgba(148,163,184,0.35); width: 4.75rem; justify-content: center; align-items:center; text-align: center;">Diamond</span>
                       </div>
@@ -1353,9 +1371,9 @@
                 <div class="product-media">
                   <img src="assets/Flower Premium - 15.png" alt="Flower premium accessory set" loading="lazy" />
                 </div>
-                <div class="product-meta-row" style="flex-direction:column; align-items:flex-start; gap:0.5rem;">
-                  <div class="swatch-slider" data-swatch-slider data-visible="1" style="justify-content:flex-start;">
-                    <div class="swatch-slider-window" data-swatch-window style="width:4.5rem; display:flex; justify-content:center;">
+                <div class="product-meta-row" style="flex-direction:column; align-items:center; gap:0.5rem;">
+                  <div class="swatch-slider" data-swatch-slider data-visible="1">
+                    <div class="swatch-slider-window" data-swatch-window>
                       <div class="swatch-slider-track" data-swatch-track>
                         <span class="swatch px-3 py-1 rounded-full ring-1 ring-slate-300 text-[0.65rem] font-semibold flex items-center justify-center uppercase tracking-wide" aria-label="Premium package" style="color:#3b2209; background: linear-gradient(135deg,#f7e0c3 0%,#d6a96a 60%,#b6813f 100%); box-shadow: inset 0 0 0 1px rgba(120,64,14,0.25); width: 4.75rem; justify-content: center; align-items:center; text-align: center;">Premium</span>
                       </div>
@@ -1379,9 +1397,9 @@
                 <div class="product-media">
                   <img src="assets/Flower Deluxe - 10.png" alt="Flower deluxe accessory set" loading="lazy" />
                 </div>
-                <div class="product-meta-row" style="flex-direction:column; align-items:flex-start; gap:0.5rem;">
-                  <div class="swatch-slider" data-swatch-slider data-visible="1" style="justify-content:flex-start;">
-                    <div class="swatch-slider-window" data-swatch-window style="width:4.5rem; display:flex; justify-content:center;">
+                <div class="product-meta-row" style="flex-direction:column; align-items:center; gap:0.5rem;">
+                  <div class="swatch-slider" data-swatch-slider data-visible="1">
+                    <div class="swatch-slider-window" data-swatch-window>
                       <div class="swatch-slider-track" data-swatch-track>
                         <span class="swatch px-3 py-1 rounded-full ring-1 ring-slate-300 text-[0.65rem] font-semibold flex items-center justify-center uppercase tracking-wide" aria-label="Deluxe package" style="color:#3a2c1a; background: linear-gradient(135deg,#fffaf2 0%,#f5e6d2 60%,#ebd3b1 100%); min-width: 4.75rem; justify-content:center; align-items:center; text-align:center;">Deluxe</span>
                       </div>
@@ -1956,7 +1974,8 @@
             const windowEl = slider.querySelector('[data-swatch-window]');
             const prev = slider.querySelector('[data-swatch-prev]');
             const next = slider.querySelector('[data-swatch-next]');
-            const visible = Number(slider.getAttribute('data-visible') || 3);
+            const visible = Number(slider.getAttribute('data-visible') || 4);
+            slider.style.setProperty('--swatch-visible', visible);
             let index = 0;
 
             const setWindowWidth = () => {
@@ -1966,7 +1985,10 @@
               const styles = getComputedStyle(track);
               const gap = parseFloat(styles.gap || styles.columnGap || '0');
               const swatchWidth = first.getBoundingClientRect().width;
-              const totalWidth = swatchWidth * visible + gap * (visible - 1);
+              const windowStyles = getComputedStyle(windowEl);
+              const paddingLeft = parseFloat(windowStyles.paddingLeft || '0');
+              const paddingRight = parseFloat(windowStyles.paddingRight || '0');
+              const totalWidth = swatchWidth * visible + gap * (visible - 1) + paddingLeft + paddingRight;
               windowEl.style.width = `${totalWidth}px`;
             };
 
@@ -1975,6 +1997,7 @@
               const swatches = Array.from(track.children);
               const total = swatches.length;
               const maxIndex = Math.max(0, total - visible);
+              slider.classList.toggle('is-centered', total <= visible);
               if (maxIndex === 0) {
                 index = 0;
               } else if (index < 0) {
@@ -1987,17 +2010,6 @@
               const swatchWidth = first ? first.getBoundingClientRect().width : 0;
               const offset = (swatchWidth + gap) * index;
               track.style.transform = `translateX(-${offset}px)`;
-              const disable = maxIndex === 0;
-              if (prev) {
-                prev.classList.toggle('opacity-40', disable);
-                prev.classList.toggle('pointer-events-none', disable);
-                prev.setAttribute('aria-disabled', disable ? 'true' : 'false');
-              }
-              if (next) {
-                next.classList.toggle('opacity-40', disable);
-                next.classList.toggle('pointer-events-none', disable);
-                next.setAttribute('aria-disabled', disable ? 'true' : 'false');
-              }
             };
 
             const step = direction => {

@@ -138,6 +138,61 @@
         align-items: center;
         justify-content: flex-start;
       }
+      .product-card .swatch-slider {
+        width: 100%;
+        justify-content: center;
+      }
+      .product-card .swatch-slider.ml-8 {
+        margin-left: 0 !important;
+      }
+      .product-card > .mt-4.flex.items-center.justify-between {
+        justify-content: center;
+      }
+      .product-card > .mt-4 > .flex.flex-col {
+        width: 100%;
+        align-items: center;
+      }
+      .swipe-cue {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        gap: 0.5rem;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        opacity: 0.85;
+        letter-spacing: 0;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .swipe-cue .swipe-label {
+        letter-spacing: 0.28em;
+      }
+      .swipe-cue .swipe-arrow {
+        letter-spacing: 0;
+        font-size: 0.75rem;
+        line-height: 1;
+      }
+      .swipe-cue.is-active {
+        visibility: visible;
+        animation: swipeCueGlow 5.4s ease-in-out forwards;
+      }
+      @keyframes swipeCueGlow {
+        0% { opacity: 0; text-shadow: none; transform: translateY(4px); }
+        10% { opacity: 1; text-shadow: none; transform: translateY(0); }
+        22% { text-shadow: 0 0 6px rgba(250, 245, 255, 0.75); }
+        32% { text-shadow: none; }
+        44% { text-shadow: 0 0 6px rgba(250, 245, 255, 0.75); }
+        54% { text-shadow: none; }
+        66% { text-shadow: 0 0 6px rgba(250, 245, 255, 0.75); }
+        76% { text-shadow: none; }
+        88% { text-shadow: 0 0 6px rgba(250, 245, 255, 0.75); }
+        90% { opacity: 1; }
+        96% { text-shadow: none; }
+        100% { opacity: 0; text-shadow: none; transform: translateY(0); }
+      }
       @media (max-width: 767px) {
         .palette-menu summary {
           display: flex;
@@ -155,27 +210,36 @@
         .product-card .swatch-slider {
           width: 100%;
           justify-content: center;
+          gap: 0.5rem;
+          flex: 1 1 100%;
         }
         .product-card .swatch-slider.ml-8 {
           margin-left: 0 !important;
         }
+        .product-card > .mt-4.flex.items-center.justify-between {
+          justify-content: center;
+        }
+        .product-card > .mt-4 > .flex.flex-col {
+          width: 100%;
+          align-items: center;
+        }
         .product-card .swatch-slider button[data-swatch-prev],
         .product-card .swatch-slider button[data-swatch-next] {
-          width: 1.5rem;
-          height: 1.5rem;
+          width: 2rem;
+          height: 2rem;
         }
         .product-card .swatch-slider button[data-swatch-prev] svg,
         .product-card .swatch-slider button[data-swatch-next] svg {
-          width: 0.85rem;
-          height: 0.85rem;
+          width: 1.1rem;
+          height: 1.1rem;
         }
         .product-card [data-swatch-track] {
-          gap: 0.35rem;
+          gap: 0.5rem;
         }
         .product-card .swatch.w-5,
         .product-card .swatch.h-5 {
-          width: 1rem !important;
-          height: 1rem !important;
+          width: 1.35rem !important;
+          height: 1.35rem !important;
         }
         .product-card > .mt-4 {
           margin-top: 0.75rem !important;
@@ -195,6 +259,98 @@
         }
         .product-card > .mt-3.flex.items-center.gap-2 {
           margin-top: 0.6rem !important;
+        }
+        #section-2 .tumbler-carousel,
+        #section-3 .cups-carousel,
+        #section-accessories .accessories-carousel {
+          --carousel-card-width: min(82vw, 18rem);
+          --carousel-side-padding: calc((100% - var(--carousel-card-width)) / 2);
+          display: flex;
+          align-items: stretch;
+          gap: 1rem;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+          padding-left: var(--carousel-side-padding);
+          padding-right: var(--carousel-side-padding);
+          padding-bottom: 0.75rem;
+          scroll-padding-inline: var(--carousel-side-padding);
+        }
+        #section-2 .tumbler-carousel .product-card,
+        #section-3 .cups-carousel .product-card,
+        #section-accessories .accessories-carousel .product-card {
+          flex: 0 0 var(--carousel-card-width);
+          scroll-snap-align: center;
+        }
+        #section-4 [data-instagram-grid] {
+          --carousel-card-width: min(82vw, 18rem);
+          --carousel-side-padding: calc((100% - var(--carousel-card-width)) / 2);
+          display: flex;
+          align-items: stretch;
+          gap: 1rem;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+          padding-left: var(--carousel-side-padding);
+          padding-right: var(--carousel-side-padding);
+          padding-bottom: 0.75rem;
+          scroll-padding-inline: var(--carousel-side-padding);
+        }
+        #section-4 [data-instagram-grid] .insta-link {
+          flex: 0 0 var(--carousel-card-width);
+          scroll-snap-align: center;
+        }
+        #section-5 .popular-categories-carousel {
+          --carousel-card-width: min(82vw, 18rem);
+          --carousel-side-padding: calc((100% - var(--carousel-card-width)) / 2);
+          display: flex;
+          align-items: stretch;
+          gap: 1rem;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+          padding-left: var(--carousel-side-padding);
+          padding-right: var(--carousel-side-padding);
+          padding-bottom: 0.75rem;
+          scroll-padding-inline: var(--carousel-side-padding);
+        }
+        #section-5 .popular-categories-carousel > a {
+          flex: 0 0 var(--carousel-card-width);
+          scroll-snap-align: center;
+        }
+        #section-2 .swipe-cue {
+          display: inline-flex;
+        }
+        #section-accessories .product-card > .mt-4 {
+          min-height: 4.75rem;
+        }
+        #section-accessories .product-card > .text-xs {
+          margin-top: 0.75rem !important;
+          min-height: 2.4em;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        #section-accessories .product-card > .tile-title {
+          margin-top: 0.45rem !important;
+          min-height: 2.4em;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        #section-accessories .product-card > .text-sm {
+          margin-top: 0.25rem !important;
+          min-height: 1.2em;
+        }
+        #section-accessories .product-card > .rating {
+          margin-top: 0.35rem !important;
+          min-height: 1.2em;
+        }
+        #section-accessories .product-card > .mt-3.flex.items-center.gap-2 {
+          margin-top: 0.6rem !important;
+          min-height: 2.4rem;
         }
       }
       @media (min-width: 768px) {
@@ -369,6 +525,44 @@
       }
       .design-preview-image {
         display: block;
+        position: relative;
+      }
+      .design-preview-image img {
+        display: none;
+      }
+      .design-preview-image.has-image img {
+        display: block;
+      }
+      .design-preview-empty {
+        pointer-events: none;
+      }
+      .design-preview-empty p {
+        margin: 0;
+      }
+      .design-preview-frame .design-video-message-title,
+      .design-preview-frame .design-video-message-body {
+        color: #6B4A78 !important;
+      }
+      .design-preview-icon-inline {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 0.2rem;
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 9999px;
+        background: linear-gradient(135deg, #E0B0FF 0%, #B678F5 100%);
+        color: #ffffff;
+        box-shadow: 0 10px 20px rgba(153, 40, 177, 0.2);
+      }
+      .design-preview-icon-inline svg {
+        width: 1rem;
+        height: 1rem;
+        color: inherit;
+        fill: currentColor;
+      }
+      .design-preview-image.has-image .design-preview-empty {
+        display: none;
       }
       .design-preview-video {
         display: none;
@@ -2327,8 +2521,14 @@
             <h2 class="font-heading text-2xl md:text-3xl font-semibold tracking-tight">Tumblers</h2>
             <div class="mt-2 text-sm text-slate-600">8 Products</div>
           </div>
-          <div class="flex items-center justify-between mb-6"></div>
-          <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div class="flex items-center justify-center mb-6">
+            <span class="swipe-cue">
+              <span class="swipe-arrow" aria-hidden="true">&larr;</span>
+              <span class="swipe-label">Swipe</span>
+              <span class="swipe-arrow" aria-hidden="true">&rarr;</span>
+            </span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 tumbler-carousel">
             <!-- Product card template start -->
             <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center relative">
@@ -2760,7 +2960,7 @@
             <div class="mt-2 text-sm text-slate-600">8 Products</div>
           </div>
           <div class="mb-6"></div>
-          <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 cups-carousel">
             <!-- Row 1 -->
             <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center overflow-hidden">
@@ -3166,7 +3366,7 @@
             <div class="mt-2 text-sm text-slate-600">8 Products</div>
           </div>
           <div class="mb-6"></div>
-          <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 accessories-carousel">
             <!-- Row 1 -->
             <div class="group relative product-card">
               <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center">
@@ -3463,7 +3663,7 @@
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="swatch px-3 py-1 rounded-full ring-1 ring-slate-300 text-[0.65rem] font-semibold flex items-center justify-center uppercase tracking-wide" aria-label="Diamond package" style="color:#000000; background: radial-gradient(circle at 35% 35%, rgba(255,255,255,1) 0%, rgba(248,250,252,0.95) 45%, rgba(224,231,255,0.75) 100%), linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(209,213,219,0.7) 100%); box-shadow: inset 0 0 6px rgba(255,255,255,0.9), inset 0 8px 14px rgba(255,255,255,0.7), inset 0 -8px 18px rgba(148,163,184,0.35); min-width: 4.5rem;">Diamond</span>
+                  <span class="swatch px-3 py-1 rounded-full ring-1 ring-slate-300 text-[0.65rem] font-semibold flex items-center justify-center uppercase tracking-wide" aria-label="Diamond package" style="color:#6B4A78 !important; -webkit-text-fill-color:#6B4A78 !important; background: radial-gradient(circle at 35% 35%, rgba(255,255,255,1) 0%, rgba(248,250,252,0.95) 45%, rgba(224,231,255,0.75) 100%), linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(209,213,219,0.7) 100%); box-shadow: inset 0 0 6px rgba(255,255,255,0.9), inset 0 8px 14px rgba(255,255,255,0.7), inset 0 -8px 18px rgba(148,163,184,0.35); min-width: 4.5rem;">Diamond</span>
                 </div>
               </div>
               <div class="mt-1 text-xs text-slate-600">Diamond | 40oz &amp; 30oz</div>
@@ -3493,7 +3693,7 @@
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="swatch px-3 py-1 rounded-full ring-1 ring-slate-300 text-[0.65rem] font-semibold flex items-center justify-center uppercase tracking-wide" aria-label="Premium package" style="color:#3b2209; background: linear-gradient(135deg,#f7e0c3 0%,#d6a96a 60%,#b6813f 100%); box-shadow: inset 0 0 0 1px rgba(120,64,14,0.25); min-width: 4.5rem;">Premium</span>
+                  <span class="swatch px-3 py-1 rounded-full ring-1 ring-slate-300 text-[0.65rem] font-semibold flex items-center justify-center uppercase tracking-wide" aria-label="Premium package" style="color:#6B4A78 !important; -webkit-text-fill-color:#6B4A78 !important; background: linear-gradient(135deg,#f7e0c3 0%,#d6a96a 60%,#b6813f 100%); box-shadow: inset 0 0 0 1px rgba(120,64,14,0.25); min-width: 4.5rem;">Premium</span>
                 </div>
               </div>
               <div class="mt-1 text-xs text-slate-600">Premium | 40oz &amp; 30oz</div>
@@ -3523,7 +3723,7 @@
               </div>
               <div class="mt-4 flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="swatch px-3 py-1 rounded-full ring-1 ring-slate-300 text-[0.65rem] font-semibold flex items-center justify-center uppercase tracking-wide" aria-label="Deluxe package" style="color:#3a2c1a; background: linear-gradient(135deg,#fffaf2 0%,#f5e6d2 60%,#ebd3b1 100%); min-width: 4.5rem;">Deluxe</span>
+                  <span class="swatch px-3 py-1 rounded-full ring-1 ring-slate-300 text-[0.65rem] font-semibold flex items-center justify-center uppercase tracking-wide" aria-label="Deluxe package" style="color:#6B4A78 !important; -webkit-text-fill-color:#6B4A78 !important; background: linear-gradient(135deg,#fffaf2 0%,#f5e6d2 60%,#ebd3b1 100%); min-width: 4.5rem;">Deluxe</span>
                 </div>
               </div>
               <div class="mt-1 text-xs text-slate-600">Deluxe | 40oz &amp; 30oz</div>
@@ -3572,8 +3772,23 @@
                       </div>
                       <div class="design-card-frame design-video-frame design-preview-frame" data-design-frame>
                         <button type="button" class="design-preview-return" data-design-back aria-label="Return to image" hidden>Return</button>
-                        <div class="design-preview-layer design-preview-image">
-                          <img id="homeDesignPreview" data-design-image src="assets/glass-tumbler.jpeg" alt="Designed palm tree tumbler" />
+                        <div class="design-preview-layer design-preview-image" data-design-image-wrap>
+                          <div class="design-video-message design-preview-empty" data-design-placeholder>
+                            <div class="design-video-message-inner">
+                              <p class="design-video-message-title">Start Your Design</p>
+                              <p class="design-video-message-body">
+                                Click the
+                                <span class="design-preview-icon-inline icon-button tile-action-design" aria-hidden="true">
+                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M16.862 2.487a2.25 2.25 0 0 1 3.182 0l1.11 1.11a3.75 3.75 0 0 1 0 5.303l-8.92 8.92a4.5 4.5 0 0 1-2.038 1.159l-3.026.757a.75.75 0 0 1-.908-.908l.757-3.026a4.5 4.5 0 0 1 1.159-2.038l8.92-8.92a2.25 2.25 0 0 0 0-3.182l-1.11-1.11a.75.75 0 0 1 1.06-1.06Z" clip-rule="evenodd" />
+                                    <path d="M4.5 17.25c.414 0 .75.336.75.75a1.5 1.5 0 0 1-1.5 1.5H3a.75.75 0 0 1 0-1.5h1.5a.75.75 0 0 0 .75-.75Z" />
+                                  </svg>
+                                </span>
+                                icon on your item to begin designing!
+                              </p>
+                            </div>
+                          </div>
+                          <img id="homeDesignPreview" data-design-image alt="Custom design preview" />
                         </div>
                         <div class="design-preview-layer design-preview-video" aria-live="polite">
                           <div class="design-video-message" data-design-video-prompt hidden aria-hidden="true">
@@ -3776,14 +3991,13 @@
           <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-8" data-instagram-grid>
             <!-- Instagram tiles hydrate via assets/instagram-feed.json; first tile shows a local video preview -->
             <a class="insta-link relative block aspect-[4/5] rounded-md bg-gradient-to-br from-[#E0B0FF] to-[#D8B4FE] group" data-instagram-card data-instagram-index="0" href="https://instagram.com/lovetts._ldc" target="_blank" rel="noopener" aria-label="View on Instagram">
-              <img src="assets/instagram/1.jpg" loading="lazy" alt="Instagram tile 1" class="absolute inset-0 w-full h-full object-cover" data-instagram-image onerror="this.style.display='none'" />
-              <video class="absolute inset-0 w-full h-full object-cover" autoplay muted loop playsinline preload="auto" poster="assets/instagram/1.jpg" aria-hidden="true">
+              <video class="absolute inset-0 w-full h-full object-cover" autoplay muted loop playsinline preload="auto" aria-hidden="true">
                 <source src="assets/instagramtile11.mp4" type="video/mp4" />
               </video>
               <div class="absolute inset-0 bg-[#E0B0FF]/0 group-hover:bg-[#E0B0FF]/30 transition-colors"></div>
               <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path d="M7 2C4.243 2 2 4.243 2 7v10c0 2.757 2.243 5 5 5h10c2.757 0 5-2.243 5-5V7c0-2.757-2.243-5-5-5H7zm0 2h10c1.654 0 3 1.346 3 3v10c0 1.654-1.346 3-3 3H7c-1.654 0-3-1.346-3-3V7c0-1.654 1.346-3 3-3zm5 3a5 5 0 100 10 5 5 0 000-10zm0 2a3 3 0 110 6 3 3 0 010-6zm5.5-.75a1.25 1.25 0 11-2.5 0 1.25 1.25 0 012.5 0z"/></svg>
-                <span class="text-xs md:text-sm font-medium">lovettsdandc@gmail.com</span>
+                <span class="text-xs md:text-sm font-medium">@lovetts._ldc</span>
               </div>
             </a>
             <a class="insta-link relative block aspect-[4/5] rounded-md bg-gradient-to-br from-[#E0B0FF] to-[#D8B4FE] group" data-instagram-card data-instagram-index="1" href="https://instagram.com/lovetts._ldc" target="_blank" rel="noopener" aria-label="View on Instagram">
@@ -3791,10 +4005,10 @@
               <div class="absolute inset-0 bg-[#E0B0FF]/0 group-hover:bg-[#E0B0FF]/30 transition-colors"></div>
               <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path d="M7 2C4.243 2 2 4.243 2 7v10c0 2.757 2.243 5 5 5h10c2.757 0 5-2.243 5-5V7c0-2.757-2.243-5-5-5H7zm0 2h10c1.654 0 3 1.346 3 3v10c0 1.654-1.346 3-3 3H7c-1.654 0-3-1.346-3-3V7c0-1.654 1.346-3 3-3zm5 3a5 5 0 100 10 5 5 0 000-10zm0 2a3 3 0 110 6 3 3 0 010-6zm5.5-.75a1.25 1.25 0 11-2.5 0 1.25 1.25 0 012.5 0z"/></svg>
-                <span class="text-xs md:text-sm font-medium">lovettsdandc@gmail.com</span>
+                <span class="text-xs md:text-sm font-medium">@lovetts._ldc</span>
               </div>
             </a>
-            <a class="insta-link relative block md:block hidden aspect-[4/5] rounded-md bg-gradient-to-br from-[#E0B0FF] to-[#D8B4FE] group" data-instagram-card data-instagram-index="2" href="https://instagram.com/lovetts._ldc" target="_blank" rel="noopener" aria-label="View on Instagram">
+            <a class="insta-link relative block aspect-[4/5] rounded-md bg-gradient-to-br from-[#E0B0FF] to-[#D8B4FE] group" data-instagram-card data-instagram-index="2" href="https://instagram.com/lovetts._ldc" target="_blank" rel="noopener" aria-label="View on Instagram">
               <div class="absolute inset-0 overflow-hidden">
                 <iframe
                   class="absolute inset-0 w-full h-full"
@@ -3809,7 +4023,7 @@
               <div class="absolute inset-0 bg-[#E0B0FF]/0 group-hover:bg-[#E0B0FF]/30 transition-colors pointer-events-none"></div>
               <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 pointer-events-none">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path d="M7 2C4.243 2 2 4.243 2 7v10c0 2.757 2.243 5 5 5h10c2.757 0 5-2.243 5-5V7c0-2.757-2.243-5-5-5H7zm0 2h10c1.654 0 3 1.346 3 3v10c0 1.654-1.346 3-3 3H7c-1.654 0-3-1.346-3-3V7c0-1.654 1.346-3 3-3zm5 3a5 5 0 100 10 5 5 0 000-10zm0 2a3 3 0 110 6 3 3 0 010-6zm5.5-.75a1.25 1.25 0 11-2.5 0 1.25 1.25 0 012.5 0z"/></svg>
-                <span class="text-xs md:text-sm font-medium">lovettsdandc@gmail.com</span>
+                <span class="text-xs md:text-sm font-medium">@lovetts._ldc</span>
               </div>
             </a>
           </div>
@@ -3896,7 +4110,7 @@
           <!-- Popular categories -->
           <div class="mt-16">
             <h3 class="font-heading text-xl md:text-2xl font-semibold tracking-tight">Popular Categories</h3>
-            <div class="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            <div class="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 popular-categories-carousel">
               <a href="tumblers.html" class="flex items-center justify-between rounded-lg border border-slate-200 tile-mauve transition-colors p-5 text-white no-underline hover:no-underline">
                 <span class="font-medium text-white no-underline hover:no-underline">Tumblers</span>
                 <div class="flex items-center gap-3">
@@ -5228,8 +5442,14 @@
       };
 
       const DESIGN_SELECTION_KEY = 'ldcDesignSelection';
-      const homeDesignPreview = document.getElementById('homeDesignPreview');
+      const DESIGN_SELECTION_PENDING_KEY = 'ldcDesignSelectionPending';
+      const DESIGN_SELECTION_PENDING_AT_KEY = 'ldcDesignSelectionPendingAt';
+      try {
+        localStorage.removeItem(DESIGN_SELECTION_PENDING_KEY);
+        localStorage.removeItem(DESIGN_SELECTION_PENDING_AT_KEY);
+      } catch {}
       const designFrame = document.querySelector('[data-design-frame]');
+      const designImageWrap = designFrame?.querySelector('[data-design-image-wrap]');
       const designImage = designFrame?.querySelector('[data-design-image]');
       const designVideo = designFrame?.querySelector('[data-design-video]');
       const designBackButton = designFrame?.querySelector('[data-design-back]');
@@ -5267,6 +5487,18 @@
             labelSpan.textContent = file ? file.name : labelSpan.dataset.defaultText || defaultText;
           });
         });
+      };
+      const setDesignPreviewImage = (src, alt) => {
+        if (!designImage || !designImageWrap) return;
+        if (src) {
+          designImage.setAttribute('src', src);
+          designImage.setAttribute('alt', alt || 'Custom design preview');
+          designImageWrap.classList.add('has-image');
+        } else {
+          designImage.removeAttribute('src');
+          designImage.setAttribute('alt', 'Design preview');
+          designImageWrap.classList.remove('has-image');
+        }
       };
 
       const readDesignAttachment = () => {
@@ -5539,12 +5771,13 @@
 
       updateColorPreview('', '');
       updateAccessoryPreview('', '');
-      let lastImageState = designImage
+      let lastImageState = designImage && designImage.getAttribute('src')
         ? {
             src: designImage.getAttribute('src'),
             alt: designImage.getAttribute('alt') || 'Custom design preview'
           }
         : null;
+      setDesignPreviewImage(lastImageState?.src, lastImageState?.alt);
       let lastPrice = { amount: 0 };
       updateDesignTotal();
 
@@ -5572,8 +5805,9 @@
           designVideo.load?.();
         }
         if (lastImageState?.src) {
-          designImage.setAttribute('src', lastImageState.src);
-          designImage.setAttribute('alt', lastImageState.alt || 'Custom design preview');
+          setDesignPreviewImage(lastImageState.src, lastImageState.alt);
+        } else {
+          setDesignPreviewImage('', '');
         }
         if (designBackButton) {
           designBackButton.hidden = true;
@@ -5653,9 +5887,8 @@
       };
 
       const applyHomeDesignPreview = selection => {
-        if (!homeDesignPreview || !selection?.src) return;
-        homeDesignPreview.setAttribute('src', selection.src);
-        homeDesignPreview.setAttribute('alt', selection.alt || 'Custom design preview');
+        if (!designImage || !selection?.src) return;
+        setDesignPreviewImage(selection.src, selection.alt);
         lastImageState = {
           src: selection.src,
           alt: selection.alt || 'Custom design preview'
@@ -5730,6 +5963,8 @@
         if (!selection?.src) return;
         try {
           localStorage.setItem(DESIGN_SELECTION_KEY, JSON.stringify(selection));
+          localStorage.setItem(DESIGN_SELECTION_PENDING_KEY, 'true');
+          localStorage.setItem(DESIGN_SELECTION_PENDING_AT_KEY, String(Date.now()));
         } catch (error) {
           console.warn('Unable to save design selection', error);
         }
@@ -5837,13 +6072,6 @@
       };
 
       const wireDesignButtons = () => {
-        const stored = getStoredDesignSelection();
-        if (stored) {
-          applyHomeDesignPreview(stored);
-          if (Array.isArray(stored.swatches) && stored.swatches.length) {
-            setDesignColorSwatches(stored.swatches);
-          }
-        }
         const extractPrice = card => {
           if (!card) return null;
           const priceEl =
@@ -6530,6 +6758,205 @@
 
         bindClear('[data-clear-color]', colorTarget, 'Select a color');
         bindClear('[data-clear-accessory]', accessoryTarget, 'Select an accessory');
+      })();
+
+      (() => {
+        const mobileQuery = window.matchMedia('(max-width: 767px)');
+        const loopState = new WeakMap();
+        const carouselSelectors = [
+          '.tumbler-carousel',
+          '.cups-carousel',
+          '.accessories-carousel',
+          '.popular-categories-carousel',
+          '[data-instagram-grid]'
+        ];
+
+        const getPaddingLeft = container => {
+          const value = window.getComputedStyle(container).paddingLeft;
+          const parsed = parseFloat(value || '0');
+          return Number.isNaN(parsed) ? 0 : parsed;
+        };
+
+        const stripCloneAttributes = node => {
+          if (node.removeAttribute) node.removeAttribute('id');
+          if (node.removeAttribute) {
+            node.removeAttribute('data-instagram-card');
+            node.removeAttribute('data-instagram-index');
+          }
+          node.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+          node.querySelectorAll('[data-image-target],[data-price-target],[data-limited-target]').forEach(el => {
+            el.removeAttribute('data-image-target');
+            el.removeAttribute('data-price-target');
+            el.removeAttribute('data-limited-target');
+          });
+          node.querySelectorAll('[data-instagram-card],[data-instagram-index],[data-instagram-image]').forEach(el => {
+            el.removeAttribute('data-instagram-card');
+            el.removeAttribute('data-instagram-index');
+            el.removeAttribute('data-instagram-image');
+          });
+          node.querySelectorAll('[data-add-to-cart]').forEach(el => {
+            el.removeAttribute('data-add-to-cart');
+          });
+          node.querySelectorAll('button, a, input, textarea, select, [tabindex]').forEach(el => {
+            el.setAttribute('tabindex', '-1');
+          });
+        };
+
+        const createClone = source => {
+          const clone = source.cloneNode(true);
+          clone.dataset.loopClone = 'true';
+          clone.setAttribute('aria-hidden', 'true');
+          clone.style.pointerEvents = 'none';
+          stripCloneAttributes(clone);
+          return clone;
+        };
+
+        const measurePositions = (container, state) => {
+          const paddingLeft = getPaddingLeft(container);
+          state.paddingLeft = paddingLeft;
+          state.realStart = state.firstReal.offsetLeft - paddingLeft;
+          state.listSpan = state.afterFirst.offsetLeft - state.firstReal.offsetLeft;
+        };
+
+        const initLoopingCarousel = container => {
+          if (container.dataset.loopInit === 'true') return;
+          const items = Array.from(container.children);
+          if (items.length < 2) return;
+
+          const firstReal = items[0];
+          const beforeClones = items.map(item => createClone(item));
+          const afterClones = items.map(item => createClone(item));
+
+          beforeClones.forEach(clone => {
+            container.insertBefore(clone, container.firstChild);
+          });
+          afterClones.forEach(clone => {
+            container.appendChild(clone);
+          });
+
+          const state = {
+            firstReal,
+            afterFirst: afterClones[0],
+            isAdjusting: false,
+            rafId: 0,
+            realStart: 0,
+            listSpan: 0,
+            paddingLeft: 0
+          };
+
+          const jumpTo = target => {
+            state.isAdjusting = true;
+            container.style.scrollSnapType = 'none';
+            container.scrollLeft = target;
+            requestAnimationFrame(() => {
+              container.style.scrollSnapType = '';
+              state.isAdjusting = false;
+            });
+          };
+
+          const adjustLoop = () => {
+            if (!mobileQuery.matches || state.isAdjusting) return;
+            if (!state.listSpan) return;
+            const threshold = Math.max(1, Math.round(container.clientWidth * 0.02));
+            const current = container.scrollLeft;
+            if (current < state.realStart - threshold) {
+              jumpTo(current + state.listSpan);
+            } else if (current > state.realStart + state.listSpan + threshold) {
+              jumpTo(current - state.listSpan);
+            }
+          };
+
+          const onScroll = () => {
+            if (state.rafId) cancelAnimationFrame(state.rafId);
+            state.rafId = requestAnimationFrame(adjustLoop);
+          };
+
+          const onResize = () => {
+            if (!mobileQuery.matches) return;
+            measurePositions(container, state);
+            if (state.listSpan) {
+              container.scrollLeft = state.realStart;
+            }
+          };
+
+          container.addEventListener('scroll', onScroll, { passive: true });
+          window.addEventListener('resize', onResize);
+          loopState.set(container, { onScroll, onResize, state });
+          container.dataset.loopInit = 'true';
+
+          requestAnimationFrame(() => {
+            measurePositions(container, state);
+            if (state.listSpan) {
+              container.scrollLeft = state.realStart;
+            }
+          });
+        };
+
+        const teardownLoopingCarousel = container => {
+          const entry = loopState.get(container);
+          if (entry) {
+            container.removeEventListener('scroll', entry.onScroll);
+            window.removeEventListener('resize', entry.onResize);
+            loopState.delete(container);
+          }
+          container.querySelectorAll('[data-loop-clone="true"]').forEach(clone => {
+            clone.remove();
+          });
+          container.scrollLeft = 0;
+          delete container.dataset.loopInit;
+        };
+
+        const applyLoopingCarousels = () => {
+          document.querySelectorAll(carouselSelectors.join(',')).forEach(container => {
+            if (mobileQuery.matches) {
+              initLoopingCarousel(container);
+            } else {
+              teardownLoopingCarousel(container);
+            }
+          });
+        };
+
+        applyLoopingCarousels();
+        if (typeof mobileQuery.addEventListener === 'function') {
+          mobileQuery.addEventListener('change', applyLoopingCarousels);
+        } else if (typeof mobileQuery.addListener === 'function') {
+          mobileQuery.addListener(applyLoopingCarousels);
+        }
+      })();
+
+      (() => {
+        const cue = document.querySelector('#section-2 .swipe-cue');
+        const section = document.getElementById('section-2');
+        if (!cue || !section) return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        const trigger = () => {
+          cue.classList.remove('is-active');
+          void cue.offsetWidth;
+          cue.classList.add('is-active');
+        };
+
+        if ('IntersectionObserver' in window) {
+          const observer = new IntersectionObserver(
+            entries => {
+              if (entries.some(entry => entry.isIntersecting)) {
+                trigger();
+              }
+            },
+            { threshold: 0.2 }
+          );
+          observer.observe(section);
+        } else {
+          const onScroll = () => {
+            const rect = section.getBoundingClientRect();
+            if (rect.top < window.innerHeight * 0.8) {
+              window.removeEventListener('scroll', onScroll);
+              trigger();
+            }
+          };
+          window.addEventListener('scroll', onScroll, { passive: true });
+          onScroll();
+        }
       })();
     </script>
   </body>

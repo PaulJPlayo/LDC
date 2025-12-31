@@ -230,6 +230,66 @@
         display: grid;
         gap: 1rem;
       }
+      .attire-swipe-cue {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        gap: 0.5rem;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .attire-swipe-cue .swipe-label {
+        letter-spacing: 0.28em;
+      }
+      .attire-swipe-cue .swipe-arrow {
+        letter-spacing: 0;
+        font-size: 0.75rem;
+        line-height: 1;
+      }
+      .attire-swipe-cue.is-active {
+        visibility: visible;
+        animation: attireSwipeCueGlow 5.8s ease-in-out forwards;
+      }
+      @keyframes attireSwipeCueGlow {
+        0% { opacity: 0; text-shadow: none; transform: translateY(4px); }
+        10% { opacity: 1; text-shadow: none; transform: translateY(0); }
+        20% { text-shadow: 0 0 8px rgba(59, 130, 246, 0.8), 0 0 14px rgba(34, 211, 238, 0.7); }
+        28% { text-shadow: none; }
+        38% { text-shadow: 0 0 8px rgba(59, 130, 246, 0.8), 0 0 14px rgba(34, 211, 238, 0.7); }
+        46% { text-shadow: none; }
+        56% { text-shadow: 0 0 8px rgba(59, 130, 246, 0.8), 0 0 14px rgba(34, 211, 238, 0.7); }
+        64% { text-shadow: none; }
+        74% { text-shadow: 0 0 8px rgba(59, 130, 246, 0.8), 0 0 14px rgba(34, 211, 238, 0.7); }
+        82% { text-shadow: none; }
+        94% { opacity: 1; text-shadow: none; }
+        100% { opacity: 0; text-shadow: none; transform: translateY(0); }
+      }
+      .attire-gallery-carousel {
+        display: none;
+      }
+      .attire-carousel-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 1.25rem;
+        background: #d8d3cb;
+        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.18);
+        min-height: 320px;
+        aspect-ratio: 4 / 5;
+        display: grid;
+        place-items: center;
+      }
+      .attire-carousel-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
       .attire-hero-image {
         position: relative;
         overflow: hidden;
@@ -328,6 +388,34 @@
         .attire-hero-arrow svg {
           width: 1rem;
           height: 1rem;
+        }
+      }
+      @media (max-width: 767px) {
+        .attire-hero-image,
+        .attire-thumbs {
+          display: none;
+        }
+        .attire-swipe-cue {
+          display: flex;
+          margin-bottom: 0.75rem;
+        }
+        .attire-gallery-carousel {
+          --carousel-card-width: min(94vw, 24rem);
+          --carousel-side-padding: calc((100% - var(--carousel-card-width)) / 2);
+          display: flex;
+          align-items: stretch;
+          gap: 1rem;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+          padding-left: var(--carousel-side-padding);
+          padding-right: var(--carousel-side-padding);
+          padding-bottom: 0.75rem;
+          scroll-padding-inline: var(--carousel-side-padding);
+        }
+        .attire-gallery-carousel .attire-carousel-item {
+          flex: 0 0 var(--carousel-card-width);
+          scroll-snap-align: center;
         }
       }
       .attire-form {
@@ -1197,6 +1285,49 @@
             </div>
             <div class="attire-grid">
               <div class="attire-gallery">
+                <div class="attire-swipe-cue">
+                  <span class="swipe-arrow" aria-hidden="true">&larr;</span>
+                  <span class="swipe-label">Swipe</span>
+                  <span class="swipe-arrow" aria-hidden="true">&rarr;</span>
+                </div>
+                <div class="attire-gallery-carousel" aria-label="Attire gallery">
+                  <div class="attire-carousel-item">
+                    <img src="assets/LAW attire 1.png" alt="L.A.W. Attire sweat suit" loading="eager" />
+                  </div>
+                  <div class="attire-carousel-item">
+                    <img src="assets/LAW camo logo with jay pic for website.png" alt="LAW camo logo" loading="lazy" />
+                  </div>
+                  <div class="attire-carousel-item">
+                    <img src="assets/Blue LAW sweat suit front.png" alt="Blue LAW sweatsuit front" loading="lazy" />
+                  </div>
+                  <div class="attire-carousel-item">
+                    <img src="assets/Blue Sweatsuit Design - 1.png" alt="Blue sweatsuit design 1" loading="lazy" />
+                  </div>
+                  <div class="attire-carousel-item">
+                    <img src="assets/Blue Sweatsuit Design - 2.png" alt="Blue sweatsuit design 2" loading="lazy" />
+                  </div>
+                  <div class="attire-carousel-item">
+                    <img src="assets/LAW pink sweat suit kids.png" alt="Pink kids sweatsuit" loading="lazy" />
+                  </div>
+                  <div class="attire-carousel-item">
+                    <img src="assets/LAW cream sweat suit camo.png" alt="Cream camo sweatsuit" loading="lazy" />
+                  </div>
+                  <div class="attire-carousel-item">
+                    <img src="assets/LAW CAMO GREEN sweat suit.png" alt="Green camo sweatsuit" loading="lazy" />
+                  </div>
+                  <div class="attire-carousel-item">
+                    <img src="assets/Hoodie - red.png" alt="Red hoodie" loading="lazy" />
+                  </div>
+                  <div class="attire-carousel-item">
+                    <img src="assets/Hoodie - red - 2.png" alt="Red hoodie alternate view" loading="lazy" />
+                  </div>
+                  <div class="attire-carousel-item">
+                    <img src="assets/Tshirt - white.png" alt="White t-shirt" loading="lazy" />
+                  </div>
+                  <div class="attire-carousel-item">
+                    <img src="assets/Tshirt - grey - black - white.png" alt="Grey black white t-shirt" loading="lazy" />
+                  </div>
+                </div>
                 <div class="attire-hero-image">
                   <img src="assets/LAW attire 1.png" alt="L.A.W. Attire sweat suit" />
                   <span class="badge badge-limited">Limited Edition</span>
@@ -1886,6 +2017,183 @@
         renderCart();
         renderFavorites();
         syncBadges();
+      })();
+
+      (() => {
+        const mobileQuery = window.matchMedia('(max-width: 767px)');
+        const carousel = document.querySelector('.attire-gallery-carousel');
+        if (!carousel) return;
+        let loopState = null;
+
+        const getPaddingLeft = container => {
+          const value = window.getComputedStyle(container).paddingLeft;
+          const parsed = parseFloat(value || '0');
+          return Number.isNaN(parsed) ? 0 : parsed;
+        };
+
+        const stripCloneAttributes = node => {
+          if (node.removeAttribute) node.removeAttribute('id');
+          node.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+          node.querySelectorAll('[data-hero-thumb]').forEach(el => el.removeAttribute('data-hero-thumb'));
+          node.querySelectorAll('button, a, input, textarea, select, [tabindex]').forEach(el => {
+            el.setAttribute('tabindex', '-1');
+          });
+        };
+
+        const createClone = source => {
+          const clone = source.cloneNode(true);
+          clone.dataset.loopClone = 'true';
+          clone.setAttribute('aria-hidden', 'true');
+          clone.style.pointerEvents = 'none';
+          stripCloneAttributes(clone);
+          return clone;
+        };
+
+        const measurePositions = (container, state) => {
+          const paddingLeft = getPaddingLeft(container);
+          state.paddingLeft = paddingLeft;
+          state.realStart = state.firstReal.offsetLeft - paddingLeft;
+          state.listSpan = state.afterFirst.offsetLeft - state.firstReal.offsetLeft;
+        };
+
+        const initLoopingCarousel = () => {
+          if (carousel.dataset.loopInit === 'true') return;
+          const items = Array.from(carousel.children).filter(child => child.dataset.loopClone !== 'true');
+          if (items.length < 2) return;
+
+          const firstReal = items[0];
+          const beforeClones = items.map(item => createClone(item));
+          const afterClones = items.map(item => createClone(item));
+
+          beforeClones.forEach(clone => {
+            carousel.insertBefore(clone, carousel.firstChild);
+          });
+          afterClones.forEach(clone => {
+            carousel.appendChild(clone);
+          });
+
+          const state = {
+            firstReal,
+            afterFirst: afterClones[0],
+            isAdjusting: false,
+            rafId: 0,
+            realStart: 0,
+            listSpan: 0,
+            paddingLeft: 0
+          };
+
+          const jumpTo = target => {
+            state.isAdjusting = true;
+            carousel.style.scrollSnapType = 'none';
+            carousel.scrollLeft = target;
+            requestAnimationFrame(() => {
+              carousel.style.scrollSnapType = '';
+              state.isAdjusting = false;
+            });
+          };
+
+          const adjustLoop = () => {
+            if (!mobileQuery.matches || state.isAdjusting) return;
+            if (!state.listSpan) return;
+            const threshold = Math.max(1, Math.round(carousel.clientWidth * 0.02));
+            const current = carousel.scrollLeft;
+            if (current < state.realStart - threshold) {
+              jumpTo(current + state.listSpan);
+            } else if (current > state.realStart + state.listSpan + threshold) {
+              jumpTo(current - state.listSpan);
+            }
+          };
+
+          const onScroll = () => {
+            if (state.rafId) cancelAnimationFrame(state.rafId);
+            state.rafId = requestAnimationFrame(adjustLoop);
+          };
+
+          const onResize = () => {
+            if (!mobileQuery.matches) return;
+            measurePositions(carousel, state);
+            if (state.listSpan) {
+              carousel.scrollLeft = state.realStart;
+            }
+          };
+
+          carousel.addEventListener('scroll', onScroll, { passive: true });
+          window.addEventListener('resize', onResize);
+          loopState = { onScroll, onResize, state };
+          carousel.dataset.loopInit = 'true';
+
+          requestAnimationFrame(() => {
+            measurePositions(carousel, state);
+            if (state.listSpan) {
+              carousel.scrollLeft = state.realStart;
+            }
+          });
+        };
+
+        const teardownLoopingCarousel = () => {
+          if (loopState) {
+            carousel.removeEventListener('scroll', loopState.onScroll);
+            window.removeEventListener('resize', loopState.onResize);
+            loopState = null;
+          }
+          carousel.querySelectorAll('[data-loop-clone="true"]').forEach(clone => {
+            clone.remove();
+          });
+          carousel.scrollLeft = 0;
+          delete carousel.dataset.loopInit;
+        };
+
+        const applyLoopingCarousel = () => {
+          if (mobileQuery.matches) {
+            initLoopingCarousel();
+          } else {
+            teardownLoopingCarousel();
+          }
+        };
+
+        applyLoopingCarousel();
+        if (typeof mobileQuery.addEventListener === 'function') {
+          mobileQuery.addEventListener('change', applyLoopingCarousel);
+        } else if (typeof mobileQuery.addListener === 'function') {
+          mobileQuery.addListener(applyLoopingCarousel);
+        }
+      })();
+
+      (() => {
+        const cue = document.querySelector('.attire-swipe-cue');
+        const section = document.querySelector('.attire-gallery');
+        if (!cue || !section) return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const mobileQuery = window.matchMedia('(max-width: 767px)');
+
+        const trigger = () => {
+          if (!mobileQuery.matches) return;
+          cue.classList.remove('is-active');
+          void cue.offsetWidth;
+          cue.classList.add('is-active');
+        };
+
+        if ('IntersectionObserver' in window) {
+          const observer = new IntersectionObserver(
+            entries => {
+              if (entries.some(entry => entry.isIntersecting)) {
+                trigger();
+              }
+            },
+            { threshold: 0.2 }
+          );
+          observer.observe(section);
+        } else {
+          const onScroll = () => {
+            if (!mobileQuery.matches) return;
+            const rect = section.getBoundingClientRect();
+            if (rect.top < window.innerHeight * 0.8 && rect.bottom > 0) {
+              trigger();
+            }
+          };
+          window.addEventListener('scroll', onScroll, { passive: true });
+          onScroll();
+        }
       })();
 
       const supportOverlay = document.querySelector('[data-support-overlay]');

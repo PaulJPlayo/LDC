@@ -923,6 +923,44 @@
       }
       .design-preview-image {
         display: block;
+        position: relative;
+      }
+      .design-preview-image img {
+        display: none;
+      }
+      .design-preview-image.has-image img {
+        display: block;
+      }
+      .design-preview-empty {
+        pointer-events: none;
+      }
+      .design-preview-empty p {
+        margin: 0;
+      }
+      .design-preview-frame .design-video-message-title,
+      .design-preview-frame .design-video-message-body {
+        color: #6B4A78 !important;
+      }
+      .design-preview-icon-inline {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 0.2rem;
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 9999px;
+        background: linear-gradient(135deg, #E0B0FF 0%, #B678F5 100%);
+        color: #ffffff;
+        box-shadow: 0 10px 20px rgba(153, 40, 177, 0.2);
+      }
+      .design-preview-icon-inline svg {
+        width: 1rem;
+        height: 1rem;
+        color: inherit;
+        fill: currentColor;
+      }
+      .design-preview-image.has-image .design-preview-empty {
+        display: none;
       }
       .design-preview-video {
         display: none;
@@ -1140,8 +1178,23 @@
                       </div>
                       <div class="design-card-frame design-video-frame design-preview-frame" data-design-frame>
                         <button type="button" class="design-preview-return" data-design-back aria-label="Return to image" hidden>Return</button>
-                        <div class="design-preview-layer design-preview-image">
-                          <img id="designPagePreview" data-design-image src="assets/glass-tumbler.jpeg" alt="Designed palm tree tumbler" />
+                        <div class="design-preview-layer design-preview-image" data-design-image-wrap>
+                          <div class="design-video-message design-preview-empty" data-design-placeholder>
+                            <div class="design-video-message-inner">
+                              <p class="design-video-message-title">Start Your Design</p>
+                              <p class="design-video-message-body">
+                                Click the
+                                <span class="design-preview-icon-inline icon-button tile-action-design" aria-hidden="true">
+                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M16.862 2.487a2.25 2.25 0 0 1 3.182 0l1.11 1.11a3.75 3.75 0 0 1 0 5.303l-8.92 8.92a4.5 4.5 0 0 1-2.038 1.159l-3.026.757a.75.75 0 0 1-.908-.908l.757-3.026a4.5 4.5 0 0 1 1.159-2.038l8.92-8.92a2.25 2.25 0 0 0 0-3.182l-1.11-1.11a.75.75 0 0 1 1.06-1.06Z" clip-rule="evenodd" />
+                                    <path d="M4.5 17.25c.414 0 .75.336.75.75a1.5 1.5 0 0 1-1.5 1.5H3a.75.75 0 0 1 0-1.5h1.5a.75.75 0 0 0 .75-.75Z" />
+                                  </svg>
+                                </span>
+                                icon on your item to begin designing!
+                              </p>
+                            </div>
+                          </div>
+                          <img id="designPagePreview" data-design-image alt="Custom design preview" />
                         </div>
                         <div class="design-preview-layer design-preview-video" aria-live="polite">
                           <div class="design-video-message" data-design-video-prompt hidden aria-hidden="true">
@@ -1344,8 +1397,11 @@
     <script>
       (() => {
         const DESIGN_SELECTION_KEY = 'ldcDesignSelection';
+        const DESIGN_SELECTION_PENDING_KEY = 'ldcDesignSelectionPending';
+        const DESIGN_SELECTION_PENDING_AT_KEY = 'ldcDesignSelectionPendingAt';
         const CART_STORAGE_KEY = 'ldc:cart';
         const designFrame = document.querySelector('[data-design-frame]');
+        const designImageWrap = designFrame?.querySelector('[data-design-image-wrap]');
         const designImage = designFrame?.querySelector('[data-design-image]');
         const designVideo = designFrame?.querySelector('[data-design-video]');
         const designBackButton = designFrame?.querySelector('[data-design-back]');
@@ -1384,6 +1440,18 @@
             });
           });
         };
+        const setDesignPreviewImage = (src, alt) => {
+          if (!designImage || !designImageWrap) return;
+          if (src) {
+            designImage.setAttribute('src', src);
+            designImage.setAttribute('alt', alt || 'Custom design preview');
+            designImageWrap.classList.add('has-image');
+          } else {
+            designImage.removeAttribute('src');
+            designImage.setAttribute('alt', 'Design preview');
+            designImageWrap.classList.remove('has-image');
+          }
+        };
         const readDesignAttachment = () => {
           return new Promise(resolve => {
             const file = designAttachmentInput?.files?.[0];
@@ -1416,12 +1484,13 @@
         let selectedWrapLabel = '';
         let selectedDesignName = '';
         let lastPrice = { amount: 0 };
-        let lastImageState = designImage
+        let lastImageState = designImage && designImage.getAttribute('src')
           ? {
               src: designImage.getAttribute('src'),
               alt: designImage.getAttribute('alt') || 'Custom design preview'
             }
           : null;
+        setDesignPreviewImage(lastImageState?.src, lastImageState?.alt);
 
         const formatPrice = value => {
           const num = typeof value === 'number' && !Number.isNaN(value) ? value : 0;
@@ -1662,8 +1731,9 @@
             designVideo.load?.();
           }
           if (lastImageState?.src) {
-            designImage.setAttribute('src', lastImageState.src);
-            designImage.setAttribute('alt', lastImageState.alt || 'Custom design preview');
+            setDesignPreviewImage(lastImageState.src, lastImageState.alt);
+          } else {
+            setDesignPreviewImage('', '');
           }
           if (designBackButton) {
             designBackButton.hidden = true;
@@ -1723,7 +1793,14 @@
 
         try {
           const storedValue = localStorage.getItem(DESIGN_SELECTION_KEY);
-          if (storedValue && designImage) {
+          const pendingFlag = localStorage.getItem(DESIGN_SELECTION_PENDING_KEY) === 'true';
+          const pendingAtRaw = localStorage.getItem(DESIGN_SELECTION_PENDING_AT_KEY) || '';
+          const pendingAt = Number.parseInt(pendingAtRaw, 10);
+          const navEntry = performance.getEntriesByType('navigation')[0];
+          const isReload = navEntry && typeof navEntry.type === 'string' && navEntry.type === 'reload';
+          const isFresh = Number.isFinite(pendingAt) && (Date.now() - pendingAt) < 10 * 60 * 1000;
+          const shouldApply = pendingFlag && isFresh && !isReload;
+          if (storedValue && designImage && shouldApply) {
             const parsed = JSON.parse(storedValue);
             if (parsed && typeof parsed === 'object' && parsed.src) {
               const storedSwatches = Array.isArray(parsed.swatches)
@@ -1733,8 +1810,7 @@
                 setDesignColorSwatches(storedSwatches);
               }
               resetDesignSelections();
-              designImage.setAttribute('src', parsed.src);
-              designImage.setAttribute('alt', parsed.alt || 'Custom design preview');
+              setDesignPreviewImage(parsed.src, parsed.alt);
               lastImageState = {
                 src: parsed.src,
                 alt: parsed.alt || 'Custom design preview'
@@ -1748,6 +1824,8 @@
               }
             }
           }
+          localStorage.removeItem(DESIGN_SELECTION_PENDING_KEY);
+          localStorage.removeItem(DESIGN_SELECTION_PENDING_AT_KEY);
         } catch (error) {
           console.warn('Unable to load saved design selection', error);
         }
