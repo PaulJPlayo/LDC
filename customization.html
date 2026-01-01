@@ -179,6 +179,10 @@
         justify-content: center;
         gap: 0.75rem;
       }
+      .design-swatch-slider[data-swatch-align="center"] .design-swatch-track {
+        justify-content: center;
+        width: 100%;
+      }
       .design-swatch-slider button[data-swatch-prev],
       .design-swatch-slider button[data-swatch-next] {
         width: 2.5rem !important;
@@ -873,6 +877,7 @@
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
+        position: relative;
       }
       .design-preview-fill {
         width: 100%;
@@ -916,6 +921,39 @@
       }
       .design-preview-frame {
         position: relative;
+      }
+      .design-preview-clear {
+        position: absolute;
+        top: 0.65rem;
+        right: 0.65rem;
+        z-index: 3;
+        border: none;
+        width: 1.8rem;
+        height: 1.8rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.92);
+        color: #6B4A78;
+        font-size: 1.1rem;
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.18);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 150ms ease, transform 150ms ease, background 150ms ease;
+      }
+      .design-preview-clear:hover,
+      .design-preview-clear:focus-visible {
+        transform: translateY(-1px);
+        background: #ffffff;
+        color: #b05cf7;
+      }
+      .design-preview-tile.has-selection .design-preview-clear,
+      .design-preview-frame.has-image .design-preview-clear {
+        opacity: 1;
+        pointer-events: auto;
       }
       .design-preview-layer {
         width: 100%;
@@ -1171,6 +1209,7 @@
                   <div class="design-center">
                     <div class="design-preview-row">
                       <div class="design-preview-tile design-preview-tile--color" aria-live="polite">
+                        <button type="button" class="design-preview-clear" data-clear-preview-color aria-label="Clear color preview">&times;</button>
                         <div class="design-preview-fill" data-color-preview>
                           <span class="design-preview-placeholder">Color preview</span>
                           <span class="design-preview-glyph" aria-hidden="true"></span>
@@ -1178,6 +1217,7 @@
                       </div>
                       <div class="design-card-frame design-video-frame design-preview-frame" data-design-frame>
                         <button type="button" class="design-preview-return" data-design-back aria-label="Return to image" hidden>Return</button>
+                        <button type="button" class="design-preview-clear" data-clear-preview-image aria-label="Clear image preview">&times;</button>
                         <div class="design-preview-layer design-preview-image" data-design-image-wrap>
                           <div class="design-video-message design-preview-empty" data-design-placeholder>
                             <div class="design-video-message-inner">
@@ -1210,6 +1250,7 @@
                         </div>
                       </div>
                       <div class="design-preview-tile design-preview-tile--accessory" aria-live="polite">
+                        <button type="button" class="design-preview-clear" data-clear-preview-accessory aria-label="Clear accessory preview">&times;</button>
                         <div class="design-preview-fill" data-accessory-preview>
                           <span class="design-preview-placeholder">Accessory preview</span>
                           <span class="design-preview-glyph" aria-hidden="true"></span>
@@ -1287,10 +1328,10 @@
                       </button>
                       <div class="relative overflow-hidden design-swatch-window" data-swatch-window>
                         <div class="flex items-center design-swatch-track transition-transform duration-200" data-swatch-track data-design-accessories-source>
-                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.6rem; line-height:1;" aria-label="Rhinestone accessory accent" data-price="5" data-image-src="assets/rhinestone-lids-5.png" data-image-alt="Rhinestone lids">💎</span>
+                            <span class="swatch" style="background:#e0f2fe; display:flex; align-items:center; justify-content:center; color:#1f2937; font-size:0.6rem; line-height:1;" aria-label="Rhinestone accessory accent" data-price="5" data-image-src="assets/rhinestone-lids-5.png" data-image-alt="Rhinestone lids">💎</span>
                             <span class="swatch" style="background:#5eead4; display:flex; align-items:center; justify-content:center; color:#0f172a; font-size:0.7rem; line-height:1;" aria-label="Jelly accessory accent" data-price="3" data-image-src="assets/Jelly Lids - 33.png" data-image-alt="Jelly lids">🪼</span>
                             <span class="swatch" style="background: radial-gradient(circle at 35% 35%, rgba(224,242,255,0.95) 0%, rgba(96,165,250,0.35) 65%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4); display:flex; align-items:center; justify-content:center; color:#1f2937; font-size:0.7rem; line-height:1;" aria-label="Glass bow straws" data-price="3" data-image-src="assets/Glass-Bow-Straws.png" data-image-alt="Glass bow straws">🔍</span>
-                            <span class="swatch" style="background:#d8b4fe; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.7rem; line-height:1;" aria-label="Bow accent" data-price="3" data-image-src="assets/Glass-Bow-Straws.png" data-image-alt="Bow straws">🎀</span>
+                            <span class="swatch" style="background:#a7f3d0; display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.7rem; line-height:1;" aria-label="Bow accent" data-price="3" data-image-src="assets/Glass-Bow-Straws.png" data-image-alt="Bow straws">🎀</span>
                             <span class="swatch" style="background:#dbeafe; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Swirl accent" data-price="3" data-image-src="assets/Glass Twist Straws - 3.png" data-image-alt="Twist straws">🌀</span>
                             <span class="swatch" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cafe accent" data-price="1" data-image-src="assets/Straw Toppers - cafe - 1.jpeg" data-image-alt="Cafe straw toppers">☕</span>
                             <span class="swatch" style="background:#f9a8d4; display:flex; align-items:center; justify-content:center; color:#7f1d1d; font-size:0.7rem; line-height:1;" aria-label="Christmas accent" data-price="1" data-image-src="assets/Straw Toppers - Christmas - 1.jpeg" data-image-alt="Christmas straw toppers">⛄️</span>
@@ -1412,12 +1453,13 @@
         const designPriceValue = document.querySelector('[data-design-price] .design-price-value');
         const designAttachmentInput = document.getElementById('designUploadCustomization');
         let designScrollPending = false;
-        const scrollDesignPreviewIntoView = () => {
-          if (!designFrame || designScrollPending) return;
+        const scrollDesignPreviewIntoView = (targetEl = designFrame) => {
+          const target = targetEl || designFrame;
+          if (!target || designScrollPending) return;
           designScrollPending = true;
           requestAnimationFrame(() => {
             designScrollPending = false;
-            const rect = designFrame.getBoundingClientRect();
+            const rect = target.getBoundingClientRect();
             const targetTop = rect.top + window.pageYOffset - (window.innerHeight - rect.height) / 2;
             const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             window.scrollTo({
@@ -1446,10 +1488,12 @@
             designImage.setAttribute('src', src);
             designImage.setAttribute('alt', alt || 'Custom design preview');
             designImageWrap.classList.add('has-image');
+            designFrame?.classList.add('has-image');
           } else {
             designImage.removeAttribute('src');
             designImage.setAttribute('alt', 'Design preview');
             designImageWrap.classList.remove('has-image');
+            designFrame?.classList.remove('has-image');
           }
         };
         const readDesignAttachment = () => {
@@ -1471,6 +1515,9 @@
         const designAccessoryPreview = document.querySelector('[data-accessory-preview]');
         const designAccessoryPreviewWrap = designAccessoryPreview?.closest('.design-preview-tile');
         const designAccessoryPreviewGlyph = designAccessoryPreview?.querySelector('.design-preview-glyph');
+        const designColorPreviewClear = designColorPreviewWrap?.querySelector('[data-clear-preview-color]');
+        const designAccessoryPreviewClear = designAccessoryPreviewWrap?.querySelector('[data-clear-preview-accessory]');
+        const designImagePreviewClear = designFrame?.querySelector('[data-clear-preview-image]');
         let accessoryPrice = 0;
         let wrapPrice = 0;
         let selectedAccessoryLabel = '';
@@ -1682,6 +1729,18 @@
           resetDesignWrapSelection();
           updateDesignTotal();
         };
+        const clearDesignImageSelection = () => {
+          lastImageState = null;
+          selectedDesignName = '';
+          lastPrice = { amount: 0 };
+          try {
+            localStorage.removeItem(DESIGN_SELECTION_KEY);
+            localStorage.removeItem(DESIGN_SELECTION_PENDING_KEY);
+            localStorage.removeItem(DESIGN_SELECTION_PENDING_AT_KEY);
+          } catch {}
+          showImagePreview();
+          updateDesignTotal();
+        };
         const resetDesignSwatchSlider = () => {
           if (!designColorTrack) return;
           const slider = designColorTrack.closest('[data-swatch-slider]');
@@ -1698,6 +1757,22 @@
           resetDesignColorSelection();
           resetDesignSwatchSlider();
         };
+
+        designColorPreviewClear?.addEventListener('click', event => {
+          event.preventDefault();
+          resetDesignColorSelection();
+        });
+
+        designAccessoryPreviewClear?.addEventListener('click', event => {
+          event.preventDefault();
+          resetDesignAccessorySelection();
+          updateDesignTotal();
+        });
+
+        designImagePreviewClear?.addEventListener('click', event => {
+          event.preventDefault();
+          clearDesignImageSelection();
+        });
 
         const initBasePrice = () => {
           if (!designPriceValue) return;
@@ -1841,8 +1916,9 @@
             const baseVisible = Number(slider.getAttribute('data-visible') || 5);
             const mobileVisible = Number(slider.getAttribute('data-visible-mobile') || baseVisible);
             const isMobile = () => window.matchMedia('(max-width: 767px)').matches;
+            const getRequested = () => (isMobile() ? mobileVisible : baseVisible);
             const getVisible = () => {
-              const requested = isMobile() ? mobileVisible : baseVisible;
+              const requested = getRequested();
               const total = track ? track.children.length : 0;
               return total ? Math.min(requested, total) : requested;
             };
@@ -1856,15 +1932,20 @@
               const styles = getComputedStyle(track);
               const gap = parseFloat(styles.gap || styles.columnGap || '0');
               const swatchWidth = first.offsetWidth || first.getBoundingClientRect().width;
+              const requested = getRequested();
               const visible = getVisible();
-              const totalWidth = swatchWidth * visible + gap * (visible - 1);
+              const total = track.children.length;
+              const isDesignSlider = slider.classList.contains('design-swatch-slider');
+              const shouldCenter = isDesignSlider && total <= visible;
+              const widthCount = Math.max(1, shouldCenter ? requested : visible);
+              const totalWidth = swatchWidth * widthCount + gap * (widthCount - 1);
               const windowStyles = getComputedStyle(windowEl);
               const paddingX =
                 parseFloat(windowStyles.paddingLeft || '0') +
                 parseFloat(windowStyles.paddingRight || '0');
-              const isDesignSlider = slider.classList.contains('design-swatch-slider');
               const inset = isDesignSlider && isMobile() ? 1 : 0;
               windowEl.style.width = `${totalWidth + paddingX - inset}px`;
+              windowEl.style.maxWidth = '';
             };
 
             const update = () => {
@@ -1877,6 +1958,14 @@
               const total = swatches.length;
               const visible = getVisible();
               const maxIndex = Math.max(0, total - visible);
+              const isDesignSlider = slider.classList.contains('design-swatch-slider');
+              if (isDesignSlider) {
+                if (maxIndex === 0) {
+                  slider.dataset.swatchAlign = 'center';
+                } else {
+                  delete slider.dataset.swatchAlign;
+                }
+              }
               if (maxIndex === 0) {
                 index = 0;
               } else if (index < 0) {
@@ -2001,7 +2090,13 @@
               showImagePreview();
             }
           }
-          scrollDesignPreviewIntoView();
+          const previewTarget =
+            target === colorTarget
+              ? designColorPreviewWrap
+              : target === accessoryTarget
+                ? designAccessoryPreviewWrap
+                : designFrame;
+          scrollDesignPreviewIntoView(previewTarget);
         };
 
           const clearTarget = (target, placeholder) => {

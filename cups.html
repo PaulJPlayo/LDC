@@ -53,6 +53,46 @@
         background: linear-gradient(135deg, #FF7EC8 0%, #FF417E 100%);
         color: #2d0f33;
       }
+      .nav-break {
+        display: none;
+      }
+      .nav-label-full {
+        display: inline;
+      }
+      .nav-label-short {
+        display: none;
+      }
+      @media (max-width: 767px) {
+        .nav-break {
+          flex-basis: 100%;
+          height: 0;
+          display: block;
+        }
+        .top-bar nav {
+          width: 100%;
+          justify-content: space-between;
+          row-gap: 0.4rem;
+          column-gap: 0;
+        }
+        .nav-icon-cluster {
+          display: flex;
+          flex-basis: 100%;
+          width: 100%;
+          justify-content: space-evenly;
+          margin-top: 0.6rem;
+          padding: 0 1rem;
+        }
+        .swatch-slider {
+          --swatch-size: 1.35rem;
+          --swatch-gap: 0.5rem;
+          --swatch-edge: 0.125rem;
+          gap: 0.5rem;
+        }
+        .swatch-slider button {
+          width: 2rem;
+          height: 2rem;
+        }
+      }
       .nav-icon-cluster {
         display: inline-flex;
         align-items: center;
@@ -81,20 +121,20 @@
       }
       .icon-badge {
         position: absolute;
-        top: -6px;
-        right: -6px;
-        min-width: 18px;
-        height: 18px;
-        padding: 0 5px;
-        border-radius: 999px;
-        background: #f97316;
-        color: #0f172a;
-        font-size: 0.7rem;
-        font-weight: 700;
+        top: -0.4rem;
+        right: -0.25rem;
+        min-width: 1.25rem;
+        height: 1.25rem;
+        padding: 0 0.35rem;
+        border-radius: 9999px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        line-height: 1;
+        font-size: 0.68rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #FF7EC8 0%, #FF417E 100%);
+        color: #fff;
+        box-shadow: 0 6px 12px rgba(255, 65, 126, 0.32);
       }
 
       body.support-open {
@@ -352,6 +392,29 @@
         gap: 0.4rem;
         color: #fff7e6;
         font-size: 0.9rem;
+      }
+      .cart-item-options .swatch,
+      .cart-item-options .swatch-pill {
+        width: 1.25rem !important;
+        height: 1.25rem !important;
+        border-radius: 50% !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        aspect-ratio: 1 / 1;
+        overflow: hidden;
+      }
+      .cart-item-options .swatch.is-text,
+      .cart-item-options .swatch-pill.is-text {
+        width: auto !important;
+        min-width: 2.75rem;
+        height: auto !important;
+        padding: 0.15rem 0.45rem;
+        border-radius: 999px !important;
+        aspect-ratio: auto;
+        overflow: visible;
+        line-height: 1;
       }
       .cart-option {
         display: flex;
@@ -901,6 +964,14 @@
         width: 1.1rem;
         height: 1.1rem;
       }
+      .icon-button.favorites-active {
+        color: #ff5ca8;
+        box-shadow: 0 12px 28px rgba(255, 92, 168, 0.25);
+      }
+      .icon-button.favorites-active svg {
+        color: #ff5ca8;
+        fill: currentColor;
+      }
       .product-title {
         font-size: 1rem;
         font-weight: 700;
@@ -1141,25 +1212,29 @@
           <nav class="flex items-center gap-2 flex-wrap">
             <a class="nav-link" href="index.html">Home</a>
             <a class="nav-link" href="tumblers.html">Tumblers</a>
-            <span class="nav-link is-active">Cups &amp; Mugs</span>
+            <span class="nav-link is-active">
+              <span class="nav-label-full">Cups &amp; Mugs</span>
+              <span class="nav-label-short">Cups</span>
+            </span>
+            <span class="nav-break" aria-hidden="true"></span>
             <a class="nav-link" href="accessories.html">Accessories</a>
             <a class="nav-link" href="attire.html">Attire</a>
             <a class="nav-link" href="doormats.html">Doormats</a>
             <div class="nav-icon-cluster">
-              <a class="nav-icon-link relative" href="#" aria-label="Favorites" data-favorites-open>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <a class="relative inline-flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 icon-button cart-btn" href="#" aria-label="Favorites" data-favorites-open>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
                   <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                 </svg>
                 <span class="icon-badge" data-favorites-count hidden></span>
               </a>
-              <a class="nav-icon-link relative" href="#" aria-label="Cart" data-open-cart data-cart-open>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <a class="relative inline-flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 icon-button cart-btn" href="#" aria-label="Cart" data-open-cart data-cart-open>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
                   <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
                 </svg>
                 <span class="icon-badge" data-cart-count hidden></span>
               </a>
-              <a class="nav-icon-link" href="#" aria-label="Contact" data-support-open>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <a class="relative inline-flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 icon-button cart-btn" href="#" aria-label="Contact" data-support-open>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
                   <path d="M2.25 5.25A2.25 2.25 0 0 1 4.5 3h15a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 19.5 21h-15A2.25 2.25 0 0 1 2.25 18.75zm2.039-.75 7.211 5.74 7.211-5.74zM19.5 8.384l-6.401 5.096a1.5 1.5 0 0 1-1.198.27 1.5 1.5 0 0 1-.64-.27L4.86 8.384V18h14.64z" />
                 </svg>
               </a>
@@ -1747,6 +1822,7 @@
         const favoritesCta = document.querySelector('[data-favorites-cta]');
         const cartCountEl = document.querySelector('[data-cart-count]');
         const favoritesCountEl = document.querySelector('[data-favorites-count]');
+        const favoritesOpeners = document.querySelectorAll('[data-favorites-open]');
 
         const buildPreviewStyle = src => {
           if (!src) return '';
@@ -1844,6 +1920,11 @@
             favoritesCountEl.textContent = favCount > 0 ? favCount : '';
             favoritesCountEl.hidden = favCount === 0;
           }
+          const hasFavorites = favCount > 0;
+          favoritesOpeners.forEach(trigger => {
+            trigger.classList.toggle('favorites-active', hasFavorites);
+            trigger.setAttribute('aria-pressed', hasFavorites ? 'true' : 'false');
+          });
         };
 
         const openCart = () => {
@@ -1883,14 +1964,21 @@
             total += lineTotal;
             const wrapper = document.createElement('div');
             wrapper.className = 'cart-item';
+            const isAccessoryOnly = item.accessoryOnly || /straw toppers/i.test(item.name || item.title || '');
+            const isPackageItem = /^(christmas diamond|flower premium|flower deluxe)$/i.test(String(item.name || item.title || '').trim());
             const optsArray = Array.isArray(item.options) ? item.options : [];
-            const findOpt = label => optsArray.find(opt => (opt.label || '').toLowerCase() === label);
+            const filteredOptions = isAccessoryOnly
+              ? optsArray.filter(opt => (opt.label || '').toLowerCase() !== 'color')
+              : optsArray;
+            const findOpt = label => filteredOptions.find(opt => (opt.label || '').toLowerCase() === label);
             const colorOpt = findOpt('color');
             const accessoryOpt = findOpt('accessory');
             const wrapOpt = findOpt('wrap');
             const notesOpt = findOpt('notes');
+            const colorGlyph = colorOpt?.swatchGlyph || '';
+            const colorIsText = /[A-Za-z]/.test(colorGlyph);
             const colorSwatch = colorOpt
-              ? `<span class="swatch swatch-pill" title="${colorOpt.value || colorOpt.label || 'Color'}" style="${colorOpt.swatchStyle || ''}">${colorOpt.swatchGlyph || ''}</span>`
+              ? `<span class="swatch swatch-pill${colorIsText ? ' is-text' : ''}" title="${colorOpt.value || colorOpt.label || 'Color'}" style="${colorOpt.swatchStyle || ''}">${colorGlyph}</span>`
               : '';
             const displayTitle = item.name || item.title || 'Custom Design';
             const thumbStyle = item.previewStyle || buildPreviewStyle(item.image || '') || '';
@@ -1898,6 +1986,7 @@
               item.previewStyle = thumbStyle;
               saveCart();
             }
+            const colorLabelMarkup = isPackageItem ? '' : '<span class="cart-option-label">Color</span>';
             wrapper.innerHTML = `
               <div class="cart-item-thumb" style="${thumbStyle}">
                 ${item.image ? `<img src="${item.image}" alt="${displayTitle}" />` : ''}
@@ -1908,7 +1997,7 @@
                   <button type="button" class="cart-item-remove" data-remove="${item.id}" aria-label="Remove item">×</button>
                 </div>
                 <div class="cart-item-options">
-                  ${colorSwatch ? `<div class="cart-option"><span class="cart-option-label">Color</span>${colorSwatch}</div>` : ''}
+                  ${colorSwatch ? `<div class="cart-option">${colorLabelMarkup}${colorSwatch}</div>` : ''}
                   ${accessoryOpt ? `<div class="cart-option"><span class="cart-option-label">Accessory</span><span class="cart-option-value">${accessoryOpt.value || accessoryOpt.label}</span></div>` : ''}
                   ${wrapOpt ? `<div class="cart-option"><span class="cart-option-label">Wrap</span><span class="cart-option-value">${wrapOpt.value || wrapOpt.label}</span></div>` : ''}
                   ${notesOpt ? `<div class="cart-option"><span class="cart-option-label">Notes</span><span class="cart-option-value">${notesOpt.value || notesOpt.label}</span></div>` : ''}

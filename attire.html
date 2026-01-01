@@ -52,6 +52,36 @@
         background: linear-gradient(135deg, #3b82f6 0%, #22d3ee 100%);
         color: #0b1120;
       }
+      .nav-break {
+        display: none;
+      }
+      .nav-label-full {
+        display: inline;
+      }
+      .nav-label-short {
+        display: none;
+      }
+      @media (max-width: 767px) {
+        .nav-break {
+          flex-basis: 100%;
+          height: 0;
+          display: block;
+        }
+        .top-bar nav {
+          width: 100%;
+          justify-content: space-between;
+          row-gap: 0.4rem;
+          column-gap: 0;
+        }
+        .nav-icon-cluster {
+          display: flex;
+          flex-basis: 100%;
+          width: 100%;
+          justify-content: space-evenly;
+          margin-top: 0.6rem;
+          padding: 0 1rem;
+        }
+      }
       .nav-icon-cluster {
         display: inline-flex;
         align-items: center;
@@ -975,6 +1005,29 @@
         color: #fff7e6;
         font-size: 0.9rem;
       }
+      .cart-item-options .swatch,
+      .cart-item-options .swatch-pill {
+        width: 1.25rem !important;
+        height: 1.25rem !important;
+        border-radius: 50% !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        aspect-ratio: 1 / 1;
+        overflow: hidden;
+      }
+      .cart-item-options .swatch.is-text,
+      .cart-item-options .swatch-pill.is-text {
+        width: auto !important;
+        min-width: 2.75rem;
+        height: auto !important;
+        padding: 0.15rem 0.45rem;
+        border-radius: 999px !important;
+        aspect-ratio: auto;
+        overflow: visible;
+        line-height: 1;
+      }
       .cart-option {
         display: flex;
         align-items: center;
@@ -1250,7 +1303,8 @@
           <nav class="flex items-center gap-2 flex-wrap">
             <a class="nav-link" href="index.html">Home</a>
             <a class="nav-link" href="tumblers.html">Tumblers</a>
-            <a class="nav-link" href="cups.html">Cups</a>
+            <a class="nav-link" href="cups.html">Cups &amp; Mugs</a>
+            <span class="nav-break" aria-hidden="true"></span>
             <a class="nav-link" href="accessories.html">Accessories</a>
             <span class="nav-link is-active">Attire</span>
             <a class="nav-link" href="doormats.html">Doormats</a>
@@ -1715,8 +1769,10 @@
           const baseStyle = (opt?.swatchStyle || '').trim();
           const glyph = opt?.swatchGlyph || '';
           if (!baseStyle && !glyph) return '';
+          const isTextGlyph = /[A-Za-z]/.test(glyph);
           const style = (baseStyle || '') + ';';
-          return `<span class="swatch swatch-pill" style="${style.replace(/"/g, '&quot;')}">${glyph}</span>`;
+          const classes = `swatch swatch-pill${isTextGlyph ? ' is-text' : ''}`;
+          return `<span class="${classes}" style="${style.replace(/"/g, '&quot;')}">${glyph}</span>`;
         };
 
         const renderCart = () => {
@@ -1733,8 +1789,13 @@
           items.forEach(item => {
             const lineTotal = (item.price || 0) * (item.quantity || 1);
             total += lineTotal;
+            const isAccessoryOnly = item.accessoryOnly || /straw toppers/i.test(item.name || item.title || '');
+            const isPackageItem = /^(christmas diamond|flower premium|flower deluxe)$/i.test(String(item.name || item.title || '').trim());
             const opts = Array.isArray(item.options) ? item.options : [];
-            const findOpt = label => opts.find(opt => (opt.label || '').toLowerCase() === label);
+            const filteredOpts = isAccessoryOnly
+              ? opts.filter(opt => (opt.label || '').toLowerCase() !== 'color')
+              : opts;
+            const findOpt = label => filteredOpts.find(opt => (opt.label || '').toLowerCase() === label);
             const styleOpt = findOpt('style');
             const colorOpt = findOpt('color');
             const accessoryOpt = findOpt('accessory');
@@ -1750,7 +1811,7 @@
             }
             const safeThumbStyle = (thumbStyle || '').replace(/"/g, '&quot;');
             const ordered = ['color', 'accessory', 'style', 'size', 'attachment', 'notes'];
-            const remaining = opts.filter(opt => !ordered.includes((opt.label || '').toLowerCase()));
+            const remaining = filteredOpts.filter(opt => !ordered.includes((opt.label || '').toLowerCase()));
             const orderedOpts = [
               colorOpt,
               accessoryOpt,
@@ -1776,10 +1837,14 @@
                     const label = (opt.label || 'Option').replace(/:$/, '');
                     const swatch = buildSwatch(opt);
                     const value = opt.value || '';
-                    if (label.toLowerCase() === 'attachment') {
+                    const normalizedLabel = label.toLowerCase();
+                    if (normalizedLabel === 'attachment') {
                       const badge = opt.attachmentData ? ' (attached)' : '';
                       const viewLink = opt.attachmentData ? `<a href="${opt.attachmentData.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="cart-attachment-link">View</a>` : '';
                       return `<div class="cart-option"><span class="cart-option-label">${label}</span><span class="cart-option-value">${value}${badge} ${viewLink}</span></div>`;
+                    }
+                    if (normalizedLabel === 'package' || (normalizedLabel === 'color' && isPackageItem)) {
+                      return `<div class="cart-option"><span class="cart-option-value">${swatch}${value}</span></div>`;
                     }
                     return `<div class="cart-option"><span class="cart-option-label">${label}</span><span class="cart-option-value">${swatch}${value}</span></div>`;
                   }).join('')}
@@ -1818,9 +1883,13 @@
             row.className = 'favorite-item';
             const thumbStyle = item.previewStyle || (item.image ? `background-image:url('${item.image}'); background-size:cover; background-position:center;` : '');
             const safeThumbStyle = thumbStyle ? thumbStyle.replace(/"/g, '&quot;') : '';
+            const isAccessoryOnly = item.accessoryOnly || /straw toppers/i.test(item.name || item.title || '');
             const opts = Array.isArray(item.options) ? item.options : [];
-            const colorOpt = opts.find(opt => (opt.label || '').toLowerCase() === 'color');
-            const accessoryOpt = opts.find(opt => (opt.label || '').toLowerCase() === 'accessory');
+            const filteredOpts = isAccessoryOnly
+              ? opts.filter(opt => (opt.label || '').toLowerCase() !== 'color')
+              : opts;
+            const colorOpt = filteredOpts.find(opt => (opt.label || '').toLowerCase() === 'color');
+            const accessoryOpt = filteredOpts.find(opt => (opt.label || '').toLowerCase() === 'accessory');
             const swatch = buildSwatch(colorOpt || accessoryOpt || {});
             row.innerHTML = `
               <div class="favorite-thumb" style="${safeThumbStyle}">

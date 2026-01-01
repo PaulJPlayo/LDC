@@ -53,6 +53,46 @@
         background: linear-gradient(135deg, #FF9AED 0%, #FF5CA8 100%);
         color: #2c0f2d;
       }
+      .nav-break {
+        display: none;
+      }
+      .nav-label-full {
+        display: inline;
+      }
+      .nav-label-short {
+        display: none;
+      }
+      @media (max-width: 767px) {
+        .nav-break {
+          flex-basis: 100%;
+          height: 0;
+          display: block;
+        }
+        .top-bar nav {
+          width: 100%;
+          justify-content: space-between;
+          row-gap: 0.4rem;
+          column-gap: 0;
+        }
+        .nav-icon-cluster {
+          display: flex;
+          flex-basis: 100%;
+          width: 100%;
+          justify-content: space-evenly;
+          margin-top: 0.6rem;
+          padding: 0 1rem;
+        }
+        .swatch-slider {
+          --swatch-size: 1.35rem;
+          --swatch-gap: 0.5rem;
+          --swatch-edge: 0.125rem;
+          gap: 0.5rem;
+        }
+        .swatch-slider button {
+          width: 2rem;
+          height: 2rem;
+        }
+      }
       .nav-icon-cluster {
         display: inline-flex;
         align-items: center;
@@ -81,20 +121,20 @@
       }
       .icon-badge {
         position: absolute;
-        top: -6px;
-        right: -6px;
-        min-width: 18px;
-        height: 18px;
-        padding: 0 5px;
-        border-radius: 999px;
-        background: #f97316;
-        color: #0f172a;
-        font-size: 0.7rem;
-        font-weight: 700;
+        top: -0.4rem;
+        right: -0.25rem;
+        min-width: 1.25rem;
+        height: 1.25rem;
+        padding: 0 0.35rem;
+        border-radius: 9999px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        line-height: 1;
+        font-size: 0.68rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #FF7EC8 0%, #FF417E 100%);
+        color: #fff;
+        box-shadow: 0 6px 12px rgba(255, 65, 126, 0.32);
       }
 
       body.support-open,
@@ -529,6 +569,14 @@
         transform: translateY(-1px);
         box-shadow: 0 14px 28px rgba(153, 40, 177, 0.28);
       }
+      .icon-button.favorites-active {
+        color: #ff5ca8;
+        box-shadow: 0 12px 28px rgba(255, 92, 168, 0.25);
+      }
+      .icon-button.favorites-active svg {
+        color: #ff5ca8;
+        fill: currentColor;
+      }
       .icon-button svg {
         width: 1.1rem;
         height: 1.1rem;
@@ -741,6 +789,29 @@
         color: #fff7e6;
         font-size: 0.9rem;
       }
+      .cart-item-options .swatch,
+      .cart-item-options .swatch-pill {
+        width: 1.25rem !important;
+        height: 1.25rem !important;
+        border-radius: 50% !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        aspect-ratio: 1 / 1;
+        overflow: hidden;
+      }
+      .cart-item-options .swatch.is-text,
+      .cart-item-options .swatch-pill.is-text {
+        width: auto !important;
+        min-width: 2.75rem;
+        height: auto !important;
+        padding: 0.15rem 0.45rem;
+        border-radius: 999px !important;
+        aspect-ratio: auto;
+        overflow: visible;
+        line-height: 1;
+      }
       .cart-option {
         display: flex;
         align-items: center;
@@ -939,6 +1010,51 @@
         font-size: 0.85rem;
         color: #fff7e6;
       }
+      .favorite-options {
+        margin-top: 0.4rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        font-size: 0.75rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #fff7e6;
+      }
+      .favorite-option {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+      .favorite-option .label {
+        font-weight: 600;
+      }
+      .favorite-option .value {
+        font-weight: 600;
+      }
+      .favorite-swatch {
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        aspect-ratio: 1 / 1;
+        overflow: hidden;
+        border: 1px solid rgba(15, 23, 42, 0.25);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+        font-size: 0.6rem;
+        line-height: 1;
+      }
+      .favorite-swatch.is-text {
+        width: auto;
+        min-width: 2.75rem;
+        height: auto;
+        padding: 0.15rem 0.45rem;
+        border-radius: 999px;
+        overflow: visible;
+        line-height: 1;
+      }
       .favorite-actions {
         margin-top: 0.5rem;
         display: flex;
@@ -999,25 +1115,29 @@
           <nav class="flex items-center gap-2 flex-wrap">
             <a class="nav-link" href="index.html">Home</a>
             <a class="nav-link" href="tumblers.html">Tumblers</a>
-            <a class="nav-link" href="cups.html">Cups</a>
+            <a class="nav-link" href="cups.html">
+              <span class="nav-label-full">Cups &amp; Mugs</span>
+              <span class="nav-label-short">Cups</span>
+            </a>
+            <span class="nav-break" aria-hidden="true"></span>
             <span class="nav-link is-active">Accessories</span>
             <a class="nav-link" href="attire.html">Attire</a>
             <a class="nav-link" href="doormats.html">Doormats</a>
             <div class="nav-icon-cluster">
-              <a class="nav-icon-link relative" href="#" aria-label="Favorites" data-favorites-open>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <a class="relative inline-flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 icon-button cart-btn" href="#" aria-label="Favorites" data-favorites-open>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
                   <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                 </svg>
                 <span class="icon-badge" data-favorites-count hidden></span>
               </a>
-              <a class="nav-icon-link relative" href="#" aria-label="Cart" data-open-cart data-cart-open>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <a class="relative inline-flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 icon-button cart-btn" href="#" aria-label="Cart" data-open-cart data-cart-open>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
                   <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
                 </svg>
                 <span class="icon-badge" data-cart-count hidden></span>
               </a>
-              <a class="nav-icon-link" href="#" aria-label="Contact" data-support-open>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <a class="relative inline-flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 icon-button cart-btn" href="#" aria-label="Contact" data-support-open>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
                   <path d="M2.25 5.25A2.25 2.25 0 0 1 4.5 3h15a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 19.5 21h-15A2.25 2.25 0 0 1 2.25 18.75zm2.039-.75 7.211 5.74 7.211-5.74zM19.5 8.384l-6.401 5.096a1.5 1.5 0 0 1-1.198.27 1.5 1.5 0 0 1-.64-.27L4.86 8.384V18h14.64z" />
                 </svg>
               </a>
@@ -1088,7 +1208,7 @@
                       </button>
                       <div class="swatch-slider-window" data-swatch-window>
                         <div class="swatch-slider-track" data-swatch-track>
-                        <span class="swatch" aria-label="Rhinestone" data-swatch-type="accessory" data-accessory-label="Rhinestone" style="display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.6rem; line-height:1; background:#B678F5;">💎</span>
+                        <span class="swatch" aria-label="Rhinestone" data-swatch-type="accessory" data-accessory-label="Rhinestone" style="display:flex; align-items:center; justify-content:center; color:#1f2937; font-size:0.6rem; line-height:1; background:#e0f2fe;">💎</span>
                         </div>
                       </div>
                       <button type="button" class="swatch-arrow light-arrow" data-swatch-next aria-label="Next accent">
@@ -1183,7 +1303,7 @@
                     </button>
                     <div class="swatch-slider-window" data-swatch-window>
                       <div class="swatch-slider-track" data-swatch-track>
-                        <span class="swatch" aria-label="Bow accent" data-swatch-type="accessory" data-accessory-label="Ribbon" style="display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.7rem; line-height:1; background:#d8b4fe;">🎀</span>
+                        <span class="swatch" aria-label="Bow accent" data-swatch-type="accessory" data-accessory-label="Ribbon" style="display:flex; align-items:center; justify-content:center; color:#ffffff; font-size:0.7rem; line-height:1; background:#a7f3d0;">🎀</span>
                         <span class="swatch" aria-label="Glass accessory accent" style="display:flex; align-items:center; justify-content:center; color:#1f2937; font-size:0.7rem; line-height:1; background: radial-gradient(circle at 35% 35%, rgba(224,242,255,0.95) 0%, rgba(96,165,250,0.35) 65%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4);">🔍</span>
                       </div>
                     </div>
@@ -1301,7 +1421,7 @@
                 </div>
               </article>
 
-              <article class="product-card group relative">
+              <article class="product-card group relative" data-accessory-only="true">
                 <div class="product-media">
                   <img id="accessoryStrawToppersImage" src="assets/Straw Toppers - cafe - 1.jpeg" alt="Straw toppers cafe set" loading="lazy" />
                 </div>
@@ -1312,12 +1432,12 @@
                     </button>
                     <div class="swatch-slider-window" data-swatch-window>
                       <div class="swatch-slider-track" data-swatch-track>
-                        <span class="swatch cursor-pointer" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cafe accent" data-image-target="accessoryStrawToppersImage" data-image-src="assets/Straw Toppers - cafe - 1.jpeg" data-image-alt="Straw toppers cafe set">☕</span>
-                        <span class="swatch cursor-pointer" style="background:#f9a8d4; display:flex; align-items:center; justify-content:center; color:#7f1d1d; font-size:0.7rem; line-height:1;" aria-label="Christmas accent" data-image-target="accessoryStrawToppersImage" data-image-src="assets/straw toppers - christmas - 1.jpeg" data-image-alt="Straw toppers Christmas set">⛄️</span>
-                        <span class="swatch cursor-pointer" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cat accent" data-image-target="accessoryStrawToppersImage" data-image-src="assets/Straw Topper - Cats - 1.jpeg" data-image-alt="Straw toppers cat design">🐱</span>
-                        <span class="swatch cursor-pointer" style="background:#86efac; display:flex; align-items:center; justify-content:center; color:#14532d; font-size:0.7rem; line-height:1;" aria-label="Cactus accent" data-image-target="accessoryStrawToppersImage" data-image-src="assets/Straw Toppers - Cactus - 1.png" data-image-alt="Straw toppers cactus design">🌵</span>
-                        <span class="swatch cursor-pointer" style="background:#93c5fd; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Beach cup accent" data-image-target="accessoryStrawToppersImage" data-image-src="assets/straw toppers - beach cup -1.png" data-image-alt="Straw toppers beach cup design">🥤</span>
-                        <span class="swatch cursor-pointer" style="background:#fef3c7; display:flex; align-items:center; justify-content:center; color:#92400e; font-size:0.7rem; line-height:1;" aria-label="Football accent" data-image-target="accessoryStrawToppersImage" data-image-src="assets/straw toppers - sports - 1.png" data-image-alt="Straw toppers sports design">🏈</span>
+                        <span class="swatch cursor-pointer" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cafe accent" data-swatch-type="accessory" data-accessory-label="Cafe" data-image-target="accessoryStrawToppersImage" data-image-src="assets/Straw Toppers - cafe - 1.jpeg" data-image-alt="Straw toppers cafe set">☕</span>
+                        <span class="swatch cursor-pointer" style="background:#f9a8d4; display:flex; align-items:center; justify-content:center; color:#7f1d1d; font-size:0.7rem; line-height:1;" aria-label="Christmas accent" data-swatch-type="accessory" data-accessory-label="Christmas" data-image-target="accessoryStrawToppersImage" data-image-src="assets/straw toppers - christmas - 1.jpeg" data-image-alt="Straw toppers Christmas set">⛄️</span>
+                        <span class="swatch cursor-pointer" style="background:#fda4af; display:flex; align-items:center; justify-content:center; color:#7e3030; font-size:0.7rem; line-height:1;" aria-label="Cat accent" data-swatch-type="accessory" data-accessory-label="Cat" data-image-target="accessoryStrawToppersImage" data-image-src="assets/Straw Topper - Cats - 1.jpeg" data-image-alt="Straw toppers cat design">🐱</span>
+                        <span class="swatch cursor-pointer" style="background:#86efac; display:flex; align-items:center; justify-content:center; color:#14532d; font-size:0.7rem; line-height:1;" aria-label="Cactus accent" data-swatch-type="accessory" data-accessory-label="Cactus" data-image-target="accessoryStrawToppersImage" data-image-src="assets/Straw Toppers - Cactus - 1.png" data-image-alt="Straw toppers cactus design">🌵</span>
+                        <span class="swatch cursor-pointer" style="background:#93c5fd; display:flex; align-items:center; justify-content:center; color:#1d4ed8; font-size:0.7rem; line-height:1;" aria-label="Beach cup accent" data-swatch-type="accessory" data-accessory-label="Beach Cup" data-image-target="accessoryStrawToppersImage" data-image-src="assets/straw toppers - beach cup -1.png" data-image-alt="Straw toppers beach cup design">🥤</span>
+                        <span class="swatch cursor-pointer" style="background:#fef3c7; display:flex; align-items:center; justify-content:center; color:#92400e; font-size:0.7rem; line-height:1;" aria-label="Football accent" data-swatch-type="accessory" data-accessory-label="Football" data-image-target="accessoryStrawToppersImage" data-image-src="assets/straw toppers - sports - 1.png" data-image-alt="Straw toppers sports design">🏈</span>
                       </div>
                     </div>
                     <button type="button" class="swatch-arrow light-arrow" data-swatch-next aria-label="Next accessory">
@@ -1338,7 +1458,7 @@
                 </div>
               </article>
 
-              <article class="product-card group relative">
+              <article class="product-card group relative" data-option-label="Package">
                 <div class="product-media">
                   <div class="badge-stack">
                     <span class="badge badge-limited">Limited Edition</span>
@@ -1367,7 +1487,7 @@
                 </div>
               </article>
 
-              <article class="product-card group relative">
+              <article class="product-card group relative" data-option-label="Package">
                 <div class="product-media">
                   <img src="assets/Flower Premium - 15.png" alt="Flower premium accessory set" loading="lazy" />
                 </div>
@@ -1393,7 +1513,7 @@
                 </div>
               </article>
 
-              <article class="product-card group relative">
+              <article class="product-card group relative" data-option-label="Package">
                 <div class="product-media">
                   <img src="assets/Flower Deluxe - 10.png" alt="Flower deluxe accessory set" loading="lazy" />
                 </div>
@@ -1606,6 +1726,7 @@
         const favoritesCta = document.querySelector('[data-favorites-cta]');
         const cartCountEl = document.querySelector('[data-cart-count]');
         const favoritesCountEl = document.querySelector('[data-favorites-count]');
+        const favoritesOpeners = document.querySelectorAll('[data-favorites-open]');
 
         const buildPreviewStyle = src => {
           if (!src) return '';
@@ -1632,7 +1753,8 @@
           if (!image && previewStyle) {
             image = extractImageFromStyle(previewStyle);
           }
-          return { ...item, name, title: item.title || name, image, previewImage: image, previewStyle, options: Array.isArray(item.options) ? item.options : [] };
+          const accessoryOnly = Boolean(item.accessoryOnly) || /straw toppers/i.test(name);
+          return { ...item, name, title: item.title || name, image, previewImage: image, previewStyle, accessoryOnly, options: Array.isArray(item.options) ? item.options : [] };
         };
         let cartState = loadCartState();
         cartState.items = (cartState.items || []).map(normalizeCartItem).filter(Boolean);
@@ -1653,6 +1775,7 @@
           if (!image && previewStyle) {
             image = extractImageFromStyle(previewStyle);
           }
+          const accessoryOnly = Boolean(item.accessoryOnly) || /straw toppers/i.test(name);
           const options = Array.isArray(item.options)
             ? item.options.map(opt => ({
                 label: String(opt?.label ?? '').trim(),
@@ -1661,7 +1784,7 @@
                 swatchGlyph: typeof opt?.swatchGlyph === 'string' ? opt.swatchGlyph : ''
               }))
             : [];
-          return { ...item, name, title: item.title || name, image, previewImage: image, previewStyle, options };
+          return { ...item, name, title: item.title || name, image, previewImage: image, previewStyle, accessoryOnly, options };
         };
         let favoritesState = loadFavoritesState();
         favoritesState.items = (favoritesState.items || []).map(normalizeFavorite).filter(Boolean);
@@ -1702,6 +1825,11 @@
             favoritesCountEl.textContent = favCount > 0 ? favCount : '';
             favoritesCountEl.hidden = favCount === 0;
           }
+          const hasFavorites = favCount > 0;
+          favoritesOpeners.forEach(trigger => {
+            trigger.classList.toggle('favorites-active', hasFavorites);
+            trigger.setAttribute('aria-pressed', hasFavorites ? 'true' : 'false');
+          });
         };
 
         const openCart = () => {
@@ -1741,14 +1869,29 @@
             total += lineTotal;
             const wrapper = document.createElement('div');
             wrapper.className = 'cart-item';
+            const isAccessoryOnly = item.accessoryOnly || /straw toppers/i.test(item.name || item.title || '');
+            const isPackageItem = /^(christmas diamond|flower premium|flower deluxe)$/i.test(String(item.name || item.title || '').trim());
             const optsArray = Array.isArray(item.options) ? item.options : [];
-            const findOpt = label => optsArray.find(opt => (opt.label || '').toLowerCase() === label);
+            const filteredOptions = isAccessoryOnly
+              ? optsArray.filter(opt => (opt.label || '').toLowerCase() !== 'color')
+              : optsArray;
+            const findOpt = label => filteredOptions.find(opt => (opt.label || '').toLowerCase() === label);
             const colorOpt = findOpt('color');
             const accessoryOpt = findOpt('accessory');
             const wrapOpt = findOpt('wrap');
             const notesOpt = findOpt('notes');
+            const colorValue = colorOpt ? (colorOpt.value || colorOpt.label || '') : '';
+            const colorGlyph = colorOpt?.swatchGlyph || '';
+            const colorIsText = /[A-Za-z]/.test(colorGlyph);
             const colorSwatch = colorOpt
-              ? `<span class="swatch swatch-pill" title="${colorOpt.value || colorOpt.label || 'Color'}" style="${colorOpt.swatchStyle || ''}">${colorOpt.swatchGlyph || ''}</span>`
+              ? `<span class="swatch swatch-pill${colorIsText ? ' is-text' : ''}" title="${colorOpt.value || colorOpt.label || 'Color'}" style="${colorOpt.swatchStyle || ''}">${colorGlyph}</span>`
+              : '';
+            const colorLabelMarkup = isPackageItem ? '' : '<span class="cart-option-label">Color</span>';
+            const accessoryValue = accessoryOpt ? (accessoryOpt.value || accessoryOpt.label || '') : '';
+            const accessoryGlyph = accessoryOpt?.swatchGlyph || '';
+            const accessoryIsText = /[A-Za-z]/.test(accessoryGlyph);
+            const accessorySwatch = accessoryOpt
+              ? `<span class="swatch swatch-pill${accessoryIsText ? ' is-text' : ''}" title="${accessoryOpt.value || accessoryOpt.label || 'Accessory'}" style="${accessoryOpt.swatchStyle || ''}">${accessoryGlyph}</span>`
               : '';
             const displayTitle = item.name || item.title || 'Custom Design';
             const thumbStyle = item.previewStyle || buildPreviewStyle(item.image || '') || '';
@@ -1766,8 +1909,8 @@
                   <button type="button" class="cart-item-remove" data-remove="${item.id}" aria-label="Remove item">×</button>
                 </div>
                 <div class="cart-item-options">
-                  ${colorSwatch ? `<div class="cart-option"><span class="cart-option-label">Color</span>${colorSwatch}</div>` : ''}
-                  ${accessoryOpt ? `<div class="cart-option"><span class="cart-option-label">Accessory</span><span class="cart-option-value">${accessoryOpt.value || accessoryOpt.label}</span></div>` : ''}
+                  ${colorSwatch ? `<div class="cart-option">${colorLabelMarkup}${colorSwatch}${colorValue ? `<span class="cart-option-value">${colorValue}</span>` : ''}</div>` : ''}
+                  ${accessoryOpt ? `<div class="cart-option"><span class="cart-option-label">Accessory</span>${accessorySwatch}${accessoryValue ? `<span class="cart-option-value">${accessoryValue}</span>` : ''}</div>` : ''}
                   ${wrapOpt ? `<div class="cart-option"><span class="cart-option-label">Wrap</span><span class="cart-option-value">${wrapOpt.value || wrapOpt.label}</span></div>` : ''}
                   ${notesOpt ? `<div class="cart-option"><span class="cart-option-label">Notes</span><span class="cart-option-value">${notesOpt.value || notesOpt.label}</span></div>` : ''}
                 </div>
@@ -1847,11 +1990,46 @@
             }
             const imgTag = item.image ? `<img src="${item.image}" alt="${item.title || item.name || 'Favorite'}" />` : '';
             const preview = `<div class="favorite-thumb" style="${thumbStyle}">${imgTag}</div>`;
+            const isAccessoryOnly = item.accessoryOnly || /straw toppers/i.test(item.name || item.title || '');
+            const isPackageItem = /^(christmas diamond|flower premium|flower deluxe)$/i.test(String(item.name || item.title || '').trim());
+            const options = Array.isArray(item.options)
+              ? item.options.filter(opt => {
+                  if (!opt || !(opt.label || opt.value)) return false;
+                  if (isAccessoryOnly && (opt.label || '').toLowerCase() === 'color') return false;
+                  return true;
+                })
+              : [];
+            const optionsMarkup = options.length
+              ? `<div class="favorite-options">${options.map(opt => {
+                  const normalizedLabel = (opt.label || '').toLowerCase();
+                  const isColor = normalizedLabel === 'color';
+                  const isAccessory = normalizedLabel === 'accessory';
+                  const swatchGlyph = opt.swatchGlyph || '';
+                  const isTextSwatch = /[A-Za-z]/.test(swatchGlyph);
+                  const baseSwatchStyle = opt.swatchStyle && opt.swatchStyle.trim()
+                    ? opt.swatchStyle.trim()
+                    : (isAccessory ? 'background:#d8b4fe;' : 'background:#e2e8f0;');
+                  const swatch = (isColor || isAccessory)
+                    ? `<span class="favorite-swatch${isTextSwatch ? ' is-text' : ''}" style="${baseSwatchStyle.replace(/"/g, '&quot;')};">${swatchGlyph}</span>`
+                    : '';
+                  if (isColor && isPackageItem) {
+                    return `<span class="favorite-option">${swatch} <span class="value">${opt.value || ''}</span></span>`;
+                  }
+                  if (isColor) {
+                    return `<span class="favorite-option"><span class="label">Color:</span>${swatch} <span class="value">${opt.value || ''}</span></span>`;
+                  }
+                  if (isAccessory) {
+                    return `<span class="favorite-option"><span class="label">Accessory:</span>${swatch} <span class="value">${opt.value || ''}</span></span>`;
+                  }
+                  return `<span class="favorite-option"><span class="label">${opt.label}:</span> <span class="value">${opt.value || ''}</span></span>`;
+                }).join('')}</div>`
+              : '';
             row.innerHTML = `
               ${preview}
               <div>
                 <div class="favorite-title">${item.name || item.title || 'Favorite'}</div>
                 <div class="favorite-meta">${formatCurrency(item.price || 0)}</div>
+                ${optionsMarkup}
                 <div class="favorite-actions">
                   <button type="button" class="favorites-btn favorite-cart-btn" data-fav-add-cart="${item.id}">Add to Cart</button>
                   <button type="button" class="favorites-btn" data-fav-remove="${item.id}">Remove</button>
@@ -1916,23 +2094,80 @@
         const getProductDetails = trigger => {
           const card = trigger.closest('.product-card');
           if (!card) return null;
+          const accessoryOnly = card.dataset.accessoryOnly === 'true';
           const title = card.querySelector('.product-title, .tile-title')?.textContent?.trim() || 'Custom Design';
           const priceText = card.querySelector('.product-price, .price-line')?.textContent || '';
           const price = Number(priceText.replace(/[^0-9.]/g, '')) || 0;
           const image = card.querySelector('img')?.getAttribute('src') || '';
           const previewStyle = buildPreviewStyle(image);
 
-          const fallbackSwatch = card.querySelector('[data-image-target][data-image-src]');
-          const colorLabel = card.dataset.selectedColorLabel || fallbackSwatch?.getAttribute('aria-label') || '';
-          const colorStyle = card.dataset.selectedColorStyle || fallbackSwatch?.getAttribute('style') || '';
+          const activeSwatch = card.querySelector('.swatch.is-active');
+          const activeSwatchType = (activeSwatch?.getAttribute('data-swatch-type') || '').toLowerCase();
+          const activeSwatchLabel =
+            activeSwatch?.getAttribute('data-accessory-label') ||
+            activeSwatch?.getAttribute('aria-label') ||
+            activeSwatch?.getAttribute('title') ||
+            activeSwatch?.getAttribute('data-image-alt') ||
+            '';
+          const activeSwatchStyle = activeSwatch?.getAttribute('style') || '';
+          const activeSwatchGlyph = (activeSwatch?.textContent || '').trim();
+
+          const fallbackColorSwatch = card.querySelector('[data-image-target][data-image-src]:not([data-swatch-type=\"accessory\"]), .swatch:not([data-swatch-type=\"accessory\"])');
+          let colorLabel = accessoryOnly ? '' : (card.dataset.selectedColorLabel || '');
+          if (!accessoryOnly && !colorLabel && activeSwatchType !== 'accessory' && activeSwatchLabel) {
+            colorLabel = activeSwatchLabel;
+          }
+          if (!accessoryOnly && !colorLabel && fallbackColorSwatch) {
+            colorLabel =
+              fallbackColorSwatch.getAttribute('aria-label') ||
+              fallbackColorSwatch.getAttribute('title') ||
+              fallbackColorSwatch.getAttribute('data-image-alt') ||
+              '';
+          }
+          let colorStyle = accessoryOnly ? '' : (card.dataset.selectedColorStyle || '');
+          if (!accessoryOnly && !colorStyle && activeSwatchType !== 'accessory' && activeSwatchStyle) {
+            colorStyle = activeSwatchStyle;
+          }
+          if (!accessoryOnly && !colorStyle && fallbackColorSwatch) {
+            colorStyle = fallbackColorSwatch.getAttribute('style') || '';
+          }
+          const colorGlyph = accessoryOnly ? '' : (card.dataset.selectedColorGlyph || '');
+
+          const fallbackAccessorySwatch = card.querySelector('[data-swatch-type=\"accessory\"]');
+          let accessoryLabel = card.dataset.selectedAccessory || '';
+          if (!accessoryLabel && activeSwatchType === 'accessory' && activeSwatchLabel) {
+            accessoryLabel = activeSwatchLabel;
+          }
+          if (!accessoryLabel && fallbackAccessorySwatch) {
+            accessoryLabel =
+              fallbackAccessorySwatch.getAttribute('data-accessory-label') ||
+              fallbackAccessorySwatch.getAttribute('aria-label') ||
+              fallbackAccessorySwatch.getAttribute('title') ||
+              '';
+          }
+          let accessoryStyle = card.dataset.selectedAccessoryStyle || '';
+          if (!accessoryStyle && activeSwatchType === 'accessory' && activeSwatchStyle) {
+            accessoryStyle = activeSwatchStyle;
+          }
+          if (!accessoryStyle && fallbackAccessorySwatch) {
+            accessoryStyle = fallbackAccessorySwatch.getAttribute('style') || '';
+          }
+          const accessoryGlyph =
+            card.dataset.selectedAccessoryGlyph ||
+            (activeSwatchType === 'accessory'
+              ? activeSwatchGlyph
+              : (fallbackAccessorySwatch?.textContent || '').trim());
 
           const options = [];
-          if (colorLabel) options.push({ label: 'Color', value: colorLabel, swatchStyle: colorStyle });
-          if (card.dataset.selectedAccessory) options.push({ label: 'Accessory', value: card.dataset.selectedAccessory });
+          if (!accessoryOnly && colorLabel) options.push({ label: 'Color', value: colorLabel, swatchStyle: colorStyle, swatchGlyph: colorGlyph });
+          if (accessoryLabel) options.push({ label: 'Accessory', value: accessoryLabel, swatchStyle: accessoryStyle, swatchGlyph: accessoryGlyph });
           if (card.dataset.selectedWrap) options.push({ label: 'Wrap', value: card.dataset.selectedWrap });
           if (card.dataset.selectedNotes) options.push({ label: 'Notes', value: card.dataset.selectedNotes });
 
-          const baseId = `${title}-${colorLabel || 'default'}-${price}`;
+          const idParts = [title, price];
+          if (!accessoryOnly && colorLabel) idParts.push(`color:${colorLabel}`);
+          if (accessoryLabel) idParts.push(`accessory:${accessoryLabel}`);
+          const baseId = idParts.join('|');
 
           return {
             id: `${baseId}-${Date.now()}`,
@@ -1943,7 +2178,8 @@
             image,
             quantity: 1,
             previewStyle,
-            options
+            options,
+            accessoryOnly
           };
         };
 
@@ -2045,7 +2281,7 @@
             const priceValue = swatch.getAttribute('data-price');
             const limitedTargetId = swatch.getAttribute('data-limited-target');
             const limitedValue = swatch.getAttribute('data-limited');
-            const swatchType = swatch.getAttribute('data-swatch-type');
+            const swatchType = (swatch.getAttribute('data-swatch-type') || '').toLowerCase();
             const accessoryLabel = swatch.getAttribute('data-accessory-label');
 
             const apply = () => {
@@ -2073,10 +2309,17 @@
               const card = swatch.closest('.product-card');
               if (card) {
                 const label = swatch.getAttribute('aria-label') || swatch.getAttribute('title') || swatch.textContent?.trim() || '';
-                card.dataset.selectedColorLabel = label;
-                card.dataset.selectedColorStyle = swatch.getAttribute('style') || '';
+                const styleValue = swatch.getAttribute('style') || '';
+                const glyph = (swatch.textContent || '').trim();
                 if (swatchType === 'accessory') {
-                  card.dataset.selectedAccessory = accessoryLabel || label;
+                  const accessoryValue = accessoryLabel || label;
+                  if (accessoryValue) card.dataset.selectedAccessory = accessoryValue;
+                  if (styleValue) card.dataset.selectedAccessoryStyle = styleValue;
+                  if (glyph) card.dataset.selectedAccessoryGlyph = glyph;
+                } else {
+                  if (label) card.dataset.selectedColorLabel = label;
+                  if (styleValue) card.dataset.selectedColorStyle = styleValue;
+                  if (glyph) card.dataset.selectedColorGlyph = glyph;
                 }
               }
               activateSwatchVisual(swatch);
@@ -2090,8 +2333,14 @@
               }
             });
 
-            if (!swatch.closest('.product-card')?.dataset.selectedColorLabel) {
-              apply();
+            const card = swatch.closest('.product-card');
+            if (card) {
+              const hasSelection = swatchType === 'accessory'
+                ? (card.dataset.selectedAccessory || card.dataset.selectedAccessoryStyle)
+                : (card.dataset.selectedColorLabel || card.dataset.selectedColorStyle);
+              if (!hasSelection) {
+                apply();
+              }
             }
             ensureDefaultSwatchActive();
           });
