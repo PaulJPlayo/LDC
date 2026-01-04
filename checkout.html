@@ -76,7 +76,13 @@
       }
       @media (min-width: 860px) {
         .checkout-content {
-          grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+          grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+        }
+        .checkout-summary {
+          order: 1;
+        }
+        .checkout-items {
+          order: 2;
         }
       }
       .checkout-items {
@@ -122,7 +128,7 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 0.75rem;
-        padding: 1rem;
+        padding: 1rem 2.75rem 1rem 1rem;
         border: 1px solid rgba(255, 255, 255, 0.18);
         border-radius: 1rem;
         background: rgba(255, 255, 255, 0.12);
@@ -182,6 +188,31 @@
         gap: 0.1rem;
         color: rgba(255, 255, 255, 0.9);
         font-size: 0.9rem;
+      }
+      .checkout-item-color {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        margin-top: 0.25rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.9rem;
+      }
+      .checkout-item-swatch {
+        width: 1rem;
+        height: 1rem;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(15, 23, 42, 0.25);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+        line-height: 1;
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .checkout-item-swatch.is-text {
+        font-size: 0.55rem;
       }
       .checkout-item-options .label,
       .checkout-item-notes .label {
@@ -277,9 +308,133 @@
         box-shadow: none;
         transform: none;
       }
+      .checkout-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        margin-bottom: 1.75rem;
+      }
+      .checkout-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .checkout-section-title {
+        margin: 0;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.82);
+      }
+      .checkout-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.85rem;
+      }
+      .checkout-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+      .checkout-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: rgba(255, 255, 255, 0.7);
+      }
+      .checkout-input,
+      .checkout-select {
+        height: 2.5rem;
+        border-radius: 0.85rem;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        background: rgba(15, 23, 42, 0.2);
+        color: #fff;
+        padding: 0 0.9rem;
+        font-size: 0.9rem;
+        outline: none;
+      }
+      .checkout-input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+      }
+      .checkout-input:focus,
+      .checkout-select:focus {
+        border-color: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
+      }
+      .checkout-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+      }
+      .checkout-option {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.65rem 0.85rem;
+        border-radius: 0.9rem;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(15, 23, 42, 0.15);
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.9);
+        transition: background 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+        cursor: pointer;
+      }
+      .checkout-option.is-selected {
+        background: rgba(255, 255, 255, 0.92);
+        border-color: rgba(255, 255, 255, 0.9);
+        color: #1f1644;
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.22);
+      }
+      .checkout-option.is-selected .option-label,
+      .checkout-option.is-selected .option-amount {
+        color: #1f1644;
+      }
+      .checkout-option input {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+        margin: 0;
+        pointer-events: none;
+      }
+      .checkout-manual-note {
+        margin-top: 0.75rem;
+        padding: 0.85rem 1rem;
+        border-radius: 0.9rem;
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        color: rgba(255, 255, 255, 0.92);
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+      .checkout-option .option-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+      }
+      .checkout-option .option-amount {
+        font-weight: 700;
+        letter-spacing: 0.08em;
+      }
+      .checkout-message {
+        margin-top: 0.8rem;
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.85);
+        min-height: 1.2rem;
+      }
+      .checkout-message[data-tone='error'] {
+        color: #fecaca;
+      }
+      .checkout-message[data-tone='success'] {
+        color: #bbf7d0;
+      }
     </style>
   </head>
-  <body>
+  <body data-medusa-enabled="true" data-medusa-backend="http://127.0.0.1:9000" data-medusa-publishable-key="pk_83213f0f437bbd64a53aa3d4402d9d6a1680bf1e1f1972a0cb1b1bea271f2a13">
     <div class="checkout-shell">
       <main class="checkout-card" aria-labelledby="checkout-heading">
         <header class="checkout-header">
@@ -297,6 +452,79 @@
         <div class="checkout-content">
           <section class="checkout-items" data-checkout-items aria-live="polite"></section>
           <aside class="checkout-summary" aria-label="Order summary">
+            <div class="checkout-form" data-checkout-form>
+              <div class="checkout-section">
+                <h2 class="checkout-section-title">Customer</h2>
+                <div class="checkout-grid">
+                  <label class="checkout-field">
+                    <span class="checkout-label">Email</span>
+                    <input class="checkout-input" type="email" placeholder="you@email.com" autocomplete="email" data-checkout-email />
+                  </label>
+                  <label class="checkout-field">
+                    <span class="checkout-label">Phone</span>
+                    <input class="checkout-input" type="tel" placeholder="(555) 555-5555" autocomplete="tel" data-checkout-phone />
+                  </label>
+                </div>
+                <div class="checkout-grid">
+                  <label class="checkout-field">
+                    <span class="checkout-label">First name</span>
+                    <input class="checkout-input" type="text" autocomplete="given-name" data-checkout-first-name />
+                  </label>
+                  <label class="checkout-field">
+                    <span class="checkout-label">Last name</span>
+                    <input class="checkout-input" type="text" autocomplete="family-name" data-checkout-last-name />
+                  </label>
+                </div>
+              </div>
+              <div class="checkout-section">
+                <h2 class="checkout-section-title">Shipping</h2>
+                <div class="checkout-grid">
+                  <label class="checkout-field">
+                    <span class="checkout-label">Address line 1</span>
+                    <input class="checkout-input" type="text" placeholder="123 Main St" autocomplete="address-line1" data-checkout-address1 />
+                  </label>
+                  <label class="checkout-field">
+                    <span class="checkout-label">Address line 2</span>
+                    <input class="checkout-input" type="text" placeholder="Apt, suite, etc." autocomplete="address-line2" data-checkout-address2 />
+                  </label>
+                </div>
+                <div class="checkout-grid">
+                  <label class="checkout-field">
+                    <span class="checkout-label">City</span>
+                    <input class="checkout-input" type="text" autocomplete="address-level2" data-checkout-city />
+                  </label>
+                  <label class="checkout-field">
+                    <span class="checkout-label">State</span>
+                    <input class="checkout-input" type="text" autocomplete="address-level1" data-checkout-state />
+                  </label>
+                </div>
+                <div class="checkout-grid">
+                  <label class="checkout-field">
+                    <span class="checkout-label">Postal code</span>
+                    <input class="checkout-input" type="text" autocomplete="postal-code" data-checkout-postal />
+                  </label>
+                  <label class="checkout-field">
+                    <span class="checkout-label">Country</span>
+                    <select class="checkout-select" data-checkout-country>
+                      <option value="us">United States</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+              <div class="checkout-section">
+                <h2 class="checkout-section-title">Shipping method</h2>
+                <div class="checkout-options" data-checkout-shipping-options>
+                  <div class="checkout-option">Enter your address to see shipping options.</div>
+                </div>
+              </div>
+              <div class="checkout-section">
+                <h2 class="checkout-section-title">Payment</h2>
+                <div class="checkout-options" data-checkout-payment-options>
+                  <div class="checkout-option">Loading payment options...</div>
+                </div>
+                <div class="checkout-manual-note" data-checkout-manual-note hidden></div>
+              </div>
+            </div>
             <div class="summary-rows">
               <div class="summary-row">
                 <span>Subtotal</span>
@@ -314,12 +542,553 @@
             </div>
             <p class="summary-count" data-checkout-count>0 items</p>
             <button type="button" class="checkout-btn" data-checkout-action disabled>Cart is empty</button>
+            <div class="checkout-message" data-checkout-message></div>
           </aside>
         </div>
       </main>
     </div>
+    <script src="commerce.js"></script>
     <script>
       (() => {
+        const runMedusaCheckout = commerce => {
+          const itemsContainer = document.querySelector('[data-checkout-items]');
+          const subtotalEl = document.querySelector('[data-checkout-subtotal]');
+          const shippingEl = document.querySelector('[data-checkout-shipping]');
+          const totalEl = document.querySelector('[data-checkout-total]');
+          const countEl = document.querySelector('[data-checkout-count]');
+          const actionBtn = document.querySelector('[data-checkout-action]');
+          const messageEl = document.querySelector('[data-checkout-message]');
+          const shippingOptionsEl = document.querySelector('[data-checkout-shipping-options]');
+          const paymentOptionsEl = document.querySelector('[data-checkout-payment-options]');
+          const manualNoteEl = document.querySelector('[data-checkout-manual-note]');
+
+          const emailInput = document.querySelector('[data-checkout-email]');
+          const phoneInput = document.querySelector('[data-checkout-phone]');
+          const firstNameInput = document.querySelector('[data-checkout-first-name]');
+          const lastNameInput = document.querySelector('[data-checkout-last-name]');
+          const address1Input = document.querySelector('[data-checkout-address1]');
+          const address2Input = document.querySelector('[data-checkout-address2]');
+          const cityInput = document.querySelector('[data-checkout-city]');
+          const stateInput = document.querySelector('[data-checkout-state]');
+          const postalInput = document.querySelector('[data-checkout-postal]');
+          const countrySelect = document.querySelector('[data-checkout-country]');
+
+          const fallbackPreview = 'background: linear-gradient(135deg, #d8b4fe 0%, #a855f7 100%);';
+          const state = {
+            cart: null,
+            shippingOptions: [],
+            paymentProviders: [],
+            selectedShippingOption: null,
+            selectedPaymentProvider: null,
+            pending: false
+          };
+
+          const formatMoney = (amount, currency) => new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: (currency || 'USD').toUpperCase()
+          }).format(Number(amount || 0));
+
+          const manualPaymentMessage =
+            'LDC will accept your order! LDC accepts payment through the LDC cashapp: $eloveit22, the LDC venmo handle @eloveit22 or the LDC zelle handle 602-425-4516';
+
+          const isManualProvider = provider => {
+            const id = String(provider?.id || '').toLowerCase();
+            const label = String(provider?.label || provider?.id || '').toLowerCase();
+            return id.includes('system') || label.includes('manual');
+          };
+
+          const cleanVariantLabel = value =>
+            String(value || '')
+              .replace(/^\s*View\s+/i, '')
+              .replace(/\s*(swatch|accent|option)\s*$/i, '')
+              .replace(/\s+/g, ' ')
+              .trim();
+
+          const deriveVariantLabel = (variantTitle, baseTitle) => {
+            if (!variantTitle) return '';
+            const base = String(baseTitle || '').trim();
+            if (base && variantTitle.startsWith(`${base} - `)) {
+              return cleanVariantLabel(variantTitle.slice(base.length + 3));
+            }
+            if (variantTitle.includes(' - ')) {
+              return cleanVariantLabel(variantTitle.split(' - ').slice(1).join(' - '));
+            }
+            if (!base || variantTitle !== base) return cleanVariantLabel(variantTitle);
+            return '';
+          };
+
+          const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => {
+            const map = {
+              '&': '&amp;',
+              '<': '&lt;',
+              '>': '&gt;',
+              '"': '&quot;',
+              "'": '&#39;'
+            };
+            return map[char] || char;
+          });
+
+          const setMessage = (text, tone) => {
+            if (!messageEl) return;
+            messageEl.textContent = text || '';
+            if (tone) {
+              messageEl.dataset.tone = tone;
+            } else {
+              delete messageEl.dataset.tone;
+            }
+          };
+
+          const readAddress = () => {
+            const email = emailInput?.value?.trim() || '';
+            const address = {
+              first_name: firstNameInput?.value?.trim() || '',
+              last_name: lastNameInput?.value?.trim() || '',
+              address_1: address1Input?.value?.trim() || '',
+              address_2: address2Input?.value?.trim() || '',
+              city: cityInput?.value?.trim() || '',
+              province: stateInput?.value?.trim() || '',
+              postal_code: postalInput?.value?.trim() || '',
+              country_code: countrySelect?.value || 'us',
+              phone: phoneInput?.value?.trim() || ''
+            };
+            return { email, address };
+          };
+
+          const hasRequiredAddress = () => {
+            const { email, address } = readAddress();
+            return !!(
+              email &&
+              address.first_name &&
+              address.last_name &&
+              address.address_1 &&
+              address.city &&
+              address.province &&
+              address.postal_code &&
+              address.country_code
+            );
+          };
+
+          const updateActionState = () => {
+            if (!actionBtn) return;
+            const hasItems = (state.cart?.items || []).length > 0;
+            const providerLabel = state.selectedPaymentProvider?.label || state.selectedPaymentProvider?.id || '';
+            const providerIsPayPal = providerLabel.toLowerCase().includes('paypal');
+            const baseLabel = providerIsPayPal ? 'Continue to PayPal' : 'Place Order';
+            actionBtn.textContent = hasItems ? baseLabel : 'Cart is empty';
+            actionBtn.disabled = state.pending || !hasItems;
+          };
+
+          const updateOptionSelection = container => {
+            if (!container) return;
+            container.querySelectorAll('.checkout-option').forEach(option => {
+              const checked = option.querySelector('input[type="radio"]:checked');
+              option.classList.toggle('is-selected', Boolean(checked));
+            });
+          };
+          const updateManualNote = () => {
+            if (!manualNoteEl) return;
+            const show = isManualProvider(state.selectedPaymentProvider);
+            manualNoteEl.hidden = !show;
+            if (show) manualNoteEl.textContent = manualPaymentMessage;
+          };
+
+          const renderCart = () => {
+            if (!itemsContainer) return;
+            const cart = state.cart;
+            const items = cart?.items || [];
+            if (!items.length) {
+              itemsContainer.innerHTML = '<div class="checkout-empty">Your cart is empty. Continue shopping to add products before checking out.</div>';
+              if (subtotalEl) subtotalEl.textContent = formatMoney(0, cart?.currency_code);
+              if (shippingEl) shippingEl.textContent = '—';
+              if (totalEl) totalEl.textContent = formatMoney(0, cart?.currency_code);
+              if (countEl) countEl.textContent = '0 items';
+              updateActionState();
+              return;
+            }
+
+            itemsContainer.innerHTML = items.map(item => {
+              const previewStyle = item.thumbnail
+                ? `background-image: url('${item.thumbnail.replace(/'/g, '%27')}');`
+                : fallbackPreview;
+              const lineTotal = (item.unit_price || 0) * (item.quantity || 0);
+              const title = item.title || item.product_title || 'Item';
+              const metadata = item.metadata || {};
+              const metadataLabel = cleanVariantLabel(
+                metadata.variant_label ||
+                  metadata.color_label ||
+                  metadata.selected_color ||
+                  metadata.selectedColor ||
+                  ''
+              );
+              const variantTitle = item.variant_title && item.variant_title !== 'Default' ? item.variant_title : '';
+              const variantLabel = metadataLabel || deriveVariantLabel(variantTitle, title);
+              const swatchStyleRaw =
+                metadata.variant_style ||
+                metadata.color_style ||
+                metadata.selected_color_style ||
+                metadata.selectedColorStyle ||
+                '';
+              const swatchGlyph =
+                metadata.variant_glyph ||
+                metadata.color_glyph ||
+                metadata.selected_color_glyph ||
+                metadata.selectedColorGlyph ||
+                '';
+              const swatchStyle = (swatchStyleRaw && swatchStyleRaw.trim())
+                ? swatchStyleRaw.trim()
+                : (variantLabel ? 'background:#e2e8f0;' : '');
+              const isTextSwatch = /[A-Za-z]/.test(swatchGlyph || '');
+              const colorMarkup = variantLabel
+                ? `<div class="checkout-item-color">
+                    <span class="checkout-item-swatch${isTextSwatch ? ' is-text' : ''}" style="${escapeHtml(swatchStyle.replace(/\"/g, '&quot;'))};">${escapeHtml(swatchGlyph)}</span>
+                    <span class="checkout-item-color-value">${escapeHtml(variantLabel)}</span>
+                  </div>`
+                : '';
+              return `
+                <article class="cart-item" data-checkout-item="${escapeHtml(item.id)}">
+                  <button type="button" class="checkout-remove" data-checkout-remove="${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(title)}">×</button>
+                  <div class="cart-item-main">
+                    <div class="cart-item-preview" style="${previewStyle}"></div>
+                    <div class="cart-item-info">
+                      <div class="cart-item-name">${escapeHtml(title)}</div>
+                      <div class="checkout-item-meta">
+                        <span class="checkout-item-quantity">Quantity <span>${item.quantity}</span></span>
+                      </div>
+                      ${colorMarkup}
+                    </div>
+                  </div>
+                  <div class="checkout-line-total">${formatMoney(lineTotal, cart.currency_code)}</div>
+                </article>
+              `;
+            }).join('');
+
+            const itemCount = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+            if (subtotalEl) subtotalEl.textContent = formatMoney(cart.subtotal, cart.currency_code);
+            if (shippingEl) {
+              if (typeof cart.shipping_total === 'number') {
+                shippingEl.textContent = cart.shipping_total > 0 ? formatMoney(cart.shipping_total, cart.currency_code) : 'Free';
+              } else {
+                shippingEl.textContent = '—';
+              }
+            }
+            if (totalEl) totalEl.textContent = formatMoney(cart.total ?? cart.subtotal, cart.currency_code);
+            if (countEl) countEl.textContent = `${itemCount} ${itemCount === 1 ? 'item' : 'items'}`;
+            updateActionState();
+
+            itemsContainer.querySelectorAll('[data-checkout-remove]').forEach(btn => {
+              btn.addEventListener('click', async () => {
+                const id = btn.getAttribute('data-checkout-remove');
+                if (!id || !state.cart?.id) return;
+                try {
+                  await commerce.request(`/store/carts/${state.cart.id}/line-items/${id}`, { method: 'DELETE' });
+                  state.cart = await commerce.request(`/store/carts/${state.cart.id}`).then(res => res.cart || res);
+                  await commerce.syncBadges();
+                  renderCart();
+                } catch (error) {
+                  setMessage('Unable to remove that item right now.', 'error');
+                }
+              });
+            });
+          };
+
+          const renderShippingOptions = () => {
+            if (!shippingOptionsEl) return;
+            if (!state.shippingOptions.length) {
+              shippingOptionsEl.innerHTML = '<div class="checkout-option">Enter your address to see shipping options.</div>';
+              return;
+            }
+            const currency = state.cart?.currency_code || 'USD';
+            shippingOptionsEl.innerHTML = state.shippingOptions.map(option => {
+              const amount = typeof option.amount === 'number' ? formatMoney(option.amount, currency) : '—';
+              const checked = option.id === state.selectedShippingOption ? 'checked' : '';
+              const label = option.name || 'Shipping';
+              return `
+                <label class="checkout-option">
+                  <span class="option-label">
+                    <input type="radio" name="shipping-option" value="${escapeHtml(option.id)}" ${checked} />
+                    ${escapeHtml(label)}
+                  </span>
+                  <span class="option-amount">${amount}</span>
+                </label>
+              `;
+            }).join('');
+            updateOptionSelection(shippingOptionsEl);
+
+            shippingOptionsEl.querySelectorAll('input[name="shipping-option"]').forEach(input => {
+              input.addEventListener('change', async event => {
+                const optionId = event.target.value;
+                if (!optionId || !state.cart?.id) return;
+                state.pending = true;
+                updateActionState();
+                try {
+                  const updated = await commerce.request(`/store/carts/${state.cart.id}/shipping-methods`, {
+                    method: 'POST',
+                    body: { option_id: optionId }
+                  });
+                  state.cart = updated.cart || updated;
+                  state.selectedShippingOption = optionId;
+                  await commerce.request(`/store/carts/${state.cart.id}/taxes`, { method: 'POST' }).catch(() => {});
+                  updateOptionSelection(shippingOptionsEl);
+                  renderCart();
+                } catch (error) {
+                  setMessage('Unable to update shipping method.', 'error');
+                } finally {
+                  state.pending = false;
+                  updateActionState();
+                }
+              });
+            });
+          };
+
+          const renderPaymentOptions = () => {
+            if (!paymentOptionsEl) return;
+            if (!state.paymentProviders.length) {
+              paymentOptionsEl.innerHTML = '<div class="checkout-option">Payment provider not configured yet.</div>';
+              return;
+            }
+            paymentOptionsEl.innerHTML = state.paymentProviders.map(provider => {
+              const label = provider.id.includes('paypal')
+                ? 'PayPal'
+                : provider.id.includes('system')
+                  ? 'Manual'
+                  : provider.id;
+              const checked = provider.id === state.selectedPaymentProvider?.id ? 'checked' : '';
+              return `
+                <label class="checkout-option">
+                  <span class="option-label">
+                    <input type="radio" name="payment-provider" value="${escapeHtml(provider.id)}" ${checked} />
+                    ${escapeHtml(label)}
+                  </span>
+                </label>
+              `;
+            }).join('');
+            updateOptionSelection(paymentOptionsEl);
+            updateManualNote();
+
+            paymentOptionsEl.querySelectorAll('input[name="payment-provider"]').forEach(input => {
+              input.addEventListener('change', event => {
+                const id = event.target.value;
+                state.selectedPaymentProvider = state.paymentProviders.find(p => p.id === id) || null;
+                updateOptionSelection(paymentOptionsEl);
+                updateManualNote();
+                updateActionState();
+              });
+            });
+            updateActionState();
+          };
+
+          const refreshPaymentProviders = async () => {
+            if (!state.cart?.region_id) return;
+            const data = await commerce.request(`/store/payment-providers?region_id=${state.cart.region_id}`);
+            const providers = data.payment_providers || [];
+            state.paymentProviders = providers;
+            state.selectedPaymentProvider =
+              providers.find(p => String(p.id).includes('paypal')) ||
+              providers[0] ||
+              null;
+            renderPaymentOptions();
+            updateManualNote();
+          };
+
+          const refreshShippingOptions = async () => {
+            if (!state.cart?.id) return;
+            const data = await commerce.request(`/store/shipping-options?cart_id=${state.cart.id}`);
+            state.shippingOptions = data.shipping_options || [];
+            if (!state.selectedShippingOption && state.cart?.shipping_methods?.length) {
+              state.selectedShippingOption = state.cart.shipping_methods[0]?.shipping_option_id;
+            }
+            renderShippingOptions();
+          };
+
+          const syncAddress = async () => {
+            if (!state.cart?.id || !hasRequiredAddress()) return;
+            const { email, address } = readAddress();
+            try {
+              const updated = await commerce.request(`/store/carts/${state.cart.id}`, {
+                method: 'POST',
+                body: {
+                  email,
+                  shipping_address: address,
+                  billing_address: address
+                }
+              });
+              state.cart = updated.cart || updated;
+              renderCart();
+              await refreshShippingOptions();
+            } catch (error) {
+              setMessage('Unable to save address details.', 'error');
+            }
+          };
+
+          const ensureRegion = async () => {
+            if (!state.cart || state.cart.region_id) return;
+            const data = await commerce.request('/store/regions');
+            const region = data.regions?.[0];
+            if (!region) return;
+            const updated = await commerce.request(`/store/carts/${state.cart.id}`, {
+              method: 'POST',
+              body: { region_id: region.id }
+            });
+            state.cart = updated.cart || updated;
+          };
+
+          const completeCart = async () => {
+            if (!state.cart?.id) return;
+            state.pending = true;
+            updateActionState();
+            try {
+              const completion = await commerce.request(`/store/carts/${state.cart.id}/complete`, {
+                method: 'POST'
+              });
+              if (completion.type === 'order') {
+                const message = isManualProvider(state.selectedPaymentProvider)
+                  ? manualPaymentMessage
+                  : 'Order placed successfully. Thank you!';
+                setMessage(message, 'success');
+                try {
+                  localStorage.removeItem('ldc:medusa:cart_id');
+                } catch {}
+                await commerce.syncBadges();
+                state.cart = completion.order?.cart || state.cart;
+              } else if (completion.type === 'cart' && completion.error?.message) {
+                setMessage(completion.error.message, 'error');
+              } else {
+                setMessage('Unable to complete checkout.', 'error');
+              }
+            } catch (error) {
+              setMessage('Unable to complete checkout.', 'error');
+            } finally {
+              state.pending = false;
+              updateActionState();
+            }
+          };
+
+          const startPayment = async () => {
+            if (!state.cart?.id) return;
+            if (!state.selectedPaymentProvider) {
+              setMessage('Select a payment method to continue.', 'error');
+              return;
+            }
+            if (!hasRequiredAddress()) {
+              setMessage('Please complete the required customer and shipping fields.', 'error');
+              return;
+            }
+            state.pending = true;
+            setMessage('Starting payment...', '');
+            updateActionState();
+            try {
+              await syncAddress();
+              const collectionRes = await commerce.request('/store/payment-collections', {
+                method: 'POST',
+                body: { cart_id: state.cart.id }
+              });
+              const collectionId = collectionRes.payment_collection?.id;
+              if (!collectionId) throw new Error('Payment collection missing.');
+              const returnUrl = `${window.location.origin}${window.location.pathname}`;
+              const { email, address } = readAddress();
+              const sessionRes = await commerce.request(`/store/payment-collections/${collectionId}/payment-sessions`, {
+                method: 'POST',
+                body: {
+                  provider_id: state.selectedPaymentProvider.id,
+                  data: {
+                    return_url: returnUrl,
+                    cancel_url: returnUrl,
+                    email,
+                    shipping_address: address,
+                    billing_address: address
+                  }
+                }
+              });
+              const sessions = sessionRes.payment_collection?.payment_sessions || [];
+              const session = sessions.find(s => s.provider_id === state.selectedPaymentProvider.id) || sessions[0];
+              const sessionData = session?.data || {};
+              const redirectUrl =
+                sessionData.redirect_url ||
+                sessionData.redirectUrl ||
+                sessionData.approval_url ||
+                sessionData.approvalUrl ||
+                sessionData.url ||
+                '';
+              if (redirectUrl) {
+                window.location.href = redirectUrl;
+                return;
+              }
+              await completeCart();
+            } catch (error) {
+              setMessage('Unable to start payment. Check your payment configuration.', 'error');
+            } finally {
+              state.pending = false;
+              updateActionState();
+            }
+          };
+
+          const bindInputListeners = () => {
+            const inputs = [
+              emailInput,
+              phoneInput,
+              firstNameInput,
+              lastNameInput,
+              address1Input,
+              address2Input,
+              cityInput,
+              stateInput,
+              postalInput,
+              countrySelect
+            ].filter(Boolean);
+            let timeout = null;
+            const debounced = () => {
+              if (timeout) window.clearTimeout(timeout);
+              timeout = window.setTimeout(() => syncAddress(), 400);
+            };
+            inputs.forEach(input => {
+              input.addEventListener('change', debounced);
+              input.addEventListener('blur', debounced);
+            });
+          };
+
+          const hydrateForm = cart => {
+            const address = cart?.shipping_address || {};
+            if (emailInput && cart?.email) emailInput.value = cart.email;
+            if (phoneInput && address.phone) phoneInput.value = address.phone;
+            if (firstNameInput && address.first_name) firstNameInput.value = address.first_name;
+            if (lastNameInput && address.last_name) lastNameInput.value = address.last_name;
+            if (address1Input && address.address_1) address1Input.value = address.address_1;
+            if (address2Input && address.address_2) address2Input.value = address.address_2;
+            if (cityInput && address.city) cityInput.value = address.city;
+            if (stateInput && address.province) stateInput.value = address.province;
+            if (postalInput && address.postal_code) postalInput.value = address.postal_code;
+            if (countrySelect && address.country_code) countrySelect.value = address.country_code;
+          };
+
+          const init = async () => {
+            try {
+              state.cart = await commerce.getOrCreateCart();
+              await ensureRegion();
+              hydrateForm(state.cart);
+              await refreshPaymentProviders();
+              await refreshShippingOptions();
+              renderCart();
+              bindInputListeners();
+              if (actionBtn) actionBtn.addEventListener('click', startPayment);
+              const params = new URLSearchParams(window.location.search);
+              if (params.has('token') || params.has('paymentId') || params.has('PayerID') || params.has('payerId')) {
+                await completeCart();
+              }
+            } catch (error) {
+              setMessage('Unable to load checkout. Please refresh and try again.', 'error');
+            }
+          };
+
+          init();
+        };
+
+        const commerce = window.LDCCommerce;
+        const medusaEnabled = document.body?.dataset?.medusaEnabled === 'true' || window.LDC_MEDUSA_ENABLED === true;
+        if (commerce?.enabled && medusaEnabled) {
+          runMedusaCheckout(commerce);
+          return;
+        }
+
         const CART_STORAGE_KEY = 'ldc:cart';
         const fallbackPreview = 'background: linear-gradient(135deg, #d8b4fe 0%, #a855f7 100%);';
 
@@ -605,7 +1374,6 @@
                   <div class="cart-item-name">${escapeHtml(item.name)}</div>
                   <div class="checkout-item-meta">
                     <span class="checkout-item-quantity">Quantity <span>${item.quantity}</span></span>
-                    <span class="checkout-item-price">${formatCurrency(item.price)}</span>
                   </div>
                   ${optionsMarkup}
                   ${notesMarkup}

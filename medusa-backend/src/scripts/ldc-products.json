@@ -1,0 +1,814 @@
+{
+  "currency": "usd",
+  "products": [
+    {
+      "key": "accessory-christmas-diamond",
+      "title": "Christmas Diamond",
+      "handle": "accessory-christmas-diamond",
+      "price": 20,
+      "image": "assets/Christmas Diamond - 20.png",
+      "variants": []
+    },
+    {
+      "key": "accessory-cowboy-glass-straws",
+      "title": "Cowboy Glass Straws",
+      "handle": "accessory-cowboy-glass-straws",
+      "price": 3,
+      "image": "assets/Cowboy Glass Straws - 3.jpg",
+      "variants": [
+        {
+          "label": "Glass",
+          "title": "Cowboy Glass Straws - Glass",
+          "price": 3,
+          "image": "assets/Cowboy Glass Straws - 3.jpg"
+        }
+      ]
+    },
+    {
+      "key": "accessory-flower-deluxe",
+      "title": "Flower Deluxe",
+      "handle": "accessory-flower-deluxe",
+      "price": 10,
+      "image": "assets/Flower Deluxe - 10.png",
+      "variants": []
+    },
+    {
+      "key": "accessory-flower-premium",
+      "title": "Flower Premium",
+      "handle": "accessory-flower-premium",
+      "price": 15,
+      "image": "assets/Flower Premium - 15.png",
+      "variants": []
+    },
+    {
+      "key": "accessory-glass-bow-straws",
+      "title": "Glass Bow Straws",
+      "handle": "accessory-glass-bow-straws",
+      "price": 3,
+      "image": "assets/Glass-Bow-Straws.png",
+      "variants": []
+    },
+    {
+      "key": "accessory-glass-twist-straws",
+      "title": "Glass Twist Straws",
+      "handle": "accessory-glass-twist-straws",
+      "price": 3,
+      "image": "assets/Glass Twist Straws - 3.png",
+      "variants": []
+    },
+    {
+      "key": "accessory-jelly-lids",
+      "title": "Jelly Lids",
+      "handle": "accessory-jelly-lids",
+      "price": 3,
+      "image": "assets/Jelly Lids - 33.png",
+      "variants": [
+        {
+          "label": "Red",
+          "title": "Jelly Lids - Red",
+          "price": 3,
+          "image": "assets/Jelly Lids - 33.png"
+        },
+        {
+          "label": "Orange",
+          "title": "Jelly Lids - Orange",
+          "price": 3,
+          "image": "assets/Jelly Lids - 33.png"
+        },
+        {
+          "label": "Purple",
+          "title": "Jelly Lids - Purple",
+          "price": 3,
+          "image": "assets/Jelly Lids - 33.png"
+        },
+        {
+          "label": "Baby blue",
+          "title": "Jelly Lids - Baby blue",
+          "price": 3,
+          "image": "assets/Jelly Lids - 33.png"
+        },
+        {
+          "label": "Light teal",
+          "title": "Jelly Lids - Light teal",
+          "price": 3,
+          "image": "assets/Jelly-Lids.png"
+        },
+        {
+          "label": "Light pink",
+          "title": "Jelly Lids - Light pink",
+          "price": 3,
+          "image": "assets/Jelly-Lids.png"
+        }
+      ]
+    },
+    {
+      "key": "accessory-rhinestone-lids",
+      "title": "Rinestone Lids",
+      "handle": "accessory-rhinestone-lids",
+      "price": 5,
+      "image": "assets/rhinestone-lids-5.png",
+      "variants": []
+    },
+    {
+      "key": "accessory-straw-toppers",
+      "title": "Straw Toppers",
+      "handle": "accessory-straw-toppers",
+      "price": 1,
+      "image": "assets/Straw Toppers - cafe - 1.jpeg",
+      "variants": [
+        {
+          "label": "Cafe",
+          "title": "Straw Toppers - Cafe",
+          "price": 1,
+          "image": "assets/Straw Toppers - cafe - 1.jpeg"
+        },
+        {
+          "label": "Christmas",
+          "title": "Straw Toppers - Christmas",
+          "price": 1,
+          "image": "assets/straw toppers - christmas - 1.jpeg"
+        },
+        {
+          "label": "Cat",
+          "title": "Straw Toppers - Cat",
+          "price": 1,
+          "image": "assets/Straw Topper - Cats - 1.jpeg"
+        },
+        {
+          "label": "Cactus",
+          "title": "Straw Toppers - Cactus",
+          "price": 1,
+          "image": "assets/Straw Toppers - Cactus - 1.png"
+        },
+        {
+          "label": "Beach Cup",
+          "title": "Straw Toppers - Beach Cup",
+          "price": 1,
+          "image": "assets/straw toppers - beach cup -1.png"
+        },
+        {
+          "label": "Football",
+          "title": "Straw Toppers - Football",
+          "price": 1,
+          "image": "assets/straw toppers - sports - 1.png"
+        }
+      ]
+    },
+    {
+      "key": "attire-custom",
+      "title": "Custom Attire",
+      "handle": "attire-custom",
+      "price": 20,
+      "image": "assets/Tshirt - white.png",
+      "variants": []
+    },
+    {
+      "key": "cup-acrylic",
+      "title": "Acrylic Cup",
+      "handle": "cup-acrylic",
+      "price": 25,
+      "image": "assets/acrylic.png",
+      "variants": [
+        {
+          "label": "Blue",
+          "title": "Acrylic Cup - Blue",
+          "price": 25,
+          "image": "assets/acrylic.png"
+        },
+        {
+          "label": "Purple",
+          "title": "Acrylic Cup - Purple",
+          "price": 25,
+          "image": "assets/acrylic.png"
+        },
+        {
+          "label": "Teal",
+          "title": "Acrylic Cup - Teal",
+          "price": 25,
+          "image": "assets/acrylic.png"
+        },
+        {
+          "label": "Pink",
+          "title": "Acrylic Cup - Pink",
+          "price": 25,
+          "image": "assets/acrylic.png"
+        }
+      ]
+    },
+    {
+      "key": "cup-bamboo-lid-mug",
+      "title": "Bamboo Lid Mug",
+      "handle": "cup-bamboo-lid-mug",
+      "price": 20,
+      "image": "assets/porcelain-sublimination.png",
+      "variants": []
+    },
+    {
+      "key": "cup-frosted-sublimation",
+      "title": "Frosted Sublimation",
+      "handle": "cup-frosted-sublimation",
+      "price": 25,
+      "image": "assets/frosted-sublimination.png",
+      "variants": []
+    },
+    {
+      "key": "cup-glass",
+      "title": "Glass",
+      "handle": "cup-glass",
+      "price": 20,
+      "image": "assets/glass.png",
+      "variants": [
+        {
+          "label": "Blue",
+          "title": "Glass - Blue",
+          "price": 20,
+          "image": "assets/glass.png"
+        },
+        {
+          "label": "Pink",
+          "title": "Glass - Pink",
+          "price": 20,
+          "image": "assets/glass.png"
+        }
+      ]
+    },
+    {
+      "key": "cup-glass-sublimation",
+      "title": "Glass Sublimation",
+      "handle": "cup-glass-sublimation",
+      "price": 20,
+      "image": "assets/glass-sublimination.png",
+      "variants": [
+        {
+          "label": "Hot pink",
+          "title": "Glass Sublimation - Hot pink",
+          "price": 20,
+          "image": "assets/glass-sublimination.png"
+        },
+        {
+          "label": "Black",
+          "title": "Glass Sublimation - Black",
+          "price": 20,
+          "image": "assets/glass-sublimination.png"
+        },
+        {
+          "label": "White",
+          "title": "Glass Sublimation - White",
+          "price": 20,
+          "image": "assets/glass-sublimination.png"
+        },
+        {
+          "label": "Teal",
+          "title": "Glass Sublimation - Teal",
+          "price": 20,
+          "image": "assets/glass-sublimination.png"
+        },
+        {
+          "label": "Pink",
+          "title": "Glass Sublimation - Pink",
+          "price": 20,
+          "image": "assets/glass-sublimination.png"
+        }
+      ]
+    },
+    {
+      "key": "cup-macaron-mug",
+      "title": "Macaron Mug",
+      "handle": "cup-macaron-mug",
+      "price": 20,
+      "image": "assets/Macaron Mug - 20.png",
+      "variants": [
+        {
+          "label": "Light blue",
+          "title": "Macaron Mug - Light blue",
+          "price": 20,
+          "image": "assets/Macaron Mug - 20.png"
+        },
+        {
+          "label": "Pink",
+          "title": "Macaron Mug - Pink",
+          "price": 20,
+          "image": "assets/Macaron Mug - 20.png"
+        },
+        {
+          "label": "White cream",
+          "title": "Macaron Mug - White cream",
+          "price": 20,
+          "image": "assets/Macaron Mug - 20.png"
+        },
+        {
+          "label": "Lime green",
+          "title": "Macaron Mug - Lime green",
+          "price": 20,
+          "image": "assets/Macaron Mug - 20.png"
+        },
+        {
+          "label": "Hot pink",
+          "title": "Macaron Mug - Hot pink",
+          "price": 20,
+          "image": "assets/Macaron Mug - 20.png"
+        }
+      ]
+    },
+    {
+      "key": "cup-mug-and-spoon",
+      "title": "Mug & Spoon",
+      "handle": "cup-mug-and-spoon",
+      "price": 20,
+      "image": "assets/Mug & Spoon - Black - 20.jpg",
+      "variants": [
+        {
+          "label": "Black",
+          "title": "Mug & Spoon - Black",
+          "price": 20,
+          "image": "assets/Mug & Spoon - Black - 20.jpg"
+        },
+        {
+          "label": "White",
+          "title": "Mug & Spoon - White",
+          "price": 20,
+          "image": "assets/Mug & Spoon - White - 20.jpg"
+        },
+        {
+          "label": "Pink",
+          "title": "Mug & Spoon - Pink",
+          "price": 20,
+          "image": "assets/Mug & Spoon - Pink - 20.jpg"
+        },
+        {
+          "label": "Red",
+          "title": "Mug & Spoon - Red",
+          "price": 20,
+          "image": "assets/Mug & Spoon - Red - 20.jpg"
+        },
+        {
+          "label": "Multi-color",
+          "title": "Mug & Spoon - Multi-color",
+          "price": 20,
+          "image": "assets/Mug & Spoon - Black, White, Pink, Red - 20.jpg"
+        }
+      ]
+    },
+    {
+      "key": "cup-slim-snow-globe",
+      "title": "Slim Snow Globe",
+      "handle": "cup-slim-snow-globe",
+      "price": 20,
+      "image": "assets/slim-snow-globe.png",
+      "variants": [
+        {
+          "label": "Navy",
+          "title": "Slim Snow Globe - Navy",
+          "price": 20,
+          "image": "assets/slim-snow-globe.png"
+        },
+        {
+          "label": "Red",
+          "title": "Slim Snow Globe - Red",
+          "price": 20,
+          "image": "assets/slim-snow-globe.png"
+        },
+        {
+          "label": "Pink",
+          "title": "Slim Snow Globe - Pink",
+          "price": 20,
+          "image": "assets/slim-snow-globe.png"
+        },
+        {
+          "label": "Orange",
+          "title": "Slim Snow Globe - Orange",
+          "price": 20,
+          "image": "assets/slim-snow-globe.png"
+        },
+        {
+          "label": "Yellow",
+          "title": "Slim Snow Globe - Yellow",
+          "price": 20,
+          "image": "assets/slim-snow-globe.png"
+        }
+      ]
+    },
+    {
+      "key": "cup-snow-globe",
+      "title": "Snow Globe",
+      "handle": "cup-snow-globe",
+      "price": 25,
+      "image": "assets/snow-globe.png",
+      "variants": []
+    },
+    {
+      "key": "cup-steel-sublimation",
+      "title": "Steel Sublimation",
+      "handle": "cup-steel-sublimation",
+      "price": 20,
+      "image": "assets/steel-sublimination.png",
+      "variants": [
+        {
+          "label": "White",
+          "title": "Steel Sublimation - White",
+          "price": 20,
+          "image": "assets/steel-sublimination.png"
+        }
+      ]
+    },
+    {
+      "key": "doormat-custom",
+      "title": "Custom Coir Doormats",
+      "handle": "doormat-custom",
+      "price": 40,
+      "image": "assets/Doormats 1.png",
+      "variants": []
+    },
+    {
+      "key": "tumbler-autumn-leaves",
+      "title": "Autumn Leaves",
+      "handle": "tumbler-autumn-leaves",
+      "price": 45,
+      "image": "assets/ldc-tumbler-8.jpeg",
+      "variants": [
+        {
+          "label": "Chocolate brown",
+          "title": "Autumn Leaves - Chocolate brown",
+          "price": 45,
+          "image": "assets/ldc-tumbler-8.jpeg"
+        }
+      ]
+    },
+    {
+      "key": "tumbler-glass-glow",
+      "title": "Glass Glow Tumbler",
+      "handle": "tumbler-glass-glow",
+      "price": 40,
+      "image": "assets/glass-glow-tumbler.jpeg",
+      "variants": []
+    },
+    {
+      "key": "tumbler-glass-tumbler",
+      "title": "Glass Tumbler",
+      "handle": "tumbler-glass-tumbler",
+      "price": 40,
+      "image": "assets/glass-tumbler.jpeg",
+      "variants": [
+        {
+          "label": "Glass finish",
+          "title": "Glass Tumbler - Glass finish",
+          "price": 40,
+          "image": "assets/glass-tumbler.jpeg"
+        }
+      ]
+    },
+    {
+      "key": "tumbler-gold-trim-tumbler",
+      "title": "Gold Trim Tumbler",
+      "handle": "tumbler-gold-trim-tumbler",
+      "price": 40,
+      "image": "assets/Gold Trim Tumbler - 40.png",
+      "variants": [
+        {
+          "label": "Chocolate brown",
+          "title": "Gold Trim Tumbler - Chocolate brown",
+          "price": 40,
+          "image": "assets/Gold Trim Tumbler - 40.png"
+        }
+      ]
+    },
+    {
+      "key": "tumbler-kids-water-bottle",
+      "title": "Kids Water Bottle",
+      "handle": "tumbler-kids-water-bottle",
+      "price": 20,
+      "image": "assets/kids-water-bottle.jpeg",
+      "variants": [
+        {
+          "label": "White",
+          "title": "Kids Water Bottle - White",
+          "price": 20,
+          "image": "assets/kids-water-bottle.jpeg"
+        },
+        {
+          "label": "Blue",
+          "title": "Kids Water Bottle - Blue",
+          "price": 20,
+          "image": "assets/kids water bottle - 12oz - 20.png"
+        },
+        {
+          "label": "Green",
+          "title": "Kids Water Bottle - Green",
+          "price": 20,
+          "image": "assets/kids water bottle - 12oz - 20.png"
+        },
+        {
+          "label": "Pink",
+          "title": "Kids Water Bottle - Pink",
+          "price": 20,
+          "image": "assets/kids water bottle - 12oz - 20.png"
+        },
+        {
+          "label": "Red",
+          "title": "Kids Water Bottle - Red",
+          "price": 20,
+          "image": "assets/kids water bottle - 12oz - 20.png"
+        }
+      ]
+    },
+    {
+      "key": "tumbler-macaron-sublimation",
+      "title": "Macaron Sublimation",
+      "handle": "tumbler-macaron-sublimation",
+      "price": 40,
+      "image": "assets/Macaron Sublimation - 40.png",
+      "variants": [
+        {
+          "label": "White cream",
+          "title": "Macaron Sublimation - White cream",
+          "price": 40,
+          "image": "assets/Macaron Sublimation - 40.png"
+        },
+        {
+          "label": "Light pink",
+          "title": "Macaron Sublimation - Light pink",
+          "price": 40,
+          "image": "assets/Macaron Sublimation - 40.png"
+        },
+        {
+          "label": "Light teal",
+          "title": "Macaron Sublimation - Light teal",
+          "price": 40,
+          "image": "assets/Macaron Sublimation - 40.png"
+        },
+        {
+          "label": "Lavender",
+          "title": "Macaron Sublimation - Lavender",
+          "price": 40,
+          "image": "assets/Macaron Sublimation - 40.png"
+        }
+      ]
+    },
+    {
+      "key": "tumbler-pink-flamingo",
+      "title": "Pink Flamingo",
+      "handle": "tumbler-pink-flamingo",
+      "price": 40,
+      "image": "assets/ldc-tumbler-6.jpeg",
+      "variants": [
+        {
+          "label": "Two-tone pink",
+          "title": "Pink Flamingo - Two-tone pink",
+          "price": 40,
+          "image": "assets/ldc-tumbler-6.jpeg"
+        }
+      ]
+    },
+    {
+      "key": "tumbler-pumpkin-spice",
+      "title": "Pumpkin Spice",
+      "handle": "tumbler-pumpkin-spice",
+      "price": 40,
+      "image": "assets/ldc-tumbler-7.jpeg",
+      "variants": [
+        {
+          "label": "Pumpkin orange",
+          "title": "Pumpkin Spice - Pumpkin orange",
+          "price": 40,
+          "image": "assets/ldc-tumbler-7.jpeg"
+        }
+      ]
+    },
+    {
+      "key": "tumbler-silver-trim-tumbler",
+      "title": "Silver Trim Tumbler",
+      "handle": "tumbler-silver-trim-tumbler",
+      "price": 40,
+      "image": "assets/ldc-tumbler-5.jpeg",
+      "variants": [
+        {
+          "label": "Hot pink",
+          "title": "Silver Trim Tumbler - Hot pink",
+          "price": 40,
+          "image": "assets/ldc-tumbler-5.jpeg"
+        },
+        {
+          "label": "Light pink",
+          "title": "Silver Trim Tumbler - Light pink",
+          "price": 40,
+          "image": "assets/Silver Trim Tumbler - 40.png"
+        },
+        {
+          "label": "Tan brown",
+          "title": "Silver Trim Tumbler - Tan brown",
+          "price": 40,
+          "image": "assets/Silver Trim Tumbler - 40.png"
+        },
+        {
+          "label": "Black",
+          "title": "Silver Trim Tumbler - Black",
+          "price": 40,
+          "image": "assets/Silver Trim Tumbler - 40.png"
+        },
+        {
+          "label": "Dark teal",
+          "title": "Silver Trim Tumbler - Dark teal",
+          "price": 40,
+          "image": "assets/Silver Trim Tumbler - 40.png"
+        }
+      ]
+    },
+    {
+      "key": "tumbler-sip-cup",
+      "title": "Sip Cup",
+      "handle": "tumbler-sip-cup",
+      "price": 40,
+      "image": "assets/Sip Cup - 40.png",
+      "variants": []
+    },
+    {
+      "key": "tumbler-sublimation",
+      "title": "Sublimation",
+      "handle": "tumbler-sublimation",
+      "price": 25,
+      "image": "assets/sublimination.jpeg",
+      "variants": [
+        {
+          "label": "White",
+          "title": "Sublimation - White",
+          "price": 25,
+          "image": "assets/sublimination.jpeg"
+        },
+        {
+          "label": "Glow in the Dark",
+          "title": "Sublimation - Glow in the Dark",
+          "price": 35,
+          "image": "assets/sublimination-glow-in-the-dark.jpeg"
+        },
+        {
+          "label": "Light Orange",
+          "title": "Sublimation - Light Orange",
+          "price": 25,
+          "image": "assets/Sublimination - 25.png"
+        },
+        {
+          "label": "Orange",
+          "title": "Sublimation - Orange",
+          "price": 25,
+          "image": "assets/Sublimination - 25.png"
+        },
+        {
+          "label": "Blue",
+          "title": "Sublimation - Blue",
+          "price": 25,
+          "image": "assets/Sublimination - 25.png"
+        }
+      ]
+    },
+    {
+      "key": "tumbler-sublimation-tumblers",
+      "title": "Sublimation Tumblers",
+      "handle": "tumbler-sublimation-tumblers",
+      "price": 40,
+      "image": "assets/Sublimination Tumblers - 40.png",
+      "variants": [
+        {
+          "label": "Cream white",
+          "title": "Sublimation Tumblers - Cream white",
+          "price": 40,
+          "image": "assets/Sublimination Tumblers - 40.png"
+        },
+        {
+          "label": "Pearl white",
+          "title": "Sublimation Tumblers - Pearl white",
+          "price": 40,
+          "image": "assets/Sublimination Tumblers - 40.png"
+        },
+        {
+          "label": "Cream pink",
+          "title": "Sublimation Tumblers - Cream pink",
+          "price": 40,
+          "image": "assets/Sublimination Tumblers - 40.png"
+        },
+        {
+          "label": "Cream peach",
+          "title": "Sublimation Tumblers - Cream peach",
+          "price": 40,
+          "image": "assets/Sublimination Tumblers - 40.png"
+        }
+      ]
+    },
+    {
+      "key": "tumbler-sublimation-water-bottle",
+      "title": "Sublimation Water Bottle",
+      "handle": "tumbler-sublimation-water-bottle",
+      "price": 30,
+      "image": "assets/Sublimation Water Bottle - 30.jpg",
+      "variants": [
+        {
+          "label": "Pink",
+          "title": "Sublimation Water Bottle - Pink",
+          "price": 30,
+          "image": "assets/Sublimation Water Bottle - 30.jpg"
+        }
+      ]
+    },
+    {
+      "key": "tumbler-tumbler-heaven",
+      "title": "Tumbler Heaven",
+      "handle": "tumbler-tumbler-heaven",
+      "price": 40,
+      "image": "assets/Tumbler Heaven - 40.png",
+      "variants": [
+        {
+          "label": "Red",
+          "title": "Tumbler Heaven - Red",
+          "price": 40,
+          "image": "assets/Tumbler Heaven - 40.png"
+        },
+        {
+          "label": "White",
+          "title": "Tumbler Heaven - White",
+          "price": 40,
+          "image": "assets/Tumbler Heaven - 40.png"
+        },
+        {
+          "label": "Baby blue",
+          "title": "Tumbler Heaven - Baby blue",
+          "price": 40,
+          "image": "assets/Tumbler Heaven - 40.png"
+        },
+        {
+          "label": "Pink",
+          "title": "Tumbler Heaven - Pink",
+          "price": 40,
+          "image": "assets/Tumbler Heaven - 40.png"
+        },
+        {
+          "label": "Metallic purple",
+          "title": "Tumbler Heaven - Metallic purple",
+          "price": 40,
+          "image": "assets/Tumbler Heaven - 40.png"
+        }
+      ]
+    },
+    {
+      "key": "tumbler-water-bottle-tumbler",
+      "title": "Water Bottle Tumbler",
+      "handle": "tumbler-water-bottle-tumbler",
+      "price": 40,
+      "image": "assets/water-bottle-tumbler.jpeg",
+      "variants": [
+        {
+          "label": "Black",
+          "title": "Water Bottle Tumbler - Black",
+          "price": 40,
+          "image": "assets/water-bottle-tumbler.jpeg"
+        },
+        {
+          "label": "Hot pink",
+          "title": "Water Bottle Tumbler - Hot pink",
+          "price": 40,
+          "image": "assets/Water Bottle Tumbler - 40.png"
+        },
+        {
+          "label": "Light pink",
+          "title": "Water Bottle Tumbler - Light pink",
+          "price": 40,
+          "image": "assets/Water Bottle Tumbler - 40.png"
+        },
+        {
+          "label": "Vanilla pink",
+          "title": "Water Bottle Tumbler - Vanilla pink",
+          "price": 40,
+          "image": "assets/Water Bottle Tumbler - 40.png"
+        },
+        {
+          "label": "White",
+          "title": "Water Bottle Tumbler - White",
+          "price": 40,
+          "image": "assets/Water Bottle Tumbler - 40.png"
+        },
+        {
+          "label": "Light blue",
+          "title": "Water Bottle Tumbler - Light blue",
+          "price": 40,
+          "image": "assets/Water Bottle Tumbler - blue - 40.png"
+        },
+        {
+          "label": "Light teal",
+          "title": "Water Bottle Tumbler - Light teal",
+          "price": 40,
+          "image": "assets/Water Bottle Tumbler - blue - 40.png"
+        },
+        {
+          "label": "Cream white",
+          "title": "Water Bottle Tumbler - Cream white",
+          "price": 40,
+          "image": "assets/Water Bottle Tumbler - blue - 40.png"
+        },
+        {
+          "label": "Very light pink",
+          "title": "Water Bottle Tumbler - Very light pink",
+          "price": 40,
+          "image": "assets/Water Bottle Tumbler - 40.png"
+        }
+      ]
+    }
+  ]
+}

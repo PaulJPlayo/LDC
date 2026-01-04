@@ -368,9 +368,17 @@
         justify-content: center;
         text-decoration: none;
       }
+      .cart-reset-btn {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.08) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        color: #fff7e6;
+      }
       .checkout-btn:hover {
         transform: translateY(-1px);
         box-shadow: 0 12px 24px rgba(168, 85, 247, 0.25);
+      }
+      .cart-reset-btn:hover {
+        box-shadow: 0 10px 18px rgba(226, 232, 240, 0.25);
       }
       .checkout-btn:disabled {
         opacity: 0.6;
@@ -1112,7 +1120,7 @@
       }
     </style>
   </head>
-  <body>
+  <body data-medusa-enabled="true" data-medusa-backend="http://127.0.0.1:9000" data-medusa-publishable-key="pk_83213f0f437bbd64a53aa3d4402d9d6a1680bf1e1f1972a0cb1b1bea271f2a13">
     <div class="page-shell">
       <header class="top-bar">
         <div class="container mx-auto px-5 lg:px-12 py-5 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
@@ -1134,6 +1142,7 @@
             <a class="nav-link" href="accessories.html">Accessories</a>
             <a class="nav-link" href="attire.html">Attire</a>
             <a class="nav-link" href="doormats.html">Doormats</a>
+            <a class="nav-link" href="account.html">Account</a>
             <div class="nav-icon-cluster">
               <a class="relative inline-flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 icon-button cart-btn" href="#" aria-label="Favorites" data-favorites-open>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
@@ -1227,7 +1236,7 @@
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                     </svg>
                   </button>
-                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-design-source="tumblersSlimImage" data-open-cart>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-product-key="tumbler-sublimation" data-design-source="tumblersSlimImage" data-open-cart>
                     <input type="hidden" name="design-source" value="tumblersSlimImage" data-design-source="tumblersSlimImage" />
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
                       <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
@@ -1280,7 +1289,7 @@
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                     </svg>
                   </button>
-                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-open-cart data-design-source="sipCupImage">
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-product-key="tumbler-sip-cup" data-open-cart data-design-source="sipCupImage">
                     <input type="hidden" name="design-source" value="sipCupImage" data-design-source="sipCupImage" />
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
                       <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
@@ -1322,7 +1331,7 @@
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                     </svg>
                   </button>
-                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-product-key="tumbler-glass-tumbler">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
                       <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
                     </svg>
@@ -1366,7 +1375,7 @@
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                     </svg>
                   </button>
-                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-open-cart data-design-source="macaronSublimationImage">
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-product-key="tumbler-macaron-sublimation" data-open-cart data-design-source="macaronSublimationImage">
                     <input type="hidden" name="design-source" value="macaronSublimationImage" data-design-source="macaronSublimationImage" />
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
                       <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
@@ -1409,7 +1418,7 @@
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                     </svg>
                   </button>
-                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-product-key="tumbler-kids-water-bottle">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
                       <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
                     </svg>
@@ -1454,7 +1463,7 @@
                     <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                   </svg>
                 </button>
-                <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-product-key="tumbler-water-bottle-tumbler">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
                     <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
                   </svg>
@@ -1492,7 +1501,7 @@
                     <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                   </svg>
                 </button>
-                <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-product-key="tumbler-sublimation-water-bottle">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
                     <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
                   </svg>
@@ -1537,7 +1546,7 @@
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                     </svg>
                   </button>
-                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-product-key="tumbler-silver-trim-tumbler">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
                       <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
                     </svg>
@@ -1578,7 +1587,7 @@
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                     </svg>
                   </button>
-                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-product-key="tumbler-pink-flamingo">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
                       <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
                     </svg>
@@ -1619,7 +1628,7 @@
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                     </svg>
                   </button>
-                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-product-key="tumbler-pumpkin-spice">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
                       <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
                     </svg>
@@ -1660,7 +1669,7 @@
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                     </svg>
                   </button>
-                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-product-key="tumbler-autumn-leaves">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
                       <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
                     </svg>
@@ -1701,7 +1710,7 @@
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                     </svg>
                   </button>
-                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-product-key="tumbler-sublimation-tumblers">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
                       <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
                     </svg>
@@ -1746,7 +1755,7 @@
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                     </svg>
                   </button>
-                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-product-key="tumbler-tumbler-heaven">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
                       <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
                     </svg>
@@ -1787,7 +1796,7 @@
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                     </svg>
                   </button>
-                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+                  <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart data-product-key="tumbler-gold-trim-tumbler">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
                       <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
                     </svg>
@@ -1854,6 +1863,7 @@
               <span>Subtotal</span>
               <span data-cart-total>$0.00</span>
             </div>
+            <button type="button" class="checkout-btn cart-reset-btn" data-cart-reset>Reset Cart</button>
             <button type="button" class="checkout-btn" data-cart-checkout>Proceed to Checkout</button>
           </div>
         </aside>
@@ -1983,6 +1993,7 @@
         const cartItemsEl = document.querySelector('[data-cart-items]');
         const cartTotalEl = document.querySelector('[data-cart-total]');
         const checkoutBtn = document.querySelector('[data-cart-checkout]');
+        const resetBtn = document.querySelector('[data-cart-reset]');
         const favoritesDrawer = document.querySelector('[data-favorites-drawer]');
         const favoritesOverlay = document.querySelector('[data-favorites-overlay]');
         const favoritesPanel = document.querySelector('[data-favorites-panel]');
@@ -2170,6 +2181,7 @@
             const accessoryOpt = findOpt('accessory');
             const wrapOpt = findOpt('wrap');
             const notesOpt = findOpt('notes');
+            const colorValue = colorOpt ? (colorOpt.value || colorOpt.label || '') : '';
             const colorGlyph = colorOpt?.swatchGlyph || '';
             const colorIsText = /[A-Za-z]/.test(colorGlyph);
             const colorSwatch = colorOpt
@@ -2177,7 +2189,6 @@
               : '';
             const displayTitle = item.name || item.title || 'Custom Design';
             const thumbStyle = item.previewStyle || buildPreviewStyle(item.image || '');
-            const colorLabelMarkup = isPackageItem ? '' : '<span class="cart-option-label">Color</span>';
             wrapper.innerHTML = `
               <div class="cart-item-thumb" style="${thumbStyle}">
                 ${item.image ? `<img src="${item.image}" alt="${displayTitle}" />` : ''}
@@ -2187,15 +2198,15 @@
                   <span class="cart-item-title">${displayTitle}</span>
                   <button type="button" class="cart-item-remove" data-remove="${item.id}" aria-label="Remove item">×</button>
                 </div>
+                <div class="cart-item-price">${formatCurrency(lineTotal)}</div>
                 <div class="cart-item-options">
-                  ${colorSwatch ? `<div class="cart-option">${colorLabelMarkup}${colorSwatch}</div>` : ''}
+                  ${colorSwatch ? `<div class="cart-option">${colorSwatch}${colorValue ? `<span class="cart-option-value">${colorValue}</span>` : ''}</div>` : ''}
                   ${accessoryOpt ? `<div class="cart-option"><span class="cart-option-label">Accessory</span><span class="cart-option-value">${accessoryOpt.value || accessoryOpt.label}</span></div>` : ''}
                   ${wrapOpt ? `<div class="cart-option"><span class="cart-option-label">Wrap</span><span class="cart-option-value">${wrapOpt.value || wrapOpt.label}</span></div>` : ''}
                   ${notesOpt ? `<div class="cart-option"><span class="cart-option-label">Notes</span><span class="cart-option-value">${notesOpt.value || notesOpt.label}</span></div>` : ''}
                 </div>
                 <div class="cart-item-meta">
                   <span class="cart-item-qty">Qty ${item.quantity || 1}</span>
-                  <span class="cart-item-price">${formatCurrency(lineTotal)}</span>
                 </div>
               </div>
             `;
@@ -2203,7 +2214,15 @@
           });
           if (cartTotalEl) cartTotalEl.textContent = formatCurrency(total);
           cartItemsEl.querySelectorAll('[data-remove]').forEach(btn => {
-            btn.addEventListener('click', () => removeItem(btn.getAttribute('data-remove')));
+            btn.addEventListener('click', () => {
+              const id = btn.getAttribute('data-remove');
+              const medusaCart = window.LDCCommerce;
+              if (medusaCart?.enabled && id) {
+                medusaCart.removeLineItem?.(id);
+                return;
+              }
+              removeItem(id);
+            });
           });
           syncBadges();
         };
@@ -2229,6 +2248,16 @@
         });
         checkoutBtn?.addEventListener('click', () => {
           window.location.href = 'checkout.html';
+        });
+        resetBtn?.addEventListener('click', () => {
+          const medusaCart = window.LDCCommerce;
+          if (medusaCart?.resetCart) {
+            medusaCart.resetCart();
+          }
+          cartState.items = [];
+          saveCart();
+          syncBadges();
+          renderCart();
         });
         document.querySelectorAll('[data-open-cart],[data-cart-open]').forEach(trigger => {
           trigger.addEventListener('click', event => {
@@ -2583,5 +2612,6 @@
       })();
     </script>
 
+    <script src="commerce.js" defer></script>
   </body>
 </html>

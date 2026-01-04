@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Account</title>
+    <meta name="description" content="LDC account and order history" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: radial-gradient(circle at top left, rgba(224, 176, 255, 0.35), transparent 55%), radial-gradient(circle at bottom right, rgba(255, 199, 229, 0.35), transparent 55%), linear-gradient(135deg, #221242 0%, #0f1534 100%);
+        color: #f8fafc;
+        padding: clamp(1.5rem, 4vw, 3rem) 1.25rem;
+      }
+      .account-shell {
+        width: 100%;
+        max-width: 980px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(1.5rem, 4vw, 2.5rem);
+      }
+      .account-header {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .account-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        text-decoration: none;
+        color: rgba(248, 250, 252, 0.8);
+      }
+      .account-back svg {
+        width: 1.1rem;
+        height: 1.1rem;
+      }
+      .account-title {
+        font-size: clamp(1.7rem, 4vw, 2.4rem);
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin: 0;
+      }
+      .account-subtitle {
+        margin: 0;
+        color: rgba(248, 250, 252, 0.78);
+        max-width: 52ch;
+        line-height: 1.6;
+      }
+      .account-card {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 1.5rem;
+        padding: clamp(1.5rem, 3vw, 2.5rem);
+        box-shadow: 0 24px 48px rgba(15, 23, 42, 0.25);
+        backdrop-filter: blur(14px);
+      }
+      .account-status {
+        font-size: 0.95rem;
+        color: rgba(248, 250, 252, 0.75);
+        margin: 0 0 1.5rem 0;
+      }
+      .account-auth {
+        display: grid;
+        gap: 1.5rem;
+      }
+      .auth-grid {
+        display: grid;
+        gap: 1.5rem;
+      }
+      .auth-card {
+        background: rgba(15, 23, 42, 0.55);
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        border-radius: 1.25rem;
+        padding: 1.5rem;
+      }
+      .auth-card h3 {
+        margin: 0 0 0.35rem 0;
+        font-size: 1.15rem;
+      }
+      .auth-card p {
+        margin: 0 0 1rem 0;
+        color: rgba(248, 250, 252, 0.7);
+      }
+      .auth-field {
+        display: grid;
+        gap: 0.35rem;
+        margin-bottom: 0.85rem;
+      }
+      .auth-field label {
+        font-size: 0.85rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(248, 250, 252, 0.7);
+      }
+      .auth-field input {
+        width: 100%;
+        padding: 0.7rem 0.85rem;
+        border-radius: 0.75rem;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        background: rgba(15, 23, 42, 0.6);
+        color: #ffffff;
+      }
+      .auth-submit {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 0.85rem;
+        border: none;
+        background: linear-gradient(135deg, #ff7ec8 0%, #ff417e 100%);
+        color: #ffffff;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        cursor: pointer;
+      }
+      .account-details {
+        display: grid;
+        gap: 1.5rem;
+      }
+      .account-meta {
+        display: grid;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+        color: rgba(248, 250, 252, 0.8);
+      }
+      .account-meta strong {
+        color: #ffffff;
+      }
+      .orders-list {
+        display: grid;
+        gap: 1rem;
+      }
+      .order-card {
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        border-radius: 1rem;
+        padding: 1rem 1.25rem;
+        background: rgba(15, 23, 42, 0.45);
+        display: grid;
+        gap: 0.4rem;
+      }
+      .order-card h4 {
+        margin: 0;
+        font-size: 1rem;
+      }
+      .order-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        font-size: 0.85rem;
+        color: rgba(248, 250, 252, 0.75);
+      }
+      .order-empty {
+        border: 1px dashed rgba(148, 163, 184, 0.4);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        text-align: center;
+        color: rgba(248, 250, 252, 0.7);
+      }
+      @media (min-width: 768px) {
+        .auth-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body data-medusa-enabled="true" data-medusa-backend="http://127.0.0.1:9000" data-medusa-publishable-key="pk_83213f0f437bbd64a53aa3d4402d9d6a1680bf1e1f1972a0cb1b1bea271f2a13">
+    <main class="account-shell">
+      <header class="account-header">
+        <a class="account-back" href="index.html">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+          Back to Home
+        </a>
+        <h1 class="account-title">Your Account</h1>
+        <p class="account-subtitle">Manage your profile and track every LDC order in one place.</p>
+      </header>
+
+      <section class="account-card">
+        <p class="account-status" data-account-status>Checking your account...</p>
+
+        <div class="account-auth" data-account-auth hidden>
+          <div class="auth-grid">
+            <form class="auth-card" data-signin-form>
+              <h3>Sign In</h3>
+              <p>Use your email to access order history.</p>
+              <div class="auth-field">
+                <label for="signInEmail">Email</label>
+                <input id="signInEmail" type="email" autocomplete="email" placeholder="you@example.com" required />
+              </div>
+              <div class="auth-field">
+                <label for="signInPassword">Password</label>
+                <input id="signInPassword" type="password" autocomplete="current-password" placeholder="Enter your password" required />
+              </div>
+              <button class="auth-submit" type="submit">Sign In</button>
+            </form>
+
+            <form class="auth-card" data-signup-form>
+              <h3>Create Account</h3>
+              <p>New here? Set up your LDC account.</p>
+              <div class="auth-field">
+                <label for="signUpName">Name</label>
+                <input id="signUpName" type="text" autocomplete="name" placeholder="Your name" required />
+              </div>
+              <div class="auth-field">
+                <label for="signUpEmail">Email</label>
+                <input id="signUpEmail" type="email" autocomplete="email" placeholder="you@example.com" required />
+              </div>
+              <div class="auth-field">
+                <label for="signUpPassword">Password</label>
+                <input id="signUpPassword" type="password" autocomplete="new-password" placeholder="Create a password" required />
+              </div>
+              <div class="auth-field">
+                <label for="signUpConfirm">Confirm</label>
+                <input id="signUpConfirm" type="password" autocomplete="new-password" placeholder="Re-enter password" required />
+              </div>
+              <button class="auth-submit" type="submit">Create Account</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="account-details" data-account-details hidden>
+          <div class="account-meta">
+            <div><strong>Name:</strong> <span data-account-name></span></div>
+            <div><strong>Email:</strong> <span data-account-email></span></div>
+          </div>
+
+          <div>
+            <h3>Order History</h3>
+            <div class="orders-list" data-order-list></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="commerce.js"></script>
+    <script>
+      (() => {
+        const statusEl = document.querySelector('[data-account-status]');
+        const authEl = document.querySelector('[data-account-auth]');
+        const detailsEl = document.querySelector('[data-account-details]');
+        const nameEl = document.querySelector('[data-account-name]');
+        const emailEl = document.querySelector('[data-account-email]');
+        const ordersEl = document.querySelector('[data-order-list]');
+
+        const formatCurrency = (value, currency) => {
+          const amount = Number(value || 0) / 100;
+          const code = (currency || 'USD').toUpperCase();
+          return new Intl.NumberFormat('en-US', { style: 'currency', currency: code }).format(amount);
+        };
+
+        const showAuth = message => {
+          if (statusEl) statusEl.textContent = message;
+          if (authEl) authEl.hidden = false;
+          if (detailsEl) detailsEl.hidden = true;
+        };
+
+        const showDetails = (customer, orders) => {
+          if (statusEl) statusEl.textContent = 'Account ready.';
+          if (authEl) authEl.hidden = true;
+          if (detailsEl) detailsEl.hidden = false;
+          if (nameEl) nameEl.textContent = `${customer?.first_name || ''} ${customer?.last_name || ''}`.trim() || 'Customer';
+          if (emailEl) emailEl.textContent = customer?.email || '';
+
+          if (!ordersEl) return;
+          ordersEl.innerHTML = '';
+
+          if (!orders || !orders.length) {
+            const empty = document.createElement('div');
+            empty.className = 'order-empty';
+            empty.textContent = 'No orders yet.';
+            ordersEl.appendChild(empty);
+            return;
+          }
+
+          orders.forEach(order => {
+            const card = document.createElement('div');
+            card.className = 'order-card';
+            const created = order?.created_at ? new Date(order.created_at) : null;
+            const dateLabel = created ? created.toLocaleDateString() : 'Order date pending';
+            const total = formatCurrency(order?.total, order?.currency_code);
+            const payment = order?.payment_status || 'pending';
+            const fulfillment = order?.fulfillment_status || 'unfulfilled';
+
+            card.innerHTML = `
+              <h4>Order ${order?.display_id || order?.id || ''}</h4>
+              <div class="order-meta">
+                <span>Date: ${dateLabel}</span>
+                <span>Total: ${total}</span>
+                <span>Payment: ${payment}</span>
+                <span>Fulfillment: ${fulfillment}</span>
+              </div>
+            `;
+            ordersEl.appendChild(card);
+          });
+        };
+
+        const loadAccount = async () => {
+          if (!window.LDCCommerce) {
+            showAuth('Account services are not connected yet.');
+            return;
+          }
+          if (statusEl) statusEl.textContent = 'Loading your account...';
+          try {
+            const customer = await window.LDCCommerce.getCustomer();
+            const orders = await window.LDCCommerce.getOrders();
+            showDetails(customer, orders);
+          } catch (error) {
+            if (error && (error.status === 401 || error.status === 403)) {
+              showAuth('Please sign in to view your account.');
+              return;
+            }
+            showAuth('Unable to load account details. Please try again soon.');
+          }
+        };
+
+        loadAccount();
+        window.addEventListener('ldc:auth:change', loadAccount);
+      })();
+    </script>
+  </body>
+</html>

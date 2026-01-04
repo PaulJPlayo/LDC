@@ -1120,9 +1120,17 @@
         justify-content: center;
         text-decoration: none;
       }
+      .cart-reset-btn {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.08) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        color: #fff7e6;
+      }
       .checkout-btn:hover {
         transform: translateY(-1px);
         box-shadow: 0 12px 24px rgba(168, 85, 247, 0.25);
+      }
+      .cart-reset-btn:hover {
+        box-shadow: 0 10px 18px rgba(226, 232, 240, 0.25);
       }
       .checkout-btn:disabled {
         opacity: 0.6;
@@ -1320,7 +1328,7 @@
       }
     </style>
   </head>
-  <body>
+  <body data-medusa-enabled="true" data-medusa-backend="http://127.0.0.1:9000" data-medusa-publishable-key="pk_83213f0f437bbd64a53aa3d4402d9d6a1680bf1e1f1972a0cb1b1bea271f2a13">
     <div class="page-shell">
       <header class="top-bar">
         <div class="container mx-auto px-5 lg:px-12 py-5 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
@@ -1339,6 +1347,7 @@
             <a class="nav-link" href="accessories.html">Accessories</a>
             <a class="nav-link" href="attire.html">Attire</a>
             <span class="nav-link is-active">Doormats</span>
+            <a class="nav-link" href="account.html">Account</a>
             <div class="nav-icon-cluster">
               <a class="nav-icon-link relative" href="#" aria-label="Favorites" data-favorites-open>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -1370,11 +1379,6 @@
             </div>
             <div class="attire-grid">
               <div class="attire-gallery">
-                <div class="doormat-swipe-cue">
-                  <span class="swipe-arrow" aria-hidden="true">&larr;</span>
-                  <span class="swipe-label">Swipe</span>
-                  <span class="swipe-arrow" aria-hidden="true">&rarr;</span>
-                </div>
                 <div class="doormat-gallery-carousel" aria-label="Doormat gallery">
                   <div class="doormat-carousel-item">
                     <img src="assets/Doormats 1.png" alt="Custom coir doormat" loading="eager" />
@@ -1382,6 +1386,11 @@
                   <div class="doormat-carousel-item">
                     <img src="assets/Doormats 2.png" alt="Doormat design variation" loading="lazy" />
                   </div>
+                </div>
+                <div class="doormat-swipe-cue">
+                  <span class="swipe-arrow" aria-hidden="true">&larr;</span>
+                  <span class="swipe-label">Swipe</span>
+                  <span class="swipe-arrow" aria-hidden="true">&rarr;</span>
                 </div>
                 <div class="attire-hero-image">
                   <img src="assets/Doormats 1.png" alt="Custom coir doormat" />
@@ -1447,7 +1456,7 @@
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                     </svg>
                   </button>
-                  <button class="cta-button" data-add-to-cart>Add to Cart</button>
+                  <button class="cta-button" data-add-to-cart data-product-key="doormat-custom">Add to Cart</button>
                   <div class="design-price-wrapper attire-price-wrapper" aria-live="polite" role="status">
                     <div class="design-price-bubble attire-price-bubble" data-doormat-price-bubble>
                       <span class="design-price-value" data-doormat-price-total>$0.00</span>
@@ -1514,6 +1523,7 @@
               <span>Subtotal</span>
               <span data-cart-total>$0.00</span>
             </div>
+            <button type="button" class="checkout-btn cart-reset-btn" data-cart-reset>Reset Cart</button>
             <button type="button" class="checkout-btn" data-cart-checkout>Proceed to Checkout</button>
           </div>
         </aside>
@@ -1615,6 +1625,7 @@
         const favoritesCountEl = document.querySelector('[data-favorites-count]');
         const favoritesCta = document.querySelector('[data-favorites-cta]');
         const checkoutBtn = document.querySelector('[data-cart-checkout]');
+        const resetBtn = document.querySelector('[data-cart-reset]');
         const sizeEl = document.getElementById('doormatSize');
         const colorEl = document.getElementById('doormatColor');
         const qtyEl = form?.querySelector('input[type="number"]');
@@ -1688,6 +1699,16 @@
         document.querySelectorAll('[data-cart-open],[data-open-cart]').forEach(btn => btn.addEventListener('click', e => { e.preventDefault(); openCart(); }));
         window.addEventListener('keydown', e => { if (e.key === 'Escape') closeCart(); });
         checkoutBtn?.addEventListener('click', () => { window.location.href = 'checkout.html'; });
+        resetBtn?.addEventListener('click', () => {
+          const medusaCart = window.LDCCommerce;
+          if (medusaCart?.resetCart) {
+            medusaCart.resetCart();
+          }
+          cartState.items = [];
+          saveState(CART_STORAGE_KEY, cartState);
+          renderCart();
+          syncBadges();
+        });
 
         const fallbackPreview = 'background: linear-gradient(135deg, #d8b4fe 0%, #a855f7 100%);';
         const buildPreviewStyle = img => {
@@ -1762,6 +1783,7 @@
                   <span class="cart-item-title">${item.name || 'Item'}</span>
                   <button type="button" class="cart-item-remove" data-remove="${item.id}" aria-label="Remove item">×</button>
                 </div>
+                <div class="cart-item-price">${formatCurrency(lineTotal)}</div>
                 <div class="cart-item-options">
                   ${orderedOpts.map(opt => {
                     const label = (opt.label || 'Option').replace(/:$/, '');
@@ -1773,7 +1795,7 @@
                       const viewLink = opt.attachmentData ? `<a href="${opt.attachmentData.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="cart-attachment-link">View</a>` : '';
                       return `<div class="cart-option"><span class="cart-option-label">${label}</span><span class="cart-option-value">${value}${badge} ${viewLink}</span></div>`;
                     }
-                    if (normalizedLabel === 'package' || (normalizedLabel === 'color' && isPackageItem)) {
+                    if (normalizedLabel === 'color' || normalizedLabel === 'package') {
                       return `<div class="cart-option"><span class="cart-option-value">${swatch}${value}</span></div>`;
                     }
                     return `<div class="cart-option"><span class="cart-option-label">${label}</span><span class="cart-option-value">${swatch}${value}</span></div>`;
@@ -1781,7 +1803,6 @@
                 </div>
                 <div class="cart-item-meta">
                   <span class="cart-item-qty">Qty ${item.quantity || 1}</span>
-                  <span class="cart-item-price">${formatCurrency(lineTotal)}</span>
                 </div>
               </div>
             `;
@@ -1791,6 +1812,11 @@
           cartItemsEl.querySelectorAll('[data-remove]').forEach(btn => {
             btn.addEventListener('click', () => {
               const id = btn.getAttribute('data-remove');
+              const medusaCart = window.LDCCommerce;
+              if (medusaCart?.enabled && id) {
+                medusaCart.removeLineItem?.(id);
+                return;
+              }
               cartState.items = (cartState.items || []).filter(it => it.id !== id);
               saveState(CART_STORAGE_KEY, cartState);
               renderCart();
@@ -2017,146 +2043,6 @@
       })();
 
       (() => {
-        const mobileQuery = window.matchMedia('(max-width: 767px)');
-        const carousel = document.querySelector('.doormat-gallery-carousel');
-        if (!carousel) return;
-        let loopState = null;
-
-        const getPaddingLeft = container => {
-          const value = window.getComputedStyle(container).paddingLeft;
-          const parsed = parseFloat(value || '0');
-          return Number.isNaN(parsed) ? 0 : parsed;
-        };
-
-        const stripCloneAttributes = node => {
-          if (node.removeAttribute) node.removeAttribute('id');
-          node.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-          node.querySelectorAll('[data-hero-thumb]').forEach(el => el.removeAttribute('data-hero-thumb'));
-          node.querySelectorAll('button, a, input, textarea, select, [tabindex]').forEach(el => {
-            el.setAttribute('tabindex', '-1');
-          });
-        };
-
-        const createClone = source => {
-          const clone = source.cloneNode(true);
-          clone.dataset.loopClone = 'true';
-          clone.setAttribute('aria-hidden', 'true');
-          clone.style.pointerEvents = 'none';
-          stripCloneAttributes(clone);
-          return clone;
-        };
-
-        const measurePositions = (container, state) => {
-          const paddingLeft = getPaddingLeft(container);
-          state.paddingLeft = paddingLeft;
-          state.realStart = state.firstReal.offsetLeft - paddingLeft;
-          state.listSpan = state.afterFirst.offsetLeft - state.firstReal.offsetLeft;
-        };
-
-        const initLoopingCarousel = () => {
-          if (carousel.dataset.loopInit === 'true') return;
-          const items = Array.from(carousel.children).filter(child => child.dataset.loopClone !== 'true');
-          if (items.length < 2) return;
-
-          const firstReal = items[0];
-          const beforeClones = items.map(item => createClone(item));
-          const afterClones = items.map(item => createClone(item));
-
-          beforeClones.forEach(clone => {
-            carousel.insertBefore(clone, carousel.firstChild);
-          });
-          afterClones.forEach(clone => {
-            carousel.appendChild(clone);
-          });
-
-          const state = {
-            firstReal,
-            afterFirst: afterClones[0],
-            isAdjusting: false,
-            rafId: 0,
-            realStart: 0,
-            listSpan: 0,
-            paddingLeft: 0
-          };
-
-          const jumpTo = target => {
-            state.isAdjusting = true;
-            carousel.style.scrollSnapType = 'none';
-            carousel.scrollLeft = target;
-            requestAnimationFrame(() => {
-              carousel.style.scrollSnapType = '';
-              state.isAdjusting = false;
-            });
-          };
-
-          const adjustLoop = () => {
-            if (!mobileQuery.matches || state.isAdjusting) return;
-            if (!state.listSpan) return;
-            const threshold = Math.max(1, Math.round(carousel.clientWidth * 0.02));
-            const current = carousel.scrollLeft;
-            if (current < state.realStart - threshold) {
-              jumpTo(current + state.listSpan);
-            } else if (current > state.realStart + state.listSpan + threshold) {
-              jumpTo(current - state.listSpan);
-            }
-          };
-
-          const onScroll = () => {
-            if (state.rafId) cancelAnimationFrame(state.rafId);
-            state.rafId = requestAnimationFrame(adjustLoop);
-          };
-
-          const onResize = () => {
-            if (!mobileQuery.matches) return;
-            measurePositions(carousel, state);
-            if (state.listSpan) {
-              carousel.scrollLeft = state.realStart;
-            }
-          };
-
-          carousel.addEventListener('scroll', onScroll, { passive: true });
-          window.addEventListener('resize', onResize);
-          loopState = { onScroll, onResize, state };
-          carousel.dataset.loopInit = 'true';
-
-          requestAnimationFrame(() => {
-            measurePositions(carousel, state);
-            if (state.listSpan) {
-              carousel.scrollLeft = state.realStart;
-            }
-          });
-        };
-
-        const teardownLoopingCarousel = () => {
-          if (loopState) {
-            carousel.removeEventListener('scroll', loopState.onScroll);
-            window.removeEventListener('resize', loopState.onResize);
-            loopState = null;
-          }
-          carousel.querySelectorAll('[data-loop-clone="true"]').forEach(clone => {
-            clone.remove();
-          });
-          carousel.scrollLeft = 0;
-          delete carousel.dataset.loopInit;
-        };
-
-        const applyLoopingCarousel = () => {
-          if (mobileQuery.matches) {
-            initLoopingCarousel();
-          } else {
-            teardownLoopingCarousel();
-          }
-        };
-
-        applyLoopingCarousel();
-        if (typeof mobileQuery.addEventListener === 'function') {
-          mobileQuery.addEventListener('change', applyLoopingCarousel);
-        } else if (typeof mobileQuery.addListener === 'function') {
-          mobileQuery.addListener(applyLoopingCarousel);
-        }
-      })();
-
-      (() => {
         const cue = document.querySelector('.doormat-swipe-cue');
         const section = document.querySelector('.attire-gallery');
         if (!cue || !section) return;
@@ -2238,5 +2124,6 @@
       }
     </script>
 
+    <script src="commerce.js" defer></script>
   </body>
 </html>

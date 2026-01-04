@@ -12,6 +12,12 @@ html { scroll-behavior: smooth; }
   --mauve-dark: #D6B4FF; /* slightly lighter mauve for controls */
 }
 
+/* Keep icon count badges hidden until they have content. */
+.icon-badge:empty,
+.icon-badge[hidden] {
+  display: none !important;
+}
+
 /* Dark thistle background utility */
 .bg-thistle-dark { background-color: #6B4A78; }
 
