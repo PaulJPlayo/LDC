@@ -1,0 +1,30 @@
+name: Deploy Medusa Backend
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - name: Configure SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+      - name: Ensure deploy directory exists
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p /home/ubuntu/ldc-medusa"
+      - name: Sync repository to EC2
+        run: |
+          rsync -az \
+            --exclude '.git' \
+            --exclude 'node_modules' \
+            --exclude 'medusa-backend/node_modules' \
+            --exclude 'medusa-backend/.env' \
+            -e "ssh -o StrictHostKeyChecking=no" \
+            ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/ubuntu/ldc-medusa
+      - name: Deploy Medusa backend
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "/home/ubuntu/ldc-medusa/scripts/deploy-medusa.sh"

@@ -69,6 +69,11 @@ type LdcSeedProduct = {
   }[];
 };
 
+type RegionLike = { id: string; name?: string };
+type StockLocationLike = { id: string; name?: string };
+type FulfillmentSetLike = { id: string; name?: string; service_zones?: { id: string }[] };
+type PublishableKeyLike = { id: string; token: string; title?: string; type?: string };
+
 export default async function seedLdcData({ container }: ExecArgs) {
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER);
   const link = container.resolve(ContainerRegistrationKeys.LINK);
@@ -144,7 +149,7 @@ export default async function seedLdcData({ container }: ExecArgs) {
     entity: "region",
     fields: ["id", "name"],
   });
-  let region = regionData.find((item: { name: string }) =>
+  let region: RegionLike | undefined = regionData.find((item: { name: string }) =>
     item.name.toLowerCase().includes("united")
   );
 
@@ -162,6 +167,9 @@ export default async function seedLdcData({ container }: ExecArgs) {
       },
     });
     region = regionResult[0];
+  }
+  if (!region) {
+    throw new Error("Failed to resolve region for LDC seed.");
   }
 
   const { data: taxRegions } = await query.graph({
@@ -188,7 +196,7 @@ export default async function seedLdcData({ container }: ExecArgs) {
     entity: "stock_location",
     fields: ["id", "name"],
   });
-  let stockLocation = locationData.find(
+  let stockLocation: StockLocationLike | undefined = locationData.find(
     (item: { name: string }) => item.name === "LDC Warehouse"
   );
 
@@ -210,6 +218,9 @@ export default async function seedLdcData({ container }: ExecArgs) {
       },
     });
     stockLocation = stockLocationResult[0];
+  }
+  if (!stockLocation) {
+    throw new Error("Failed to resolve stock location for LDC seed.");
   }
 
   await updateStoresWorkflow(container).run({
@@ -245,7 +256,7 @@ export default async function seedLdcData({ container }: ExecArgs) {
     entity: "fulfillment_set",
     fields: ["id", "name", "service_zones.id"],
   });
-  let fulfillmentSet = fulfillmentSetData.find(
+  let fulfillmentSet: FulfillmentSetLike | undefined = fulfillmentSetData.find(
     (item: { name: string }) => item.name === "LDC Warehouse delivery"
   );
 
@@ -265,6 +276,9 @@ export default async function seedLdcData({ container }: ExecArgs) {
         },
       ],
     });
+  }
+  if (!fulfillmentSet) {
+    throw new Error("Failed to resolve fulfillment set for LDC seed.");
   }
 
   const safeLink = async (payload: Record<string, any>) => {
@@ -297,7 +311,10 @@ export default async function seedLdcData({ container }: ExecArgs) {
     entity: "shipping_option",
     fields: ["id", "name", "service_zone_id"],
   });
-  const serviceZoneId = fulfillmentSet.service_zones[0].id;
+  const serviceZoneId = fulfillmentSet.service_zones?.[0]?.id;
+  if (!serviceZoneId) {
+    throw new Error("No service zone found for fulfillment set.");
+  }
   const existingOptionNames = new Set(
     shippingOptions
       .filter((option: { service_zone_id: string }) => option.service_zone_id === serviceZoneId)
@@ -395,7 +412,7 @@ export default async function seedLdcData({ container }: ExecArgs) {
     entity: "api_key",
     fields: ["id", "title", "token", "type"],
   });
-  let publishableKey = apiKeys.find(
+  let publishableKey: PublishableKeyLike | undefined = apiKeys.find(
     (item: { title: string; type: string }) =>
       item.title === "LDC Storefront" && item.type === "publishable"
   );
@@ -415,6 +432,9 @@ export default async function seedLdcData({ container }: ExecArgs) {
       },
     });
     publishableKey = publishableApiKeyResult[0];
+  }
+  if (!publishableKey) {
+    throw new Error("Failed to resolve publishable API key.");
   }
 
   await linkSalesChannelsToApiKeyWorkflow(container).run({
