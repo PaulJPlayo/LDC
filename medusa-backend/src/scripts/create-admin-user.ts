@@ -34,7 +34,7 @@ export default async function createAdminUser({ container, args }: ExecArgs) {
   });
 
   if (error || !authIdentity) {
-    throw new Error(error?.message || "Failed to register auth identity.");
+    throw new Error("Failed to register auth identity.");
   }
 
   await authService.updateAuthIdentities({

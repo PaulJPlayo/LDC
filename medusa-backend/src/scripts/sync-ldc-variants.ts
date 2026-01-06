@@ -24,6 +24,12 @@ type SeedProduct = {
   variants?: SeedVariant[];
 };
 
+type ProductRecord = {
+  id: string;
+  handle: string;
+  title: string;
+};
+
 const slugify = (value: string) =>
   String(value || "")
     .toLowerCase()
@@ -70,12 +76,12 @@ export default async function syncLdcVariants({ container }: ExecArgs) {
     return assetBase + src.replace(/^\/+/, "");
   };
 
-  const { data: products } = await query.graph({
+  const { data: products } = (await query.graph({
     entity: "product",
     fields: ["id", "handle", "title"],
-  });
+  })) as { data: ProductRecord[] };
   const productByHandle = new Map(
-    products.map((product: { handle: string }) => [product.handle, product])
+    products.map((product) => [product.handle, product])
   );
 
   const productMapPath = path.resolve(__dirname, "../../..", "product-map.json");
@@ -145,7 +151,7 @@ export default async function syncLdcVariants({ container }: ExecArgs) {
     const desiredLabels = desiredVariants.length
       ? desiredVariants
           .map((variant) => cleanLabel(variant.label || variant.title || ""))
-          .filter(Boolean)
+          .filter((value): value is string => Boolean(value))
       : ["Default"];
 
     const existingOptions = await productService.listProductOptions(
@@ -186,6 +192,7 @@ export default async function syncLdcVariants({ container }: ExecArgs) {
       const price =
         typeof desired.price === "number" ? desired.price : seedProduct.price;
       const labelKey = slugify(label);
+      const metadata = image ? { preview_image: image } : undefined;
 
       let existing =
         existingByLabel.get(labelKey) ||
@@ -202,10 +209,10 @@ export default async function syncLdcVariants({ container }: ExecArgs) {
               {
                 id: existing.id,
                 title,
-                thumbnail: image,
                 options: {
                   Style: label,
                 },
+                ...(metadata ? { metadata } : {}),
                 prices: price
                   ? [
                       {
@@ -235,10 +242,10 @@ export default async function syncLdcVariants({ container }: ExecArgs) {
               sku: `LDC-${seedProduct.key
                 .toUpperCase()
                 .replace(/[^A-Z0-9]+/g, "-")}-${labelKey.toUpperCase()}`,
-              thumbnail: image,
               options: {
                 Style: label,
               },
+              ...(metadata ? { metadata } : {}),
               prices: price
                 ? [
                     {

@@ -21,6 +21,9 @@ build/
 # OS files
 .DS_Store
 
+# Local Medusa runtime files
+.config/medusa/
+
 # Local git scratch dirs
 git-temp/
 git-work/

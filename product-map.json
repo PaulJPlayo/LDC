@@ -3,642 +3,642 @@
   "products": {
     "accessory-christmas-diamond": {
       "title": "Christmas Diamond",
-      "variantId": "variant_01KE064572CAG3F473GMQTFENW",
-      "image": "http://127.0.0.1:5501/assets/Christmas Diamond - 20.png"
+      "variantId": "variant_01KE74Y56TWF945PMN6DKY3VJV",
+      "image": "https://ldc-8kg.pages.dev/assets/Christmas Diamond - 20.png"
     },
     "accessory-cowboy-glass-straws": {
       "title": "Cowboy Glass Straws",
-      "variantId": "variant_01KE064572K78BE6KR8EJJ81MQ",
-      "image": "http://127.0.0.1:5501/assets/Cowboy Glass Straws - 3.jpg",
+      "variantId": "variant_01KE74Y56VY5GQBW5BC17XQ2NN",
+      "image": "https://ldc-8kg.pages.dev/assets/Cowboy Glass Straws - 3.jpg",
       "variants": {
         "glass": {
           "label": "Glass",
-          "variantId": "variant_01KE064572K78BE6KR8EJJ81MQ",
-          "image": "http://127.0.0.1:5501/assets/Cowboy Glass Straws - 3.jpg"
+          "variantId": "variant_01KE74Y56VY5GQBW5BC17XQ2NN",
+          "image": "https://ldc-8kg.pages.dev/assets/Cowboy Glass Straws - 3.jpg"
         }
       }
     },
     "accessory-flower-deluxe": {
       "title": "Flower Deluxe",
-      "variantId": "variant_01KE064572JX5KJF9SA63HPFCC",
-      "image": "http://127.0.0.1:5501/assets/Flower Deluxe - 10.png"
+      "variantId": "variant_01KE74Y573FKK7FBTBA0F9BP0X",
+      "image": "https://ldc-8kg.pages.dev/assets/Flower Deluxe - 10.png"
     },
     "accessory-flower-premium": {
       "title": "Flower Premium",
-      "variantId": "variant_01KE064572X8X145AWSYWWFZSH",
-      "image": "http://127.0.0.1:5501/assets/Flower Premium - 15.png"
+      "variantId": "variant_01KE74Y574B5YQXN109EKYQZC4",
+      "image": "https://ldc-8kg.pages.dev/assets/Flower Premium - 15.png"
     },
     "accessory-glass-bow-straws": {
       "title": "Glass Bow Straws",
-      "variantId": "variant_01KE064573D37K3RJEQ5S5DKYG",
-      "image": "http://127.0.0.1:5501/assets/Glass-Bow-Straws.png"
+      "variantId": "variant_01KE74Y574STE0X8GZ52NMEEKX",
+      "image": "https://ldc-8kg.pages.dev/assets/Glass-Bow-Straws.png"
     },
     "accessory-glass-twist-straws": {
       "title": "Glass Twist Straws",
-      "variantId": "variant_01KE064573AYTAGJFAWB18AGE6",
-      "image": "http://127.0.0.1:5501/assets/Glass Twist Straws - 3.png"
+      "variantId": "variant_01KE74Y575CTGZXFTFW706BV3K",
+      "image": "https://ldc-8kg.pages.dev/assets/Glass Twist Straws - 3.png"
     },
     "accessory-jelly-lids": {
       "title": "Jelly Lids",
-      "variantId": "variant_01KE064573DM1SYAVKV338XZ65",
-      "image": "http://127.0.0.1:5501/assets/Jelly Lids - 33.png",
+      "variantId": "variant_01KE74Y577A3M6XN7DN0PXMEAS",
+      "image": "https://ldc-8kg.pages.dev/assets/Jelly Lids - 33.png",
       "variants": {
         "red": {
           "label": "Red",
-          "variantId": "variant_01KE064573DM1SYAVKV338XZ65",
-          "image": "http://127.0.0.1:5501/assets/Jelly Lids - 33.png"
+          "variantId": "variant_01KE74Y577A3M6XN7DN0PXMEAS",
+          "image": "https://ldc-8kg.pages.dev/assets/Jelly Lids - 33.png"
         },
         "orange": {
           "label": "Orange",
-          "variantId": "variant_01KE0SK4BW7QMQ9V5KP39J2FHQ",
-          "image": "http://127.0.0.1:5501/assets/Jelly Lids - 33.png"
+          "variantId": "variant_01KE74Y578GF05PVVXY54NAAYM",
+          "image": "https://ldc-8kg.pages.dev/assets/Jelly Lids - 33.png"
         },
         "purple": {
           "label": "Purple",
-          "variantId": "variant_01KE0SK4GDA875N97WK6JDXG9G",
-          "image": "http://127.0.0.1:5501/assets/Jelly Lids - 33.png"
+          "variantId": "variant_01KE74Y57897DS8TAFZPZAJR1E",
+          "image": "https://ldc-8kg.pages.dev/assets/Jelly Lids - 33.png"
         },
         "baby-blue": {
           "label": "Baby blue",
-          "variantId": "variant_01KE0SK4HXKNRVW4XC4VVPSTFZ",
-          "image": "http://127.0.0.1:5501/assets/Jelly Lids - 33.png"
+          "variantId": "variant_01KE74Y57944R8DX8PXZRSCBXK",
+          "image": "https://ldc-8kg.pages.dev/assets/Jelly Lids - 33.png"
         },
         "light-teal": {
           "label": "Light teal",
-          "variantId": "variant_01KE0SK4KG74P9SFDB8XK0H98F",
-          "image": "http://127.0.0.1:5501/assets/Jelly-Lids.png"
+          "variantId": "variant_01KE74Y57CKYCTWXJ5BXGNHFG2",
+          "image": "https://ldc-8kg.pages.dev/assets/Jelly-Lids.png"
         },
         "light-pink": {
           "label": "Light pink",
-          "variantId": "variant_01KE0SK4QJSJVB46GRJ3AGX8CF",
-          "image": "http://127.0.0.1:5501/assets/Jelly-Lids.png"
+          "variantId": "variant_01KE74Y57DNNJNB0MC97WBF52M",
+          "image": "https://ldc-8kg.pages.dev/assets/Jelly-Lids.png"
         }
       }
     },
     "accessory-rhinestone-lids": {
       "title": "Rinestone Lids",
-      "variantId": "variant_01KE0645746AZEEQMCZ9D344EQ",
-      "image": "http://127.0.0.1:5501/assets/rhinestone-lids-5.png"
+      "variantId": "variant_01KE74Y57D16MT81TPK63FYVV8",
+      "image": "https://ldc-8kg.pages.dev/assets/rhinestone-lids-5.png"
     },
     "accessory-straw-toppers": {
       "title": "Straw Toppers",
-      "variantId": "variant_01KE064574A7BXPJTAZYD7GN4T",
-      "image": "http://127.0.0.1:5501/assets/Straw Toppers - cafe - 1.jpeg",
+      "variantId": "variant_01KE74Y57E9XQZZ3Z0501R81BY",
+      "image": "https://ldc-8kg.pages.dev/assets/Straw Toppers - cafe - 1.jpeg",
       "variants": {
         "cafe": {
           "label": "Cafe",
-          "variantId": "variant_01KE064574A7BXPJTAZYD7GN4T",
-          "image": "http://127.0.0.1:5501/assets/Straw Toppers - cafe - 1.jpeg"
+          "variantId": "variant_01KE74Y57E9XQZZ3Z0501R81BY",
+          "image": "https://ldc-8kg.pages.dev/assets/Straw Toppers - cafe - 1.jpeg"
         },
         "christmas": {
           "label": "Christmas",
-          "variantId": "variant_01KE0SK4YBZ303DM827DGRT9D6",
-          "image": "http://127.0.0.1:5501/assets/straw toppers - christmas - 1.jpeg"
+          "variantId": "variant_01KE74Y57MC4JHBX4N24X7SSJV",
+          "image": "https://ldc-8kg.pages.dev/assets/straw toppers - christmas - 1.jpeg"
         },
         "cat": {
           "label": "Cat",
-          "variantId": "variant_01KE0SK4ZQRAPTDQVNNQVC15SS",
-          "image": "http://127.0.0.1:5501/assets/Straw Topper - Cats - 1.jpeg"
+          "variantId": "variant_01KE74Y57N7CVXABYT8J300VVB",
+          "image": "https://ldc-8kg.pages.dev/assets/Straw Topper - Cats - 1.jpeg"
         },
         "cactus": {
           "label": "Cactus",
-          "variantId": "variant_01KE0SK5129WZHWQ7KP4CHF1ZR",
-          "image": "http://127.0.0.1:5501/assets/Straw Toppers - Cactus - 1.png"
+          "variantId": "variant_01KE74Y57NHDS6SKCVD936B2T3",
+          "image": "https://ldc-8kg.pages.dev/assets/Straw Toppers - Cactus - 1.png"
         },
         "beach-cup": {
           "label": "Beach Cup",
-          "variantId": "variant_01KE0SK52GZW3DQC09R6CZ5Q02",
-          "image": "http://127.0.0.1:5501/assets/straw toppers - beach cup -1.png"
+          "variantId": "variant_01KE74Y57PZXZ7KZC8X99174CR",
+          "image": "https://ldc-8kg.pages.dev/assets/straw toppers - beach cup -1.png"
         },
         "football": {
           "label": "Football",
-          "variantId": "variant_01KE0SK5413SKQV5JTFWEX72M8",
-          "image": "http://127.0.0.1:5501/assets/straw toppers - sports - 1.png"
+          "variantId": "variant_01KE74Y57S7KBPFAC3NW8H0YEG",
+          "image": "https://ldc-8kg.pages.dev/assets/straw toppers - sports - 1.png"
         }
       }
     },
     "attire-custom": {
       "title": "Custom Attire",
-      "variantId": "variant_01KE064574HA7BGSFJGE6WXF05",
-      "image": "http://127.0.0.1:5501/assets/Tshirt - white.png"
+      "variantId": "variant_01KE74Y57TFVFAAQBH8G0AAHPN",
+      "image": "https://ldc-8kg.pages.dev/assets/Tshirt - white.png"
     },
     "cup-acrylic": {
       "title": "Acrylic Cup",
-      "variantId": "variant_01KE064574EFT6DD18DJQ6X6XG",
-      "image": "http://127.0.0.1:5501/assets/acrylic.png",
+      "variantId": "variant_01KE74Y57T2MWATZMJJQEC9CSR",
+      "image": "https://ldc-8kg.pages.dev/assets/acrylic.png",
       "variants": {
         "blue": {
           "label": "Blue",
-          "variantId": "variant_01KE064574EFT6DD18DJQ6X6XG",
-          "image": "http://127.0.0.1:5501/assets/acrylic.png"
+          "variantId": "variant_01KE74Y57T2MWATZMJJQEC9CSR",
+          "image": "https://ldc-8kg.pages.dev/assets/acrylic.png"
         },
         "purple": {
           "label": "Purple",
-          "variantId": "variant_01KE0SK59B07CXCPTEGTW2VTR7",
-          "image": "http://127.0.0.1:5501/assets/acrylic.png"
+          "variantId": "variant_01KE74Y57T9W1R6VYJKCAT1NNW",
+          "image": "https://ldc-8kg.pages.dev/assets/acrylic.png"
         },
         "teal": {
           "label": "Teal",
-          "variantId": "variant_01KE0SK5ANNPCX9RASDM8BHCMW",
-          "image": "http://127.0.0.1:5501/assets/acrylic.png"
+          "variantId": "variant_01KE74Y57V1K0RYW2F2ABCWH4W",
+          "image": "https://ldc-8kg.pages.dev/assets/acrylic.png"
         },
         "pink": {
           "label": "Pink",
-          "variantId": "variant_01KE0SK5BZH7SJD6QZSPR0DBNW",
-          "image": "http://127.0.0.1:5501/assets/acrylic.png"
+          "variantId": "variant_01KE74Y57XWN2MBJVSR37RG66J",
+          "image": "https://ldc-8kg.pages.dev/assets/acrylic.png"
         }
       }
     },
     "cup-bamboo-lid-mug": {
       "title": "Bamboo Lid Mug",
-      "variantId": "variant_01KE0645752ED2Z716GJXC0Q3Q",
-      "image": "http://127.0.0.1:5501/assets/porcelain-sublimination.png"
+      "variantId": "variant_01KE74Y57YMYVJ2MRV72E4AFCM",
+      "image": "https://ldc-8kg.pages.dev/assets/porcelain-sublimination.png"
     },
     "cup-frosted-sublimation": {
       "title": "Frosted Sublimation",
-      "variantId": "variant_01KE064575CKP24S8F2ZX8YVD0",
-      "image": "http://127.0.0.1:5501/assets/frosted-sublimination.png"
+      "variantId": "variant_01KE74Y584MN6ENEJ3R5F226BS",
+      "image": "https://ldc-8kg.pages.dev/assets/frosted-sublimination.png"
     },
     "cup-glass": {
       "title": "Glass",
-      "variantId": "variant_01KE0645751ZN773C78PJQV0W7",
-      "image": "http://127.0.0.1:5501/assets/glass.png",
+      "variantId": "variant_01KE74Y585GS48TF3M9PPVS289",
+      "image": "https://ldc-8kg.pages.dev/assets/glass.png",
       "variants": {
         "blue": {
           "label": "Blue",
-          "variantId": "variant_01KE0645751ZN773C78PJQV0W7",
-          "image": "http://127.0.0.1:5501/assets/glass.png"
+          "variantId": "variant_01KE74Y585GS48TF3M9PPVS289",
+          "image": "https://ldc-8kg.pages.dev/assets/glass.png"
         },
         "pink": {
           "label": "Pink",
-          "variantId": "variant_01KE0SK5J1CHTNX1EW486MYSY8",
-          "image": "http://127.0.0.1:5501/assets/glass.png"
+          "variantId": "variant_01KE74Y5850997YXT2Y0ENZ27Z",
+          "image": "https://ldc-8kg.pages.dev/assets/glass.png"
         }
       }
     },
     "cup-glass-sublimation": {
       "title": "Glass Sublimation",
-      "variantId": "variant_01KE0645750CVXYMJ0EM65WK04",
-      "image": "http://127.0.0.1:5501/assets/glass-sublimination.png",
+      "variantId": "variant_01KE74Y585FHT197KHJJ89WCYB",
+      "image": "https://ldc-8kg.pages.dev/assets/glass-sublimination.png",
       "variants": {
         "hot-pink": {
           "label": "Hot pink",
-          "variantId": "variant_01KE0645750CVXYMJ0EM65WK04",
-          "image": "http://127.0.0.1:5501/assets/glass-sublimination.png"
+          "variantId": "variant_01KE74Y585FHT197KHJJ89WCYB",
+          "image": "https://ldc-8kg.pages.dev/assets/glass-sublimination.png"
         },
         "black": {
           "label": "Black",
-          "variantId": "variant_01KE0SK5PBD3ZFHSRHEZG130W5",
-          "image": "http://127.0.0.1:5501/assets/glass-sublimination.png"
+          "variantId": "variant_01KE74Y586H4BZPFCQTV440RP8",
+          "image": "https://ldc-8kg.pages.dev/assets/glass-sublimination.png"
         },
         "white": {
           "label": "White",
-          "variantId": "variant_01KE0SK5QRH8AX089XGCXYG5Y4",
-          "image": "http://127.0.0.1:5501/assets/glass-sublimination.png"
+          "variantId": "variant_01KE74Y58EK9SNB8WKKK0SRT65",
+          "image": "https://ldc-8kg.pages.dev/assets/glass-sublimination.png"
         },
         "teal": {
           "label": "Teal",
-          "variantId": "variant_01KE0SK5S0ZFT4H97MEKJ0XATN",
-          "image": "http://127.0.0.1:5501/assets/glass-sublimination.png"
+          "variantId": "variant_01KE74Y58FM09DD2FW6KKZX6SY",
+          "image": "https://ldc-8kg.pages.dev/assets/glass-sublimination.png"
         },
         "pink": {
           "label": "Pink",
-          "variantId": "variant_01KE0SK5V1JJP16PTB3GRPGJ60",
-          "image": "http://127.0.0.1:5501/assets/glass-sublimination.png"
+          "variantId": "variant_01KE74Y58FA81KTC17EKN5XHM5",
+          "image": "https://ldc-8kg.pages.dev/assets/glass-sublimination.png"
         }
       }
     },
     "cup-macaron-mug": {
       "title": "Macaron Mug",
-      "variantId": "variant_01KE064575F89B7GEADQQAHRCE",
-      "image": "http://127.0.0.1:5501/assets/Macaron Mug - 20.png",
+      "variantId": "variant_01KE74Y58G0BF02BTAYGYZ8A81",
+      "image": "https://ldc-8kg.pages.dev/assets/Macaron Mug - 20.png",
       "variants": {
         "light-blue": {
           "label": "Light blue",
-          "variantId": "variant_01KE064575F89B7GEADQQAHRCE",
-          "image": "http://127.0.0.1:5501/assets/Macaron Mug - 20.png"
+          "variantId": "variant_01KE74Y58G0BF02BTAYGYZ8A81",
+          "image": "https://ldc-8kg.pages.dev/assets/Macaron Mug - 20.png"
         },
         "pink": {
           "label": "Pink",
-          "variantId": "variant_01KE0SK5Z6CBVC35Y1Q9J2QS0V",
-          "image": "http://127.0.0.1:5501/assets/Macaron Mug - 20.png"
+          "variantId": "variant_01KE74Y58RV4MM6YA5BZCZF05K",
+          "image": "https://ldc-8kg.pages.dev/assets/Macaron Mug - 20.png"
         },
         "white-cream": {
           "label": "White cream",
-          "variantId": "variant_01KE0SK60D949YQCDA3XA3HSXK",
-          "image": "http://127.0.0.1:5501/assets/Macaron Mug - 20.png"
+          "variantId": "variant_01KE74Y58SD9HNFYF60ARGMTA7",
+          "image": "https://ldc-8kg.pages.dev/assets/Macaron Mug - 20.png"
         },
         "lime-green": {
           "label": "Lime green",
-          "variantId": "variant_01KE0SK61SXHF7T8578T3NG57W",
-          "image": "http://127.0.0.1:5501/assets/Macaron Mug - 20.png"
+          "variantId": "variant_01KE74Y58S460RVSHDBSPY1BC9",
+          "image": "https://ldc-8kg.pages.dev/assets/Macaron Mug - 20.png"
         },
         "hot-pink": {
           "label": "Hot pink",
-          "variantId": "variant_01KE0SK63110692RRV4AT71970",
-          "image": "http://127.0.0.1:5501/assets/Macaron Mug - 20.png"
+          "variantId": "variant_01KE74Y58SBKTNHTNN1E2WP634",
+          "image": "https://ldc-8kg.pages.dev/assets/Macaron Mug - 20.png"
         }
       }
     },
     "cup-mug-and-spoon": {
       "title": "Mug & Spoon",
-      "variantId": "variant_01KE0645759H1HXAVW8T0HXFPB",
-      "image": "http://127.0.0.1:5501/assets/Mug & Spoon - Black - 20.jpg",
+      "variantId": "variant_01KE74Y58THDCXPKBMMPK6CWTQ",
+      "image": "https://ldc-8kg.pages.dev/assets/Mug & Spoon - Black - 20.jpg",
       "variants": {
         "black": {
           "label": "Black",
-          "variantId": "variant_01KE0645759H1HXAVW8T0HXFPB",
-          "image": "http://127.0.0.1:5501/assets/Mug & Spoon - Black - 20.jpg"
+          "variantId": "variant_01KE74Y58THDCXPKBMMPK6CWTQ",
+          "image": "https://ldc-8kg.pages.dev/assets/Mug & Spoon - Black - 20.jpg"
         },
         "white": {
           "label": "White",
-          "variantId": "variant_01KE0SK66ZANF76XD69BNE0HS1",
-          "image": "http://127.0.0.1:5501/assets/Mug & Spoon - White - 20.jpg"
+          "variantId": "variant_01KE74Y590ZASE6QN71VX2TBPY",
+          "image": "https://ldc-8kg.pages.dev/assets/Mug & Spoon - White - 20.jpg"
         },
         "pink": {
           "label": "Pink",
-          "variantId": "variant_01KE0SK68809V6P1Q5ZSDHNK8R",
-          "image": "http://127.0.0.1:5501/assets/Mug & Spoon - Pink - 20.jpg"
+          "variantId": "variant_01KE74Y591HM2T9RR5EFKG37GG",
+          "image": "https://ldc-8kg.pages.dev/assets/Mug & Spoon - Pink - 20.jpg"
         },
         "red": {
           "label": "Red",
-          "variantId": "variant_01KE0SK69HMG0S7338K91AN4PS",
-          "image": "http://127.0.0.1:5501/assets/Mug & Spoon - Red - 20.jpg"
+          "variantId": "variant_01KE74Y591MNHAKZR58CM0AJET",
+          "image": "https://ldc-8kg.pages.dev/assets/Mug & Spoon - Red - 20.jpg"
         },
         "multi-color": {
           "label": "Multi-color",
-          "variantId": "variant_01KE0SK6ARE741TM3A37HWSNC3",
-          "image": "http://127.0.0.1:5501/assets/Mug & Spoon - Black, White, Pink, Red - 20.jpg"
+          "variantId": "variant_01KE74Y592G15RAYNGNS3DJNVZ",
+          "image": "https://ldc-8kg.pages.dev/assets/Mug & Spoon - Black, White, Pink, Red - 20.jpg"
         }
       }
     },
     "cup-slim-snow-globe": {
       "title": "Slim Snow Globe",
-      "variantId": "variant_01KE0645763TKEFDR3JG6FKZF0",
-      "image": "http://127.0.0.1:5501/assets/slim-snow-globe.png",
+      "variantId": "variant_01KE74Y596AVCFA65ZRFC5956S",
+      "image": "https://ldc-8kg.pages.dev/assets/slim-snow-globe.png",
       "variants": {
         "navy": {
           "label": "Navy",
-          "variantId": "variant_01KE0645763TKEFDR3JG6FKZF0",
-          "image": "http://127.0.0.1:5501/assets/slim-snow-globe.png"
+          "variantId": "variant_01KE74Y596AVCFA65ZRFC5956S",
+          "image": "https://ldc-8kg.pages.dev/assets/slim-snow-globe.png"
         },
         "red": {
           "label": "Red",
-          "variantId": "variant_01KE0SK6ES143DNKCBGKTWWNFA",
-          "image": "http://127.0.0.1:5501/assets/slim-snow-globe.png"
+          "variantId": "variant_01KE74Y597BE6G7E0NVKHZVMDM",
+          "image": "https://ldc-8kg.pages.dev/assets/slim-snow-globe.png"
         },
         "pink": {
           "label": "Pink",
-          "variantId": "variant_01KE0SK6G0Y0F2D486VYQ5ED88",
-          "image": "http://127.0.0.1:5501/assets/slim-snow-globe.png"
+          "variantId": "variant_01KE74Y59709FDSX5JQMC1ZCDY",
+          "image": "https://ldc-8kg.pages.dev/assets/slim-snow-globe.png"
         },
         "orange": {
           "label": "Orange",
-          "variantId": "variant_01KE0SK6H89PJ3X3EAHBRCE7DQ",
-          "image": "http://127.0.0.1:5501/assets/slim-snow-globe.png"
+          "variantId": "variant_01KE74Y598G0T7G2GYJBJWS9YR",
+          "image": "https://ldc-8kg.pages.dev/assets/slim-snow-globe.png"
         },
         "yellow": {
           "label": "Yellow",
-          "variantId": "variant_01KE0SK6JK51K1D39C41VHAVF9",
-          "image": "http://127.0.0.1:5501/assets/slim-snow-globe.png"
+          "variantId": "variant_01KE74Y59CTVB7RB1NTYPG7HNH",
+          "image": "https://ldc-8kg.pages.dev/assets/slim-snow-globe.png"
         }
       }
     },
     "cup-snow-globe": {
       "title": "Snow Globe",
-      "variantId": "variant_01KE0645767PZV9CJA6AJNFBKG",
-      "image": "http://127.0.0.1:5501/assets/snow-globe.png"
+      "variantId": "variant_01KE74Y59WQ1CGV0M877DP4BVQ",
+      "image": "https://ldc-8kg.pages.dev/assets/snow-globe.png"
     },
     "cup-steel-sublimation": {
       "title": "Steel Sublimation",
-      "variantId": "variant_01KE0645765BCNDEW57FCP71D8",
-      "image": "http://127.0.0.1:5501/assets/steel-sublimination.png",
+      "variantId": "variant_01KE74Y59WQ8MWXTK4BVGE09V5",
+      "image": "https://ldc-8kg.pages.dev/assets/steel-sublimination.png",
       "variants": {
         "white": {
           "label": "White",
-          "variantId": "variant_01KE0645765BCNDEW57FCP71D8",
-          "image": "http://127.0.0.1:5501/assets/steel-sublimination.png"
+          "variantId": "variant_01KE74Y59WQ8MWXTK4BVGE09V5",
+          "image": "https://ldc-8kg.pages.dev/assets/steel-sublimination.png"
         }
       }
     },
     "doormat-custom": {
       "title": "Custom Coir Doormats",
-      "variantId": "variant_01KE0645766H0HXJ81411YQRAH",
-      "image": "http://127.0.0.1:5501/assets/Doormats 1.png"
+      "variantId": "variant_01KE74Y59XP64THG6BBW5HRZ35",
+      "image": "https://ldc-8kg.pages.dev/assets/Doormats 1.png"
     },
     "tumbler-autumn-leaves": {
       "title": "Autumn Leaves",
-      "variantId": "variant_01KE064576R5G717WAQCPZD8J2",
-      "image": "http://127.0.0.1:5501/assets/ldc-tumbler-8.jpeg",
+      "variantId": "variant_01KE74Y5A1G1HN574BG4XY6JZ8",
+      "image": "https://ldc-8kg.pages.dev/assets/ldc-tumbler-8.jpeg",
       "variants": {
         "chocolate-brown": {
           "label": "Chocolate brown",
-          "variantId": "variant_01KE064576R5G717WAQCPZD8J2",
-          "image": "http://127.0.0.1:5501/assets/ldc-tumbler-8.jpeg"
+          "variantId": "variant_01KE74Y5A1G1HN574BG4XY6JZ8",
+          "image": "https://ldc-8kg.pages.dev/assets/ldc-tumbler-8.jpeg"
         }
       }
     },
     "tumbler-glass-glow": {
       "title": "Glass Glow Tumbler",
-      "variantId": "variant_01KE064576ZPPTM9ZPBECQ9V2G",
-      "image": "http://127.0.0.1:5501/assets/glass-glow-tumbler.jpeg"
+      "variantId": "variant_01KE74Y5A245E0S6STB55S6JAY",
+      "image": "https://ldc-8kg.pages.dev/assets/glass-glow-tumbler.jpeg"
     },
     "tumbler-glass-tumbler": {
       "title": "Glass Tumbler",
-      "variantId": "variant_01KE064576CHKEDBKRBAXW69BV",
-      "image": "http://127.0.0.1:5501/assets/glass-tumbler.jpeg",
+      "variantId": "variant_01KE74Y5A2CNW92MA0Z1133H9Z",
+      "image": "https://ldc-8kg.pages.dev/assets/glass-tumbler.jpeg",
       "variants": {
         "glass-finish": {
           "label": "Glass finish",
-          "variantId": "variant_01KE064576CHKEDBKRBAXW69BV",
-          "image": "http://127.0.0.1:5501/assets/glass-tumbler.jpeg"
+          "variantId": "variant_01KE74Y5A2CNW92MA0Z1133H9Z",
+          "image": "https://ldc-8kg.pages.dev/assets/glass-tumbler.jpeg"
         }
       }
     },
     "tumbler-gold-trim-tumbler": {
       "title": "Gold Trim Tumbler",
-      "variantId": "variant_01KE064577FDGSD8HAY226EZ2M",
-      "image": "http://127.0.0.1:5501/assets/Gold Trim Tumbler - 40.png",
+      "variantId": "variant_01KE74Y5A3N93M4SC2B0B7FHX0",
+      "image": "https://ldc-8kg.pages.dev/assets/Gold Trim Tumbler - 40.png",
       "variants": {
         "chocolate-brown": {
           "label": "Chocolate brown",
-          "variantId": "variant_01KE064577FDGSD8HAY226EZ2M",
-          "image": "http://127.0.0.1:5501/assets/Gold Trim Tumbler - 40.png"
+          "variantId": "variant_01KE74Y5A3N93M4SC2B0B7FHX0",
+          "image": "https://ldc-8kg.pages.dev/assets/Gold Trim Tumbler - 40.png"
         }
       }
     },
     "tumbler-kids-water-bottle": {
       "title": "Kids Water Bottle",
-      "variantId": "variant_01KE064577T6P4F1BA7ZPQ5B5M",
-      "image": "http://127.0.0.1:5501/assets/kids-water-bottle.jpeg",
+      "variantId": "variant_01KE74Y5A7HBQGCQ94VCSAACBC",
+      "image": "https://ldc-8kg.pages.dev/assets/kids-water-bottle.jpeg",
       "variants": {
         "white": {
           "label": "White",
-          "variantId": "variant_01KE064577T6P4F1BA7ZPQ5B5M",
-          "image": "http://127.0.0.1:5501/assets/kids-water-bottle.jpeg"
+          "variantId": "variant_01KE74Y5A7HBQGCQ94VCSAACBC",
+          "image": "https://ldc-8kg.pages.dev/assets/kids-water-bottle.jpeg"
         },
         "blue": {
           "label": "Blue",
-          "variantId": "variant_01KE0SK7561XNDE2587PZ3AJY0",
-          "image": "http://127.0.0.1:5501/assets/kids water bottle - 12oz - 20.png"
+          "variantId": "variant_01KE74Y5A89DH6F9TEKTBP7JF3",
+          "image": "https://ldc-8kg.pages.dev/assets/kids water bottle - 12oz - 20.png"
         },
         "green": {
           "label": "Green",
-          "variantId": "variant_01KE0SK76SDTC1YWPFCCHWCQR7",
-          "image": "http://127.0.0.1:5501/assets/kids water bottle - 12oz - 20.png"
+          "variantId": "variant_01KE74Y5A8JB9QPQN7F7Q91YW6",
+          "image": "https://ldc-8kg.pages.dev/assets/kids water bottle - 12oz - 20.png"
         },
         "pink": {
           "label": "Pink",
-          "variantId": "variant_01KE0SK780004X4SQ4CZY4SZAS",
-          "image": "http://127.0.0.1:5501/assets/kids water bottle - 12oz - 20.png"
+          "variantId": "variant_01KE74Y5A9MH1ZGKVNN4WAS56G",
+          "image": "https://ldc-8kg.pages.dev/assets/kids water bottle - 12oz - 20.png"
         },
         "red": {
           "label": "Red",
-          "variantId": "variant_01KE0SK799575KH7V84311F8GN",
-          "image": "http://127.0.0.1:5501/assets/kids water bottle - 12oz - 20.png"
+          "variantId": "variant_01KE74Y5AFEZDJT99BY88TXT4Z",
+          "image": "https://ldc-8kg.pages.dev/assets/kids water bottle - 12oz - 20.png"
         }
       }
     },
     "tumbler-macaron-sublimation": {
       "title": "Macaron Sublimation",
-      "variantId": "variant_01KE0645774JKPARZGWYH8VVAT",
-      "image": "http://127.0.0.1:5501/assets/Macaron Sublimation - 40.png",
+      "variantId": "variant_01KE74Y5AGXGHEHWPVGP13YCTD",
+      "image": "https://ldc-8kg.pages.dev/assets/Macaron Sublimation - 40.png",
       "variants": {
         "white-cream": {
           "label": "White cream",
-          "variantId": "variant_01KE0645774JKPARZGWYH8VVAT",
-          "image": "http://127.0.0.1:5501/assets/Macaron Sublimation - 40.png"
+          "variantId": "variant_01KE74Y5AGXGHEHWPVGP13YCTD",
+          "image": "https://ldc-8kg.pages.dev/assets/Macaron Sublimation - 40.png"
         },
         "light-pink": {
           "label": "Light pink",
-          "variantId": "variant_01KE0SK7DY4X4E2092X2XRFYP4",
-          "image": "http://127.0.0.1:5501/assets/Macaron Sublimation - 40.png"
+          "variantId": "variant_01KE74Y5AGMHJERCRVQMJZYAVM",
+          "image": "https://ldc-8kg.pages.dev/assets/Macaron Sublimation - 40.png"
         },
         "light-teal": {
           "label": "Light teal",
-          "variantId": "variant_01KE0SK7F3HH58WK59Q3N2WYBV",
-          "image": "http://127.0.0.1:5501/assets/Macaron Sublimation - 40.png"
+          "variantId": "variant_01KE74Y5AH02MKA80NC7ZCYGH0",
+          "image": "https://ldc-8kg.pages.dev/assets/Macaron Sublimation - 40.png"
         },
         "lavender": {
           "label": "Lavender",
-          "variantId": "variant_01KE0SK7GBXP53EQ73RE3WD2FK",
-          "image": "http://127.0.0.1:5501/assets/Macaron Sublimation - 40.png"
+          "variantId": "variant_01KE74Y5AN5DZ9GXE6SH5MYC82",
+          "image": "https://ldc-8kg.pages.dev/assets/Macaron Sublimation - 40.png"
         }
       }
     },
     "tumbler-pink-flamingo": {
       "title": "Pink Flamingo",
-      "variantId": "variant_01KE064577H70JP476NGJZB5NP",
-      "image": "http://127.0.0.1:5501/assets/ldc-tumbler-6.jpeg",
+      "variantId": "variant_01KE74Y5APNGAEF457WJAQ19BA",
+      "image": "https://ldc-8kg.pages.dev/assets/ldc-tumbler-6.jpeg",
       "variants": {
         "two-tone-pink": {
           "label": "Two-tone pink",
-          "variantId": "variant_01KE064577H70JP476NGJZB5NP",
-          "image": "http://127.0.0.1:5501/assets/ldc-tumbler-6.jpeg"
+          "variantId": "variant_01KE74Y5APNGAEF457WJAQ19BA",
+          "image": "https://ldc-8kg.pages.dev/assets/ldc-tumbler-6.jpeg"
         }
       }
     },
     "tumbler-pumpkin-spice": {
       "title": "Pumpkin Spice",
-      "variantId": "variant_01KE064577RWM3GNJVXC2SJDC0",
-      "image": "http://127.0.0.1:5501/assets/ldc-tumbler-7.jpeg",
+      "variantId": "variant_01KE74Y5AP6KHYTDMG3BK0Q0PW",
+      "image": "https://ldc-8kg.pages.dev/assets/ldc-tumbler-7.jpeg",
       "variants": {
         "pumpkin-orange": {
           "label": "Pumpkin orange",
-          "variantId": "variant_01KE064577RWM3GNJVXC2SJDC0",
-          "image": "http://127.0.0.1:5501/assets/ldc-tumbler-7.jpeg"
+          "variantId": "variant_01KE74Y5AP6KHYTDMG3BK0Q0PW",
+          "image": "https://ldc-8kg.pages.dev/assets/ldc-tumbler-7.jpeg"
         }
       }
     },
     "tumbler-silver-trim-tumbler": {
       "title": "Silver Trim Tumbler",
-      "variantId": "variant_01KE0645777PDM4DTVAKFNHMJ7",
-      "image": "http://127.0.0.1:5501/assets/ldc-tumbler-5.jpeg",
+      "variantId": "variant_01KE74Y5APCGDTB6YQXZCZSHAT",
+      "image": "https://ldc-8kg.pages.dev/assets/ldc-tumbler-5.jpeg",
       "variants": {
         "hot-pink": {
           "label": "Hot pink",
-          "variantId": "variant_01KE0645777PDM4DTVAKFNHMJ7",
-          "image": "http://127.0.0.1:5501/assets/ldc-tumbler-5.jpeg"
+          "variantId": "variant_01KE74Y5APCGDTB6YQXZCZSHAT",
+          "image": "https://ldc-8kg.pages.dev/assets/ldc-tumbler-5.jpeg"
         },
         "light-pink": {
           "label": "Light pink",
-          "variantId": "variant_01KE0SK7S1NPVY2F5EF7DNF2ZH",
-          "image": "http://127.0.0.1:5501/assets/Silver Trim Tumbler - 40.png"
+          "variantId": "variant_01KE74Y5AQ90ZYDXXNJ2GA27T5",
+          "image": "https://ldc-8kg.pages.dev/assets/Silver Trim Tumbler - 40.png"
         },
         "tan-brown": {
           "label": "Tan brown",
-          "variantId": "variant_01KE0SK7T7HKRBQ6G6MV3EZD22",
-          "image": "http://127.0.0.1:5501/assets/Silver Trim Tumbler - 40.png"
+          "variantId": "variant_01KE74Y5AX5P7T3ADE001CMN0G",
+          "image": "https://ldc-8kg.pages.dev/assets/Silver Trim Tumbler - 40.png"
         },
         "black": {
           "label": "Black",
-          "variantId": "variant_01KE0SK7VHWDT2TB24C823218Y",
-          "image": "http://127.0.0.1:5501/assets/Silver Trim Tumbler - 40.png"
+          "variantId": "variant_01KE74Y5AXV5BHRQF3WJ6RGX5J",
+          "image": "https://ldc-8kg.pages.dev/assets/Silver Trim Tumbler - 40.png"
         },
         "dark-teal": {
           "label": "Dark teal",
-          "variantId": "variant_01KE0SK83AT8YZEBNN3N5EYQFA",
-          "image": "http://127.0.0.1:5501/assets/Silver Trim Tumbler - 40.png"
+          "variantId": "variant_01KE74Y5AX3JY3C8TB64G1ZAE8",
+          "image": "https://ldc-8kg.pages.dev/assets/Silver Trim Tumbler - 40.png"
         }
       }
     },
     "tumbler-sip-cup": {
       "title": "Sip Cup",
-      "variantId": "variant_01KE064577F92JN62MB2RZQMVZ",
-      "image": "http://127.0.0.1:5501/assets/Sip Cup - 40.png"
+      "variantId": "variant_01KE74Y5AY3HSPY23B274PV3Y4",
+      "image": "https://ldc-8kg.pages.dev/assets/Sip Cup - 40.png"
     },
     "tumbler-sublimation": {
       "title": "Sublimation",
-      "variantId": "variant_01KE064577DQKRN7VSPPY13K66",
-      "image": "http://127.0.0.1:5501/assets/sublimination.jpeg",
+      "variantId": "variant_01KE74Y5B2VCCV8M1HD8VN4C7T",
+      "image": "https://ldc-8kg.pages.dev/assets/sublimination.jpeg",
       "variants": {
         "white": {
           "label": "White",
-          "variantId": "variant_01KE064577DQKRN7VSPPY13K66",
-          "image": "http://127.0.0.1:5501/assets/sublimination.jpeg"
+          "variantId": "variant_01KE74Y5B2VCCV8M1HD8VN4C7T",
+          "image": "https://ldc-8kg.pages.dev/assets/sublimination.jpeg"
         },
         "glow-in-the-dark": {
           "label": "Glow in the Dark",
-          "variantId": "variant_01KE0SK8CTESCMQZ2VFP02N6PG",
-          "image": "http://127.0.0.1:5501/assets/sublimination-glow-in-the-dark.jpeg"
+          "variantId": "variant_01KE74Y5B361HVPSJHAWH4PE6B",
+          "image": "https://ldc-8kg.pages.dev/assets/sublimination-glow-in-the-dark.jpeg"
         },
         "light-orange": {
           "label": "Light Orange",
-          "variantId": "variant_01KE0SK8E1K7KMTYRRAQAX3TVN",
-          "image": "http://127.0.0.1:5501/assets/Sublimination - 25.png"
+          "variantId": "variant_01KE74Y5B3MVGH0S5RGVF3J1JD",
+          "image": "https://ldc-8kg.pages.dev/assets/Sublimination - 25.png"
         },
         "orange": {
           "label": "Orange",
-          "variantId": "variant_01KE0SK8F8TQ4HP6961D4G1JA6",
-          "image": "http://127.0.0.1:5501/assets/Sublimination - 25.png"
+          "variantId": "variant_01KE74Y5B445E7BWS0ZJPGR0RX",
+          "image": "https://ldc-8kg.pages.dev/assets/Sublimination - 25.png"
         },
         "blue": {
           "label": "Blue",
-          "variantId": "variant_01KE0SK8GHQJVBTG417JZ7D56D",
-          "image": "http://127.0.0.1:5501/assets/Sublimination - 25.png"
+          "variantId": "variant_01KE74Y5B8V5V8ZKFX4SPEMYXG",
+          "image": "https://ldc-8kg.pages.dev/assets/Sublimination - 25.png"
         }
       }
     },
     "tumbler-sublimation-tumblers": {
       "title": "Sublimation Tumblers",
-      "variantId": "variant_01KE064578Y9394MS935MFW4QK",
-      "image": "http://127.0.0.1:5501/assets/Sublimination Tumblers - 40.png",
+      "variantId": "variant_01KE74Y5BB5C7AE0TS85VYNQXV",
+      "image": "https://ldc-8kg.pages.dev/assets/Sublimination Tumblers - 40.png",
       "variants": {
         "cream-white": {
           "label": "Cream white",
-          "variantId": "variant_01KE064578Y9394MS935MFW4QK",
-          "image": "http://127.0.0.1:5501/assets/Sublimination Tumblers - 40.png"
+          "variantId": "variant_01KE74Y5BB5C7AE0TS85VYNQXV",
+          "image": "https://ldc-8kg.pages.dev/assets/Sublimination Tumblers - 40.png"
         },
         "pearl-white": {
           "label": "Pearl white",
-          "variantId": "variant_01KE0SK8MEMK1CG7NZDV97KY4W",
-          "image": "http://127.0.0.1:5501/assets/Sublimination Tumblers - 40.png"
+          "variantId": "variant_01KE74Y5BB220GXGTFBWT8A2PT",
+          "image": "https://ldc-8kg.pages.dev/assets/Sublimination Tumblers - 40.png"
         },
         "cream-pink": {
           "label": "Cream pink",
-          "variantId": "variant_01KE0SK8NJF1XDC9M6643845M4",
-          "image": "http://127.0.0.1:5501/assets/Sublimination Tumblers - 40.png"
+          "variantId": "variant_01KE74Y5BE971FS03H173KNQHD",
+          "image": "https://ldc-8kg.pages.dev/assets/Sublimination Tumblers - 40.png"
         },
         "cream-peach": {
           "label": "Cream peach",
-          "variantId": "variant_01KE0SK8PQP5A7B1EABM978JEF",
-          "image": "http://127.0.0.1:5501/assets/Sublimination Tumblers - 40.png"
+          "variantId": "variant_01KE74Y5BE54QSJ4K28WT4ER7P",
+          "image": "https://ldc-8kg.pages.dev/assets/Sublimination Tumblers - 40.png"
         }
       }
     },
     "tumbler-sublimation-water-bottle": {
       "title": "Sublimation Water Bottle",
-      "variantId": "variant_01KE064578W360PHX9VEGR8R4E",
-      "image": "http://127.0.0.1:5501/assets/Sublimation Water Bottle - 30.jpg",
+      "variantId": "variant_01KE74Y5BEAMNT5VSYCXZ9Y59H",
+      "image": "https://ldc-8kg.pages.dev/assets/Sublimation Water Bottle - 30.jpg",
       "variants": {
         "pink": {
           "label": "Pink",
-          "variantId": "variant_01KE064578W360PHX9VEGR8R4E",
-          "image": "http://127.0.0.1:5501/assets/Sublimation Water Bottle - 30.jpg"
+          "variantId": "variant_01KE74Y5BEAMNT5VSYCXZ9Y59H",
+          "image": "https://ldc-8kg.pages.dev/assets/Sublimation Water Bottle - 30.jpg"
         }
       }
     },
     "tumbler-tumbler-heaven": {
       "title": "Tumbler Heaven",
-      "variantId": "variant_01KE064578WNC8K1ZEFX9QYE5X",
-      "image": "http://127.0.0.1:5501/assets/Tumbler Heaven - 40.png",
+      "variantId": "variant_01KE74Y5BFQ9V7HAHQRJGN19QM",
+      "image": "https://ldc-8kg.pages.dev/assets/Tumbler Heaven - 40.png",
       "variants": {
         "red": {
           "label": "Red",
-          "variantId": "variant_01KE064578WNC8K1ZEFX9QYE5X",
-          "image": "http://127.0.0.1:5501/assets/Tumbler Heaven - 40.png"
+          "variantId": "variant_01KE74Y5BFQ9V7HAHQRJGN19QM",
+          "image": "https://ldc-8kg.pages.dev/assets/Tumbler Heaven - 40.png"
         },
         "white": {
           "label": "White",
-          "variantId": "variant_01KE0SK8WTBW9BNFRYBMJC3P6Y",
-          "image": "http://127.0.0.1:5501/assets/Tumbler Heaven - 40.png"
+          "variantId": "variant_01KE74Y5BFKHANHHKR4RBXETJM",
+          "image": "https://ldc-8kg.pages.dev/assets/Tumbler Heaven - 40.png"
         },
         "baby-blue": {
           "label": "Baby blue",
-          "variantId": "variant_01KE0SK8XYAS69QCNVZABY0Y5B",
-          "image": "http://127.0.0.1:5501/assets/Tumbler Heaven - 40.png"
+          "variantId": "variant_01KE74Y5BG2M2YZEAGNGKF04A2",
+          "image": "https://ldc-8kg.pages.dev/assets/Tumbler Heaven - 40.png"
         },
         "pink": {
           "label": "Pink",
-          "variantId": "variant_01KE0SK8Z5SNSZK21F1R1K5YBK",
-          "image": "http://127.0.0.1:5501/assets/Tumbler Heaven - 40.png"
+          "variantId": "variant_01KE74Y5BPXSAQJ63JXR2AYD03",
+          "image": "https://ldc-8kg.pages.dev/assets/Tumbler Heaven - 40.png"
         },
         "metallic-purple": {
           "label": "Metallic purple",
-          "variantId": "variant_01KE0SK90CV6KBJYTHCJQGV88S",
-          "image": "http://127.0.0.1:5501/assets/Tumbler Heaven - 40.png"
+          "variantId": "variant_01KE74Y5BQAW6BNQ5VQTW2GHJE",
+          "image": "https://ldc-8kg.pages.dev/assets/Tumbler Heaven - 40.png"
         }
       }
     },
     "tumbler-water-bottle-tumbler": {
       "title": "Water Bottle Tumbler",
-      "variantId": "variant_01KE064578AE9YXEXVP8CR819B",
-      "image": "http://127.0.0.1:5501/assets/water-bottle-tumbler.jpeg",
+      "variantId": "variant_01KE74Y5BQB7YTFSSFC7Z9063K",
+      "image": "https://ldc-8kg.pages.dev/assets/water-bottle-tumbler.jpeg",
       "variants": {
         "black": {
           "label": "Black",
-          "variantId": "variant_01KE064578AE9YXEXVP8CR819B",
-          "image": "http://127.0.0.1:5501/assets/water-bottle-tumbler.jpeg"
+          "variantId": "variant_01KE74Y5BQB7YTFSSFC7Z9063K",
+          "image": "https://ldc-8kg.pages.dev/assets/water-bottle-tumbler.jpeg"
         },
         "hot-pink": {
           "label": "Hot pink",
-          "variantId": "variant_01KE0SK94QAQ0V6XTYE1P0W8ZC",
-          "image": "http://127.0.0.1:5501/assets/Water Bottle Tumbler - 40.png"
+          "variantId": "variant_01KE74Y5BQXEWWVVFW3EVWMAJB",
+          "image": "https://ldc-8kg.pages.dev/assets/Water Bottle Tumbler - 40.png"
         },
         "light-pink": {
           "label": "Light pink",
-          "variantId": "variant_01KE0SK960NK0AM5CC0QZ5G3W3",
-          "image": "http://127.0.0.1:5501/assets/Water Bottle Tumbler - 40.png"
+          "variantId": "variant_01KE74Y5BWMC5YRFY1H61C6FVZ",
+          "image": "https://ldc-8kg.pages.dev/assets/Water Bottle Tumbler - 40.png"
         },
         "vanilla-pink": {
           "label": "Vanilla pink",
-          "variantId": "variant_01KE0SK981TVBQPTWECS92S349",
-          "image": "http://127.0.0.1:5501/assets/Water Bottle Tumbler - 40.png"
+          "variantId": "variant_01KE74Y5BWHNRTKC7YW0TKF41J",
+          "image": "https://ldc-8kg.pages.dev/assets/Water Bottle Tumbler - 40.png"
         },
         "white": {
           "label": "White",
-          "variantId": "variant_01KE0SK99KDK18X1BBX1VRPT8Q",
-          "image": "http://127.0.0.1:5501/assets/Water Bottle Tumbler - 40.png"
+          "variantId": "variant_01KE74Y5BX82CQH0W5BMWH7WT7",
+          "image": "https://ldc-8kg.pages.dev/assets/Water Bottle Tumbler - 40.png"
         },
         "light-blue": {
           "label": "Light blue",
-          "variantId": "variant_01KE0SK9AXEW7BYFQ1CWH23E42",
-          "image": "http://127.0.0.1:5501/assets/Water Bottle Tumbler - blue - 40.png"
+          "variantId": "variant_01KE74Y5BXPGTGZH49ASA79N4G",
+          "image": "https://ldc-8kg.pages.dev/assets/Water Bottle Tumbler - blue - 40.png"
         },
         "light-teal": {
           "label": "Light teal",
-          "variantId": "variant_01KE0SK9C4C0Q57YZ9BM53S2S1",
-          "image": "http://127.0.0.1:5501/assets/Water Bottle Tumbler - blue - 40.png"
+          "variantId": "variant_01KE74Y5BYFF4D27YP2ADGRNXF",
+          "image": "https://ldc-8kg.pages.dev/assets/Water Bottle Tumbler - blue - 40.png"
         },
         "cream-white": {
           "label": "Cream white",
-          "variantId": "variant_01KE0SK9DJYX105ZPGJKHZKQHM",
-          "image": "http://127.0.0.1:5501/assets/Water Bottle Tumbler - blue - 40.png"
+          "variantId": "variant_01KE74Y5C263Q5QBFMX28TBQTP",
+          "image": "https://ldc-8kg.pages.dev/assets/Water Bottle Tumbler - blue - 40.png"
         },
         "very-light-pink": {
           "label": "Very light pink",
-          "variantId": "variant_01KE0SK9EXY7WV1KHKCBRF4GHW",
-          "image": "http://127.0.0.1:5501/assets/Water Bottle Tumbler - 40.png"
+          "variantId": "variant_01KE74Y5C3VRRX60ZQEG7PJPQ5",
+          "image": "https://ldc-8kg.pages.dev/assets/Water Bottle Tumbler - 40.png"
         }
       }
     }

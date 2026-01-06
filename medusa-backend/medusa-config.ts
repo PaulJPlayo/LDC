@@ -18,10 +18,15 @@ const withLocalPreview = (list: string[]) => {
 const storeCors = withLocalPreview(parseCors(process.env.STORE_CORS)).join(',')
 const adminCors = withLocalPreview(parseCors(process.env.ADMIN_CORS)).join(',')
 const authCors = withLocalPreview(parseCors(process.env.AUTH_CORS)).join(',')
+const databaseDriverOptions =
+  process.env.DATABASE_SSL === 'true'
+    ? { connection: { ssl: { rejectUnauthorized: false } } }
+    : undefined
 
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
+    databaseDriverOptions,
     redisUrl: process.env.REDIS_URL,
     http: {
       storeCors,

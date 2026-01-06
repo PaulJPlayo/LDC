@@ -304,10 +304,10 @@ export default async function seedLdcData({ container }: ExecArgs) {
       .map((option: { name: string }) => option.name)
   );
 
-  const optionsToCreate = [
+  const allShippingOptions = [
     {
       name: "Standard Shipping",
-      price_type: "flat",
+      price_type: "flat" as const,
       provider_id: "manual_manual",
       service_zone_id: serviceZoneId,
       shipping_profile_id: shippingProfile.id,
@@ -330,18 +330,18 @@ export default async function seedLdcData({ container }: ExecArgs) {
         {
           attribute: "enabled_in_store",
           value: "true",
-          operator: "eq",
+          operator: "eq" as const,
         },
         {
           attribute: "is_return",
           value: "false",
-          operator: "eq",
+          operator: "eq" as const,
         },
       ],
     },
     {
       name: "Express Shipping",
-      price_type: "flat",
+      price_type: "flat" as const,
       provider_id: "manual_manual",
       service_zone_id: serviceZoneId,
       shipping_profile_id: shippingProfile.id,
@@ -364,20 +364,23 @@ export default async function seedLdcData({ container }: ExecArgs) {
         {
           attribute: "enabled_in_store",
           value: "true",
-          operator: "eq",
+          operator: "eq" as const,
         },
         {
           attribute: "is_return",
           value: "false",
-          operator: "eq",
+          operator: "eq" as const,
         },
       ],
     },
-  ].filter((option) => !existingOptionNames.has(option.name));
+  ] as const;
+  const optionsToCreate = allShippingOptions.filter(
+    (option) => !existingOptionNames.has(option.name)
+  );
 
   if (optionsToCreate.length) {
     await createShippingOptionsWorkflow(container).run({
-      input: optionsToCreate,
+      input: optionsToCreate as any,
     });
   }
 
@@ -463,7 +466,7 @@ export default async function seedLdcData({ container }: ExecArgs) {
       handle: product.handle,
       status: ProductStatus.PUBLISHED,
       shipping_profile_id: shippingProfile.id,
-      thumbnail: resolveImage(product.image),
+      thumbnail: resolveImage(product.image) || undefined,
       metadata: {
         product_key: product.key,
       },
@@ -474,7 +477,7 @@ export default async function seedLdcData({ container }: ExecArgs) {
             product.variants?.length
               ? product.variants
                   .map((variant) => variant.label || variant.title)
-                  .filter(Boolean)
+                  .filter((value): value is string => Boolean(value))
               : ["Default"],
         },
       ],

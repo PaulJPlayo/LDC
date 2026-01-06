@@ -273,6 +273,7 @@ class PayPalProviderService extends AbstractPaymentProvider<PayPalOptions> {
     const approvalLink = order.links?.find((link) => link.rel === "approve");
 
     return {
+      id: order.id,
       data: {
         order_id: order.id,
         status: order.status,
