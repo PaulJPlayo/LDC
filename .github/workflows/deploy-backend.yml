@@ -28,3 +28,6 @@ jobs:
       - name: Deploy Medusa backend
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "/home/ubuntu/ldc-medusa/scripts/deploy-medusa.sh"
+      - name: Health check
+        run: |
+          curl -fsS --retry 10 --retry-connrefused --retry-delay 5 https://api.lovettsldc.com/health
