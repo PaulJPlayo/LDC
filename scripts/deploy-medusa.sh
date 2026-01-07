@@ -6,6 +6,17 @@ BACKEND_DIR="${REPO_DIR}/medusa-backend"
 ADMIN_BUILD_DIR="${BACKEND_DIR}/.medusa/server/public/admin"
 ADMIN_PUBLIC_DIR="${BACKEND_DIR}/public/admin"
 
+export GIT_SSH_COMMAND="ssh -i /home/ubuntu/.ssh/ldc_medusa_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+
+mkdir -p "${REPO_DIR}"
+cd "${REPO_DIR}"
+if [[ ! -d .git ]]; then
+  git init
+  git remote add origin git@github.com:PaulJPlayo/LDC.git
+fi
+git fetch origin
+git reset --hard origin/main
+
 cd "${BACKEND_DIR}"
 npm ci
 
