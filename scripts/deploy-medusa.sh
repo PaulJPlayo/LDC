@@ -13,6 +13,10 @@ mkdir -p "${REPO_DIR}"
 cd "${REPO_DIR}"
 if [[ ! -d .git ]]; then
   git init
+fi
+if git remote get-url origin >/dev/null 2>&1; then
+  git remote set-url origin git@github.com:PaulJPlayo/LDC.git
+else
   git remote add origin git@github.com:PaulJPlayo/LDC.git
 fi
 git fetch origin
