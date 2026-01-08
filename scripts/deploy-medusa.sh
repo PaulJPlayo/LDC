@@ -23,7 +23,7 @@ git fetch origin
 git reset --hard origin/main
 
 cd "${BACKEND_DIR}"
-npm ci
+npm ci --no-audit --no-fund
 
 # Build the admin UI bundle and expose it from /public/admin.
 NODE_OPTIONS=--max-old-space-size=1536 node node_modules/@medusajs/cli/cli.js build
