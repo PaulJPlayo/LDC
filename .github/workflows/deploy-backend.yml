@@ -23,12 +23,13 @@ jobs:
             --targets "Key=InstanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
             --comment "Deploy Medusa backend" \
             --parameters commands='["set -e","sudo -u ubuntu -H bash -lc \"/home/ubuntu/ldc-medusa/scripts/deploy-medusa.sh\""]' \
+            --timeout-seconds 3600 \
             --query "Command.CommandId" \
             --output text)
 
           STATUS="InProgress"
           ELAPSED=0
-          TIMEOUT=1200
+          TIMEOUT=3600
           while [ "$STATUS" = "InProgress" ] || [ "$STATUS" = "Pending" ] || [ "$STATUS" = "Delayed" ]; do
             sleep 10
             ELAPSED=$((ELAPSED + 10))
