@@ -22,13 +22,13 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --targets "Key=InstanceIds,Values=${{ secrets.EC2_INSTANCE_ID }}" \
             --comment "Deploy Medusa backend" \
-            --parameters commands='["set -e","/home/ubuntu/ldc-medusa/scripts/deploy-medusa.sh"]' \
+            --parameters commands='["set -e","sudo -u ubuntu -H bash -lc \"/home/ubuntu/ldc-medusa/scripts/deploy-medusa.sh\""]' \
             --query "Command.CommandId" \
             --output text)
 
           aws ssm wait command-executed \
             --command-id "$COMMAND_ID" \
-            --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
+            --instance-id "${{ secrets.EC2_INSTANCE_ID }}" || true
 
           STATUS=$(aws ssm get-command-invocation \
             --command-id "$COMMAND_ID" \
@@ -36,13 +36,20 @@ jobs:
             --query "Status" \
             --output text)
 
+          echo "SSM status: $STATUS"
+          aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
+            --query "StandardOutputContent" \
+            --output text
+          aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
+            --query "StandardErrorContent" \
+            --output text
+
           if [ "$STATUS" != "Success" ]; then
             echo "SSM deploy failed with status: $STATUS"
-            aws ssm get-command-invocation \
-              --command-id "$COMMAND_ID" \
-              --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
-              --query "StandardErrorContent" \
-              --output text
             exit 1
           fi
       - name: Health check
