@@ -7,6 +7,7 @@ ADMIN_BUILD_DIR="${BACKEND_DIR}/.medusa/server/public/admin"
 ADMIN_PUBLIC_DIR="${BACKEND_DIR}/public/admin"
 
 export GIT_SSH_COMMAND="ssh -i /home/ubuntu/.ssh/ldc_medusa_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+git config --global --add safe.directory "${REPO_DIR}"
 
 mkdir -p "${REPO_DIR}"
 cd "${REPO_DIR}"
