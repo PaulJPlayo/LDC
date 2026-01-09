@@ -161,11 +161,11 @@ const landingHtml = `<!doctype html>
         <a class="button button--primary" href="https://lovettsldc.com">
           Visit the Storefront
         </a>
-        <a class="button" href="/app">Admin Login</a>
+        <a class="button" href="https://admin.lovettsldc.com">Admin Login</a>
       </div>
       <div class="meta">
         <div><strong>Storefront:</strong> https://lovettsldc.com</div>
-        <div><strong>Admin:</strong> https://api.lovettsldc.com/app</div>
+        <div><strong>Admin:</strong> https://admin.lovettsldc.com</div>
       </div>
     </main>
   </body>

@@ -8,16 +8,23 @@ const parseCors = (value?: string) =>
     .map(entry => entry.trim())
     .filter(Boolean)
 
-const withLocalPreview = (list: string[]) => {
-  if (!list.includes('http://127.0.0.1:5501')) {
-    list.push('http://127.0.0.1:5501')
-  }
+const withPreviewOrigins = (list: string[]) => {
+  const defaults = [
+    'http://127.0.0.1:5501',
+    'http://localhost:5174',
+    'https://admin.lovettsldc.com'
+  ]
+  defaults.forEach(origin => {
+    if (!list.includes(origin)) {
+      list.push(origin)
+    }
+  })
   return list
 }
 
-const storeCors = withLocalPreview(parseCors(process.env.STORE_CORS)).join(',')
-const adminCors = withLocalPreview(parseCors(process.env.ADMIN_CORS)).join(',')
-const authCors = withLocalPreview(parseCors(process.env.AUTH_CORS)).join(',')
+const storeCors = withPreviewOrigins(parseCors(process.env.STORE_CORS)).join(',')
+const adminCors = withPreviewOrigins(parseCors(process.env.ADMIN_CORS)).join(',')
+const authCors = withPreviewOrigins(parseCors(process.env.AUTH_CORS)).join(',')
 const databaseDriverOptions =
   process.env.DATABASE_SSL === 'true'
     ? { connection: { ssl: { rejectUnauthorized: false } } }
