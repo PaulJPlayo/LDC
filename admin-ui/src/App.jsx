@@ -4,6 +4,7 @@ import { useAuth } from './state/auth.jsx';
 import AdminShell from './components/AdminShell.jsx';
 import Login from './routes/Login.jsx';
 import Dashboard from './routes/Dashboard.jsx';
+import DraftOrderCreate from './routes/DraftOrderCreate.jsx';
 import ResourceList from './routes/ResourceList.jsx';
 import ResourceDetail from './routes/ResourceDetail.jsx';
 import Settings from './routes/Settings.jsx';
@@ -39,6 +40,7 @@ const App = () => {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="draft-orders/new" element={<DraftOrderCreate />} />
         {resources.map((resource) => (
           <Route
             key={resource.id}

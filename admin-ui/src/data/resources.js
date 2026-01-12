@@ -67,6 +67,7 @@ export const resources = [
     listKey: 'products',
     detailKey: 'product',
     columns: [
+      { key: 'thumbnail', label: 'Image', type: 'thumbnail' },
       { key: 'title', label: 'Product' },
       { key: 'handle', label: 'Handle' },
       { key: 'status', label: 'Status', badge: true },
@@ -80,10 +81,36 @@ export const resources = [
     endpoint: '/admin/product-variants',
     listKey: 'variants',
     detailKey: 'variant',
+    listParams: {
+      fields: '+inventory_quantity'
+    },
     columns: [
+      {
+        key: 'thumbnail',
+        label: 'Image',
+        type: 'thumbnail',
+        format: (value, row) =>
+          row?.thumbnail ||
+          row?.image ||
+          row?.cover_image ||
+          row?.images?.[0]?.url ||
+          row?.images?.[0] ||
+          row?.product?.thumbnail ||
+          row?.product?.images?.[0]?.url ||
+          row?.product?.images?.[0] ||
+          value ||
+          ''
+      },
       { key: 'title', label: 'Variant' },
       { key: 'sku', label: 'SKU' },
-      { key: 'inventory_quantity', label: 'Inventory' },
+      {
+        key: 'inventory_quantity',
+        label: 'Inventory',
+        format: (value, row) => {
+          if (row?.manage_inventory === false) return 'Not managed';
+          return typeof value === 'number' ? value : '-';
+        }
+      },
       { key: 'created_at', label: 'Created', format: formatDate }
     ]
   },
@@ -95,6 +122,23 @@ export const resources = [
     listKey: 'collections',
     detailKey: 'collection',
     columns: [
+      {
+        key: 'thumbnail',
+        label: 'Image',
+        type: 'thumbnail',
+        format: (value, row) =>
+          row?.metadata?.thumbnail ||
+          row?.metadata?.image ||
+          row?.metadata?.images?.[0]?.url ||
+          row?.metadata?.images?.[0] ||
+          row?.thumbnail ||
+          row?.image ||
+          row?.cover_image ||
+          row?.images?.[0]?.url ||
+          row?.images?.[0] ||
+          value ||
+          ''
+      },
       { key: 'title', label: 'Collection' },
       { key: 'handle', label: 'Handle' },
       { key: 'updated_at', label: 'Updated', format: formatDate }
@@ -287,6 +331,20 @@ export const resources = [
     ]
   },
   {
+    id: 'invites',
+    label: 'Invites',
+    path: '/invites',
+    endpoint: '/admin/invites',
+    listKey: 'invites',
+    detailKey: 'invite',
+    columns: [
+      { key: 'email', label: 'Email' },
+      { key: 'accepted', label: 'Accepted', format: (value) => (value ? 'Yes' : 'No') },
+      { key: 'expires_at', label: 'Expires', format: formatDateTime },
+      { key: 'created_at', label: 'Created', format: formatDate }
+    ]
+  },
+  {
     id: 'api-keys',
     label: 'API Keys',
     path: '/api-keys',
@@ -321,6 +379,7 @@ export const resources = [
     detailKey: 'sales_channel',
     columns: [
       { key: 'name', label: 'Channel' },
+      { key: 'is_disabled', label: 'Status', format: (value) => (value ? 'Disabled' : 'Active') },
       { key: 'description', label: 'Description' },
       { key: 'created_at', label: 'Created', format: formatDate }
     ]
@@ -329,8 +388,8 @@ export const resources = [
     id: 'uploads',
     label: 'Uploads',
     path: '/uploads',
-    endpoint: '/admin/uploads',
-    listKey: 'uploads',
+    endpoint: '/admin/files',
+    listKey: 'files',
     detailKey: 'upload',
     columns: [
       { key: 'filename', label: 'File' },
@@ -372,6 +431,6 @@ export const resourceGroups = [
   },
   {
     label: 'Settings',
-    items: ['stores', 'sales-channels', 'users', 'api-keys', 'uploads']
+    items: ['stores', 'sales-channels', 'users', 'invites', 'api-keys', 'uploads']
   }
 ];

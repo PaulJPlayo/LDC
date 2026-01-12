@@ -5,11 +5,32 @@ const toneMap = {
   completed: 'bg-emerald-100 text-emerald-700',
   paid: 'bg-emerald-100 text-emerald-700',
   captured: 'bg-emerald-100 text-emerald-700',
+  fulfilled: 'bg-emerald-100 text-emerald-700',
+  shipped: 'bg-emerald-100 text-emerald-700',
+  delivered: 'bg-emerald-100 text-emerald-700',
+  received: 'bg-emerald-100 text-emerald-700',
+  authorized: 'bg-amber-100 text-amber-700',
   pending: 'bg-amber-100 text-amber-700',
+  awaiting: 'bg-amber-100 text-amber-700',
+  packed: 'bg-amber-100 text-amber-700',
+  processing: 'bg-amber-100 text-amber-700',
+  requires_action: 'bg-amber-100 text-amber-700',
   requires_more: 'bg-amber-100 text-amber-700',
+  partially_authorized: 'bg-amber-100 text-amber-700',
+  partially_captured: 'bg-amber-100 text-amber-700',
+  partially_refunded: 'bg-amber-100 text-amber-700',
+  partially_fulfilled: 'bg-amber-100 text-amber-700',
+  partially_shipped: 'bg-amber-100 text-amber-700',
+  partially_delivered: 'bg-amber-100 text-amber-700',
+  partially_received: 'bg-amber-100 text-amber-700',
+  requested: 'bg-amber-100 text-amber-700',
   canceled: 'bg-rose-100 text-rose-700',
   refunded: 'bg-rose-100 text-rose-700',
-  draft: 'bg-slate-100 text-slate-600'
+  failed: 'bg-rose-100 text-rose-700',
+  not_paid: 'bg-slate-100 text-slate-600',
+  not_fulfilled: 'bg-slate-100 text-slate-600',
+  draft: 'bg-slate-100 text-slate-600',
+  archived: 'bg-slate-100 text-slate-600'
 };
 
 const StatusBadge = ({ value }) => {

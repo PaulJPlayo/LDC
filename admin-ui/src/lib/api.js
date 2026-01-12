@@ -42,6 +42,43 @@ export const request = async (path, options = {}) => {
   return payload;
 };
 
+export const uploadFiles = async (files, path = '/admin/uploads') => {
+  const url = `${API_BASE}${path}`;
+  const form = new FormData();
+
+  if (!files) {
+    throw new ApiError('No file selected.', 400);
+  }
+
+  if (files instanceof FileList) {
+    Array.from(files).forEach((file) => {
+      form.append('files', file);
+    });
+  } else if (Array.isArray(files)) {
+    files.forEach((file) => {
+      form.append('files', file);
+    });
+  } else {
+    form.append('files', files);
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    credentials: 'include',
+    body: form
+  });
+
+  const payload = await parseResponse(response);
+  if (!response.ok) {
+    const message =
+      typeof payload === 'string'
+        ? payload
+        : payload?.message || `Upload failed (${response.status})`;
+    throw new ApiError(message, response.status);
+  }
+  return payload;
+};
+
 export const login = async (email, password) => {
   const tokenRes = await fetch(`${API_BASE}/auth/user/emailpass`, {
     method: 'POST',
@@ -93,22 +130,28 @@ export const getCount = async (endpoint) => {
   return Number(payload?.count || 0);
 };
 
+const appendQueryParam = (query, key, value) => {
+  if (Array.isArray(value)) {
+    value.forEach((entry) => {
+      if (entry === undefined || entry === null || entry === '') return;
+      query.append(key, String(entry));
+    });
+    return;
+  }
+  if (value === undefined || value === null || value === '') return;
+  query.set(key, String(value));
+};
+
 export const getList = async (endpoint, params = {}) => {
   const query = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value === undefined || value === null || value === '') return;
-    query.set(key, String(value));
-  });
+  Object.entries(params).forEach(([key, value]) => appendQueryParam(query, key, value));
   const suffix = query.toString();
   return request(`${endpoint}${suffix ? `?${suffix}` : ''}`);
 };
 
 export const getDetail = async (endpoint, id, params = {}) => {
   const query = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value === undefined || value === null || value === '') return;
-    query.set(key, String(value));
-  });
+  Object.entries(params).forEach(([key, value]) => appendQueryParam(query, key, value));
   const suffix = query.toString();
   return request(`${endpoint}/${id}${suffix ? `?${suffix}` : ''}`);
 };
