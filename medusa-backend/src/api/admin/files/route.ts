@@ -1,5 +1,6 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { Modules } from "@medusajs/utils"
+import { Dirent } from "fs"
 import fs from "fs/promises"
 import path from "path"
 
@@ -15,7 +16,7 @@ const defaultUploadDir = () => path.join(process.cwd(), "static")
 
 const readFilesRecursive = async (dir: string, baseDir: string) => {
   const entries: FileEntry[] = []
-  let dirEntries: fs.Dirent[] = []
+  let dirEntries: Dirent[] = []
 
   try {
     dirEntries = await fs.readdir(dir, { withFileTypes: true })
