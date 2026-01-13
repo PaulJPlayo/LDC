@@ -1,5 +1,34 @@
 import { formatDate, formatDateTime, formatMoney, formatStatus } from '../lib/formatters.js';
 
+const formatCountryCodes = (countries) => {
+  if (!Array.isArray(countries) || !countries.length) return '-';
+  const codes = countries
+    .map((country) => {
+      if (!country) return null;
+      if (typeof country === 'string') return country;
+      return country.iso_2 || country.iso2 || country.code || country.id;
+    })
+    .filter(Boolean)
+    .map((code) => String(code).toUpperCase());
+  return codes.length ? codes.join(', ') : '-';
+};
+
+const formatProviderLabel = (value, row) =>
+  row?.provider_id || row?.provider?.id || row?.provider?.code || row?.provider?.name || value || '-';
+
+const formatProfileLabel = (value, row) =>
+  row?.shipping_profile?.name || row?.shipping_profile_id || row?.shipping_profile?.id || value || '-';
+
+const formatServiceZoneLabel = (value, row) =>
+  row?.service_zone?.name || row?.service_zone_id || value || '-';
+
+const formatTaxRegionLabel = (region) => {
+  if (!region) return '-';
+  if (typeof region === 'string') return region;
+  const code = region.country_code || region.code || region.id;
+  return code ? String(code).toUpperCase() : region.name || region.id || '-';
+};
+
 export const resources = [
   {
     id: 'orders',
@@ -57,6 +86,34 @@ export const resources = [
       { key: 'display_id', label: 'Exchange', format: (value) => (value ? `#${value}` : '-') },
       { key: 'status', label: 'Status', badge: true },
       { key: 'created_at', label: 'Created', format: formatDateTime }
+    ]
+  },
+  {
+    id: 'return-reasons',
+    label: 'Return Reasons',
+    path: '/return-reasons',
+    endpoint: '/admin/return-reasons',
+    listKey: 'return_reasons',
+    detailKey: 'return_reason',
+    columns: [
+      { key: 'label', label: 'Label' },
+      { key: 'value', label: 'Value' },
+      { key: 'description', label: 'Description' },
+      { key: 'updated_at', label: 'Updated', format: formatDate }
+    ]
+  },
+  {
+    id: 'refund-reasons',
+    label: 'Refund Reasons',
+    path: '/refund-reasons',
+    endpoint: '/admin/refund-reasons',
+    listKey: 'refund_reasons',
+    detailKey: 'refund_reason',
+    columns: [
+      { key: 'label', label: 'Label' },
+      { key: 'code', label: 'Code' },
+      { key: 'description', label: 'Description' },
+      { key: 'updated_at', label: 'Updated', format: formatDate }
     ]
   },
   {
@@ -154,6 +211,30 @@ export const resources = [
     columns: [
       { key: 'name', label: 'Category' },
       { key: 'handle', label: 'Handle' },
+      { key: 'updated_at', label: 'Updated', format: formatDate }
+    ]
+  },
+  {
+    id: 'product-types',
+    label: 'Product Types',
+    path: '/product-types',
+    endpoint: '/admin/product-types',
+    listKey: 'product_types',
+    detailKey: 'product_type',
+    columns: [
+      { key: 'value', label: 'Value' },
+      { key: 'updated_at', label: 'Updated', format: formatDate }
+    ]
+  },
+  {
+    id: 'product-tags',
+    label: 'Product Tags',
+    path: '/product-tags',
+    endpoint: '/admin/product-tags',
+    listKey: 'product_tags',
+    detailKey: 'product_tag',
+    columns: [
+      { key: 'value', label: 'Value' },
       { key: 'updated_at', label: 'Updated', format: formatDate }
     ]
   },
@@ -259,9 +340,17 @@ export const resources = [
     endpoint: '/admin/regions',
     listKey: 'regions',
     detailKey: 'region',
+    listParams: {
+      fields: '+countries'
+    },
     columns: [
       { key: 'name', label: 'Region' },
       { key: 'currency_code', label: 'Currency', format: (value) => value?.toUpperCase() || '-' },
+      {
+        key: 'countries',
+        label: 'Countries',
+        format: (value, row) => formatCountryCodes(row?.countries || value)
+      },
       { key: 'created_at', label: 'Created', format: formatDate }
     ]
   },
@@ -285,8 +374,14 @@ export const resources = [
     endpoint: '/admin/shipping-options',
     listKey: 'shipping_options',
     detailKey: 'shipping_option',
+    listParams: {
+      fields: '+shipping_profile,+service_zone,+provider'
+    },
     columns: [
       { key: 'name', label: 'Option' },
+      { key: 'shipping_profile', label: 'Profile', format: formatProfileLabel },
+      { key: 'provider', label: 'Provider', format: formatProviderLabel },
+      { key: 'service_zone', label: 'Service zone', format: formatServiceZoneLabel },
       { key: 'price_type', label: 'Pricing' },
       { key: 'created_at', label: 'Created', format: formatDate }
     ]
@@ -298,8 +393,17 @@ export const resources = [
     endpoint: '/admin/tax-regions',
     listKey: 'tax_regions',
     detailKey: 'tax_region',
+    listParams: {
+      fields: '+parent'
+    },
     columns: [
       { key: 'country_code', label: 'Country', format: (value) => value?.toUpperCase() || '-' },
+      { key: 'province_code', label: 'Province', format: (value) => value?.toUpperCase() || '-' },
+      {
+        key: 'parent',
+        label: 'Parent',
+        format: (value, row) => formatTaxRegionLabel(row?.parent || row?.parent_id)
+      },
       { key: 'created_at', label: 'Created', format: formatDate }
     ]
   },
@@ -310,9 +414,18 @@ export const resources = [
     endpoint: '/admin/tax-rates',
     listKey: 'tax_rates',
     detailKey: 'tax_rate',
+    listParams: {
+      fields: '+tax_region'
+    },
     columns: [
       { key: 'name', label: 'Tax Rate' },
       { key: 'rate', label: 'Rate', format: (value) => (typeof value === 'number' ? `${value}%` : '-') },
+      {
+        key: 'tax_region',
+        label: 'Tax region',
+        format: (value, row) => formatTaxRegionLabel(row?.tax_region || row?.tax_region_id)
+      },
+      { key: 'is_default', label: 'Default', format: (value) => (value ? 'Yes' : 'No') },
       { key: 'created_at', label: 'Created', format: formatDate }
     ]
   },
@@ -411,7 +524,15 @@ export const resourceGroups = [
   },
   {
     label: 'Catalog',
-    items: ['products', 'product-variants', 'collections', 'product-categories', 'price-lists']
+    items: [
+      'products',
+      'product-variants',
+      'collections',
+      'product-categories',
+      'product-types',
+      'product-tags',
+      'price-lists'
+    ]
   },
   {
     label: 'Customers',
@@ -427,7 +548,15 @@ export const resourceGroups = [
   },
   {
     label: 'Operations',
-    items: ['regions', 'shipping-profiles', 'shipping-options', 'tax-regions', 'tax-rates']
+    items: [
+      'regions',
+      'shipping-profiles',
+      'shipping-options',
+      'tax-regions',
+      'tax-rates',
+      'return-reasons',
+      'refund-reasons'
+    ]
   },
   {
     label: 'Settings',

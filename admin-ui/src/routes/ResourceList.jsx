@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PageHeader from '../components/PageHeader.jsx';
 import DataTable from '../components/DataTable.jsx';
-import { getList, request, uploadFiles } from '../lib/api.js';
+import { formatApiError, getList, request, uploadFiles } from '../lib/api.js';
 
 const getArrayFromPayload = (payload, key) => {
   if (!payload) return [];
@@ -33,6 +33,17 @@ const PRODUCT_ORDER_OPTIONS = [
 ];
 
 const PRODUCT_PAGE_SIZES = [20, 50, 100];
+
+const LIST_META_LABELS = {
+  paymentProviders: 'Payment providers',
+  fulfillmentProviders: 'Fulfillment providers',
+  shippingProfiles: 'Shipping profiles',
+  regions: 'Regions',
+  serviceZones: 'Service zones',
+  taxProviders: 'Tax providers',
+  taxRegions: 'Tax regions',
+  campaigns: 'Campaigns'
+};
 
 const parsePositiveInt = (value, fallback) => {
   const parsed = Number(value);
@@ -199,6 +210,7 @@ const ResourceList = ({ resource }) => {
   });
   const [listMetaLoading, setListMetaLoading] = useState(false);
   const [listMetaError, setListMetaError] = useState('');
+  const [listMetaFailures, setListMetaFailures] = useState([]);
   const [regionDraft, setRegionDraft] = useState({
     name: '',
     currency_code: '',
@@ -271,6 +283,31 @@ const ResourceList = ({ resource }) => {
     metadata: ''
   });
   const [taxRateCreateState, setTaxRateCreateState] = useState({
+    saving: false,
+    error: '',
+    success: ''
+  });
+  const [returnReasonCreateDraft, setReturnReasonCreateDraft] = useState({
+    value: '',
+    label: '',
+    description: '',
+    parent_return_reason_id: '',
+    metadata: ''
+  });
+  const [returnReasonCreateState, setReturnReasonCreateState] = useState({
+    saving: false,
+    error: '',
+    success: ''
+  });
+  const [returnReasonMeta, setReturnReasonMeta] = useState({ reasons: [] });
+  const [returnReasonMetaLoading, setReturnReasonMetaLoading] = useState(false);
+  const [returnReasonMetaError, setReturnReasonMetaError] = useState('');
+  const [refundReasonCreateDraft, setRefundReasonCreateDraft] = useState({
+    label: '',
+    code: '',
+    description: ''
+  });
+  const [refundReasonCreateState, setRefundReasonCreateState] = useState({
     saving: false,
     error: '',
     success: ''
@@ -481,6 +518,24 @@ const ResourceList = ({ resource }) => {
   const [categoryCreateMeta, setCategoryCreateMeta] = useState({ categories: [] });
   const [categoryCreateMetaLoading, setCategoryCreateMetaLoading] = useState(false);
   const [categoryCreateMetaError, setCategoryCreateMetaError] = useState('');
+  const [productTypeCreateDraft, setProductTypeCreateDraft] = useState({
+    value: '',
+    metadata: ''
+  });
+  const [productTypeCreateState, setProductTypeCreateState] = useState({
+    saving: false,
+    error: '',
+    success: ''
+  });
+  const [productTagCreateDraft, setProductTagCreateDraft] = useState({
+    value: '',
+    metadata: ''
+  });
+  const [productTagCreateState, setProductTagCreateState] = useState({
+    saving: false,
+    error: '',
+    success: ''
+  });
   const [salesChannelCreateDraft, setSalesChannelCreateDraft] = useState({
     name: '',
     description: '',
@@ -524,16 +579,29 @@ const ResourceList = ({ resource }) => {
     success: ''
   });
 
+  const renderListMetaFailures = (className) =>
+    listMetaFailures.length ? (
+      <ul className={className}>
+        {listMetaFailures.map((message) => (
+          <li key={message}>• {message}</li>
+        ))}
+      </ul>
+    ) : null;
+
   const isProductList = resource?.id === 'products';
   const isDraftOrderList = resource?.id === 'draft-orders';
   const isCollectionList = resource?.id === 'collections';
   const isCategoryList = resource?.id === 'product-categories';
+  const isProductTypeList = resource?.id === 'product-types';
+  const isProductTagList = resource?.id === 'product-tags';
   const isSalesChannelList = resource?.id === 'sales-channels';
   const isRegionList = resource?.id === 'regions';
   const isShippingProfileList = resource?.id === 'shipping-profiles';
   const isShippingOptionList = resource?.id === 'shipping-options';
   const isTaxRegionList = resource?.id === 'tax-regions';
   const isTaxRateList = resource?.id === 'tax-rates';
+  const isReturnReasonList = resource?.id === 'return-reasons';
+  const isRefundReasonList = resource?.id === 'refund-reasons';
   const isPromotionList = resource?.id === 'promotions';
   const isCampaignList = resource?.id === 'campaigns';
   const isPriceListList = resource?.id === 'price-lists';
@@ -634,7 +702,7 @@ const ResourceList = ({ resource }) => {
     } catch (err) {
       setRows([]);
       setCount(0);
-      setError(err?.message || 'Unable to load data.');
+      setError(formatApiError(err, 'Unable to load data.'));
     } finally {
       setLoading(false);
     }
@@ -736,6 +804,7 @@ const ResourceList = ({ resource }) => {
       });
       setListMetaLoading(false);
       setListMetaError('');
+      setListMetaFailures([]);
       return;
     }
     let isActive = true;
@@ -743,6 +812,7 @@ const ResourceList = ({ resource }) => {
     const loadMeta = async () => {
       setListMetaLoading(true);
       setListMetaError('');
+      setListMetaFailures([]);
       const tasks = [];
 
       if (isRegionList) {
@@ -796,11 +866,14 @@ const ResourceList = ({ resource }) => {
         campaigns: []
       };
       let failedCount = 0;
+      const failureMessages = [];
 
       results.forEach((result, index) => {
         const task = tasks[index];
         if (result.status !== 'fulfilled') {
           failedCount += 1;
+          const label = LIST_META_LABELS[task.key] || task.key;
+          failureMessages.push(`${label}: ${formatApiError(result.reason, 'Unable to load.')}`);
           return;
         }
         const payload = result.value;
@@ -854,6 +927,7 @@ const ResourceList = ({ resource }) => {
       if (failedCount) {
         setListMetaError('Some settings failed to load.');
       }
+      setListMetaFailures(failureMessages);
       setListMetaLoading(false);
     };
 
@@ -863,6 +937,43 @@ const ResourceList = ({ resource }) => {
       isActive = false;
     };
   }, [isRegionList, isShippingOptionList, isTaxRegionList, isTaxRateList, isPromotionList]);
+
+  useEffect(() => {
+    if (!isReturnReasonList) {
+      setReturnReasonMeta({ reasons: [] });
+      setReturnReasonMetaLoading(false);
+      setReturnReasonMetaError('');
+      return;
+    }
+    let isActive = true;
+
+    const loadReturnReasonMeta = async () => {
+      setReturnReasonMetaLoading(true);
+      setReturnReasonMetaError('');
+      try {
+        const payload = await getList('/admin/return-reasons', { limit: 200 });
+        if (!isActive) return;
+        setReturnReasonMeta({
+          reasons: sortByLabel(
+            getArrayFromPayload(payload, 'return_reasons'),
+            (reason) => reason?.label || reason?.value || reason?.id
+          )
+        });
+      } catch (err) {
+        if (!isActive) return;
+        setReturnReasonMeta({ reasons: [] });
+        setReturnReasonMetaError(err?.message || 'Unable to load return reasons.');
+      } finally {
+        if (isActive) setReturnReasonMetaLoading(false);
+      }
+    };
+
+    loadReturnReasonMeta();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isReturnReasonList]);
 
   useEffect(() => {
     if (!isPriceListList) {
@@ -1962,6 +2073,117 @@ const ResourceList = ({ resource }) => {
     }
   };
 
+  const handleReturnReasonDraftChange = (field) => (event) => {
+    const value = event.target.value;
+    setReturnReasonCreateDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleCreateReturnReason = async (event) => {
+    event.preventDefault();
+    const value = returnReasonCreateDraft.value.trim();
+    const label = returnReasonCreateDraft.label.trim();
+    const description = returnReasonCreateDraft.description.trim();
+    const parentId = returnReasonCreateDraft.parent_return_reason_id.trim();
+    const { data: metadata, error: metadataError } = parseJsonInput(returnReasonCreateDraft.metadata);
+
+    if (!value || !label) {
+      setReturnReasonCreateState({
+        saving: false,
+        error: 'Value and label are required.',
+        success: ''
+      });
+      return;
+    }
+
+    if (metadataError) {
+      setReturnReasonCreateState({
+        saving: false,
+        error: `Metadata JSON error: ${metadataError}`,
+        success: ''
+      });
+      return;
+    }
+
+    setReturnReasonCreateState({ saving: true, error: '', success: '' });
+    try {
+      await request('/admin/return-reasons', {
+        method: 'POST',
+        body: {
+          value,
+          label,
+          description: description || null,
+          parent_return_reason_id: parentId || null,
+          ...(metadata && typeof metadata === 'object' ? { metadata } : {})
+        }
+      });
+      setReturnReasonCreateDraft({
+        value: '',
+        label: '',
+        description: '',
+        parent_return_reason_id: '',
+        metadata: ''
+      });
+      setReturnReasonCreateState({
+        saving: false,
+        error: '',
+        success: 'Return reason created.'
+      });
+      fetchList();
+    } catch (err) {
+      setReturnReasonCreateState({
+        saving: false,
+        error: err?.message || 'Unable to create return reason.',
+        success: ''
+      });
+    }
+  };
+
+  const handleRefundReasonDraftChange = (field) => (event) => {
+    const value = event.target.value;
+    setRefundReasonCreateDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleCreateRefundReason = async (event) => {
+    event.preventDefault();
+    const label = refundReasonCreateDraft.label.trim();
+    const code = refundReasonCreateDraft.code.trim();
+    const description = refundReasonCreateDraft.description.trim();
+
+    if (!label || !code) {
+      setRefundReasonCreateState({
+        saving: false,
+        error: 'Label and code are required.',
+        success: ''
+      });
+      return;
+    }
+
+    setRefundReasonCreateState({ saving: true, error: '', success: '' });
+    try {
+      await request('/admin/refund-reasons', {
+        method: 'POST',
+        body: {
+          label,
+          code,
+          description: description || null
+        }
+      });
+      setRefundReasonCreateDraft({ label: '', code: '', description: '' });
+      setRefundReasonCreateState({
+        saving: false,
+        error: '',
+        success: 'Refund reason created.'
+      });
+      fetchList();
+    } catch (err) {
+      setRefundReasonCreateState({
+        saving: false,
+        error: err?.message || 'Unable to create refund reason.',
+        success: ''
+      });
+    }
+  };
+
   const handlePromotionDraftChange = (field) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
     setPromotionDraft((prev) => ({ ...prev, [field]: value }));
@@ -2869,6 +3091,114 @@ const ResourceList = ({ resource }) => {
     }
   };
 
+  const handleProductTypeCreateDraftChange = (field) => (event) => {
+    const value = event.target.value;
+    setProductTypeCreateDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleCreateProductType = async (event) => {
+    event.preventDefault();
+    const value = productTypeCreateDraft.value.trim();
+    const { data: metadata, error: metadataError } = parseJsonInput(
+      productTypeCreateDraft.metadata
+    );
+
+    if (!value) {
+      setProductTypeCreateState({
+        saving: false,
+        error: 'Value is required.',
+        success: ''
+      });
+      return;
+    }
+
+    if (metadataError) {
+      setProductTypeCreateState({
+        saving: false,
+        error: `Metadata JSON error: ${metadataError}`,
+        success: ''
+      });
+      return;
+    }
+
+    setProductTypeCreateState({ saving: true, error: '', success: '' });
+    try {
+      await request('/admin/product-types', {
+        method: 'POST',
+        body: {
+          value,
+          ...(metadata && typeof metadata === 'object' ? { metadata } : {})
+        }
+      });
+      setProductTypeCreateDraft({ value: '', metadata: '' });
+      setProductTypeCreateState({
+        saving: false,
+        error: '',
+        success: 'Product type created.'
+      });
+      fetchList();
+    } catch (err) {
+      setProductTypeCreateState({
+        saving: false,
+        error: err?.message || 'Unable to create product type.',
+        success: ''
+      });
+    }
+  };
+
+  const handleProductTagCreateDraftChange = (field) => (event) => {
+    const value = event.target.value;
+    setProductTagCreateDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleCreateProductTag = async (event) => {
+    event.preventDefault();
+    const value = productTagCreateDraft.value.trim();
+    const { data: metadata, error: metadataError } = parseJsonInput(productTagCreateDraft.metadata);
+
+    if (!value) {
+      setProductTagCreateState({
+        saving: false,
+        error: 'Value is required.',
+        success: ''
+      });
+      return;
+    }
+
+    if (metadataError) {
+      setProductTagCreateState({
+        saving: false,
+        error: `Metadata JSON error: ${metadataError}`,
+        success: ''
+      });
+      return;
+    }
+
+    setProductTagCreateState({ saving: true, error: '', success: '' });
+    try {
+      await request('/admin/product-tags', {
+        method: 'POST',
+        body: {
+          value,
+          ...(metadata && typeof metadata === 'object' ? { metadata } : {})
+        }
+      });
+      setProductTagCreateDraft({ value: '', metadata: '' });
+      setProductTagCreateState({
+        saving: false,
+        error: '',
+        success: 'Product tag created.'
+      });
+      fetchList();
+    } catch (err) {
+      setProductTagCreateState({
+        saving: false,
+        error: err?.message || 'Unable to create product tag.',
+        success: ''
+      });
+    }
+  };
+
   const handleSalesChannelCreateDraftChange = (field) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
     setSalesChannelCreateDraft((prev) => ({ ...prev, [field]: value }));
@@ -3333,6 +3663,7 @@ const ResourceList = ({ resource }) => {
             {listMetaError ? (
               <div className="md:col-span-2 text-sm text-rose-600">{listMetaError}</div>
             ) : null}
+            {renderListMetaFailures('md:col-span-2 text-xs text-ldc-ink/60')}
             {regionCreateState.error ? (
               <div className="md:col-span-2 text-sm text-rose-600">{regionCreateState.error}</div>
             ) : null}
@@ -3651,6 +3982,7 @@ const ResourceList = ({ resource }) => {
             {listMetaError ? (
               <div className="text-sm text-rose-600">{listMetaError}</div>
             ) : null}
+            {renderListMetaFailures('text-xs text-ldc-ink/60')}
             {shippingOptionCreateState.error ? (
               <div className="text-sm text-rose-600">{shippingOptionCreateState.error}</div>
             ) : null}
@@ -3809,6 +4141,7 @@ const ResourceList = ({ resource }) => {
             {listMetaError ? (
               <div className="md:col-span-3 text-sm text-rose-600">{listMetaError}</div>
             ) : null}
+            {renderListMetaFailures('md:col-span-3 text-xs text-ldc-ink/60')}
             {taxRegionCreateState.error ? (
               <div className="md:col-span-3 text-sm text-rose-600">
                 {taxRegionCreateState.error}
@@ -4127,6 +4460,7 @@ const ResourceList = ({ resource }) => {
             {listMetaError ? (
               <div className="md:col-span-2 text-sm text-rose-600">{listMetaError}</div>
             ) : null}
+            {renderListMetaFailures('md:col-span-2 text-xs text-ldc-ink/60')}
             {taxRateCreateState.error ? (
               <div className="md:col-span-2 text-sm text-rose-600">
                 {taxRateCreateState.error}
@@ -4143,6 +4477,151 @@ const ResourceList = ({ resource }) => {
               disabled={taxRateCreateState.saving}
             >
               {taxRateCreateState.saving ? 'Creating...' : 'Create tax rate'}
+            </button>
+          </form>
+        </div>
+      ) : null}
+
+      {isReturnReasonList ? (
+        <div className="mb-6 ldc-card p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="font-heading text-lg text-ldc-ink">Create return reason</h3>
+            {returnReasonMetaLoading ? (
+              <span className="text-xs text-ldc-ink/60">Loading existing reasons...</span>
+            ) : null}
+          </div>
+          <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleCreateReturnReason}>
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Label
+              <input
+                className="ldc-input mt-2"
+                value={returnReasonCreateDraft.label}
+                onChange={handleReturnReasonDraftChange('label')}
+                placeholder="Damaged item"
+              />
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Value
+              <input
+                className="ldc-input mt-2"
+                value={returnReasonCreateDraft.value}
+                onChange={handleReturnReasonDraftChange('value')}
+                placeholder="damaged"
+              />
+            </label>
+            <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Description (optional)
+              <textarea
+                className="ldc-input mt-2 min-h-[90px]"
+                value={returnReasonCreateDraft.description}
+                onChange={handleReturnReasonDraftChange('description')}
+                placeholder="Describe when to use this return reason."
+              />
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Parent reason (optional)
+              {returnReasonMeta.reasons.length ? (
+                <select
+                  className="ldc-input mt-2"
+                  value={returnReasonCreateDraft.parent_return_reason_id}
+                  onChange={handleReturnReasonDraftChange('parent_return_reason_id')}
+                >
+                  <option value="">No parent</option>
+                  {returnReasonMeta.reasons.map((reason) => (
+                    <option key={reason.id} value={reason.id}>
+                      {reason.label || reason.value || reason.id}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className="ldc-input mt-2"
+                  value={returnReasonCreateDraft.parent_return_reason_id}
+                  onChange={handleReturnReasonDraftChange('parent_return_reason_id')}
+                  placeholder="rr_..."
+                />
+              )}
+            </label>
+            <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Metadata (optional)
+              <textarea
+                className="ldc-input mt-2 min-h-[90px] font-mono text-xs"
+                value={returnReasonCreateDraft.metadata}
+                onChange={handleReturnReasonDraftChange('metadata')}
+                placeholder='{"priority":"high"}'
+              />
+            </label>
+            {returnReasonMetaError ? (
+              <div className="md:col-span-2 text-sm text-rose-600">{returnReasonMetaError}</div>
+            ) : null}
+            {returnReasonCreateState.error ? (
+              <div className="md:col-span-2 text-sm text-rose-600">
+                {returnReasonCreateState.error}
+              </div>
+            ) : null}
+            {returnReasonCreateState.success ? (
+              <div className="md:col-span-2 text-sm text-emerald-700">
+                {returnReasonCreateState.success}
+              </div>
+            ) : null}
+            <button
+              className="ldc-button-primary md:col-span-2"
+              type="submit"
+              disabled={returnReasonCreateState.saving}
+            >
+              {returnReasonCreateState.saving ? 'Creating...' : 'Create return reason'}
+            </button>
+          </form>
+        </div>
+      ) : null}
+
+      {isRefundReasonList ? (
+        <div className="mb-6 ldc-card p-4">
+          <h3 className="font-heading text-lg text-ldc-ink">Create refund reason</h3>
+          <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleCreateRefundReason}>
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Label
+              <input
+                className="ldc-input mt-2"
+                value={refundReasonCreateDraft.label}
+                onChange={handleRefundReasonDraftChange('label')}
+                placeholder="Customer complaint"
+              />
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Code
+              <input
+                className="ldc-input mt-2"
+                value={refundReasonCreateDraft.code}
+                onChange={handleRefundReasonDraftChange('code')}
+                placeholder="complaint"
+              />
+            </label>
+            <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Description (optional)
+              <textarea
+                className="ldc-input mt-2 min-h-[90px]"
+                value={refundReasonCreateDraft.description}
+                onChange={handleRefundReasonDraftChange('description')}
+                placeholder="Describe when to use this refund reason."
+              />
+            </label>
+            {refundReasonCreateState.error ? (
+              <div className="md:col-span-2 text-sm text-rose-600">
+                {refundReasonCreateState.error}
+              </div>
+            ) : null}
+            {refundReasonCreateState.success ? (
+              <div className="md:col-span-2 text-sm text-emerald-700">
+                {refundReasonCreateState.success}
+              </div>
+            ) : null}
+            <button
+              className="ldc-button-primary md:col-span-2"
+              type="submit"
+              disabled={refundReasonCreateState.saving}
+            >
+              {refundReasonCreateState.saving ? 'Creating...' : 'Create refund reason'}
             </button>
           </form>
         </div>
@@ -4321,6 +4800,7 @@ const ResourceList = ({ resource }) => {
             {listMetaError ? (
               <div className="text-sm text-rose-600">{listMetaError}</div>
             ) : null}
+            {renderListMetaFailures('text-xs text-ldc-ink/60')}
             {promotionCreateState.error ? (
               <div className="text-sm text-rose-600">{promotionCreateState.error}</div>
             ) : null}
@@ -4937,6 +5417,92 @@ const ResourceList = ({ resource }) => {
               disabled={categoryCreateState.saving}
             >
               {categoryCreateState.saving ? 'Creating...' : 'Create category'}
+            </button>
+          </form>
+        </div>
+      ) : null}
+
+      {isProductTypeList ? (
+        <div className="mb-6 ldc-card p-4">
+          <h3 className="font-heading text-lg text-ldc-ink">Create product type</h3>
+          <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleCreateProductType}>
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Value
+              <input
+                className="ldc-input mt-2"
+                value={productTypeCreateDraft.value}
+                onChange={handleProductTypeCreateDraftChange('value')}
+                placeholder="Drinkware"
+              />
+            </label>
+            <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Metadata (optional)
+              <textarea
+                className="ldc-input mt-2 min-h-[90px] font-mono text-xs"
+                value={productTypeCreateDraft.metadata}
+                onChange={handleProductTypeCreateDraftChange('metadata')}
+                placeholder='{"priority":"high"}'
+              />
+            </label>
+            {productTypeCreateState.error ? (
+              <div className="md:col-span-2 text-sm text-rose-600">
+                {productTypeCreateState.error}
+              </div>
+            ) : null}
+            {productTypeCreateState.success ? (
+              <div className="md:col-span-2 text-sm text-emerald-700">
+                {productTypeCreateState.success}
+              </div>
+            ) : null}
+            <button
+              className="ldc-button-primary md:col-span-2"
+              type="submit"
+              disabled={productTypeCreateState.saving}
+            >
+              {productTypeCreateState.saving ? 'Creating...' : 'Create product type'}
+            </button>
+          </form>
+        </div>
+      ) : null}
+
+      {isProductTagList ? (
+        <div className="mb-6 ldc-card p-4">
+          <h3 className="font-heading text-lg text-ldc-ink">Create product tag</h3>
+          <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleCreateProductTag}>
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Value
+              <input
+                className="ldc-input mt-2"
+                value={productTagCreateDraft.value}
+                onChange={handleProductTagCreateDraftChange('value')}
+                placeholder="Bestseller"
+              />
+            </label>
+            <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Metadata (optional)
+              <textarea
+                className="ldc-input mt-2 min-h-[90px] font-mono text-xs"
+                value={productTagCreateDraft.metadata}
+                onChange={handleProductTagCreateDraftChange('metadata')}
+                placeholder='{"badge":"top"}'
+              />
+            </label>
+            {productTagCreateState.error ? (
+              <div className="md:col-span-2 text-sm text-rose-600">
+                {productTagCreateState.error}
+              </div>
+            ) : null}
+            {productTagCreateState.success ? (
+              <div className="md:col-span-2 text-sm text-emerald-700">
+                {productTagCreateState.success}
+              </div>
+            ) : null}
+            <button
+              className="ldc-button-primary md:col-span-2"
+              type="submit"
+              disabled={productTagCreateState.saving}
+            >
+              {productTagCreateState.saving ? 'Creating...' : 'Create product tag'}
             </button>
           </form>
         </div>

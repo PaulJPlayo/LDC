@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import DataTable from '../components/DataTable.jsx';
 import PageHeader from '../components/PageHeader.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
-import { ApiError, getDetail, getList, request, uploadFiles } from '../lib/api.js';
+import { ApiError, formatApiError, getDetail, getList, request, uploadFiles } from '../lib/api.js';
 import { formatDateTime, formatMoney } from '../lib/formatters.js';
 
 const getObjectFromPayload = (payload, key) => {
@@ -29,6 +29,16 @@ const formatMoneyOrDash = (amount, currency) => {
   const numeric = toNumber(amount);
   if (numeric === null) return '-';
   return formatMoney(numeric, currency);
+};
+
+const OPS_META_LABELS = {
+  paymentProviders: 'Payment providers',
+  fulfillmentProviders: 'Fulfillment providers',
+  shippingProfiles: 'Shipping profiles',
+  regions: 'Regions',
+  serviceZones: 'Service zones',
+  taxProviders: 'Tax providers',
+  taxRegions: 'Tax regions'
 };
 
 const buildAddressLines = (address) => {
@@ -72,6 +82,56 @@ const getLineItemThumbnail = (item) => {
     item?.variant?.product?.images?.[0] ||
     ''
   );
+};
+
+const getReturnItemLine = (entry) =>
+  entry?.item || entry?.line_item || entry?.detail || entry?.order_item || entry?.item_detail || entry;
+
+const getReturnItemSku = (entry) => {
+  const line = getReturnItemLine(entry);
+  return (
+    line?.variant_sku ||
+    line?.variant?.sku ||
+    line?.sku ||
+    entry?.sku ||
+    entry?.item_id ||
+    '-'
+  );
+};
+
+const getReturnItemQuantity = (entry) => {
+  const line = getReturnItemLine(entry);
+  const quantity =
+    entry?.quantity ??
+    entry?.return_quantity ??
+    entry?.requested_quantity ??
+    entry?.detail?.quantity ??
+    line?.quantity;
+  return toNumber(quantity) ?? 0;
+};
+
+const getReturnItemReceivedQuantity = (entry) => {
+  const received =
+    entry?.received_quantity ??
+    entry?.received_return_quantity ??
+    entry?.received_items_quantity ??
+    entry?.detail?.received_quantity;
+  return toNumber(received);
+};
+
+const getReturnItemReason = (entry) => {
+  const reason = entry?.reason || entry?.reason_detail || entry?.reason_id || entry?.reason_code;
+  if (!reason) return '-';
+  if (typeof reason === 'string') return reason;
+  return reason?.label || reason?.value || reason?.code || reason?.id || '-';
+};
+
+const getReturnItemNote = (entry) =>
+  entry?.note || entry?.reason_note || entry?.description || entry?.detail?.note || '-';
+
+const resolveExchangeReturnId = (exchangeId, exchanges = []) => {
+  const match = (exchanges || []).find((exchange) => exchange?.id === exchangeId);
+  return match?.return_id || match?.return?.id || null;
 };
 
 const getLineItemQuantity = (item) => {
@@ -330,6 +390,14 @@ const parsePriceInput = (value) => {
   return Math.round(numeric * 100);
 };
 
+const parseQuantityInput = (value) => {
+  const trimmed = String(value ?? '').trim();
+  if (!trimmed) return null;
+  const numeric = Number(trimmed);
+  if (!Number.isFinite(numeric)) return null;
+  return Math.max(0, Math.floor(numeric));
+};
+
 const formatDateTimeInput = (value) => {
   if (!value) return '';
   const date = new Date(value);
@@ -535,6 +603,8 @@ const mapStoreLocales = (locales) => {
 
 const formatBooleanLabel = (value, truthyLabel, falsyLabel) =>
   value ? truthyLabel : falsyLabel;
+
+const normalizeStatus = (value) => String(value || '').toLowerCase();
 
 const formatRuleSet = (rules) => {
   if (!rules || typeof rules !== 'object') return '-';
@@ -761,6 +831,24 @@ const buildReturnReceiveMap = (items) => {
   return map;
 };
 
+const buildReturnItemRows = (items, fallbackId) => {
+  if (!Array.isArray(items)) return [];
+  return items.map((entry, index) => {
+    const line = getReturnItemLine(entry);
+    const rowId =
+      getOrderItemId(line) || entry?.id || entry?.item_id || `${fallbackId || 'item'}-${index}`;
+    return {
+      id: rowId,
+      title: getLineItemTitle(line),
+      sku: getReturnItemSku(entry),
+      quantity: getReturnItemQuantity(entry),
+      received: getReturnItemReceivedQuantity(entry),
+      reason: getReturnItemReason(entry),
+      note: getReturnItemNote(entry)
+    };
+  });
+};
+
 const ResourceDetail = ({ resource }) => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -772,13 +860,19 @@ const ResourceDetail = ({ resource }) => {
   const isVariant = resource?.id === 'product-variants';
   const isCollection = resource?.id === 'collections';
   const isCategory = resource?.id === 'product-categories';
+  const isProductType = resource?.id === 'product-types';
+  const isProductTag = resource?.id === 'product-tags';
   const isOrder = resource?.id === 'orders';
   const isOrderLike = isOrder || resource?.id === 'draft-orders';
+  const isReturn = resource?.id === 'returns';
+  const isExchange = resource?.id === 'exchanges';
   const isRegion = resource?.id === 'regions';
   const isShippingProfile = resource?.id === 'shipping-profiles';
   const isShippingOption = resource?.id === 'shipping-options';
   const isTaxRegion = resource?.id === 'tax-regions';
   const isTaxRate = resource?.id === 'tax-rates';
+  const isReturnReason = resource?.id === 'return-reasons';
+  const isRefundReason = resource?.id === 'refund-reasons';
   const isPromotion = resource?.id === 'promotions';
   const isCampaign = resource?.id === 'campaigns';
   const isPriceList = resource?.id === 'price-lists';
@@ -860,10 +954,68 @@ const ResourceDetail = ({ resource }) => {
   const [orderExchanges, setOrderExchanges] = useState([]);
   const [orderExchangesLoading, setOrderExchangesLoading] = useState(false);
   const [orderExchangesError, setOrderExchangesError] = useState('');
+  const [linkedOrder, setLinkedOrder] = useState(null);
+  const [linkedOrderLoading, setLinkedOrderLoading] = useState(false);
+  const [linkedOrderError, setLinkedOrderError] = useState('');
   const [orderPreview, setOrderPreview] = useState(null);
   const [orderPreviewLoading, setOrderPreviewLoading] = useState(false);
   const [orderPreviewError, setOrderPreviewError] = useState('');
+  const [orderChanges, setOrderChanges] = useState([]);
+  const [orderChangesLoading, setOrderChangesLoading] = useState(false);
+  const [orderChangesError, setOrderChangesError] = useState('');
+  const [orderEditDraft, setOrderEditDraft] = useState({
+    description: '',
+    internal_note: ''
+  });
+  const [orderEditState, setOrderEditState] = useState({
+    saving: false,
+    action: '',
+    error: '',
+    success: ''
+  });
+  const [orderEditItemDrafts, setOrderEditItemDrafts] = useState({});
+  const [orderEditItemState, setOrderEditItemState] = useState({
+    savingId: null,
+    action: '',
+    error: '',
+    success: ''
+  });
+  const [orderEditAddDraft, setOrderEditAddDraft] = useState({
+    variant_id: '',
+    quantity: 1,
+    unit_price: '',
+    compare_at_unit_price: '',
+    allow_backorder: false,
+    internal_note: ''
+  });
+  const [orderEditAddState, setOrderEditAddState] = useState({
+    saving: false,
+    error: '',
+    success: ''
+  });
+  const [orderEditVariantSearch, setOrderEditVariantSearch] = useState({
+    query: '',
+    results: [],
+    loading: false,
+    error: ''
+  });
+  const [orderEditSelectedVariant, setOrderEditSelectedVariant] = useState(null);
+  const [orderEditAddActionDrafts, setOrderEditAddActionDrafts] = useState({});
+  const [orderEditShippingDraft, setOrderEditShippingDraft] = useState({
+    shipping_option_id: '',
+    custom_amount: '',
+    description: '',
+    internal_note: ''
+  });
+  const [orderEditShippingActionDrafts, setOrderEditShippingActionDrafts] = useState({});
+  const [orderEditShippingState, setOrderEditShippingState] = useState({
+    savingId: null,
+    action: '',
+    error: '',
+    success: ''
+  });
   const [returnReasons, setReturnReasons] = useState([]);
+  const [returnReasonsLoading, setReturnReasonsLoading] = useState(false);
   const [returnReasonsError, setReturnReasonsError] = useState('');
   const [returnDraft, setReturnDraft] = useState({
     location_id: '',
@@ -905,6 +1057,16 @@ const ResourceDetail = ({ resource }) => {
   });
   const [opsMetaLoading, setOpsMetaLoading] = useState(false);
   const [opsMetaError, setOpsMetaError] = useState('');
+  const [opsMetaFailures, setOpsMetaFailures] = useState([]);
+
+  const renderOpsMetaFailures = (className) =>
+    opsMetaFailures.length ? (
+      <ul className={className}>
+        {opsMetaFailures.map((message) => (
+          <li key={message}>• {message}</li>
+        ))}
+      </ul>
+    ) : null;
   const [regionDraft, setRegionDraft] = useState({
     name: '',
     currency_code: '',
@@ -971,6 +1133,30 @@ const ResourceDetail = ({ resource }) => {
     metadata: ''
   });
   const [taxRateState, setTaxRateState] = useState({
+    saving: false,
+    deleting: false,
+    error: '',
+    success: ''
+  });
+  const [returnReasonDraft, setReturnReasonDraft] = useState({
+    value: '',
+    label: '',
+    description: '',
+    parent_return_reason_id: '',
+    metadata: ''
+  });
+  const [returnReasonState, setReturnReasonState] = useState({
+    saving: false,
+    deleting: false,
+    error: '',
+    success: ''
+  });
+  const [refundReasonDraft, setRefundReasonDraft] = useState({
+    label: '',
+    code: '',
+    description: ''
+  });
+  const [refundReasonState, setRefundReasonState] = useState({
     saving: false,
     deleting: false,
     error: '',
@@ -1131,6 +1317,26 @@ const ResourceDetail = ({ resource }) => {
   });
   const [categoryUploadState, setCategoryUploadState] = useState({
     uploading: false,
+    error: '',
+    success: ''
+  });
+  const [productTypeDraft, setProductTypeDraft] = useState({
+    value: '',
+    metadata: ''
+  });
+  const [productTypeState, setProductTypeState] = useState({
+    saving: false,
+    deleting: false,
+    error: '',
+    success: ''
+  });
+  const [productTagDraft, setProductTagDraft] = useState({
+    value: '',
+    metadata: ''
+  });
+  const [productTagState, setProductTagState] = useState({
+    saving: false,
+    deleting: false,
     error: '',
     success: ''
   });
@@ -1408,6 +1614,63 @@ const ResourceDetail = ({ resource }) => {
     return Array.isArray(record.items) ? record.items : [];
   }, [isOrder, record]);
 
+  const returnRecordItems = useMemo(() => {
+    if (!isReturn || !record) return [];
+    if (Array.isArray(record.items) && record.items.length) return record.items;
+    if (Array.isArray(record.return_items) && record.return_items.length) return record.return_items;
+    if (Array.isArray(record.line_items) && record.line_items.length) return record.line_items;
+    return [];
+  }, [isReturn, record]);
+
+  const linkedOrderItems = useMemo(() => {
+    if (!linkedOrder) return [];
+    return Array.isArray(linkedOrder.items) ? linkedOrder.items : [];
+  }, [linkedOrder]);
+
+  const returnItemSource = useMemo(() => {
+    if (isReturn) {
+      return linkedOrderItems.length ? linkedOrderItems : returnRecordItems;
+    }
+    return orderItems;
+  }, [isReturn, linkedOrderItems, returnRecordItems, orderItems]);
+
+  const exchangeInboundItems = useMemo(() => {
+    if (!isExchange || !record) return [];
+    if (Array.isArray(record.return_items) && record.return_items.length) return record.return_items;
+    if (Array.isArray(record.inbound_items) && record.inbound_items.length) return record.inbound_items;
+    if (Array.isArray(record.items) && record.items.length) return record.items;
+    return [];
+  }, [isExchange, record]);
+
+  const exchangeOutboundItems = useMemo(() => {
+    if (!isExchange || !record) return [];
+    if (Array.isArray(record.additional_items) && record.additional_items.length) {
+      return record.additional_items;
+    }
+    if (Array.isArray(record.outbound_items) && record.outbound_items.length) {
+      return record.outbound_items;
+    }
+    if (Array.isArray(record.new_items) && record.new_items.length) {
+      return record.new_items;
+    }
+    return [];
+  }, [isExchange, record]);
+
+  const exchangeRecords = useMemo(() => {
+    if (isOrder) return orderExchanges;
+    if (isExchange && record) return [record];
+    return [];
+  }, [isOrder, orderExchanges, isExchange, record]);
+
+  const exchangeItemSource = useMemo(() => {
+    if (isOrder) return orderItems;
+    if (isExchange) {
+      if (linkedOrderItems.length) return linkedOrderItems;
+      if (exchangeInboundItems.length) return exchangeInboundItems;
+    }
+    return [];
+  }, [isOrder, orderItems, isExchange, linkedOrderItems, exchangeInboundItems]);
+
   const orderPayments = useMemo(() => {
     if (!isOrder || !record) return [];
     const collections = Array.isArray(record.payment_collections) ? record.payment_collections : [];
@@ -1458,6 +1721,71 @@ const ResourceDetail = ({ resource }) => {
     [isOrder]
   );
 
+  const orderEditChanges = useMemo(() => {
+    if (!orderChanges.length) return [];
+    const edits = orderChanges.filter((change) => change?.change_type === 'edit');
+    return edits.sort((a, b) => {
+      const aTime = new Date(a?.created_at || 0).getTime();
+      const bTime = new Date(b?.created_at || 0).getTime();
+      return bTime - aTime;
+    });
+  }, [orderChanges]);
+
+  const orderEditActiveChange = useMemo(
+    () =>
+      orderEditChanges.find((change) =>
+        ['pending', 'requested'].includes(normalizeStatus(change?.status))
+      ) || null,
+    [orderEditChanges]
+  );
+
+  const orderEditChange = orderEditActiveChange;
+  const orderEditLastChange = orderEditChanges[0] || null;
+  const orderEditStatus = normalizeStatus(orderEditChange?.status);
+  const orderEditActive = Boolean(orderEditChange);
+  const orderEditActions = useMemo(
+    () =>
+      Array.isArray(orderEditChange?.actions)
+        ? orderEditChange.actions.filter(Boolean)
+        : [],
+    [orderEditChange]
+  );
+  const orderEditItemUpdateMap = useMemo(() => {
+    const map = {};
+    orderEditActions.forEach((action) => {
+      if (action?.action !== 'ITEM_UPDATE') return;
+      const referenceId =
+        action?.details?.reference_id || action?.reference_id || action?.reference;
+      if (!referenceId) return;
+      map[referenceId] = action;
+    });
+    return map;
+  }, [orderEditActions]);
+  const orderEditAddActions = useMemo(
+    () => orderEditActions.filter((action) => action?.action === 'ITEM_ADD'),
+    [orderEditActions]
+  );
+  const orderEditShippingActions = useMemo(
+    () => orderEditActions.filter((action) => action?.action === 'SHIPPING_ADD'),
+    [orderEditActions]
+  );
+  const returnReasonParentOptions = useMemo(() => {
+    if (!isReturnReason) return [];
+    const options = returnReasons.filter((reason) => reason?.id && reason.id !== record?.id);
+    const currentParentId = returnReasonDraft.parent_return_reason_id;
+    if (currentParentId && !options.some((reason) => reason.id === currentParentId)) {
+      options.unshift({
+        id: currentParentId,
+        label:
+          record?.parent_return_reason?.label ||
+          record?.parent_return_reason?.value ||
+          currentParentId,
+        value: record?.parent_return_reason?.value
+      });
+    }
+    return options;
+  }, [isReturnReason, returnReasons, record, returnReasonDraft.parent_return_reason_id]);
+
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -1490,12 +1818,12 @@ const ResourceDetail = ({ resource }) => {
           const payload = await getDetail(resource.endpoint, id, detailParams);
           setRecord(getObjectFromPayload(payload, resource.detailKey));
         }
-      } catch (err) {
-        setError(err?.message || 'Unable to load details.');
-        setRecord(null);
-      } finally {
-        setLoading(false);
-      }
+    } catch (err) {
+      setError(formatApiError(err, 'Unable to load details.'));
+      setRecord(null);
+    } finally {
+      setLoading(false);
+    }
     };
 
     load();
@@ -1516,6 +1844,8 @@ const ResourceDetail = ({ resource }) => {
     isApiKey,
     isStore,
     isSalesChannel,
+    isReturnReason,
+    isRefundReason,
     orderDetailParams
   ]);
 
@@ -1599,6 +1929,23 @@ const ResourceDetail = ({ resource }) => {
       setTaxRateSelectedProducts((prev) =>
         nextRuleDraft.product_ids.map((id) => prev.find((item) => item.id === id) || { id })
       );
+    }
+    if (isReturnReason) {
+      setReturnReasonDraft({
+        value: record?.value || '',
+        label: record?.label || '',
+        description: record?.description || '',
+        parent_return_reason_id:
+          record?.parent_return_reason_id || record?.parent_return_reason?.id || '',
+        metadata: formatJsonValue(record?.metadata)
+      });
+    }
+    if (isRefundReason) {
+      setRefundReasonDraft({
+        label: record?.label || '',
+        code: record?.code || '',
+        description: record?.description || ''
+      });
     }
     if (isPromotion) {
       const applicationMethod = record?.application_method || record?.applicationMethod || {};
@@ -1720,6 +2067,18 @@ const ResourceDetail = ({ resource }) => {
       setCategoryBulkState({ saving: false, error: '', success: '' });
       setCategoryUploadState({ uploading: false, error: '', success: '' });
     }
+    if (isProductType) {
+      setProductTypeDraft({
+        value: record?.value || '',
+        metadata: formatJsonValue(record?.metadata)
+      });
+    }
+    if (isProductTag) {
+      setProductTagDraft({
+        value: record?.value || '',
+        metadata: formatJsonValue(record?.metadata)
+      });
+    }
     if (isUser) {
       setUserDraft({
         email: record?.email || '',
@@ -1792,11 +2151,15 @@ const ResourceDetail = ({ resource }) => {
     isCustomerGroup,
     isCollection,
     isCategory,
+    isProductType,
+    isProductTag,
     isUser,
     isInvite,
     isApiKey,
     isStore,
     isSalesChannel,
+    isReturnReason,
+    isRefundReason,
     isInventoryItem,
     isStockLocation
   ]);
@@ -1957,6 +2320,7 @@ const ResourceDetail = ({ resource }) => {
       });
       setOpsMetaLoading(false);
       setOpsMetaError('');
+      setOpsMetaFailures([]);
       return;
     }
     let isActive = true;
@@ -1964,6 +2328,7 @@ const ResourceDetail = ({ resource }) => {
     const loadOpsMeta = async () => {
       setOpsMetaLoading(true);
       setOpsMetaError('');
+      setOpsMetaFailures([]);
       const tasks = [];
 
       if (isRegion) {
@@ -2012,11 +2377,14 @@ const ResourceDetail = ({ resource }) => {
         taxRegions: []
       };
       let failedCount = 0;
+      const failureMessages = [];
 
       results.forEach((result, index) => {
         const task = tasks[index];
         if (result.status !== 'fulfilled') {
           failedCount += 1;
+          const label = OPS_META_LABELS[task.key] || task.key;
+          failureMessages.push(`${label}: ${formatApiError(result.reason, 'Unable to load.')}`);
           return;
         }
         const payload = result.value;
@@ -2070,6 +2438,7 @@ const ResourceDetail = ({ resource }) => {
       if (failedCount) {
         setOpsMetaError('Some settings failed to load.');
       }
+      setOpsMetaFailures(failureMessages);
       setOpsMetaLoading(false);
     };
 
@@ -2805,7 +3174,14 @@ const ResourceDetail = ({ resource }) => {
   }, [isSalesChannel, salesChannelProductSearch.query]);
 
   useEffect(() => {
-    if (!isOrder || !record?.id) {
+    if (!isOrder && !isExchange) {
+      setFulfillmentMeta({ locations: [], shippingOptions: [] });
+      setFulfillmentMetaError('');
+      setFulfillmentMetaLoading(false);
+      return;
+    }
+    const orderId = isOrder ? record?.id : record?.order_id || record?.order?.id;
+    if (!orderId) {
       setFulfillmentMeta({ locations: [], shippingOptions: [] });
       setFulfillmentMetaError('');
       setFulfillmentMetaLoading(false);
@@ -2819,7 +3195,7 @@ const ResourceDetail = ({ resource }) => {
       try {
         const results = await Promise.allSettled([
           getList('/admin/stock-locations', { limit: 200 }),
-          getList(`/admin/orders/${record.id}/shipping-options`)
+          getList(`/admin/orders/${orderId}/shipping-options`)
         ]);
         if (!isActive) return;
 
@@ -2857,7 +3233,7 @@ const ResourceDetail = ({ resource }) => {
     return () => {
       isActive = false;
     };
-  }, [isOrder, record?.id]);
+  }, [isOrder, isExchange, record?.id, record?.order_id, record?.order?.id]);
 
   useEffect(() => {
     if (!isOrder || !record?.items) {
@@ -2919,13 +3295,15 @@ const ResourceDetail = ({ resource }) => {
   }, [isOrder]);
 
   useEffect(() => {
-    if (!isOrder) {
+    if (!isOrder && !isReturnReason && !isReturn && !isExchange) {
       setReturnReasons([]);
       setReturnReasonsError('');
+      setReturnReasonsLoading(false);
       return;
     }
     let isActive = true;
     const loadReturnReasons = async () => {
+      setReturnReasonsLoading(true);
       setReturnReasonsError('');
       try {
         const payload = await getList('/admin/return-reasons', { limit: 200 });
@@ -2936,6 +3314,8 @@ const ResourceDetail = ({ resource }) => {
       } catch (err) {
         if (!isActive) return;
         setReturnReasonsError(err?.message || 'Unable to load return reasons.');
+      } finally {
+        if (isActive) setReturnReasonsLoading(false);
       }
     };
 
@@ -2944,7 +3324,7 @@ const ResourceDetail = ({ resource }) => {
     return () => {
       isActive = false;
     };
-  }, [isOrder]);
+  }, [isOrder, isReturnReason, isReturn, isExchange]);
 
   useEffect(() => {
     if (!isOrder || !record?.id) {
@@ -2959,14 +3339,245 @@ const ResourceDetail = ({ resource }) => {
   }, [isOrder, record?.id]);
 
   useEffect(() => {
-    if (!isOrder || !record?.id) {
+    if (!isExchange) return;
+    const orderId = record?.order_id || record?.order?.id;
+    if (!orderId) {
+      setOrderExchanges([]);
+      setOrderExchangesError('');
+      setOrderExchangesLoading(false);
+      return;
+    }
+    refreshExchanges(orderId);
+  }, [isExchange, record?.order_id, record?.order?.id]);
+
+  useEffect(() => {
+    if (!isOrder && !isExchange) {
       setOrderPreview(null);
       setOrderPreviewError('');
       setOrderPreviewLoading(false);
       return;
     }
-    refreshOrderPreview();
+    const orderId = isOrder ? record?.id : record?.order_id || record?.order?.id;
+    if (!orderId) {
+      setOrderPreview(null);
+      setOrderPreviewError('');
+      setOrderPreviewLoading(false);
+      return;
+    }
+    refreshOrderPreview(orderId);
+  }, [isOrder, isExchange, record?.id, record?.order_id, record?.order?.id]);
+
+  useEffect(() => {
+    if (!isOrder || !record?.id) {
+      setOrderChanges([]);
+      setOrderChangesError('');
+      setOrderChangesLoading(false);
+      return;
+    }
+    refreshOrderChanges();
   }, [isOrder, record?.id]);
+
+  useEffect(() => {
+    if (!isReturn && !isExchange) {
+      setLinkedOrder(null);
+      setLinkedOrderError('');
+      setLinkedOrderLoading(false);
+      return;
+    }
+    const orderId = record?.order_id || record?.order?.id;
+    if (!orderId) {
+      setLinkedOrder(null);
+      setLinkedOrderError('');
+      setLinkedOrderLoading(false);
+      return;
+    }
+    let isActive = true;
+    const loadLinkedOrder = async () => {
+      setLinkedOrderLoading(true);
+      setLinkedOrderError('');
+      try {
+        const payload = await getDetail('/admin/orders', orderId, orderDetailParams);
+        const order = getObjectFromPayload(payload, 'order');
+        if (isActive) setLinkedOrder(order);
+      } catch (err) {
+        if (!isActive) return;
+        setLinkedOrder(null);
+        setLinkedOrderError(err?.message || 'Unable to load related order.');
+      } finally {
+        if (isActive) setLinkedOrderLoading(false);
+      }
+    };
+
+    loadLinkedOrder();
+
+    return () => {
+      isActive = false;
+    };
+  }, [
+    isReturn,
+    isExchange,
+    record?.order_id,
+    record?.order?.id,
+    orderDetailParams
+  ]);
+
+  useEffect(() => {
+    if (!isOrder) {
+      setOrderEditItemDrafts({});
+      return;
+    }
+    const items = Array.isArray(record?.items) ? record.items : [];
+    if (!items.length) {
+      setOrderEditItemDrafts({});
+      return;
+    }
+    setOrderEditItemDrafts((prev) => {
+      const next = { ...prev };
+      items.forEach((item) => {
+        const itemId = getOrderItemId(item);
+        if (!itemId) return;
+        const updateAction = orderEditItemUpdateMap[itemId];
+        const quantity = updateAction?.details?.quantity ?? item?.quantity ?? 0;
+        const unitPrice =
+          updateAction?.details?.unit_price ??
+          item?.unit_price ??
+          item?.detail?.unit_price ??
+          null;
+        const compareAt =
+          updateAction?.details?.compare_at_unit_price ??
+          item?.compare_at_unit_price ??
+          item?.detail?.compare_at_unit_price ??
+          null;
+        if (!next[itemId]) {
+          next[itemId] = {
+            quantity: quantity ?? 0,
+            unit_price: unitPrice != null ? formatPriceInput(unitPrice) : '',
+            compare_at_unit_price: compareAt != null ? formatPriceInput(compareAt) : '',
+            internal_note: ''
+          };
+        }
+      });
+      Object.keys(next).forEach((itemId) => {
+        if (!items.some((item) => getOrderItemId(item) === itemId)) {
+          delete next[itemId];
+        }
+      });
+      return next;
+    });
+  }, [isOrder, record?.items, orderEditItemUpdateMap]);
+
+  useEffect(() => {
+    if (!isOrder) {
+      setOrderEditAddActionDrafts({});
+      return;
+    }
+    if (!orderEditAddActions.length) {
+      setOrderEditAddActionDrafts({});
+      return;
+    }
+    setOrderEditAddActionDrafts((prev) => {
+      const next = { ...prev };
+      orderEditAddActions.forEach((action) => {
+        if (!action?.id) return;
+        if (!next[action.id]) {
+          next[action.id] = {
+            quantity: action?.details?.quantity ?? 1,
+            unit_price:
+              action?.details?.unit_price != null
+                ? formatPriceInput(action.details.unit_price)
+                : '',
+            compare_at_unit_price:
+              action?.details?.compare_at_unit_price != null
+                ? formatPriceInput(action.details.compare_at_unit_price)
+                : '',
+            internal_note: action?.internal_note || ''
+          };
+        }
+      });
+      Object.keys(next).forEach((actionId) => {
+        if (!orderEditAddActions.some((action) => action?.id === actionId)) {
+          delete next[actionId];
+        }
+      });
+      return next;
+    });
+  }, [isOrder, orderEditAddActions]);
+
+  useEffect(() => {
+    if (!isOrder) {
+      setOrderEditShippingActionDrafts({});
+      return;
+    }
+    if (!orderEditShippingActions.length) {
+      setOrderEditShippingActionDrafts({});
+      return;
+    }
+    setOrderEditShippingActionDrafts((prev) => {
+      const next = { ...prev };
+      const previewMethods = Array.isArray(orderPreview?.shipping_methods)
+        ? orderPreview.shipping_methods
+        : [];
+      orderEditShippingActions.forEach((action) => {
+        if (!action?.id) return;
+        const referenceId =
+          action?.reference_id || action?.details?.reference_id || action?.reference;
+        const method = previewMethods.find((entry) => entry?.id === referenceId);
+        if (!next[action.id]) {
+          const amount = method?.amount ?? action?.details?.amount ?? null;
+          next[action.id] = {
+            custom_amount: amount != null ? formatPriceInput(amount) : '',
+            internal_note: action?.internal_note || ''
+          };
+        }
+      });
+      Object.keys(next).forEach((actionId) => {
+        if (!orderEditShippingActions.some((action) => action?.id === actionId)) {
+          delete next[actionId];
+        }
+      });
+      return next;
+    });
+  }, [isOrder, orderEditShippingActions, orderPreview?.shipping_methods]);
+
+  useEffect(() => {
+    if (!isOrder || !orderEditActive) {
+      setOrderEditVariantSearch({ query: '', results: [], loading: false, error: '' });
+      setOrderEditSelectedVariant(null);
+      return;
+    }
+    const query = orderEditVariantSearch.query.trim();
+    if (!query) {
+      setOrderEditVariantSearch((prev) => ({ ...prev, results: [], loading: false, error: '' }));
+      return;
+    }
+    let isActive = true;
+    const loadVariants = async () => {
+      setOrderEditVariantSearch((prev) => ({ ...prev, loading: true, error: '' }));
+      try {
+        const payload = await getList('/admin/product-variants', { q: query, limit: 20 });
+        if (!isActive) return;
+        setOrderEditVariantSearch((prev) => ({
+          ...prev,
+          results: getArrayFromPayload(payload, 'variants'),
+          loading: false
+        }));
+      } catch (err) {
+        if (!isActive) return;
+        setOrderEditVariantSearch((prev) => ({
+          ...prev,
+          results: [],
+          loading: false,
+          error: err?.message || 'Unable to search variants.'
+        }));
+      }
+    };
+
+    loadVariants();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isOrder, orderEditActive, orderEditVariantSearch.query]);
 
   useEffect(() => {
     if (!isOrder) return;
@@ -2998,8 +3609,22 @@ const ResourceDetail = ({ resource }) => {
   }, [isOrder, orderReturns, orderItems]);
 
   useEffect(() => {
-    if (!isOrder) return;
-    if (!orderExchanges.length) {
+    if (!isReturn || !record?.id) return;
+    setReturnRequestDrafts((prev) => {
+      const existing = prev[record.id];
+      if (existing && Object.keys(existing).length) return prev;
+      return { ...prev, [record.id]: buildReturnRequestMap(returnItemSource) };
+    });
+    setReturnReceiveDrafts((prev) => {
+      const existing = prev[record.id];
+      if (existing && Object.keys(existing).length) return prev;
+      return { ...prev, [record.id]: buildReturnReceiveMap(returnItemSource) };
+    });
+  }, [isReturn, record?.id, returnItemSource]);
+
+  useEffect(() => {
+    if (!isOrder && !isExchange) return;
+    if (!exchangeRecords.length) {
       setExchangeInboundDrafts({});
       setExchangeOutboundDrafts({});
       setExchangeShippingDrafts({});
@@ -3007,12 +3632,12 @@ const ResourceDetail = ({ resource }) => {
     }
     setExchangeInboundDrafts((prev) => {
       const next = { ...prev };
-      orderExchanges.forEach((exchange) => {
+      exchangeRecords.forEach((exchange) => {
         if (!exchange?.id) return;
         if (!next[exchange.id]) {
           next[exchange.id] = {
             location_id: '',
-            items: buildReturnRequestMap(orderItems)
+            items: buildReturnRequestMap(exchangeItemSource)
           };
         }
       });
@@ -3020,7 +3645,7 @@ const ResourceDetail = ({ resource }) => {
     });
     setExchangeOutboundDrafts((prev) => {
       const next = { ...prev };
-      orderExchanges.forEach((exchange) => {
+      exchangeRecords.forEach((exchange) => {
         if (!exchange?.id) return;
         if (!next[exchange.id]) {
           next[exchange.id] = {
@@ -3031,19 +3656,19 @@ const ResourceDetail = ({ resource }) => {
       });
       return next;
     });
-  }, [isOrder, orderExchanges, orderItems]);
+  }, [isOrder, isExchange, exchangeRecords, exchangeItemSource]);
 
   useEffect(() => {
-    if (!isOrder) return;
-    if (!orderExchanges.length) {
+    if (!isOrder && !isExchange) return;
+    if (!exchangeRecords.length) {
       setExchangeShippingDrafts({});
       return;
     }
     setExchangeShippingDrafts((prev) => {
       const next = { ...prev };
-      orderExchanges.forEach((exchange) => {
+      exchangeRecords.forEach((exchange) => {
         if (!exchange?.id) return;
-        const exchangeReturnId = exchange.return_id || exchange.return?.id || null;
+        const exchangeReturnId = resolveExchangeReturnId(exchange.id, exchangeRecords);
         const hasPreview = Boolean(orderPreview);
         const outboundShipping = getExchangeShippingMethod(orderPreview, exchange.id, 'outbound');
         const inboundShipping = getExchangeShippingMethod(
@@ -3085,7 +3710,7 @@ const ResourceDetail = ({ resource }) => {
       });
       return next;
     });
-  }, [isOrder, orderExchanges, orderPreview]);
+  }, [isOrder, isExchange, exchangeRecords, orderPreview]);
 
   useEffect(() => {
     if (!isProduct || !record?.id) {
@@ -3156,6 +3781,12 @@ const ResourceDetail = ({ resource }) => {
     setRecord(updated);
   };
 
+  const applyOrderPreviewPayload = (payload) => {
+    const preview = payload?.order_preview || payload?.order || payload?.preview;
+    if (!preview) return;
+    setOrderPreview(preview);
+  };
+
   const applyInventoryItemPayload = (payload) => {
     const updated =
       payload?.inventory_item ||
@@ -3181,12 +3812,15 @@ const ResourceDetail = ({ resource }) => {
     }
   };
 
-  const refreshExchanges = async () => {
-    if (!isOrder || !record?.id) return;
+  const refreshExchanges = async (orderIdOverride = null) => {
+    if (!isOrder && !isExchange && !orderIdOverride) return;
+    const orderId =
+      orderIdOverride || (isOrder ? record?.id : record?.order_id || record?.order?.id);
+    if (!orderId) return;
     setOrderExchangesLoading(true);
     setOrderExchangesError('');
     try {
-      const payload = await getList('/admin/exchanges', { order_id: record.id, limit: 50 });
+      const payload = await getList('/admin/exchanges', { order_id: orderId, limit: 50 });
       setOrderExchanges(getArrayFromPayload(payload, 'exchanges'));
     } catch (err) {
       setOrderExchanges([]);
@@ -3194,6 +3828,19 @@ const ResourceDetail = ({ resource }) => {
     } finally {
       setOrderExchangesLoading(false);
     }
+  };
+
+  const refreshExchangeContext = async () => {
+    if (isExchange) {
+      await refreshExchangeDetail();
+      const orderId = record?.order_id || record?.order?.id;
+      if (orderId) {
+        await refreshOrderPreview(orderId);
+      }
+      return;
+    }
+    await refreshExchanges();
+    await refreshOrderPreview();
   };
 
   const refreshOrder = async () => {
@@ -3207,12 +3854,37 @@ const ResourceDetail = ({ resource }) => {
     }
   };
 
-  const refreshOrderPreview = async () => {
-    if (!isOrder || !record?.id) return;
+  const refreshReturnDetail = async () => {
+    if (!isReturn || !record?.id) return;
+    try {
+      const payload = await getDetail(resource.endpoint, record.id);
+      const updated = getObjectFromPayload(payload, resource?.detailKey);
+      if (updated) setRecord(updated);
+    } catch (err) {
+      setError(err?.message || 'Unable to refresh return details.');
+    }
+  };
+
+  const refreshExchangeDetail = async () => {
+    if (!isExchange || !record?.id) return;
+    try {
+      const payload = await getDetail(resource.endpoint, record.id);
+      const updated = getObjectFromPayload(payload, resource?.detailKey);
+      if (updated) setRecord(updated);
+    } catch (err) {
+      setError(err?.message || 'Unable to refresh exchange details.');
+    }
+  };
+
+  const refreshOrderPreview = async (orderIdOverride = null) => {
+    if (!isOrder && !isExchange && !orderIdOverride) return;
+    const orderId =
+      orderIdOverride || (isOrder ? record?.id : record?.order_id || record?.order?.id);
+    if (!orderId) return;
     setOrderPreviewLoading(true);
     setOrderPreviewError('');
     try {
-      const payload = await request(`/admin/orders/${record.id}/preview`);
+      const payload = await request(`/admin/orders/${orderId}/preview`);
       const updated = getObjectFromPayload(payload, 'order');
       setOrderPreview(updated || null);
     } catch (err) {
@@ -3220,6 +3892,21 @@ const ResourceDetail = ({ resource }) => {
       setOrderPreviewError(err?.message || 'Unable to load order preview.');
     } finally {
       setOrderPreviewLoading(false);
+    }
+  };
+
+  const refreshOrderChanges = async () => {
+    if (!isOrder || !record?.id) return;
+    setOrderChangesLoading(true);
+    setOrderChangesError('');
+    try {
+      const payload = await getList(`/admin/orders/${record.id}/changes`, { limit: 50 });
+      setOrderChanges(getArrayFromPayload(payload, 'order_changes'));
+    } catch (err) {
+      setOrderChanges([]);
+      setOrderChangesError(err?.message || 'Unable to load order changes.');
+    } finally {
+      setOrderChangesLoading(false);
     }
   };
 
@@ -3683,6 +4370,7 @@ const ResourceDetail = ({ resource }) => {
     const countryCode = taxRegionDraft.country_code.trim().toLowerCase();
     const provinceCode = taxRegionDraft.province_code.trim().toLowerCase();
     const providerId = taxRegionDraft.provider_id.trim();
+    const parentId = taxRegionDraft.parent_id.trim();
     const { data: metadata, error: metadataError } = parseJsonInput(taxRegionDraft.metadata);
 
     if (!countryCode) {
@@ -3705,6 +4393,16 @@ const ResourceDetail = ({ resource }) => {
       return;
     }
 
+    if (parentId && parentId === record.id) {
+      setTaxRegionState({
+        saving: false,
+        deleting: false,
+        error: 'Parent tax region cannot be the same as this region.',
+        success: ''
+      });
+      return;
+    }
+
     setTaxRegionState({ saving: true, deleting: false, error: '', success: '' });
     try {
       const payload = await request(`${resource.endpoint}/${record.id}`, {
@@ -3713,6 +4411,7 @@ const ResourceDetail = ({ resource }) => {
           country_code: countryCode,
           province_code: provinceCode || undefined,
           provider_id: providerId || undefined,
+          parent_id: parentId || null,
           ...(metadata && typeof metadata === 'object' ? { metadata } : {})
         }
       });
@@ -3881,6 +4580,164 @@ const ResourceDetail = ({ resource }) => {
         saving: false,
         deleting: false,
         error: err?.message || 'Unable to delete tax rate.',
+        success: ''
+      });
+    }
+  };
+
+  const handleReturnReasonDraftChange = (field) => (event) => {
+    const value = event.target.value;
+    setReturnReasonDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveReturnReason = async (event) => {
+    event.preventDefault();
+    if (!record?.id) return;
+    const value = returnReasonDraft.value.trim();
+    const label = returnReasonDraft.label.trim();
+    const description = returnReasonDraft.description.trim();
+    const parentId = returnReasonDraft.parent_return_reason_id.trim();
+    const { data: metadata, error: metadataError } = parseJsonInput(returnReasonDraft.metadata);
+
+    if (!value || !label) {
+      setReturnReasonState({
+        saving: false,
+        deleting: false,
+        error: 'Value and label are required.',
+        success: ''
+      });
+      return;
+    }
+
+    if (parentId && parentId === record.id) {
+      setReturnReasonState({
+        saving: false,
+        deleting: false,
+        error: 'Parent reason cannot be the same as this reason.',
+        success: ''
+      });
+      return;
+    }
+
+    if (metadataError) {
+      setReturnReasonState({
+        saving: false,
+        deleting: false,
+        error: `Metadata JSON error: ${metadataError}`,
+        success: ''
+      });
+      return;
+    }
+
+    setReturnReasonState({ saving: true, deleting: false, error: '', success: '' });
+    try {
+      const payload = await request(`${resource.endpoint}/${record.id}`, {
+        method: 'POST',
+        body: {
+          value,
+          label,
+          description: description || null,
+          parent_return_reason_id: parentId || null,
+          ...(metadata && typeof metadata === 'object' ? { metadata } : {})
+        }
+      });
+      const updated = getObjectFromPayload(payload, resource.detailKey);
+      if (updated) setRecord(updated);
+      setReturnReasonState({
+        saving: false,
+        deleting: false,
+        error: '',
+        success: 'Return reason updated.'
+      });
+    } catch (err) {
+      setReturnReasonState({
+        saving: false,
+        deleting: false,
+        error: err?.message || 'Unable to update return reason.',
+        success: ''
+      });
+    }
+  };
+
+  const handleDeleteReturnReason = async () => {
+    if (!record?.id) return;
+    if (!window.confirm('Delete this return reason?')) return;
+    setReturnReasonState({ saving: false, deleting: true, error: '', success: '' });
+    try {
+      await request(`${resource.endpoint}/${record.id}`, { method: 'DELETE' });
+      navigate(resource.path);
+    } catch (err) {
+      setReturnReasonState({
+        saving: false,
+        deleting: false,
+        error: err?.message || 'Unable to delete return reason.',
+        success: ''
+      });
+    }
+  };
+
+  const handleRefundReasonDraftChange = (field) => (event) => {
+    const value = event.target.value;
+    setRefundReasonDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveRefundReason = async (event) => {
+    event.preventDefault();
+    if (!record?.id) return;
+    const label = refundReasonDraft.label.trim();
+    const code = refundReasonDraft.code.trim();
+    const description = refundReasonDraft.description.trim();
+
+    if (!label || !code) {
+      setRefundReasonState({
+        saving: false,
+        deleting: false,
+        error: 'Label and code are required.',
+        success: ''
+      });
+      return;
+    }
+
+    setRefundReasonState({ saving: true, deleting: false, error: '', success: '' });
+    try {
+      const payload = await request(`${resource.endpoint}/${record.id}`, {
+        method: 'POST',
+        body: {
+          label,
+          code,
+          description: description || null
+        }
+      });
+      const updated = getObjectFromPayload(payload, resource.detailKey);
+      if (updated) setRecord(updated);
+      setRefundReasonState({
+        saving: false,
+        deleting: false,
+        error: '',
+        success: 'Refund reason updated.'
+      });
+    } catch (err) {
+      setRefundReasonState({
+        saving: false,
+        deleting: false,
+        error: err?.message || 'Unable to update refund reason.',
+        success: ''
+      });
+    }
+  };
+
+  const handleDeleteRefundReason = async () => {
+    if (!record?.id) return;
+    if (!window.confirm('Delete this refund reason?')) return;
+    setRefundReasonState({ saving: false, deleting: true, error: '', success: '' });
+    try {
+      await request(`${resource.endpoint}/${record.id}`, { method: 'DELETE' });
+      navigate(resource.path);
+    } catch (err) {
+      setRefundReasonState({
+        saving: false,
+        deleting: false,
+        error: err?.message || 'Unable to delete refund reason.',
         success: ''
       });
     }
@@ -5753,6 +6610,156 @@ const ResourceDetail = ({ resource }) => {
     }
   };
 
+  const handleProductTypeDraftChange = (field) => (event) => {
+    const value = event.target.value;
+    setProductTypeDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveProductType = async (event) => {
+    event.preventDefault();
+    if (!record?.id) return;
+    const value = productTypeDraft.value.trim();
+    const { data: metadata, error: metadataError } = parseJsonInput(productTypeDraft.metadata);
+
+    if (!value) {
+      setProductTypeState({
+        saving: false,
+        deleting: false,
+        error: 'Value is required.',
+        success: ''
+      });
+      return;
+    }
+
+    if (metadataError) {
+      setProductTypeState({
+        saving: false,
+        deleting: false,
+        error: `Metadata JSON error: ${metadataError}`,
+        success: ''
+      });
+      return;
+    }
+
+    setProductTypeState({ saving: true, deleting: false, error: '', success: '' });
+    try {
+      const payload = await request(`${resource.endpoint}/${record.id}`, {
+        method: 'POST',
+        body: {
+          value,
+          ...(metadata && typeof metadata === 'object' ? { metadata } : {})
+        }
+      });
+      const updated = getObjectFromPayload(payload, resource.detailKey);
+      if (updated) setRecord(updated);
+      setProductTypeState({
+        saving: false,
+        deleting: false,
+        error: '',
+        success: 'Product type updated.'
+      });
+    } catch (err) {
+      setProductTypeState({
+        saving: false,
+        deleting: false,
+        error: err?.message || 'Unable to update product type.',
+        success: ''
+      });
+    }
+  };
+
+  const handleDeleteProductType = async () => {
+    if (!record?.id) return;
+    if (!window.confirm('Delete this product type?')) return;
+    setProductTypeState({ saving: false, deleting: true, error: '', success: '' });
+    try {
+      await request(`${resource.endpoint}/${record.id}`, { method: 'DELETE' });
+      navigate(resource.path);
+    } catch (err) {
+      setProductTypeState({
+        saving: false,
+        deleting: false,
+        error: err?.message || 'Unable to delete product type.',
+        success: ''
+      });
+    }
+  };
+
+  const handleProductTagDraftChange = (field) => (event) => {
+    const value = event.target.value;
+    setProductTagDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveProductTag = async (event) => {
+    event.preventDefault();
+    if (!record?.id) return;
+    const value = productTagDraft.value.trim();
+    const { data: metadata, error: metadataError } = parseJsonInput(productTagDraft.metadata);
+
+    if (!value) {
+      setProductTagState({
+        saving: false,
+        deleting: false,
+        error: 'Value is required.',
+        success: ''
+      });
+      return;
+    }
+
+    if (metadataError) {
+      setProductTagState({
+        saving: false,
+        deleting: false,
+        error: `Metadata JSON error: ${metadataError}`,
+        success: ''
+      });
+      return;
+    }
+
+    setProductTagState({ saving: true, deleting: false, error: '', success: '' });
+    try {
+      const payload = await request(`${resource.endpoint}/${record.id}`, {
+        method: 'POST',
+        body: {
+          value,
+          ...(metadata && typeof metadata === 'object' ? { metadata } : {})
+        }
+      });
+      const updated = getObjectFromPayload(payload, resource.detailKey);
+      if (updated) setRecord(updated);
+      setProductTagState({
+        saving: false,
+        deleting: false,
+        error: '',
+        success: 'Product tag updated.'
+      });
+    } catch (err) {
+      setProductTagState({
+        saving: false,
+        deleting: false,
+        error: err?.message || 'Unable to update product tag.',
+        success: ''
+      });
+    }
+  };
+
+  const handleDeleteProductTag = async () => {
+    if (!record?.id) return;
+    if (!window.confirm('Delete this product tag?')) return;
+    setProductTagState({ saving: false, deleting: true, error: '', success: '' });
+    try {
+      await request(`${resource.endpoint}/${record.id}`, { method: 'DELETE' });
+      navigate(resource.path);
+    } catch (err) {
+      setProductTagState({
+        saving: false,
+        deleting: false,
+        error: err?.message || 'Unable to delete product tag.',
+        success: ''
+      });
+    }
+  };
+
   const handleGroupCustomerSearchChange = (event) => {
     const value = event.target.value;
     setGroupCustomerSearch((prev) => ({ ...prev, query: value }));
@@ -6961,6 +7968,667 @@ const ResourceDetail = ({ resource }) => {
     }
   };
 
+  const handleOrderEditDraftChange = (field) => (event) => {
+    const value = event.target.value;
+    setOrderEditDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleStartOrderEdit = async (event) => {
+    event.preventDefault();
+    if (!record?.id) return;
+    const description = orderEditDraft.description.trim();
+    const internal_note = orderEditDraft.internal_note.trim();
+    setOrderEditState({ saving: true, action: 'start', error: '', success: '' });
+    try {
+      await request('/admin/order-edits', {
+        method: 'POST',
+        body: {
+          order_id: record.id,
+          ...(description ? { description } : {}),
+          ...(internal_note ? { internal_note } : {})
+        }
+      });
+      setOrderEditDraft({ description: '', internal_note: '' });
+      setOrderEditState({
+        saving: false,
+        action: '',
+        error: '',
+        success: 'Order edit started.'
+      });
+      refreshOrderChanges();
+      refreshOrderPreview();
+    } catch (err) {
+      setOrderEditState({
+        saving: false,
+        action: '',
+        error: err?.message || 'Unable to start order edit.',
+        success: ''
+      });
+    }
+  };
+
+  const handleCancelOrderEdit = async () => {
+    if (!orderEditChange?.id) {
+      setOrderEditState({
+        saving: false,
+        action: '',
+        error: 'Start an order edit before canceling.',
+        success: ''
+      });
+      return;
+    }
+    if (!window.confirm('Cancel this order edit?')) return;
+    setOrderEditState({ saving: true, action: 'cancel', error: '', success: '' });
+    try {
+      await request(`/admin/order-edits/${orderEditChange.id}`, { method: 'DELETE' });
+      setOrderEditState({
+        saving: false,
+        action: '',
+        error: '',
+        success: 'Order edit canceled.'
+      });
+      refreshOrderChanges();
+      refreshOrderPreview();
+    } catch (err) {
+      setOrderEditState({
+        saving: false,
+        action: '',
+        error: err?.message || 'Unable to cancel order edit.',
+        success: ''
+      });
+    }
+  };
+
+  const handleRequestOrderEdit = async () => {
+    if (!orderEditChange?.id) {
+      setOrderEditState({
+        saving: false,
+        action: '',
+        error: 'Start an order edit before requesting.',
+        success: ''
+      });
+      return;
+    }
+    setOrderEditState({ saving: true, action: 'request', error: '', success: '' });
+    try {
+      const payload = await request(`/admin/order-edits/${orderEditChange.id}/request`, {
+        method: 'POST'
+      });
+      applyOrderPreviewPayload(payload);
+      setOrderEditState({
+        saving: false,
+        action: '',
+        error: '',
+        success: 'Order edit requested.'
+      });
+      refreshOrderChanges();
+    } catch (err) {
+      setOrderEditState({
+        saving: false,
+        action: '',
+        error: err?.message || 'Unable to request order edit.',
+        success: ''
+      });
+    }
+  };
+
+  const handleConfirmOrderEdit = async () => {
+    if (!orderEditChange?.id) {
+      setOrderEditState({
+        saving: false,
+        action: '',
+        error: 'Start an order edit before confirming.',
+        success: ''
+      });
+      return;
+    }
+    if (!window.confirm('Confirm and apply this order edit?')) return;
+    setOrderEditState({ saving: true, action: 'confirm', error: '', success: '' });
+    try {
+      const payload = await request(`/admin/order-edits/${orderEditChange.id}/confirm`, {
+        method: 'POST'
+      });
+      applyOrderPreviewPayload(payload);
+      setOrderEditState({
+        saving: false,
+        action: '',
+        error: '',
+        success: 'Order edit confirmed.'
+      });
+      refreshOrderChanges();
+      refreshOrder();
+    } catch (err) {
+      setOrderEditState({
+        saving: false,
+        action: '',
+        error: err?.message || 'Unable to confirm order edit.',
+        success: ''
+      });
+    }
+  };
+
+  const handleOrderEditItemDraftChange = (itemId, field) => (event) => {
+    const value = event.target.value;
+    setOrderEditItemDrafts((prev) => ({
+      ...prev,
+      [itemId]: {
+        ...(prev[itemId] || {}),
+        [field]: value
+      }
+    }));
+  };
+
+  const submitOrderEditItem = async (itemId, overrideQuantity = null) => {
+    if (!record?.id) return;
+    if (!orderEditActive) {
+      setOrderEditItemState({
+        savingId: itemId,
+        action: 'update',
+        error: 'Start an order edit before updating items.',
+        success: ''
+      });
+      return;
+    }
+    if (!orderEditChange?.id) {
+      setOrderEditItemState({
+        savingId: itemId,
+        action: 'update',
+        error: 'Order edit not found. Refresh and try again.',
+        success: ''
+      });
+      return;
+    }
+    const draft = orderEditItemDrafts[itemId] || {};
+    const quantityValue =
+      overrideQuantity !== null ? overrideQuantity : parseQuantityInput(draft.quantity);
+    if (quantityValue === null) {
+      setOrderEditItemState({
+        savingId: itemId,
+        action: 'update',
+        error: 'Quantity must be a number.',
+        success: ''
+      });
+      return;
+    }
+    const unitPriceInput = String(draft.unit_price ?? '').trim();
+    const unitPrice = unitPriceInput ? parsePriceInput(unitPriceInput) : null;
+    if (unitPriceInput && unitPrice === null) {
+      setOrderEditItemState({
+        savingId: itemId,
+        action: 'update',
+        error: 'Unit price must be a number.',
+        success: ''
+      });
+      return;
+    }
+    const compareInput = String(draft.compare_at_unit_price ?? '').trim();
+    const compareAt = compareInput ? parsePriceInput(compareInput) : null;
+    if (compareInput && compareAt === null) {
+      setOrderEditItemState({
+        savingId: itemId,
+        action: 'update',
+        error: 'Compare at price must be a number.',
+        success: ''
+      });
+      return;
+    }
+    setOrderEditItemState({
+      savingId: itemId,
+      action: overrideQuantity === 0 ? 'remove' : 'update',
+      error: '',
+      success: ''
+    });
+    try {
+      const payload = await request(
+        `/admin/order-edits/${orderEditChange.id}/items/item/${itemId}`,
+        {
+          method: 'POST',
+          body: {
+            quantity: quantityValue,
+            ...(unitPrice !== null ? { unit_price: unitPrice } : {}),
+            ...(compareAt !== null ? { compare_at_unit_price: compareAt } : {}),
+            ...(draft.internal_note?.trim() ? { internal_note: draft.internal_note.trim() } : {})
+          }
+        }
+      );
+      applyOrderPreviewPayload(payload);
+      setOrderEditItemState({
+        savingId: null,
+        action: '',
+        error: '',
+        success: overrideQuantity === 0 ? 'Item removed from edit.' : 'Item updated.'
+      });
+      refreshOrderChanges();
+    } catch (err) {
+      setOrderEditItemState({
+        savingId: null,
+        action: '',
+        error: err?.message || 'Unable to update order item.',
+        success: ''
+      });
+    }
+  };
+
+  const handleOrderEditAddDraftChange = (field) => (event) => {
+    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
+    setOrderEditAddDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleOrderEditVariantSearchChange = (event) => {
+    const value = event.target.value;
+    setOrderEditVariantSearch((prev) => ({ ...prev, query: value }));
+  };
+
+  const handleSelectOrderEditVariant = (variant) => {
+    if (!variant?.id) return;
+    setOrderEditSelectedVariant(variant);
+    setOrderEditAddDraft((prev) => ({ ...prev, variant_id: variant.id }));
+    setOrderEditVariantSearch((prev) => ({ ...prev, query: '', results: [], error: '' }));
+  };
+
+  const handleAddOrderEditItem = async (event) => {
+    event.preventDefault();
+    if (!record?.id) return;
+    if (!orderEditActive) {
+      setOrderEditAddState({
+        saving: false,
+        error: 'Start an order edit before adding items.',
+        success: ''
+      });
+      return;
+    }
+    if (!orderEditChange?.id) {
+      setOrderEditAddState({
+        saving: false,
+        error: 'Order edit not found. Refresh and try again.',
+        success: ''
+      });
+      return;
+    }
+    const variantId = orderEditAddDraft.variant_id.trim();
+    const quantityValue = parseQuantityInput(orderEditAddDraft.quantity);
+    if (!variantId) {
+      setOrderEditAddState({ saving: false, error: 'Variant ID is required.', success: '' });
+      return;
+    }
+    if (!quantityValue || quantityValue <= 0) {
+      setOrderEditAddState({ saving: false, error: 'Quantity must be at least 1.', success: '' });
+      return;
+    }
+    const unitPriceInput = String(orderEditAddDraft.unit_price ?? '').trim();
+    const unitPrice = unitPriceInput ? parsePriceInput(unitPriceInput) : null;
+    if (unitPriceInput && unitPrice === null) {
+      setOrderEditAddState({ saving: false, error: 'Unit price must be a number.', success: '' });
+      return;
+    }
+    const compareInput = String(orderEditAddDraft.compare_at_unit_price ?? '').trim();
+    const compareAt = compareInput ? parsePriceInput(compareInput) : null;
+    if (compareInput && compareAt === null) {
+      setOrderEditAddState({
+        saving: false,
+        error: 'Compare at price must be a number.',
+        success: ''
+      });
+      return;
+    }
+    setOrderEditAddState({ saving: true, error: '', success: '' });
+    try {
+      const payload = await request(`/admin/order-edits/${orderEditChange.id}/items`, {
+        method: 'POST',
+        body: {
+          items: [
+            {
+              variant_id: variantId,
+              quantity: quantityValue,
+              ...(unitPrice !== null ? { unit_price: unitPrice } : {}),
+              ...(compareAt !== null ? { compare_at_unit_price: compareAt } : {}),
+              allow_backorder: Boolean(orderEditAddDraft.allow_backorder),
+              ...(orderEditAddDraft.internal_note?.trim()
+                ? { internal_note: orderEditAddDraft.internal_note.trim() }
+                : {})
+            }
+          ]
+        }
+      });
+      applyOrderPreviewPayload(payload);
+      setOrderEditAddDraft({
+        variant_id: '',
+        quantity: 1,
+        unit_price: '',
+        compare_at_unit_price: '',
+        allow_backorder: false,
+        internal_note: ''
+      });
+      setOrderEditSelectedVariant(null);
+      setOrderEditAddState({
+        saving: false,
+        error: '',
+        success: 'Item added to edit.'
+      });
+      refreshOrderChanges();
+    } catch (err) {
+      setOrderEditAddState({
+        saving: false,
+        error: err?.message || 'Unable to add item to order edit.',
+        success: ''
+      });
+    }
+  };
+
+  const handleOrderEditAddActionDraftChange = (actionId, field) => (event) => {
+    const value = event.target.value;
+    setOrderEditAddActionDrafts((prev) => ({
+      ...prev,
+      [actionId]: {
+        ...(prev[actionId] || {}),
+        [field]: value
+      }
+    }));
+  };
+
+  const handleUpdateOrderEditAddAction = async (actionId) => {
+    if (!record?.id) return;
+    if (!orderEditActive) {
+      setOrderEditItemState({
+        savingId: actionId,
+        action: 'add-update',
+        error: 'Start an order edit before updating added items.',
+        success: ''
+      });
+      return;
+    }
+    if (!orderEditChange?.id) {
+      setOrderEditItemState({
+        savingId: actionId,
+        action: 'add-update',
+        error: 'Order edit not found. Refresh and try again.',
+        success: ''
+      });
+      return;
+    }
+    const draft = orderEditAddActionDrafts[actionId] || {};
+    const quantityValue = parseQuantityInput(draft.quantity);
+    if (!quantityValue || quantityValue <= 0) {
+      setOrderEditItemState({
+        savingId: actionId,
+        action: 'add-update',
+        error: 'Quantity must be at least 1.',
+        success: ''
+      });
+      return;
+    }
+    const unitPriceInput = String(draft.unit_price ?? '').trim();
+    const unitPrice = unitPriceInput ? parsePriceInput(unitPriceInput) : null;
+    if (unitPriceInput && unitPrice === null) {
+      setOrderEditItemState({
+        savingId: actionId,
+        action: 'add-update',
+        error: 'Unit price must be a number.',
+        success: ''
+      });
+      return;
+    }
+    const compareInput = String(draft.compare_at_unit_price ?? '').trim();
+    const compareAt = compareInput ? parsePriceInput(compareInput) : null;
+    if (compareInput && compareAt === null) {
+      setOrderEditItemState({
+        savingId: actionId,
+        action: 'add-update',
+        error: 'Compare at price must be a number.',
+        success: ''
+      });
+      return;
+    }
+    setOrderEditItemState({ savingId: actionId, action: 'add-update', error: '', success: '' });
+    try {
+      const payload = await request(`/admin/order-edits/${orderEditChange.id}/items/${actionId}`, {
+        method: 'POST',
+        body: {
+          quantity: quantityValue,
+          ...(unitPrice !== null ? { unit_price: unitPrice } : {}),
+          ...(compareAt !== null ? { compare_at_unit_price: compareAt } : {}),
+          ...(draft.internal_note?.trim() ? { internal_note: draft.internal_note.trim() } : {})
+        }
+      });
+      applyOrderPreviewPayload(payload);
+      setOrderEditItemState({
+        savingId: null,
+        action: '',
+        error: '',
+        success: 'Added item updated.'
+      });
+      refreshOrderChanges();
+    } catch (err) {
+      setOrderEditItemState({
+        savingId: null,
+        action: '',
+        error: err?.message || 'Unable to update added item.',
+        success: ''
+      });
+    }
+  };
+
+  const handleRemoveOrderEditAddAction = async (actionId) => {
+    if (!record?.id) return;
+    if (!orderEditChange?.id) {
+      setOrderEditItemState({
+        savingId: actionId,
+        action: 'add-remove',
+        error: 'Order edit not found. Refresh and try again.',
+        success: ''
+      });
+      return;
+    }
+    if (!window.confirm('Remove this added item from the edit?')) return;
+    setOrderEditItemState({ savingId: actionId, action: 'add-remove', error: '', success: '' });
+    try {
+      const payload = await request(`/admin/order-edits/${orderEditChange.id}/items/${actionId}`, {
+        method: 'DELETE'
+      });
+      applyOrderPreviewPayload(payload);
+      setOrderEditItemState({
+        savingId: null,
+        action: '',
+        error: '',
+        success: 'Added item removed.'
+      });
+      refreshOrderChanges();
+    } catch (err) {
+      setOrderEditItemState({
+        savingId: null,
+        action: '',
+        error: err?.message || 'Unable to remove added item.',
+        success: ''
+      });
+    }
+  };
+
+  const handleOrderEditShippingDraftChange = (field) => (event) => {
+    const value = event.target.value;
+    setOrderEditShippingDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleOrderEditShippingActionDraftChange = (actionId, field) => (event) => {
+    const value = event.target.value;
+    setOrderEditShippingActionDrafts((prev) => ({
+      ...prev,
+      [actionId]: {
+        ...(prev[actionId] || {}),
+        [field]: value
+      }
+    }));
+  };
+
+  const handleAddOrderEditShipping = async (event) => {
+    event.preventDefault();
+    if (!record?.id) return;
+    if (!orderEditActive) {
+      setOrderEditShippingState({
+        savingId: 'new',
+        action: 'add',
+        error: 'Start an order edit before adding shipping.',
+        success: ''
+      });
+      return;
+    }
+    if (!orderEditChange?.id) {
+      setOrderEditShippingState({
+        savingId: 'new',
+        action: 'add',
+        error: 'Order edit not found. Refresh and try again.',
+        success: ''
+      });
+      return;
+    }
+    const shippingOptionId = orderEditShippingDraft.shipping_option_id.trim();
+    if (!shippingOptionId) {
+      setOrderEditShippingState({
+        savingId: 'new',
+        action: 'add',
+        error: 'Shipping option is required.',
+        success: ''
+      });
+      return;
+    }
+    const customAmountInput = String(orderEditShippingDraft.custom_amount ?? '').trim();
+    const customAmount = customAmountInput ? parsePriceInput(customAmountInput) : null;
+    if (customAmountInput && customAmount === null) {
+      setOrderEditShippingState({
+        savingId: 'new',
+        action: 'add',
+        error: 'Custom amount must be a number.',
+        success: ''
+      });
+      return;
+    }
+    setOrderEditShippingState({ savingId: 'new', action: 'add', error: '', success: '' });
+    try {
+      const payload = await request(`/admin/order-edits/${orderEditChange.id}/shipping-method`, {
+        method: 'POST',
+        body: {
+          shipping_option_id: shippingOptionId,
+          ...(customAmount !== null ? { custom_amount: customAmount } : {}),
+          ...(orderEditShippingDraft.description?.trim()
+            ? { description: orderEditShippingDraft.description.trim() }
+            : {}),
+          ...(orderEditShippingDraft.internal_note?.trim()
+            ? { internal_note: orderEditShippingDraft.internal_note.trim() }
+            : {})
+        }
+      });
+      applyOrderPreviewPayload(payload);
+      setOrderEditShippingDraft({
+        shipping_option_id: '',
+        custom_amount: '',
+        description: '',
+        internal_note: ''
+      });
+      setOrderEditShippingState({
+        savingId: null,
+        action: '',
+        error: '',
+        success: 'Shipping method added.'
+      });
+      refreshOrderChanges();
+    } catch (err) {
+      setOrderEditShippingState({
+        savingId: null,
+        action: '',
+        error: err?.message || 'Unable to add shipping method.',
+        success: ''
+      });
+    }
+  };
+
+  const handleUpdateOrderEditShipping = async (actionId) => {
+    if (!record?.id) return;
+    if (!orderEditChange?.id) {
+      setOrderEditShippingState({
+        savingId: actionId,
+        action: 'update',
+        error: 'Order edit not found. Refresh and try again.',
+        success: ''
+      });
+      return;
+    }
+    const draft = orderEditShippingActionDrafts[actionId] || {};
+    const customAmountInput = String(draft.custom_amount ?? '').trim();
+    const customAmount = customAmountInput ? parsePriceInput(customAmountInput) : null;
+    if (customAmountInput && customAmount === null) {
+      setOrderEditShippingState({
+        savingId: actionId,
+        action: 'update',
+        error: 'Custom amount must be a number.',
+        success: ''
+      });
+      return;
+    }
+    setOrderEditShippingState({ savingId: actionId, action: 'update', error: '', success: '' });
+    try {
+      const payload = await request(
+        `/admin/order-edits/${orderEditChange.id}/shipping-method/${actionId}`,
+        {
+          method: 'POST',
+          body: {
+            ...(customAmount !== null ? { custom_amount: customAmount } : {}),
+            ...(draft.internal_note?.trim() ? { internal_note: draft.internal_note.trim() } : {})
+          }
+        }
+      );
+      applyOrderPreviewPayload(payload);
+      setOrderEditShippingState({
+        savingId: null,
+        action: '',
+        error: '',
+        success: 'Shipping method updated.'
+      });
+      refreshOrderChanges();
+    } catch (err) {
+      setOrderEditShippingState({
+        savingId: null,
+        action: '',
+        error: err?.message || 'Unable to update shipping method.',
+        success: ''
+      });
+    }
+  };
+
+  const handleRemoveOrderEditShipping = async (actionId) => {
+    if (!record?.id) return;
+    if (!orderEditChange?.id) {
+      setOrderEditShippingState({
+        savingId: actionId,
+        action: 'remove',
+        error: 'Order edit not found. Refresh and try again.',
+        success: ''
+      });
+      return;
+    }
+    if (!window.confirm('Remove this shipping method from the edit?')) return;
+    setOrderEditShippingState({ savingId: actionId, action: 'remove', error: '', success: '' });
+    try {
+      const payload = await request(
+        `/admin/order-edits/${orderEditChange.id}/shipping-method/${actionId}`,
+        { method: 'DELETE' }
+      );
+      applyOrderPreviewPayload(payload);
+      setOrderEditShippingState({
+        savingId: null,
+        action: '',
+        error: '',
+        success: 'Shipping method removed.'
+      });
+      refreshOrderChanges();
+    } catch (err) {
+      setOrderEditShippingState({
+        savingId: null,
+        action: '',
+        error: err?.message || 'Unable to remove shipping method.',
+        success: ''
+      });
+    }
+  };
+
   const handleFulfillmentFieldChange = (field) => (event) => {
     const value = event.target.value;
     setFulfillmentDraft((prev) => ({ ...prev, [field]: value }));
@@ -7321,7 +8989,7 @@ const ResourceDetail = ({ resource }) => {
     setReturnRequestDrafts((prev) => ({
       ...prev,
       [returnId]: {
-        ...(prev[returnId] || buildReturnRequestMap(orderItems)),
+        ...(prev[returnId] || buildReturnRequestMap(returnItemSource)),
         [itemId]: {
           ...(prev[returnId]?.[itemId] || { quantity: 0, reason_id: '' }),
           [field]: field === 'quantity' ? (Number.isFinite(value) && value > 0 ? value : 0) : value
@@ -7335,7 +9003,7 @@ const ResourceDetail = ({ resource }) => {
     setReturnReceiveDrafts((prev) => ({
       ...prev,
       [returnId]: {
-        ...(prev[returnId] || buildReturnReceiveMap(orderItems)),
+        ...(prev[returnId] || buildReturnReceiveMap(returnItemSource)),
         [itemId]: Number.isFinite(value) && value > 0 ? value : 0
       }
     }));
@@ -7393,7 +9061,11 @@ const ResourceDetail = ({ resource }) => {
         method: 'POST',
         body: { items: itemsPayload }
       });
-      await refreshReturns();
+      if (isReturn) {
+        await refreshReturnDetail();
+      } else {
+        await refreshReturns();
+      }
       setReturnState({ savingId: null, error: '', success: 'Return items requested.' });
     } catch (err) {
       setReturnState({
@@ -7411,7 +9083,11 @@ const ResourceDetail = ({ resource }) => {
         method: 'POST',
         body: { no_notification: !returnDraft.notify_customer }
       });
-      await refreshReturns();
+      if (isReturn) {
+        await refreshReturnDetail();
+      } else {
+        await refreshReturns();
+      }
       setReturnState({ savingId: null, error: '', success: 'Return request confirmed.' });
     } catch (err) {
       setReturnState({
@@ -7432,7 +9108,11 @@ const ResourceDetail = ({ resource }) => {
           internal_note: returnDraft.internal_note || undefined
         }
       });
-      await refreshReturns();
+      if (isReturn) {
+        await refreshReturnDetail();
+      } else {
+        await refreshReturns();
+      }
       setReturnState({ savingId: null, error: '', success: 'Receiving started.' });
     } catch (err) {
       setReturnState({
@@ -7467,7 +9147,11 @@ const ResourceDetail = ({ resource }) => {
         method: 'POST',
         body: { items: itemsPayload }
       });
-      await refreshReturns();
+      if (isReturn) {
+        await refreshReturnDetail();
+      } else {
+        await refreshReturns();
+      }
       setReturnState({ savingId: null, error: '', success: 'Return items received.' });
     } catch (err) {
       setReturnState({
@@ -7485,7 +9169,11 @@ const ResourceDetail = ({ resource }) => {
         method: 'POST',
         body: { no_notification: !returnDraft.notify_customer }
       });
-      await refreshReturns();
+      if (isReturn) {
+        await refreshReturnDetail();
+      } else {
+        await refreshReturns();
+      }
       setReturnState({ savingId: null, error: '', success: 'Return received.' });
     } catch (err) {
       setReturnState({
@@ -7504,7 +9192,11 @@ const ResourceDetail = ({ resource }) => {
         method: 'POST',
         body: { no_notification: !returnDraft.notify_customer }
       });
-      await refreshReturns();
+      if (isReturn) {
+        await refreshReturnDetail();
+      } else {
+        await refreshReturns();
+      }
       setReturnState({ savingId: null, error: '', success: 'Return canceled.' });
     } catch (err) {
       setReturnState({
@@ -7533,8 +9225,12 @@ const ResourceDetail = ({ resource }) => {
           internal_note: exchangeDraft.internal_note || undefined
         }
       });
-      await refreshExchanges();
-      await refreshOrderPreview();
+      if (isExchange) {
+        await refreshExchangeDetail();
+      } else {
+        await refreshExchanges();
+        await refreshOrderPreview();
+      }
       setExchangeState({ savingId: null, error: '', success: 'Exchange created.' });
     } catch (err) {
       setExchangeState({
@@ -7550,9 +9246,9 @@ const ResourceDetail = ({ resource }) => {
     setExchangeInboundDrafts((prev) => ({
       ...prev,
       [exchangeId]: {
-        ...(prev[exchangeId] || { location_id: '', items: buildReturnRequestMap(orderItems) }),
+        ...(prev[exchangeId] || { location_id: '', items: buildReturnRequestMap(exchangeItemSource) }),
         items: {
-          ...(prev[exchangeId]?.items || buildReturnRequestMap(orderItems)),
+          ...(prev[exchangeId]?.items || buildReturnRequestMap(exchangeItemSource)),
           [itemId]: {
             ...(prev[exchangeId]?.items?.[itemId] || { quantity: 0, reason_id: '' }),
             [field]: field === 'quantity' ? (Number.isFinite(value) && value > 0 ? value : 0) : value
@@ -7567,7 +9263,7 @@ const ResourceDetail = ({ resource }) => {
     setExchangeInboundDrafts((prev) => ({
       ...prev,
       [exchangeId]: {
-        ...(prev[exchangeId] || { location_id: '', items: buildReturnRequestMap(orderItems) }),
+        ...(prev[exchangeId] || { location_id: '', items: buildReturnRequestMap(exchangeItemSource) }),
         location_id: value
       }
     }));
@@ -7601,8 +9297,7 @@ const ResourceDetail = ({ resource }) => {
           items: itemsPayload
         }
       });
-      await refreshExchanges();
-      await refreshOrderPreview();
+      await refreshExchangeContext();
       setExchangeState({ savingId: null, error: '', success: 'Inbound items added.' });
     } catch (err) {
       setExchangeState({
@@ -7725,8 +9420,7 @@ const ResourceDetail = ({ resource }) => {
     const trackingNumber = String(draft.inbound_tracking_number || '').trim();
     const trackingUrl = String(draft.inbound_tracking_url || '').trim();
     const labelUrl = String(draft.inbound_label_url || '').trim();
-    const exchangeReturnId =
-      orderExchanges.find((exchange) => exchange?.id === exchangeId)?.return_id || null;
+    const exchangeReturnId = resolveExchangeReturnId(exchangeId, exchangeRecords);
     const inboundShipping = getExchangeShippingMethod(
       orderPreview,
       exchangeId,
@@ -7808,8 +9502,7 @@ const ResourceDetail = ({ resource }) => {
         });
       }
 
-      await refreshOrderPreview();
-      await refreshExchanges();
+      await refreshExchangeContext();
       setExchangeState({ savingId: null, error: '', success: 'Inbound shipping updated.' });
     } catch (err) {
       setExchangeState({
@@ -7821,8 +9514,7 @@ const ResourceDetail = ({ resource }) => {
   };
 
   const handleClearExchangeInboundShipping = async (exchangeId) => {
-    const exchangeReturnId =
-      orderExchanges.find((exchange) => exchange?.id === exchangeId)?.return_id || null;
+    const exchangeReturnId = resolveExchangeReturnId(exchangeId, exchangeRecords);
     const inboundShipping = getExchangeShippingMethod(
       orderPreview,
       exchangeId,
@@ -7847,8 +9539,7 @@ const ResourceDetail = ({ resource }) => {
       await request(`/admin/exchanges/${exchangeId}/inbound/shipping-method/${actionId}`, {
         method: 'DELETE'
       });
-      await refreshOrderPreview();
-      await refreshExchanges();
+      await refreshExchangeContext();
       setExchangeState({ savingId: null, error: '', success: 'Inbound shipping removed.' });
     } catch (err) {
       setExchangeState({
@@ -7910,8 +9601,7 @@ const ResourceDetail = ({ resource }) => {
         });
       }
 
-      await refreshOrderPreview();
-      await refreshExchanges();
+      await refreshExchangeContext();
       setExchangeState({ savingId: null, error: '', success: 'Outbound shipping updated.' });
     } catch (err) {
       setExchangeState({
@@ -7942,8 +9632,7 @@ const ResourceDetail = ({ resource }) => {
       await request(`/admin/exchanges/${exchangeId}/outbound/shipping-method/${actionId}`, {
         method: 'DELETE'
       });
-      await refreshOrderPreview();
-      await refreshExchanges();
+      await refreshExchangeContext();
       setExchangeState({ savingId: null, error: '', success: 'Outbound shipping removed.' });
     } catch (err) {
       setExchangeState({
@@ -8014,8 +9703,7 @@ const ResourceDetail = ({ resource }) => {
         method: 'POST',
         body: { items: itemsPayload }
       });
-      await refreshExchanges();
-      await refreshOrderPreview();
+      await refreshExchangeContext();
       setExchangeOutboundDrafts((prev) => ({
         ...prev,
         [exchangeId]: {
@@ -8037,8 +9725,7 @@ const ResourceDetail = ({ resource }) => {
     setExchangeState({ savingId: exchangeId, error: '', success: '' });
     try {
       await request(`/admin/exchanges/${exchangeId}/request`, { method: 'POST' });
-      await refreshExchanges();
-      await refreshOrderPreview();
+      await refreshExchangeContext();
       setExchangeState({ savingId: null, error: '', success: 'Exchange request confirmed.' });
     } catch (err) {
       setExchangeState({
@@ -8072,8 +9759,7 @@ const ResourceDetail = ({ resource }) => {
         });
       }
 
-      await refreshExchanges();
-      await refreshOrderPreview();
+      await refreshExchangeContext();
       setExchangeState({
         savingId: null,
         error: '',
@@ -8122,6 +9808,35 @@ const ResourceDetail = ({ resource }) => {
     record?.region?.currency_code ||
     record?.region?.currency?.code ||
     'usd';
+
+  const returnOrderId = isReturn ? record?.order_id || record?.order?.id : null;
+  const returnRefundAmount = isReturn
+    ? record?.refund_amount ??
+      record?.refund_total ??
+      record?.refund?.amount ??
+      record?.refunded_amount ??
+      null
+    : null;
+  const returnShippingMethod = isReturn
+    ? record?.shipping_method || record?.shipping_methods?.[0] || record?.shipping_option
+    : null;
+  const returnShippingLabel =
+    returnShippingMethod?.name ||
+    returnShippingMethod?.shipping_option?.name ||
+    returnShippingMethod?.shipping_option_id ||
+    returnShippingMethod?.id ||
+    '';
+  const returnOrderDisplayId = linkedOrder?.display_id || record?.order?.display_id || null;
+  const returnOrderLabel = returnOrderId
+    ? returnOrderDisplayId
+      ? `#${returnOrderDisplayId}`
+      : returnOrderId
+    : '';
+  const returnRequestDraft =
+    isReturn && record?.id ? returnRequestDrafts[record.id] || {} : {};
+  const returnReceiveDraft =
+    isReturn && record?.id ? returnReceiveDrafts[record.id] || {} : {};
+  const returnIsBusy = isReturn && record?.id ? returnState.savingId === record.id : false;
 
   const customerDetails = useMemo(() => {
     if (!isOrderLike || !record) return [];
@@ -8197,6 +9912,27 @@ const ResourceDetail = ({ resource }) => {
     [orderCurrency]
   );
 
+  const returnItemColumns = useMemo(
+    () => [
+      { key: 'title', label: 'Item' },
+      { key: 'sku', label: 'SKU' },
+      { key: 'quantity', label: 'Requested' },
+      {
+        key: 'received',
+        label: 'Received',
+        format: (value) => (value === null || value === undefined ? '-' : value)
+      },
+      { key: 'reason', label: 'Reason' },
+      { key: 'note', label: 'Note' }
+    ],
+    []
+  );
+
+  const returnItemRows = useMemo(
+    () => buildReturnItemRows(returnRecordItems, record?.id),
+    [returnRecordItems, record?.id]
+  );
+
   const orderTotals = useMemo(() => {
     if (!isOrderLike || !record) return [];
     const totals = [];
@@ -8217,6 +9953,50 @@ const ResourceDetail = ({ resource }) => {
     }
     return totals;
   }, [isOrderLike, record]);
+
+  const orderEditPreviewTotals = useMemo(() => {
+    if (!orderPreview) return [];
+    const totals = [];
+    const pushTotal = (label, amount) => {
+      const numeric = toNumber(amount);
+      if (numeric === null) return;
+      totals.push({ label, amount: numeric });
+    };
+    pushTotal('Item subtotal', orderPreview.item_subtotal ?? orderPreview.subtotal);
+    pushTotal('Discounts', orderPreview.discount_total ?? orderPreview.discount_subtotal);
+    pushTotal('Shipping', orderPreview.shipping_total ?? orderPreview.shipping_subtotal);
+    pushTotal('Tax', orderPreview.tax_total ?? orderPreview.shipping_tax_total);
+    pushTotal('Total', orderPreview.total ?? orderPreview.original_total);
+    return totals;
+  }, [orderPreview]);
+
+  const orderEditPreviewItems = useMemo(() => {
+    if (!orderPreview) return [];
+    return Array.isArray(orderPreview.items) ? orderPreview.items : [];
+  }, [orderPreview]);
+
+  const orderEditAddedItems = useMemo(
+    () =>
+      orderEditAddActions.map((action) => {
+        const referenceId =
+          action?.details?.reference_id || action?.reference_id || action?.reference;
+        const item = orderEditPreviewItems.find((entry) => getOrderItemId(entry) === referenceId);
+        return { action, item, referenceId };
+      }),
+    [orderEditAddActions, orderEditPreviewItems]
+  );
+
+  const orderEditShippingMethods = useMemo(() => {
+    const methods = Array.isArray(orderPreview?.shipping_methods)
+      ? orderPreview.shipping_methods
+      : [];
+    return orderEditShippingActions.map((action) => {
+      const referenceId =
+        action?.reference_id || action?.details?.reference_id || action?.reference;
+      const method = methods.find((entry) => entry?.id === referenceId);
+      return { action, method, referenceId };
+    });
+  }, [orderEditShippingActions, orderPreview?.shipping_methods]);
 
   const shippingMethodRows = useMemo(() => {
     if (!isOrderLike || !record) return [];
@@ -8574,6 +10354,548 @@ const ResourceDetail = ({ resource }) => {
     ? 'Edit this variant details, options, and pricing.'
     : 'Create and update product variants, options, and pricing.';
 
+  const renderExchangeCard = (exchange) => {
+    if (!exchange?.id) return null;
+    const exchangeReturnId = resolveExchangeReturnId(exchange.id, exchangeRecords);
+    const inboundDraft = exchangeInboundDrafts[exchange.id] || {
+      location_id: '',
+      items: buildReturnRequestMap(exchangeItemSource)
+    };
+    const outboundDraft = exchangeOutboundDrafts[exchange.id] || {
+      items: [],
+      newItem: { variant_id: '', quantity: 1, unit_price: '', allow_backorder: false }
+    };
+    const shippingDraft = exchangeShippingDrafts[exchange.id] || {
+      outbound_option_id: '',
+      outbound_custom_amount: '',
+      inbound_option_id: '',
+      inbound_custom_amount: '',
+      inbound_tracking_number: '',
+      inbound_tracking_url: '',
+      inbound_label_url: ''
+    };
+    const outboundShipping = getExchangeShippingMethod(orderPreview, exchange.id, 'outbound');
+    const outboundShippingActionId = getExchangeShippingActionId(
+      outboundShipping,
+      exchange.id,
+      'outbound'
+    );
+    const inboundShipping = getExchangeShippingMethod(
+      orderPreview,
+      exchange.id,
+      'inbound',
+      exchangeReturnId
+    );
+    const inboundShippingActionId = getExchangeShippingActionId(
+      inboundShipping,
+      exchange.id,
+      'inbound',
+      exchangeReturnId
+    );
+    const inboundTrackingNumber = getShippingMetaValue(inboundShipping, 'tracking_number');
+    const inboundTrackingUrl = getShippingMetaValue(inboundShipping, 'tracking_url');
+    const inboundLabelUrl = getShippingMetaValue(inboundShipping, 'label_url');
+    const canManageInboundShipping = Boolean(exchangeReturnId);
+    const isBusy = exchangeState.savingId === exchange.id;
+    return (
+      <div key={exchange.id} className="rounded-2xl bg-white/70 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold text-ldc-ink">Exchange {exchange.id}</div>
+            <div className="mt-1 text-xs text-ldc-ink/60">
+              Created {formatDateTime(exchange.created_at)}
+            </div>
+          </div>
+          <StatusBadge
+            value={exchange.status || (exchange.canceled_at ? 'canceled' : 'requested')}
+          />
+        </div>
+
+        <div className="mt-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+            Inbound return items
+          </div>
+          <label className="mt-3 block text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+            Stock location
+            <select
+              className="ldc-input mt-2"
+              value={inboundDraft.location_id}
+              onChange={handleExchangeInboundLocation(exchange.id)}
+            >
+              <option value="">Default location</option>
+              {fulfillmentMeta.locations.map((location) => (
+                <option key={location.id} value={location.id}>
+                  {location.name || location.id}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="mt-3 space-y-3">
+            {exchangeItemSource.length ? (
+              exchangeItemSource.map((item) => {
+                const itemId = getOrderItemId(item);
+                if (!itemId) return null;
+                const entry = inboundDraft.items?.[itemId] || {
+                  quantity: 0,
+                  reason_id: ''
+                };
+                return (
+                  <div key={itemId} className="rounded-2xl bg-white/80 p-3">
+                    <div className="text-sm font-semibold text-ldc-ink">
+                      {getLineItemTitle(item)}
+                    </div>
+                    <div className="mt-2 grid gap-3 md:grid-cols-2">
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        Quantity
+                        <input
+                          className="ldc-input mt-2"
+                          type="number"
+                          min="0"
+                          max={item?.quantity ?? undefined}
+                          value={entry.quantity ?? ''}
+                          onChange={handleExchangeInboundChange(exchange.id, itemId, 'quantity')}
+                        />
+                      </label>
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        Reason
+                        <select
+                          className="ldc-input mt-2"
+                          value={entry.reason_id || ''}
+                          onChange={handleExchangeInboundChange(exchange.id, itemId, 'reason_id')}
+                        >
+                          <option value="">Select reason</option>
+                          {returnReasons.map((reason) => (
+                            <option key={reason.id} value={reason.id}>
+                              {reason.label || reason.value || reason.id}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-sm text-ldc-ink/60">No items available.</p>
+            )}
+          </div>
+          <button
+            className="ldc-button-primary mt-3"
+            type="button"
+            onClick={() => handleAddExchangeInboundItems(exchange.id)}
+            disabled={isBusy}
+          >
+            {isBusy ? 'Saving...' : 'Add inbound items'}
+          </button>
+        </div>
+
+        <div className="mt-6">
+          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+            Inbound shipping
+          </div>
+          <p className="mt-2 text-sm text-ldc-ink/60">
+            Choose the return shipping option for inbound items.
+          </p>
+          {orderPreviewLoading ? (
+            <div className="mt-2 text-sm text-ldc-ink/60">Loading order preview...</div>
+          ) : null}
+          {orderPreviewError ? (
+            <div className="mt-2 text-sm text-rose-600">{orderPreviewError}</div>
+          ) : null}
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Return shipping option
+              <select
+                className="ldc-input mt-2"
+                value={shippingDraft.inbound_option_id}
+                onChange={handleExchangeShippingDraftChange(exchange.id, 'inbound_option_id')}
+                disabled={
+                  !inboundShippingOptions.length || isBusy || !canManageInboundShipping
+                }
+              >
+                <option value="">Select option</option>
+                {inboundShippingOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.name || option.id}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Custom amount (optional)
+              <input
+                className="ldc-input mt-2"
+                type="number"
+                min="0"
+                step="0.01"
+                value={shippingDraft.inbound_custom_amount}
+                onChange={handleExchangeShippingDraftChange(exchange.id, 'inbound_custom_amount')}
+                disabled={isBusy || !canManageInboundShipping}
+              />
+            </label>
+          </div>
+          <div className="mt-3 grid gap-3 md:grid-cols-3">
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Tracking number (optional)
+              <input
+                className="ldc-input mt-2"
+                value={shippingDraft.inbound_tracking_number}
+                onChange={handleExchangeShippingDraftChange(exchange.id, 'inbound_tracking_number')}
+                disabled={isBusy || !canManageInboundShipping}
+              />
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Tracking URL (optional)
+              <input
+                className="ldc-input mt-2"
+                value={shippingDraft.inbound_tracking_url}
+                onChange={handleExchangeShippingDraftChange(exchange.id, 'inbound_tracking_url')}
+                disabled={isBusy || !canManageInboundShipping}
+              />
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Label URL (optional)
+              <input
+                className="ldc-input mt-2"
+                value={shippingDraft.inbound_label_url}
+                onChange={handleExchangeShippingDraftChange(exchange.id, 'inbound_label_url')}
+                disabled={isBusy || !canManageInboundShipping}
+              />
+            </label>
+          </div>
+          <div className="mt-3">
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Upload label file (optional)
+              <input
+                className="ldc-input mt-2"
+                type="file"
+                accept="application/pdf,image/*"
+                onChange={(event) => handleInboundLabelUpload(exchange.id, event)}
+                disabled={isBusy || !canManageInboundShipping}
+              />
+            </label>
+            {exchangeLabelUploadState.targetId === exchange.id ? (
+              <>
+                {exchangeLabelUploadState.uploadingId === exchange.id ? (
+                  <div className="mt-2 text-sm text-ldc-ink/60">Uploading label...</div>
+                ) : null}
+                {exchangeLabelUploadState.error ? (
+                  <div className="mt-2 text-sm text-rose-600">
+                    {exchangeLabelUploadState.error}
+                  </div>
+                ) : null}
+                {exchangeLabelUploadState.success ? (
+                  <div className="mt-2 text-sm text-emerald-700">
+                    {exchangeLabelUploadState.success}
+                  </div>
+                ) : null}
+              </>
+            ) : null}
+          </div>
+          {!canManageInboundShipping ? (
+            <p className="mt-2 text-sm text-ldc-ink/60">
+              Add inbound items first to enable return shipping.
+            </p>
+          ) : null}
+          {!inboundShippingOptions.length ? (
+            <p className="mt-2 text-sm text-ldc-ink/60">
+              No inbound shipping options available for this order.
+            </p>
+          ) : null}
+          <p className="mt-2 text-xs text-ldc-ink/60">
+            Current:{' '}
+            {inboundShipping
+              ? `${inboundShipping.name || inboundShipping.shipping_option_id || 'Inbound shipping'} · ${formatMoneyOrDash(
+                  inboundShipping.amount ?? inboundShipping.total,
+                  orderCurrency
+                )}`
+              : 'No inbound shipping set.'}
+          </p>
+          {inboundTrackingNumber || inboundTrackingUrl || inboundLabelUrl ? (
+            <div className="mt-2 space-y-1 text-xs text-ldc-ink/60">
+              {inboundTrackingNumber ? <div>Tracking # {inboundTrackingNumber}</div> : null}
+              {inboundTrackingUrl ? (
+                <div>Tracking URL: {renderExternalLink(inboundTrackingUrl)}</div>
+              ) : null}
+              {inboundLabelUrl ? (
+                <div>Label URL: {renderExternalLink(inboundLabelUrl)}</div>
+              ) : null}
+            </div>
+          ) : (
+            <div className="mt-2 text-xs text-ldc-ink/60">No tracking info set.</div>
+          )}
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button
+              className="ldc-button-primary"
+              type="button"
+              onClick={() => handleSaveExchangeInboundShipping(exchange.id)}
+              disabled={
+                isBusy ||
+                !canManageInboundShipping ||
+                (!shippingDraft.inbound_option_id && !inboundShippingActionId)
+              }
+            >
+              {isBusy ? 'Saving...' : 'Save inbound shipping'}
+            </button>
+            <button
+              className="ldc-button-secondary"
+              type="button"
+              onClick={() => handleClearExchangeInboundShipping(exchange.id)}
+              disabled={isBusy || !inboundShippingActionId}
+            >
+              Clear inbound shipping
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+            Outbound items
+          </div>
+          {outboundDraft.items.length ? (
+            <div className="mt-3 space-y-2">
+              {outboundDraft.items.map((item, index) => (
+                <div key={`${item.variant_id}-${index}`} className="rounded-2xl bg-white/80 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-ldc-ink">
+                      Variant {item.variant_id}
+                    </div>
+                    <button
+                      className="ldc-button-secondary"
+                      type="button"
+                      onClick={() => handleRemoveExchangeOutboundItem(exchange.id, index)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div className="mt-2 text-xs text-ldc-ink/60">
+                    Qty: {item.quantity} {item.unit_price ? `· Price: ${item.unit_price}` : ''}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm text-ldc-ink/60">No outbound items added.</p>
+          )}
+
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Variant ID
+              <input
+                className="ldc-input mt-2"
+                value={outboundDraft.newItem?.variant_id || ''}
+                onChange={handleExchangeOutboundField(exchange.id, 'variant_id')}
+                placeholder="variant_..."
+              />
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Quantity
+              <input
+                className="ldc-input mt-2"
+                type="number"
+                min="1"
+                value={outboundDraft.newItem?.quantity || 1}
+                onChange={handleExchangeOutboundField(exchange.id, 'quantity')}
+              />
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Unit price (optional)
+              <input
+                className="ldc-input mt-2"
+                value={outboundDraft.newItem?.unit_price || ''}
+                onChange={handleExchangeOutboundField(exchange.id, 'unit_price')}
+              />
+            </label>
+            <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-ldc-plum"
+                checked={Boolean(outboundDraft.newItem?.allow_backorder)}
+                onChange={handleExchangeOutboundToggle(exchange.id)}
+              />
+              Allow backorder
+            </label>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button
+              className="ldc-button-secondary"
+              type="button"
+              onClick={() => handleAddExchangeOutboundItem(exchange.id)}
+              disabled={isBusy}
+            >
+              Add outbound item
+            </button>
+            <button
+              className="ldc-button-primary"
+              type="button"
+              onClick={() => handleSubmitExchangeOutboundItems(exchange.id)}
+              disabled={isBusy || !outboundDraft.items.length}
+            >
+              {isBusy ? 'Saving...' : 'Save outbound items'}
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+            Outbound shipping
+          </div>
+          <p className="mt-2 text-sm text-ldc-ink/60">
+            Select shipping for the replacement items.
+          </p>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Shipping option
+              <select
+                className="ldc-input mt-2"
+                value={shippingDraft.outbound_option_id}
+                onChange={handleExchangeShippingDraftChange(exchange.id, 'outbound_option_id')}
+                disabled={!outboundShippingOptions.length || isBusy}
+              >
+                <option value="">Select option</option>
+                {outboundShippingOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.name || option.id}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Custom amount (optional)
+              <input
+                className="ldc-input mt-2"
+                type="number"
+                min="0"
+                step="0.01"
+                value={shippingDraft.outbound_custom_amount}
+                onChange={handleExchangeShippingDraftChange(exchange.id, 'outbound_custom_amount')}
+                disabled={isBusy}
+              />
+            </label>
+          </div>
+          {!outboundShippingOptions.length ? (
+            <p className="mt-2 text-sm text-ldc-ink/60">
+              No outbound shipping options available for this order.
+            </p>
+          ) : null}
+          <p className="mt-2 text-xs text-ldc-ink/60">
+            Current:{' '}
+            {outboundShipping
+              ? `${outboundShipping.name || outboundShipping.shipping_option_id || 'Outbound shipping'} · ${formatMoneyOrDash(
+                  outboundShipping.amount ?? outboundShipping.total,
+                  orderCurrency
+                )}`
+              : 'No outbound shipping set.'}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button
+              className="ldc-button-primary"
+              type="button"
+              onClick={() => handleSaveExchangeOutboundShipping(exchange.id)}
+              disabled={isBusy || !shippingDraft.outbound_option_id}
+            >
+              {isBusy ? 'Saving...' : 'Save outbound shipping'}
+            </button>
+            <button
+              className="ldc-button-secondary"
+              type="button"
+              onClick={() => handleClearExchangeOutboundShipping(exchange.id)}
+              disabled={isBusy || !outboundShippingActionId}
+            >
+              Clear outbound shipping
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button
+            className="ldc-button-secondary"
+            type="button"
+            onClick={() => handleConfirmExchangeRequest(exchange.id)}
+            disabled={isBusy}
+          >
+            Confirm exchange request
+          </button>
+          <button
+            className="ldc-button-secondary"
+            type="button"
+            onClick={() => handleCancelExchange(exchange.id)}
+            disabled={isBusy}
+          >
+            Cancel exchange
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderExchangeWorkflow = (showCreate) => (
+    <div className="ldc-card p-6">
+      <h3 className="font-heading text-xl text-ldc-ink">Exchanges</h3>
+      <p className="mt-2 text-sm text-ldc-ink/70">
+        {showCreate
+          ? 'Create exchanges, attach return items, and add outbound variants.'
+          : 'Manage inbound returns, outbound items, and shipping for this exchange.'}
+      </p>
+      {orderExchangesError ? (
+        <div className="mt-3 text-sm text-rose-600">{orderExchangesError}</div>
+      ) : null}
+      {exchangeState.error ? (
+        <div className="mt-3 text-sm text-rose-600">{exchangeState.error}</div>
+      ) : null}
+      {exchangeState.success ? (
+        <div className="mt-3 text-sm text-emerald-700">{exchangeState.success}</div>
+      ) : null}
+
+      {showCreate ? (
+        <form className="mt-4 space-y-4" onSubmit={handleCreateExchange}>
+          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+            Create exchange
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Description
+              <input
+                className="ldc-input mt-2"
+                value={exchangeDraft.description}
+                onChange={handleExchangeDraftChange('description')}
+              />
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Internal note
+              <input
+                className="ldc-input mt-2"
+                value={exchangeDraft.internal_note}
+                onChange={handleExchangeDraftChange('internal_note')}
+              />
+            </label>
+          </div>
+          <button
+            className="ldc-button-primary"
+            type="submit"
+            disabled={exchangeState.savingId === 'new'}
+          >
+            {exchangeState.savingId === 'new' ? 'Creating...' : 'Create exchange'}
+          </button>
+        </form>
+      ) : null}
+
+      <div className={showCreate ? 'mt-8 space-y-4' : 'mt-4 space-y-4'}>
+        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+          {showCreate ? 'Existing exchanges' : 'Exchange workflow'}
+        </div>
+        {orderExchangesLoading ? (
+          <div className="text-sm text-ldc-ink/60">Loading exchanges...</div>
+        ) : null}
+        {exchangeRecords.length ? (
+          exchangeRecords.map((exchange) => renderExchangeCard(exchange))
+        ) : (
+          <p className="text-sm text-ldc-ink/60">No exchanges yet.</p>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div>
       <PageHeader
@@ -8819,6 +11141,641 @@ const ResourceDetail = ({ resource }) => {
                         Cancel Order
                       </button>
                     </div>
+                  </div>
+
+                  <div className="ldc-card p-6">
+                    <h3 className="font-heading text-xl text-ldc-ink">Order Edit</h3>
+                    <p className="mt-2 text-sm text-ldc-ink/70">
+                      Adjust line items and shipping before confirming the update.
+                    </p>
+                    {orderChangesLoading ? (
+                      <div className="mt-3 text-sm text-ldc-ink/60">Loading order edits...</div>
+                    ) : null}
+                    {orderChangesError ? (
+                      <div className="mt-3 text-sm text-rose-600">{orderChangesError}</div>
+                    ) : null}
+
+                    {orderEditChange ? (
+                      <>
+                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                          <div className="rounded-2xl bg-white/70 p-3 text-xs text-ldc-ink/70">
+                            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                              Active edit
+                            </div>
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                              <StatusBadge value={orderEditChange.status || 'pending'} />
+                              <span className="text-ldc-ink/60">ID {orderEditChange.id}</span>
+                            </div>
+                            {orderEditChange.description ? (
+                              <div className="mt-2 text-xs text-ldc-ink/60">
+                                {orderEditChange.description}
+                              </div>
+                            ) : null}
+                            {orderEditChange.internal_note ? (
+                              <div className="mt-2 text-xs text-ldc-ink/60">
+                                Note: {orderEditChange.internal_note}
+                              </div>
+                            ) : null}
+                          </div>
+                          <div className="rounded-2xl bg-white/70 p-3 text-xs text-ldc-ink/70">
+                            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                              Timeline
+                            </div>
+                            <div className="mt-2 text-xs text-ldc-ink/60">
+                              Created {formatDateTime(orderEditChange.created_at)}
+                            </div>
+                            {orderEditChange.requested_at ? (
+                              <div className="mt-1 text-xs text-ldc-ink/60">
+                                Requested {formatDateTime(orderEditChange.requested_at)}
+                              </div>
+                            ) : null}
+                            {orderEditChange.confirmed_at ? (
+                              <div className="mt-1 text-xs text-ldc-ink/60">
+                                Confirmed {formatDateTime(orderEditChange.confirmed_at)}
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        {orderEditState.error ? (
+                          <div className="mt-3 text-sm text-rose-600">{orderEditState.error}</div>
+                        ) : null}
+                        {orderEditState.success ? (
+                          <div className="mt-3 text-sm text-emerald-700">
+                            {orderEditState.success}
+                          </div>
+                        ) : null}
+
+                        <div className="mt-4 flex flex-wrap items-center gap-3">
+                          <button
+                            className="ldc-button-secondary"
+                            type="button"
+                            onClick={handleRequestOrderEdit}
+                            disabled={
+                              orderEditState.saving ||
+                              orderEditStatus === 'requested'
+                            }
+                          >
+                            {orderEditState.saving && orderEditState.action === 'request'
+                              ? 'Requesting...'
+                              : 'Request edit'}
+                          </button>
+                          <button
+                            className="ldc-button-primary"
+                            type="button"
+                            onClick={handleConfirmOrderEdit}
+                            disabled={orderEditState.saving}
+                          >
+                            {orderEditState.saving && orderEditState.action === 'confirm'
+                              ? 'Confirming...'
+                              : 'Confirm edit'}
+                          </button>
+                          <button
+                            className="ldc-button-secondary"
+                            type="button"
+                            onClick={handleCancelOrderEdit}
+                            disabled={orderEditState.saving}
+                          >
+                            {orderEditState.saving && orderEditState.action === 'cancel'
+                              ? 'Canceling...'
+                              : 'Cancel edit'}
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleStartOrderEdit}>
+                        <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                          Description (optional)
+                          <input
+                            className="ldc-input mt-2"
+                            value={orderEditDraft.description}
+                            onChange={handleOrderEditDraftChange('description')}
+                            placeholder="Adjust quantities or add items"
+                          />
+                        </label>
+                        <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                          Internal note (optional)
+                          <input
+                            className="ldc-input mt-2"
+                            value={orderEditDraft.internal_note}
+                            onChange={handleOrderEditDraftChange('internal_note')}
+                            placeholder="Private context for the edit"
+                          />
+                        </label>
+                        {orderEditLastChange ? (
+                          <div className="md:col-span-2 text-xs text-ldc-ink/60">
+                            Last edit {orderEditLastChange.status || 'completed'} on{' '}
+                            {formatDateTime(orderEditLastChange.updated_at || orderEditLastChange.created_at)}
+                          </div>
+                        ) : null}
+                        {orderEditState.error ? (
+                          <div className="md:col-span-2 text-sm text-rose-600">
+                            {orderEditState.error}
+                          </div>
+                        ) : null}
+                        {orderEditState.success ? (
+                          <div className="md:col-span-2 text-sm text-emerald-700">
+                            {orderEditState.success}
+                          </div>
+                        ) : null}
+                        <button
+                          className="ldc-button-primary md:col-span-2"
+                          type="submit"
+                          disabled={orderEditState.saving}
+                        >
+                          {orderEditState.saving ? 'Starting...' : 'Start order edit'}
+                        </button>
+                      </form>
+                    )}
+
+                    {orderEditChange ? (
+                      <div className="mt-6 space-y-4">
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                          Line item adjustments
+                        </div>
+                        {orderEditItemState.error ? (
+                          <div className="text-sm text-rose-600">{orderEditItemState.error}</div>
+                        ) : null}
+                        {orderEditItemState.success ? (
+                          <div className="text-sm text-emerald-700">{orderEditItemState.success}</div>
+                        ) : null}
+                        {orderItems.length ? (
+                          <div className="space-y-3">
+                            {orderItems.map((item) => {
+                              const itemId = getOrderItemId(item);
+                              if (!itemId) return null;
+                              const draft = orderEditItemDrafts[itemId] || {};
+                              const currentQty = getLineItemQuantity(item);
+                              const pendingQty = orderEditItemUpdateMap[itemId]?.details?.quantity;
+                              const isSaving = orderEditItemState.savingId === itemId;
+                              return (
+                                <div key={itemId} className="rounded-2xl bg-white/70 p-4">
+                                  <div className="flex flex-wrap items-start justify-between gap-3">
+                                    <div>
+                                      <div className="text-sm font-semibold text-ldc-ink">
+                                        {getLineItemTitle(item)}
+                                      </div>
+                                      <div className="mt-1 text-xs text-ldc-ink/60">
+                                        SKU: {item?.variant_sku || item?.variant?.sku || '-'}
+                                      </div>
+                                      <div className="mt-1 text-xs text-ldc-ink/60">
+                                        Current qty: {currentQty}
+                                        {pendingQty != null && pendingQty !== currentQty
+                                          ? ` • Pending ${pendingQty}`
+                                          : ''}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="mt-3 grid gap-3 md:grid-cols-3">
+                                    <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                      New quantity
+                                      <input
+                                        className="ldc-input mt-2"
+                                        type="number"
+                                        min="0"
+                                        value={draft.quantity ?? currentQty ?? ''}
+                                        onChange={handleOrderEditItemDraftChange(itemId, 'quantity')}
+                                      />
+                                    </label>
+                                    <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                      Unit price override
+                                      <input
+                                        className="ldc-input mt-2"
+                                        value={draft.unit_price ?? ''}
+                                        onChange={handleOrderEditItemDraftChange(itemId, 'unit_price')}
+                                        placeholder="Leave blank to keep"
+                                      />
+                                    </label>
+                                    <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                      Compare at price
+                                      <input
+                                        className="ldc-input mt-2"
+                                        value={draft.compare_at_unit_price ?? ''}
+                                        onChange={handleOrderEditItemDraftChange(itemId, 'compare_at_unit_price')}
+                                        placeholder="Optional"
+                                      />
+                                    </label>
+                                  </div>
+                                  <label className="mt-3 block text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                    Internal note (optional)
+                                    <input
+                                      className="ldc-input mt-2"
+                                      value={draft.internal_note ?? ''}
+                                      onChange={handleOrderEditItemDraftChange(itemId, 'internal_note')}
+                                    />
+                                  </label>
+                                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                                    <button
+                                      className="ldc-button-primary"
+                                      type="button"
+                                      onClick={() => submitOrderEditItem(itemId)}
+                                      disabled={isSaving}
+                                    >
+                                      {isSaving && orderEditItemState.action === 'update'
+                                        ? 'Updating...'
+                                        : 'Update item'}
+                                    </button>
+                                    <button
+                                      className="ldc-button-secondary"
+                                      type="button"
+                                      onClick={() => submitOrderEditItem(itemId, 0)}
+                                      disabled={isSaving}
+                                    >
+                                      {isSaving && orderEditItemState.action === 'remove'
+                                        ? 'Removing...'
+                                        : 'Remove item'}
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-ldc-ink/60">No line items found.</div>
+                        )}
+                      </div>
+                    ) : null}
+
+                    {orderEditChange ? (
+                      <div className="mt-6 space-y-4">
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                          Added items
+                        </div>
+                        {orderEditAddedItems.length ? (
+                          <div className="space-y-3">
+                            {orderEditAddedItems.map(({ action, item, referenceId }) => {
+                              if (!action?.id) return null;
+                              const draft = orderEditAddActionDrafts[action.id] || {};
+                              const isSaving = orderEditItemState.savingId === action.id;
+                              return (
+                                <div key={action.id} className="rounded-2xl bg-white/70 p-4">
+                                  <div className="text-sm font-semibold text-ldc-ink">
+                                    {item ? getLineItemTitle(item) : `Added item ${referenceId}`}
+                                  </div>
+                                  <div className="mt-1 text-xs text-ldc-ink/60">
+                                    SKU: {item?.variant_sku || item?.variant?.sku || '-'}
+                                  </div>
+                                  <div className="mt-3 grid gap-3 md:grid-cols-3">
+                                    <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                      Quantity
+                                      <input
+                                        className="ldc-input mt-2"
+                                        type="number"
+                                        min="1"
+                                        value={draft.quantity ?? 1}
+                                        onChange={handleOrderEditAddActionDraftChange(action.id, 'quantity')}
+                                      />
+                                    </label>
+                                    <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                      Unit price override
+                                      <input
+                                        className="ldc-input mt-2"
+                                        value={draft.unit_price ?? ''}
+                                        onChange={handleOrderEditAddActionDraftChange(action.id, 'unit_price')}
+                                      />
+                                    </label>
+                                    <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                      Compare at price
+                                      <input
+                                        className="ldc-input mt-2"
+                                        value={draft.compare_at_unit_price ?? ''}
+                                        onChange={handleOrderEditAddActionDraftChange(action.id, 'compare_at_unit_price')}
+                                      />
+                                    </label>
+                                  </div>
+                                  <label className="mt-3 block text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                    Internal note (optional)
+                                    <input
+                                      className="ldc-input mt-2"
+                                      value={draft.internal_note ?? ''}
+                                      onChange={handleOrderEditAddActionDraftChange(action.id, 'internal_note')}
+                                    />
+                                  </label>
+                                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                                    <button
+                                      className="ldc-button-primary"
+                                      type="button"
+                                      onClick={() => handleUpdateOrderEditAddAction(action.id)}
+                                      disabled={isSaving}
+                                    >
+                                      {isSaving && orderEditItemState.action === 'add-update'
+                                        ? 'Updating...'
+                                        : 'Update added item'}
+                                    </button>
+                                    <button
+                                      className="ldc-button-secondary"
+                                      type="button"
+                                      onClick={() => handleRemoveOrderEditAddAction(action.id)}
+                                      disabled={isSaving}
+                                    >
+                                      {isSaving && orderEditItemState.action === 'add-remove'
+                                        ? 'Removing...'
+                                        : 'Remove'}
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-ldc-ink/60">No items added yet.</div>
+                        )}
+                      </div>
+                    ) : null}
+
+                    {orderEditChange ? (
+                      <div className="mt-6 space-y-4">
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                          Add new item
+                        </div>
+                        {orderEditVariantSearch.error ? (
+                          <div className="text-sm text-rose-600">{orderEditVariantSearch.error}</div>
+                        ) : null}
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Search variants
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderEditVariantSearch.query}
+                              onChange={handleOrderEditVariantSearchChange}
+                              placeholder="Search by title or SKU"
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Variant ID
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderEditAddDraft.variant_id}
+                              onChange={handleOrderEditAddDraftChange('variant_id')}
+                              placeholder="variant_..."
+                            />
+                          </label>
+                        </div>
+                        {orderEditVariantSearch.loading ? (
+                          <div className="text-sm text-ldc-ink/60">Searching variants...</div>
+                        ) : null}
+                        {orderEditVariantSearch.results.length ? (
+                          <div className="grid gap-2 md:grid-cols-2">
+                            {orderEditVariantSearch.results.map((variant) => (
+                              <button
+                                key={variant.id}
+                                className="rounded-2xl border border-white/70 bg-white/70 px-3 py-2 text-left text-xs text-ldc-ink"
+                                type="button"
+                                onClick={() => handleSelectOrderEditVariant(variant)}
+                              >
+                                <div className="font-semibold">
+                                  {variant.product?.title || variant.title || variant.id}
+                                </div>
+                                <div className="text-ldc-ink/60">
+                                  {variant.title ? `${variant.title} · ` : ''}SKU {variant.sku || '-'}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
+                        {orderEditSelectedVariant ? (
+                          <div className="rounded-2xl bg-white/70 p-3 text-xs text-ldc-ink/70">
+                            Selected: {orderEditSelectedVariant.product?.title || 'Variant'} ·{' '}
+                            {orderEditSelectedVariant.title || orderEditSelectedVariant.id}
+                          </div>
+                        ) : null}
+                        <form className="grid gap-4 md:grid-cols-3" onSubmit={handleAddOrderEditItem}>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Quantity
+                            <input
+                              className="ldc-input mt-2"
+                              type="number"
+                              min="1"
+                              value={orderEditAddDraft.quantity}
+                              onChange={handleOrderEditAddDraftChange('quantity')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Unit price override
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderEditAddDraft.unit_price}
+                              onChange={handleOrderEditAddDraftChange('unit_price')}
+                              placeholder="Optional"
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Compare at price
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderEditAddDraft.compare_at_unit_price}
+                              onChange={handleOrderEditAddDraftChange('compare_at_unit_price')}
+                              placeholder="Optional"
+                            />
+                          </label>
+                          <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Internal note (optional)
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderEditAddDraft.internal_note}
+                              onChange={handleOrderEditAddDraftChange('internal_note')}
+                            />
+                          </label>
+                          <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 accent-ldc-plum"
+                              checked={orderEditAddDraft.allow_backorder}
+                              onChange={handleOrderEditAddDraftChange('allow_backorder')}
+                            />
+                            Allow backorder
+                          </label>
+                          {orderEditAddState.error ? (
+                            <div className="md:col-span-3 text-sm text-rose-600">
+                              {orderEditAddState.error}
+                            </div>
+                          ) : null}
+                          {orderEditAddState.success ? (
+                            <div className="md:col-span-3 text-sm text-emerald-700">
+                              {orderEditAddState.success}
+                            </div>
+                          ) : null}
+                          <button
+                            className="ldc-button-primary md:col-span-3"
+                            type="submit"
+                            disabled={orderEditAddState.saving}
+                          >
+                            {orderEditAddState.saving ? 'Adding...' : 'Add item to edit'}
+                          </button>
+                        </form>
+                      </div>
+                    ) : null}
+
+                    {orderEditChange ? (
+                      <div className="mt-6 space-y-4">
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                          Shipping adjustments
+                        </div>
+                        {orderEditShippingState.error ? (
+                          <div className="text-sm text-rose-600">{orderEditShippingState.error}</div>
+                        ) : null}
+                        {orderEditShippingState.success ? (
+                          <div className="text-sm text-emerald-700">
+                            {orderEditShippingState.success}
+                          </div>
+                        ) : null}
+                        {orderEditShippingMethods.length ? (
+                          <div className="space-y-3">
+                            {orderEditShippingMethods.map(({ action, method, referenceId }) => {
+                              if (!action?.id) return null;
+                              const draft = orderEditShippingActionDrafts[action.id] || {};
+                              const isSaving = orderEditShippingState.savingId === action.id;
+                              const label =
+                                method?.name ||
+                                method?.shipping_option?.name ||
+                                method?.shipping_option_id ||
+                                referenceId ||
+                                'Shipping method';
+                              return (
+                                <div key={action.id} className="rounded-2xl bg-white/70 p-4">
+                                  <div className="text-sm font-semibold text-ldc-ink">{label}</div>
+                                  <div className="mt-1 text-xs text-ldc-ink/60">
+                                    Current amount:{' '}
+                                    {formatMoneyOrDash(method?.amount, method?.currency_code || orderCurrency)}
+                                  </div>
+                                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                                    <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                      Custom amount
+                                      <input
+                                        className="ldc-input mt-2"
+                                        value={draft.custom_amount ?? ''}
+                                        onChange={handleOrderEditShippingActionDraftChange(action.id, 'custom_amount')}
+                                      />
+                                    </label>
+                                    <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                      Internal note
+                                      <input
+                                        className="ldc-input mt-2"
+                                        value={draft.internal_note ?? ''}
+                                        onChange={handleOrderEditShippingActionDraftChange(action.id, 'internal_note')}
+                                      />
+                                    </label>
+                                  </div>
+                                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                                    <button
+                                      className="ldc-button-primary"
+                                      type="button"
+                                      onClick={() => handleUpdateOrderEditShipping(action.id)}
+                                      disabled={isSaving}
+                                    >
+                                      {isSaving && orderEditShippingState.action === 'update'
+                                        ? 'Updating...'
+                                        : 'Update shipping'}
+                                    </button>
+                                    <button
+                                      className="ldc-button-secondary"
+                                      type="button"
+                                      onClick={() => handleRemoveOrderEditShipping(action.id)}
+                                      disabled={isSaving}
+                                    >
+                                      {isSaving && orderEditShippingState.action === 'remove'
+                                        ? 'Removing...'
+                                        : 'Remove'}
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-ldc-ink/60">
+                            No shipping changes yet.
+                          </div>
+                        )}
+                        <form className="grid gap-4 md:grid-cols-2" onSubmit={handleAddOrderEditShipping}>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Shipping option
+                            <select
+                              className="ldc-input mt-2"
+                              value={orderEditShippingDraft.shipping_option_id}
+                              onChange={handleOrderEditShippingDraftChange('shipping_option_id')}
+                            >
+                              <option value="">Select a shipping option</option>
+                              {fulfillmentMeta.shippingOptions.map((option) => (
+                                <option key={option.id} value={option.id}>
+                                  {option.name || option.id}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Custom amount
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderEditShippingDraft.custom_amount}
+                              onChange={handleOrderEditShippingDraftChange('custom_amount')}
+                              placeholder="Optional"
+                            />
+                          </label>
+                          <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Description (optional)
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderEditShippingDraft.description}
+                              onChange={handleOrderEditShippingDraftChange('description')}
+                            />
+                          </label>
+                          <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Internal note (optional)
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderEditShippingDraft.internal_note}
+                              onChange={handleOrderEditShippingDraftChange('internal_note')}
+                            />
+                          </label>
+                          <button
+                            className="ldc-button-primary md:col-span-2"
+                            type="submit"
+                            disabled={
+                              orderEditShippingState.savingId === 'new' &&
+                              orderEditShippingState.action === 'add'
+                            }
+                          >
+                            {orderEditShippingState.savingId === 'new' &&
+                            orderEditShippingState.action === 'add'
+                              ? 'Adding...'
+                              : 'Add shipping method'}
+                          </button>
+                        </form>
+                      </div>
+                    ) : null}
+
+                    {orderEditChange ? (
+                      <div className="mt-6 space-y-3">
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                          Order preview totals
+                        </div>
+                        {orderPreviewLoading ? (
+                          <div className="text-sm text-ldc-ink/60">Loading preview...</div>
+                        ) : null}
+                        {orderPreviewError ? (
+                          <div className="text-sm text-rose-600">{orderPreviewError}</div>
+                        ) : null}
+                        {orderEditPreviewTotals.length ? (
+                          <div className="grid gap-3 md:grid-cols-3">
+                            {orderEditPreviewTotals.map((total) => (
+                              <div key={total.label} className="rounded-2xl bg-white/70 p-3">
+                                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                                  {total.label}
+                                </div>
+                                <div className="mt-2 text-sm text-ldc-ink">
+                                  {formatMoneyOrDash(total.amount, orderCurrency)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-ldc-ink/60">
+                            Preview totals unavailable yet.
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="ldc-card p-6">
@@ -9573,581 +12530,299 @@ const ResourceDetail = ({ resource }) => {
                     </div>
                   </div>
 
-                  <div className="ldc-card p-6">
-                    <h3 className="font-heading text-xl text-ldc-ink">Exchanges</h3>
-                    <p className="mt-2 text-sm text-ldc-ink/70">
-                      Create exchanges, attach return items, and add outbound variants.
-                    </p>
-                    {orderExchangesError ? (
-                      <div className="mt-3 text-sm text-rose-600">{orderExchangesError}</div>
-                    ) : null}
-                    {exchangeState.error ? (
-                      <div className="mt-3 text-sm text-rose-600">{exchangeState.error}</div>
-                    ) : null}
-                    {exchangeState.success ? (
-                      <div className="mt-3 text-sm text-emerald-700">{exchangeState.success}</div>
-                    ) : null}
-
-                    <form className="mt-4 space-y-4" onSubmit={handleCreateExchange}>
-                      <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
-                        Create exchange
-                      </div>
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                          Description
-                          <input
-                            className="ldc-input mt-2"
-                            value={exchangeDraft.description}
-                            onChange={handleExchangeDraftChange('description')}
-                          />
-                        </label>
-                        <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                          Internal note
-                          <input
-                            className="ldc-input mt-2"
-                            value={exchangeDraft.internal_note}
-                            onChange={handleExchangeDraftChange('internal_note')}
-                          />
-                        </label>
-                      </div>
-                      <button
-                        className="ldc-button-primary"
-                        type="submit"
-                        disabled={exchangeState.savingId === 'new'}
-                      >
-                        {exchangeState.savingId === 'new' ? 'Creating...' : 'Create exchange'}
-                      </button>
-                    </form>
-
-                    <div className="mt-8 space-y-4">
-                      <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
-                        Existing exchanges
-                      </div>
-                      {orderExchangesLoading ? (
-                        <div className="text-sm text-ldc-ink/60">Loading exchanges...</div>
-                      ) : null}
-                      {orderExchanges.length ? (
-                        orderExchanges.map((exchange) => {
-                          const exchangeReturnId = exchange.return_id || exchange.return?.id || null;
-                          const inboundDraft = exchangeInboundDrafts[exchange.id] || {
-                            location_id: '',
-                            items: buildReturnRequestMap(orderItems)
-                          };
-                          const outboundDraft = exchangeOutboundDrafts[exchange.id] || {
-                            items: [],
-                            newItem: { variant_id: '', quantity: 1, unit_price: '', allow_backorder: false }
-                          };
-                          const shippingDraft = exchangeShippingDrafts[exchange.id] || {
-                            outbound_option_id: '',
-                            outbound_custom_amount: '',
-                            inbound_option_id: '',
-                            inbound_custom_amount: '',
-                            inbound_tracking_number: '',
-                            inbound_tracking_url: '',
-                            inbound_label_url: ''
-                          };
-                          const outboundShipping = getExchangeShippingMethod(
-                            orderPreview,
-                            exchange.id,
-                            'outbound'
-                          );
-                          const outboundShippingActionId = getExchangeShippingActionId(
-                            outboundShipping,
-                            exchange.id,
-                            'outbound'
-                          );
-                          const inboundShipping = getExchangeShippingMethod(
-                            orderPreview,
-                            exchange.id,
-                            'inbound',
-                            exchangeReturnId
-                          );
-                          const inboundShippingActionId = getExchangeShippingActionId(
-                            inboundShipping,
-                            exchange.id,
-                            'inbound',
-                            exchangeReturnId
-                          );
-                          const inboundTrackingNumber = getShippingMetaValue(
-                            inboundShipping,
-                            'tracking_number'
-                          );
-                          const inboundTrackingUrl = getShippingMetaValue(inboundShipping, 'tracking_url');
-                          const inboundLabelUrl = getShippingMetaValue(inboundShipping, 'label_url');
-                          const canManageInboundShipping = Boolean(exchangeReturnId);
-                          const isBusy = exchangeState.savingId === exchange.id;
-                          return (
-                            <div key={exchange.id} className="rounded-2xl bg-white/70 p-4">
-                              <div className="flex flex-wrap items-start justify-between gap-3">
-                                <div>
-                                  <div className="text-sm font-semibold text-ldc-ink">
-                                    Exchange {exchange.id}
-                                  </div>
-                                  <div className="mt-1 text-xs text-ldc-ink/60">
-                                    Created {formatDateTime(exchange.created_at)}
-                                  </div>
-                                </div>
-                                <StatusBadge value={exchange.status || (exchange.canceled_at ? 'canceled' : 'requested')} />
-                              </div>
-
-                              <div className="mt-4">
-                                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
-                                  Inbound return items
-                                </div>
-                                <label className="mt-3 block text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                                  Stock location
-                                  <select
-                                    className="ldc-input mt-2"
-                                    value={inboundDraft.location_id}
-                                    onChange={handleExchangeInboundLocation(exchange.id)}
-                                  >
-                                    <option value="">Default location</option>
-                                    {fulfillmentMeta.locations.map((location) => (
-                                      <option key={location.id} value={location.id}>
-                                        {location.name || location.id}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </label>
-                                <div className="mt-3 space-y-3">
-                                  {orderItems.map((item) => {
-                                    const itemId = getOrderItemId(item);
-                                    if (!itemId) return null;
-                                    const entry = inboundDraft.items?.[itemId] || { quantity: 0, reason_id: '' };
-                                    return (
-                                      <div key={itemId} className="rounded-2xl bg-white/80 p-3">
-                                        <div className="text-sm font-semibold text-ldc-ink">
-                                          {getLineItemTitle(item)}
-                                        </div>
-                                        <div className="mt-2 grid gap-3 md:grid-cols-2">
-                                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                                            Quantity
-                                            <input
-                                              className="ldc-input mt-2"
-                                              type="number"
-                                              min="0"
-                                              max={item?.quantity ?? undefined}
-                                              value={entry.quantity ?? ''}
-                                              onChange={handleExchangeInboundChange(exchange.id, itemId, 'quantity')}
-                                            />
-                                          </label>
-                                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                                            Reason
-                                            <select
-                                              className="ldc-input mt-2"
-                                              value={entry.reason_id || ''}
-                                              onChange={handleExchangeInboundChange(exchange.id, itemId, 'reason_id')}
-                                            >
-                                              <option value="">Select reason</option>
-                                              {returnReasons.map((reason) => (
-                                                <option key={reason.id} value={reason.id}>
-                                                  {reason.label || reason.value || reason.id}
-                                                </option>
-                                              ))}
-                                            </select>
-                                          </label>
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                                <button
-                                  className="ldc-button-primary mt-3"
-                                  type="button"
-                                  onClick={() => handleAddExchangeInboundItems(exchange.id)}
-                                  disabled={isBusy}
-                                >
-                                  {isBusy ? 'Saving...' : 'Add inbound items'}
-                                </button>
-                              </div>
-
-                              <div className="mt-6">
-                                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
-                                  Inbound shipping
-                                </div>
-                                <p className="mt-2 text-sm text-ldc-ink/60">
-                                  Choose the return shipping option for inbound items.
-                                </p>
-                                {orderPreviewLoading ? (
-                                  <div className="mt-2 text-sm text-ldc-ink/60">
-                                    Loading order preview...
-                                  </div>
-                                ) : null}
-                                {orderPreviewError ? (
-                                  <div className="mt-2 text-sm text-rose-600">{orderPreviewError}</div>
-                                ) : null}
-                                <div className="mt-3 grid gap-3 md:grid-cols-2">
-                                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                                    Return shipping option
-                                    <select
-                                      className="ldc-input mt-2"
-                                      value={shippingDraft.inbound_option_id}
-                                      onChange={handleExchangeShippingDraftChange(
-                                        exchange.id,
-                                        'inbound_option_id'
-                                      )}
-                                      disabled={
-                                        !inboundShippingOptions.length || isBusy || !canManageInboundShipping
-                                      }
-                                    >
-                                      <option value="">Select option</option>
-                                      {inboundShippingOptions.map((option) => (
-                                        <option key={option.id} value={option.id}>
-                                          {option.name || option.id}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </label>
-                                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                                    Custom amount (optional)
-                                    <input
-                                      className="ldc-input mt-2"
-                                      type="number"
-                                      min="0"
-                                      step="0.01"
-                                      value={shippingDraft.inbound_custom_amount}
-                                      onChange={handleExchangeShippingDraftChange(
-                                        exchange.id,
-                                        'inbound_custom_amount'
-                                      )}
-                                      disabled={isBusy || !canManageInboundShipping}
-                                    />
-                                  </label>
-                                </div>
-                                <div className="mt-3 grid gap-3 md:grid-cols-3">
-                                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                                    Tracking number (optional)
-                                    <input
-                                      className="ldc-input mt-2"
-                                      value={shippingDraft.inbound_tracking_number}
-                                      onChange={handleExchangeShippingDraftChange(
-                                        exchange.id,
-                                        'inbound_tracking_number'
-                                      )}
-                                      disabled={isBusy || !canManageInboundShipping}
-                                    />
-                                  </label>
-                                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                                    Tracking URL (optional)
-                                    <input
-                                      className="ldc-input mt-2"
-                                      value={shippingDraft.inbound_tracking_url}
-                                      onChange={handleExchangeShippingDraftChange(
-                                        exchange.id,
-                                        'inbound_tracking_url'
-                                      )}
-                                      disabled={isBusy || !canManageInboundShipping}
-                                    />
-                                  </label>
-                                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                                    Label URL (optional)
-                                    <input
-                                      className="ldc-input mt-2"
-                                      value={shippingDraft.inbound_label_url}
-                                      onChange={handleExchangeShippingDraftChange(
-                                        exchange.id,
-                                        'inbound_label_url'
-                                      )}
-                                      disabled={isBusy || !canManageInboundShipping}
-                                    />
-                                  </label>
-                                </div>
-                                <div className="mt-3">
-                                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                                    Upload label file (optional)
-                                    <input
-                                      className="ldc-input mt-2"
-                                      type="file"
-                                      accept="application/pdf,image/*"
-                                      onChange={(event) => handleInboundLabelUpload(exchange.id, event)}
-                                      disabled={isBusy || !canManageInboundShipping}
-                                    />
-                                  </label>
-                                  {exchangeLabelUploadState.targetId === exchange.id ? (
-                                    <>
-                                      {exchangeLabelUploadState.uploadingId === exchange.id ? (
-                                        <div className="mt-2 text-sm text-ldc-ink/60">
-                                          Uploading label...
-                                        </div>
-                                      ) : null}
-                                      {exchangeLabelUploadState.error ? (
-                                        <div className="mt-2 text-sm text-rose-600">
-                                          {exchangeLabelUploadState.error}
-                                        </div>
-                                      ) : null}
-                                      {exchangeLabelUploadState.success ? (
-                                        <div className="mt-2 text-sm text-emerald-700">
-                                          {exchangeLabelUploadState.success}
-                                        </div>
-                                      ) : null}
-                                    </>
-                                  ) : null}
-                                </div>
-                                {!canManageInboundShipping ? (
-                                  <p className="mt-2 text-sm text-ldc-ink/60">
-                                    Add inbound items first to enable return shipping.
-                                  </p>
-                                ) : null}
-                                {!inboundShippingOptions.length ? (
-                                  <p className="mt-2 text-sm text-ldc-ink/60">
-                                    No inbound shipping options available for this order.
-                                  </p>
-                                ) : null}
-                                <p className="mt-2 text-xs text-ldc-ink/60">
-                                  Current:{' '}
-                                  {inboundShipping
-                                    ? `${inboundShipping.name || inboundShipping.shipping_option_id || 'Inbound shipping'} · ${formatMoneyOrDash(
-                                        inboundShipping.amount ?? inboundShipping.total,
-                                        record?.currency_code
-                                      )}`
-                                    : 'No inbound shipping set.'}
-                                </p>
-                                {inboundTrackingNumber || inboundTrackingUrl || inboundLabelUrl ? (
-                                  <div className="mt-2 space-y-1 text-xs text-ldc-ink/60">
-                                    {inboundTrackingNumber ? (
-                                      <div>Tracking # {inboundTrackingNumber}</div>
-                                    ) : null}
-                                    {inboundTrackingUrl ? (
-                                      <div>Tracking URL: {renderExternalLink(inboundTrackingUrl)}</div>
-                                    ) : null}
-                                    {inboundLabelUrl ? (
-                                      <div>Label URL: {renderExternalLink(inboundLabelUrl)}</div>
-                                    ) : null}
-                                  </div>
-                                ) : (
-                                  <div className="mt-2 text-xs text-ldc-ink/60">
-                                    No tracking info set.
-                                  </div>
-                                )}
-                                <div className="mt-3 flex flex-wrap items-center gap-3">
-                                  <button
-                                    className="ldc-button-primary"
-                                    type="button"
-                                    onClick={() => handleSaveExchangeInboundShipping(exchange.id)}
-                                    disabled={
-                                      isBusy ||
-                                      !canManageInboundShipping ||
-                                      (!shippingDraft.inbound_option_id && !inboundShippingActionId)
-                                    }
-                                  >
-                                    {isBusy ? 'Saving...' : 'Save inbound shipping'}
-                                  </button>
-                                  <button
-                                    className="ldc-button-secondary"
-                                    type="button"
-                                    onClick={() => handleClearExchangeInboundShipping(exchange.id)}
-                                    disabled={isBusy || !inboundShippingActionId}
-                                  >
-                                    Clear inbound shipping
-                                  </button>
-                                </div>
-                              </div>
-
-                              <div className="mt-6">
-                                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
-                                  Outbound items
-                                </div>
-                                {outboundDraft.items.length ? (
-                                  <div className="mt-3 space-y-2">
-                                    {outboundDraft.items.map((item, index) => (
-                                      <div key={`${item.variant_id}-${index}`} className="rounded-2xl bg-white/80 p-3">
-                                        <div className="flex flex-wrap items-center justify-between gap-3">
-                                          <div className="text-sm font-semibold text-ldc-ink">
-                                            Variant {item.variant_id}
-                                          </div>
-                                          <button
-                                            className="ldc-button-secondary"
-                                            type="button"
-                                            onClick={() => handleRemoveExchangeOutboundItem(exchange.id, index)}
-                                          >
-                                            Remove
-                                          </button>
-                                        </div>
-                                        <div className="mt-2 text-xs text-ldc-ink/60">
-                                          Qty: {item.quantity} {item.unit_price ? `· Price: ${item.unit_price}` : ''}
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="mt-3 text-sm text-ldc-ink/60">No outbound items added.</p>
-                                )}
-
-                                <div className="mt-3 grid gap-3 md:grid-cols-2">
-                                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                                    Variant ID
-                                    <input
-                                      className="ldc-input mt-2"
-                                      value={outboundDraft.newItem.variant_id}
-                                      onChange={handleExchangeOutboundField(exchange.id, 'variant_id')}
-                                      placeholder="variant_..."
-                                    />
-                                  </label>
-                                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                                    Quantity
-                                    <input
-                                      className="ldc-input mt-2"
-                                      type="number"
-                                      min="1"
-                                      value={outboundDraft.newItem.quantity}
-                                      onChange={handleExchangeOutboundField(exchange.id, 'quantity')}
-                                    />
-                                  </label>
-                                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                                    Unit price (optional)
-                                    <input
-                                      className="ldc-input mt-2"
-                                      type="number"
-                                      min="0"
-                                      step="0.01"
-                                      value={outboundDraft.newItem.unit_price}
-                                      onChange={handleExchangeOutboundField(exchange.id, 'unit_price')}
-                                    />
-                                  </label>
-                                  <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                                    <input
-                                      type="checkbox"
-                                      className="h-4 w-4 accent-ldc-plum"
-                                      checked={outboundDraft.newItem.allow_backorder}
-                                      onChange={handleExchangeOutboundToggle(exchange.id)}
-                                    />
-                                    Allow backorder
-                                  </label>
-                                </div>
-                                <div className="mt-3 flex flex-wrap items-center gap-3">
-                                  <button
-                                    className="ldc-button-secondary"
-                                    type="button"
-                                    onClick={() => handleAddExchangeOutboundItem(exchange.id)}
-                                  >
-                                    Add outbound item
-                                  </button>
-                                  <button
-                                    className="ldc-button-primary"
-                                    type="button"
-                                    onClick={() => handleSubmitExchangeOutboundItems(exchange.id)}
-                                    disabled={isBusy}
-                                  >
-                                    {isBusy ? 'Saving...' : 'Save outbound items'}
-                                  </button>
-                                </div>
-                              </div>
-
-                              <div className="mt-6">
-                                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
-                                  Outbound shipping
-                                </div>
-                                <p className="mt-2 text-sm text-ldc-ink/60">
-                                  Choose the shipping option used to deliver outbound exchange items.
-                                </p>
-                                {orderPreviewLoading ? (
-                                  <div className="mt-2 text-sm text-ldc-ink/60">
-                                    Loading order preview...
-                                  </div>
-                                ) : null}
-                                {orderPreviewError ? (
-                                  <div className="mt-2 text-sm text-rose-600">{orderPreviewError}</div>
-                                ) : null}
-                                <div className="mt-3 grid gap-3 md:grid-cols-2">
-                                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                                    Shipping option
-                                    <select
-                                      className="ldc-input mt-2"
-                                      value={shippingDraft.outbound_option_id}
-                                      onChange={handleExchangeShippingDraftChange(
-                                        exchange.id,
-                                        'outbound_option_id'
-                                      )}
-                                      disabled={!outboundShippingOptions.length || isBusy}
-                                    >
-                                      <option value="">Select option</option>
-                                      {outboundShippingOptions.map((option) => (
-                                        <option key={option.id} value={option.id}>
-                                          {option.name || option.id}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </label>
-                                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                                    Custom amount (optional)
-                                    <input
-                                      className="ldc-input mt-2"
-                                      type="number"
-                                      min="0"
-                                      step="0.01"
-                                      value={shippingDraft.outbound_custom_amount}
-                                      onChange={handleExchangeShippingDraftChange(
-                                        exchange.id,
-                                        'outbound_custom_amount'
-                                      )}
-                                      disabled={isBusy}
-                                    />
-                                  </label>
-                                </div>
-                                {!outboundShippingOptions.length ? (
-                                  <p className="mt-2 text-sm text-ldc-ink/60">
-                                    No outbound shipping options available for this order.
-                                  </p>
-                                ) : null}
-                                <p className="mt-2 text-xs text-ldc-ink/60">
-                                  Current:{' '}
-                                  {outboundShipping
-                                    ? `${outboundShipping.name || outboundShipping.shipping_option_id || 'Outbound shipping'} · ${formatMoneyOrDash(
-                                        outboundShipping.amount ?? outboundShipping.total,
-                                        record?.currency_code
-                                      )}`
-                                    : 'No outbound shipping set.'}
-                                </p>
-                                <div className="mt-3 flex flex-wrap items-center gap-3">
-                                  <button
-                                    className="ldc-button-primary"
-                                    type="button"
-                                    onClick={() => handleSaveExchangeOutboundShipping(exchange.id)}
-                                    disabled={isBusy || !shippingDraft.outbound_option_id}
-                                  >
-                                    {isBusy ? 'Saving...' : 'Save outbound shipping'}
-                                  </button>
-                                  <button
-                                    className="ldc-button-secondary"
-                                    type="button"
-                                    onClick={() => handleClearExchangeOutboundShipping(exchange.id)}
-                                    disabled={isBusy || !outboundShippingActionId}
-                                  >
-                                    Clear outbound shipping
-                                  </button>
-                                </div>
-                              </div>
-
-                              <div className="mt-4 flex flex-wrap items-center gap-3">
-                                <button
-                                  className="ldc-button-secondary"
-                                  type="button"
-                                  onClick={() => handleConfirmExchangeRequest(exchange.id)}
-                                  disabled={isBusy}
-                                >
-                                  Confirm exchange request
-                                </button>
-                                <button
-                                  className="ldc-button-secondary"
-                                  type="button"
-                                  onClick={() => handleCancelExchange(exchange.id)}
-                                  disabled={isBusy}
-                                >
-                                  Cancel exchange
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <p className="text-sm text-ldc-ink/60">No exchanges yet.</p>
-                      )}
-                    </div>
-                  </div>
+                  {renderExchangeWorkflow(true)}
                 </>
               ) : null}
             </>
           ) : null}
+
+          {isReturn ? (
+            <>
+              <div className="ldc-card p-6">
+                <h3 className="font-heading text-xl text-ldc-ink">Return Details</h3>
+                <p className="mt-2 text-sm text-ldc-ink/70">
+                  Review return metadata and the related order.
+                </p>
+                <div className="mt-4 grid gap-4 md:grid-cols-3">
+                  <div className="rounded-2xl bg-white/70 px-4 py-3">
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                      Order
+                    </div>
+                    <div className="mt-2 text-sm text-ldc-ink">
+                      {returnOrderId ? (
+                        <Link className="underline" to={`/orders/${returnOrderId}`}>
+                          {returnOrderLabel || returnOrderId}
+                        </Link>
+                      ) : (
+                        '-'
+                      )}
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-white/70 px-4 py-3">
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                      Status
+                    </div>
+                    <div className="mt-2 text-sm text-ldc-ink">
+                      <StatusBadge value={record?.status || 'pending'} />
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-white/70 px-4 py-3">
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                      Refund
+                    </div>
+                    <div className="mt-2 text-sm text-ldc-ink">
+                      {formatMoneyOrDash(returnRefundAmount, orderCurrency)}
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-white/70 px-4 py-3">
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                      Return shipping
+                    </div>
+                    <div className="mt-2 text-sm text-ldc-ink">
+                      {returnShippingLabel || '—'}
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-white/70 px-4 py-3">
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                      Created
+                    </div>
+                    <div className="mt-2 text-sm text-ldc-ink">
+                      {record?.created_at ? formatDateTime(record.created_at) : '—'}
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-white/70 px-4 py-3">
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                      Updated
+                    </div>
+                    <div className="mt-2 text-sm text-ldc-ink">
+                      {record?.updated_at ? formatDateTime(record.updated_at) : '—'}
+                    </div>
+                  </div>
+                </div>
+                {linkedOrderLoading ? (
+                  <div className="mt-3 text-xs text-ldc-ink/60">Loading order details...</div>
+                ) : null}
+                {linkedOrderError ? (
+                  <div className="mt-3 text-sm text-rose-600">{linkedOrderError}</div>
+                ) : null}
+              </div>
+
+              <div className="ldc-card p-6">
+                <h3 className="font-heading text-xl text-ldc-ink">Return Items</h3>
+                <p className="mt-2 text-sm text-ldc-ink/70">
+                  Requested items and quantities for this return.
+                </p>
+                <div className="mt-4">
+                  <DataTable
+                    columns={returnItemColumns}
+                    rows={returnItemRows}
+                    getRowId={(row) => row.id}
+                    isLoading={false}
+                    emptyText="No return items recorded yet."
+                  />
+                </div>
+              </div>
+
+              <div className="ldc-card p-6">
+                <h3 className="font-heading text-xl text-ldc-ink">Return Workflow</h3>
+                <p className="mt-2 text-sm text-ldc-ink/70">
+                  Request items and confirm receipt as they come back.
+                </p>
+                {returnReasonsError ? (
+                  <div className="mt-3 text-sm text-rose-600">{returnReasonsError}</div>
+                ) : null}
+                {returnReasonsLoading ? (
+                  <div className="mt-2 text-xs text-ldc-ink/60">Loading return reasons...</div>
+                ) : null}
+                {returnState.error ? (
+                  <div className="mt-3 text-sm text-rose-600">{returnState.error}</div>
+                ) : null}
+                {returnState.success ? (
+                  <div className="mt-3 text-sm text-emerald-700">{returnState.success}</div>
+                ) : null}
+
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Description
+                    <input
+                      className="ldc-input mt-2"
+                      value={returnDraft.description}
+                      onChange={handleReturnDraftChange('description')}
+                    />
+                  </label>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Internal note
+                    <input
+                      className="ldc-input mt-2"
+                      value={returnDraft.internal_note}
+                      onChange={handleReturnDraftChange('internal_note')}
+                    />
+                  </label>
+                  <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-ldc-plum"
+                      checked={returnDraft.notify_customer}
+                      onChange={handleReturnDraftToggle}
+                    />
+                    Notify customer
+                  </label>
+                </div>
+
+                <div className="mt-6">
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                    Request items
+                  </div>
+                  <div className="mt-3 space-y-3">
+                    {returnItemSource.length ? (
+                      returnItemSource.map((item) => {
+                        const itemId = getOrderItemId(item);
+                        if (!itemId) return null;
+                        const line = getReturnItemLine(item);
+                        const entry = returnRequestDraft[itemId] || { quantity: 0, reason_id: '' };
+                        return (
+                          <div key={itemId} className="rounded-2xl bg-white/80 p-3">
+                            <div className="text-sm font-semibold text-ldc-ink">
+                              {getLineItemTitle(line)}
+                            </div>
+                            <div className="mt-1 text-xs text-ldc-ink/60">
+                              SKU: {getReturnItemSku(item)}
+                            </div>
+                            <div className="mt-2 grid gap-3 md:grid-cols-2">
+                              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                Quantity
+                                <input
+                                  className="ldc-input mt-2"
+                                  type="number"
+                                  min="0"
+                                  max={line?.quantity ?? undefined}
+                                  value={entry.quantity ?? ''}
+                                  onChange={handleReturnRequestItemChange(record.id, itemId, 'quantity')}
+                                />
+                              </label>
+                              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                Reason
+                                <select
+                                  className="ldc-input mt-2"
+                                  value={entry.reason_id || ''}
+                                  onChange={handleReturnRequestItemChange(record.id, itemId, 'reason_id')}
+                                >
+                                  <option value="">Select reason</option>
+                                  {returnReasons.map((reason) => (
+                                    <option key={reason.id} value={reason.id}>
+                                      {reason.label || reason.value || reason.id}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm text-ldc-ink/60">No items available.</p>
+                    )}
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <button
+                      className="ldc-button-primary"
+                      type="button"
+                      onClick={() => handleRequestReturnItems(record.id)}
+                      disabled={returnIsBusy}
+                    >
+                      {returnIsBusy ? 'Saving...' : 'Request items'}
+                    </button>
+                    <button
+                      className="ldc-button-secondary"
+                      type="button"
+                      onClick={() => handleConfirmReturnRequest(record.id)}
+                      disabled={returnIsBusy}
+                    >
+                      Confirm request
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                    Receive items
+                  </div>
+                  <div className="mt-3 space-y-3">
+                    {returnItemSource.length ? (
+                      returnItemSource.map((item) => {
+                        const itemId = getOrderItemId(item);
+                        if (!itemId) return null;
+                        const line = getReturnItemLine(item);
+                        const quantity = returnReceiveDraft[itemId] ?? '';
+                        return (
+                          <div key={itemId} className="rounded-2xl bg-white/80 p-3">
+                            <div className="text-sm font-semibold text-ldc-ink">
+                              {getLineItemTitle(line)}
+                            </div>
+                            <div className="mt-1 text-xs text-ldc-ink/60">
+                              SKU: {getReturnItemSku(item)}
+                            </div>
+                            <label className="mt-2 block text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                              Quantity received
+                              <input
+                                className="ldc-input mt-2"
+                                type="number"
+                                min="0"
+                                max={line?.quantity ?? undefined}
+                                value={quantity}
+                                onChange={handleReturnReceiveItemChange(record.id, itemId)}
+                              />
+                            </label>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm text-ldc-ink/60">No items available.</p>
+                    )}
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <button
+                      className="ldc-button-secondary"
+                      type="button"
+                      onClick={() => handleStartReturnReceive(record.id)}
+                      disabled={returnIsBusy}
+                    >
+                      Start receiving
+                    </button>
+                    <button
+                      className="ldc-button-primary"
+                      type="button"
+                      onClick={() => handleReceiveReturnItems(record.id)}
+                      disabled={returnIsBusy}
+                    >
+                      Receive items
+                    </button>
+                    <button
+                      className="ldc-button-secondary"
+                      type="button"
+                      onClick={() => handleConfirmReturnReceive(record.id)}
+                      disabled={returnIsBusy}
+                    >
+                      Confirm receipt
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <button
+                    className="ldc-button-secondary"
+                    type="button"
+                    onClick={() => handleCancelReturn(record.id)}
+                    disabled={returnIsBusy}
+                  >
+                    Cancel return
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : null}
+
+          {isExchange ? renderExchangeWorkflow(false) : null}
 
           {isProduct && productDraft ? (
             <div className="ldc-card p-6">
@@ -12123,6 +14798,116 @@ const ResourceDetail = ({ resource }) => {
             </div>
           ) : null}
 
+          {isProductType ? (
+            <div className="ldc-card p-6">
+              <h3 className="font-heading text-xl text-ldc-ink">Product Type</h3>
+              <p className="mt-2 text-sm text-ldc-ink/70">
+                Manage reusable product type labels and metadata.
+              </p>
+              <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleSaveProductType}>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Value
+                  <input
+                    className="ldc-input mt-2"
+                    value={productTypeDraft.value}
+                    onChange={handleProductTypeDraftChange('value')}
+                  />
+                </label>
+                <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Metadata (optional)
+                  <textarea
+                    className="ldc-input mt-2 min-h-[90px] font-mono text-xs"
+                    value={productTypeDraft.metadata}
+                    onChange={handleProductTypeDraftChange('metadata')}
+                    placeholder='{"priority":"high"}'
+                  />
+                </label>
+                {productTypeState.error ? (
+                  <div className="md:col-span-2 text-sm text-rose-600">
+                    {productTypeState.error}
+                  </div>
+                ) : null}
+                {productTypeState.success ? (
+                  <div className="md:col-span-2 text-sm text-emerald-700">
+                    {productTypeState.success}
+                  </div>
+                ) : null}
+                <div className="md:col-span-2 flex flex-wrap items-center gap-3">
+                  <button
+                    className="ldc-button-primary"
+                    type="submit"
+                    disabled={productTypeState.saving}
+                  >
+                    {productTypeState.saving ? 'Saving...' : 'Save product type'}
+                  </button>
+                  <button
+                    className="ldc-button-secondary"
+                    type="button"
+                    onClick={handleDeleteProductType}
+                    disabled={productTypeState.deleting}
+                  >
+                    {productTypeState.deleting ? 'Deleting...' : 'Delete product type'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          ) : null}
+
+          {isProductTag ? (
+            <div className="ldc-card p-6">
+              <h3 className="font-heading text-xl text-ldc-ink">Product Tag</h3>
+              <p className="mt-2 text-sm text-ldc-ink/70">
+                Update tags used to organize and filter products.
+              </p>
+              <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleSaveProductTag}>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Value
+                  <input
+                    className="ldc-input mt-2"
+                    value={productTagDraft.value}
+                    onChange={handleProductTagDraftChange('value')}
+                  />
+                </label>
+                <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Metadata (optional)
+                  <textarea
+                    className="ldc-input mt-2 min-h-[90px] font-mono text-xs"
+                    value={productTagDraft.metadata}
+                    onChange={handleProductTagDraftChange('metadata')}
+                    placeholder='{"badge":"top"}'
+                  />
+                </label>
+                {productTagState.error ? (
+                  <div className="md:col-span-2 text-sm text-rose-600">
+                    {productTagState.error}
+                  </div>
+                ) : null}
+                {productTagState.success ? (
+                  <div className="md:col-span-2 text-sm text-emerald-700">
+                    {productTagState.success}
+                  </div>
+                ) : null}
+                <div className="md:col-span-2 flex flex-wrap items-center gap-3">
+                  <button
+                    className="ldc-button-primary"
+                    type="submit"
+                    disabled={productTagState.saving}
+                  >
+                    {productTagState.saving ? 'Saving...' : 'Save product tag'}
+                  </button>
+                  <button
+                    className="ldc-button-secondary"
+                    type="button"
+                    onClick={handleDeleteProductTag}
+                    disabled={productTagState.deleting}
+                  >
+                    {productTagState.deleting ? 'Deleting...' : 'Delete product tag'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          ) : null}
+
           {isUser ? (
             <div className="ldc-card p-6">
               <h3 className="font-heading text-xl text-ldc-ink">Team Member</h3>
@@ -12911,6 +15696,7 @@ const ResourceDetail = ({ resource }) => {
                 {opsMetaError ? (
                   <div className="md:col-span-2 text-sm text-rose-600">{opsMetaError}</div>
                 ) : null}
+                {renderOpsMetaFailures('md:col-span-2 text-xs text-ldc-ink/60')}
                 {regionState.error ? (
                   <div className="md:col-span-2 text-sm text-rose-600">{regionState.error}</div>
                 ) : null}
@@ -13249,6 +16035,7 @@ const ResourceDetail = ({ resource }) => {
                 {opsMetaError ? (
                   <div className="text-sm text-rose-600">{opsMetaError}</div>
                 ) : null}
+                {renderOpsMetaFailures('text-xs text-ldc-ink/60')}
                 {shippingOptionState.error ? (
                   <div className="text-sm text-rose-600">{shippingOptionState.error}</div>
                 ) : null}
@@ -13330,21 +16117,21 @@ const ResourceDetail = ({ resource }) => {
                       className="ldc-input mt-2"
                       value={taxRegionDraft.parent_id}
                       onChange={handleTaxRegionDraftChange('parent_id')}
-                      disabled
                     >
                       <option value="">No parent</option>
-                      {opsMeta.taxRegions.map((region) => (
-                        <option key={region.id} value={region.id}>
-                          {region.country_code || region.name || region.id}
-                        </option>
-                      ))}
+                      {opsMeta.taxRegions
+                        .filter((region) => region.id !== record?.id)
+                        .map((region) => (
+                          <option key={region.id} value={region.id}>
+                            {region.country_code || region.name || region.id}
+                          </option>
+                        ))}
                     </select>
                   ) : (
                     <input
                       className="ldc-input mt-2"
                       value={taxRegionDraft.parent_id}
                       onChange={handleTaxRegionDraftChange('parent_id')}
-                      disabled
                     />
                   )}
                 </label>
@@ -13365,6 +16152,7 @@ const ResourceDetail = ({ resource }) => {
                 {opsMetaError ? (
                   <div className="md:col-span-3 text-sm text-rose-600">{opsMetaError}</div>
                 ) : null}
+                {renderOpsMetaFailures('md:col-span-3 text-xs text-ldc-ink/60')}
                 {taxRegionState.error ? (
                   <div className="md:col-span-3 text-sm text-rose-600">
                     {taxRegionState.error}
@@ -13703,6 +16491,7 @@ const ResourceDetail = ({ resource }) => {
                 {opsMetaError ? (
                   <div className="md:col-span-2 text-sm text-rose-600">{opsMetaError}</div>
                 ) : null}
+                {renderOpsMetaFailures('md:col-span-2 text-xs text-ldc-ink/60')}
                 {taxRateState.error ? (
                   <div className="md:col-span-2 text-sm text-rose-600">
                     {taxRateState.error}
@@ -13728,6 +16517,171 @@ const ResourceDetail = ({ resource }) => {
                     disabled={taxRateState.deleting}
                   >
                     {taxRateState.deleting ? 'Deleting...' : 'Delete tax rate'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          ) : null}
+
+          {isReturnReason ? (
+            <div className="ldc-card p-6">
+              <h3 className="font-heading text-xl text-ldc-ink">Return Reason</h3>
+              <p className="mt-2 text-sm text-ldc-ink/70">
+                Manage reasons shown in return and exchange workflows.
+              </p>
+              <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleSaveReturnReason}>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Label
+                  <input
+                    className="ldc-input mt-2"
+                    value={returnReasonDraft.label}
+                    onChange={handleReturnReasonDraftChange('label')}
+                  />
+                </label>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Value
+                  <input
+                    className="ldc-input mt-2"
+                    value={returnReasonDraft.value}
+                    onChange={handleReturnReasonDraftChange('value')}
+                  />
+                </label>
+                <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Description (optional)
+                  <textarea
+                    className="ldc-input mt-2 min-h-[90px]"
+                    value={returnReasonDraft.description}
+                    onChange={handleReturnReasonDraftChange('description')}
+                  />
+                </label>
+                <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Parent reason (optional)
+                  {returnReasonParentOptions.length ? (
+                    <select
+                      className="ldc-input mt-2"
+                      value={returnReasonDraft.parent_return_reason_id}
+                      onChange={handleReturnReasonDraftChange('parent_return_reason_id')}
+                    >
+                      <option value="">No parent</option>
+                      {returnReasonParentOptions.map((reason) => (
+                        <option key={reason.id} value={reason.id}>
+                          {reason.label || reason.value || reason.id}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      className="ldc-input mt-2"
+                      value={returnReasonDraft.parent_return_reason_id}
+                      onChange={handleReturnReasonDraftChange('parent_return_reason_id')}
+                      placeholder="rr_..."
+                    />
+                  )}
+                  {returnReasonsLoading ? (
+                    <div className="mt-2 text-xs text-ldc-ink/60">Loading return reasons...</div>
+                  ) : null}
+                </label>
+                <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Metadata (optional)
+                  <textarea
+                    className="ldc-input mt-2 min-h-[90px] font-mono text-xs"
+                    value={returnReasonDraft.metadata}
+                    onChange={handleReturnReasonDraftChange('metadata')}
+                    placeholder='{"priority":"high"}'
+                  />
+                </label>
+                {returnReasonsError ? (
+                  <div className="md:col-span-2 text-sm text-rose-600">
+                    {returnReasonsError}
+                  </div>
+                ) : null}
+                {returnReasonState.error ? (
+                  <div className="md:col-span-2 text-sm text-rose-600">
+                    {returnReasonState.error}
+                  </div>
+                ) : null}
+                {returnReasonState.success ? (
+                  <div className="md:col-span-2 text-sm text-emerald-700">
+                    {returnReasonState.success}
+                  </div>
+                ) : null}
+                <div className="md:col-span-2 flex flex-wrap items-center gap-3">
+                  <button
+                    className="ldc-button-primary"
+                    type="submit"
+                    disabled={returnReasonState.saving}
+                  >
+                    {returnReasonState.saving ? 'Saving...' : 'Save return reason'}
+                  </button>
+                  <button
+                    className="ldc-button-secondary"
+                    type="button"
+                    onClick={handleDeleteReturnReason}
+                    disabled={returnReasonState.deleting}
+                  >
+                    {returnReasonState.deleting ? 'Deleting...' : 'Delete return reason'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          ) : null}
+
+          {isRefundReason ? (
+            <div className="ldc-card p-6">
+              <h3 className="font-heading text-xl text-ldc-ink">Refund Reason</h3>
+              <p className="mt-2 text-sm text-ldc-ink/70">
+                Manage reasons displayed when issuing refunds.
+              </p>
+              <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleSaveRefundReason}>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Label
+                  <input
+                    className="ldc-input mt-2"
+                    value={refundReasonDraft.label}
+                    onChange={handleRefundReasonDraftChange('label')}
+                  />
+                </label>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Code
+                  <input
+                    className="ldc-input mt-2"
+                    value={refundReasonDraft.code}
+                    onChange={handleRefundReasonDraftChange('code')}
+                  />
+                </label>
+                <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Description (optional)
+                  <textarea
+                    className="ldc-input mt-2 min-h-[90px]"
+                    value={refundReasonDraft.description}
+                    onChange={handleRefundReasonDraftChange('description')}
+                  />
+                </label>
+                {refundReasonState.error ? (
+                  <div className="md:col-span-2 text-sm text-rose-600">
+                    {refundReasonState.error}
+                  </div>
+                ) : null}
+                {refundReasonState.success ? (
+                  <div className="md:col-span-2 text-sm text-emerald-700">
+                    {refundReasonState.success}
+                  </div>
+                ) : null}
+                <div className="md:col-span-2 flex flex-wrap items-center gap-3">
+                  <button
+                    className="ldc-button-primary"
+                    type="submit"
+                    disabled={refundReasonState.saving}
+                  >
+                    {refundReasonState.saving ? 'Saving...' : 'Save refund reason'}
+                  </button>
+                  <button
+                    className="ldc-button-secondary"
+                    type="button"
+                    onClick={handleDeleteRefundReason}
+                    disabled={refundReasonState.deleting}
+                  >
+                    {refundReasonState.deleting ? 'Deleting...' : 'Delete refund reason'}
                   </button>
                 </div>
               </form>

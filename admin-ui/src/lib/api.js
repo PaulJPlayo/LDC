@@ -155,3 +155,18 @@ export const getDetail = async (endpoint, id, params = {}) => {
   const suffix = query.toString();
   return request(`${endpoint}/${id}${suffix ? `?${suffix}` : ''}`);
 };
+
+export const formatApiError = (error, fallback = 'Something went wrong.') => {
+  if (!error) return fallback;
+  if (error instanceof ApiError) {
+    if ([401, 403].includes(error.status)) {
+      return 'Your session expired or you do not have access. Please sign in again.';
+    }
+    return error.message || fallback;
+  }
+  const message = error?.message || fallback;
+  if (message === 'Failed to fetch' || message.includes('NetworkError')) {
+    return 'Unable to reach the backend API. Check the server URL and status.';
+  }
+  return message;
+};
