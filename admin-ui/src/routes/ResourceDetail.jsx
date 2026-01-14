@@ -31,6 +31,42 @@ const formatMoneyOrDash = (amount, currency) => {
   return formatMoney(numeric, currency);
 };
 
+const extractServiceZones = (payload) => {
+  const zones = [];
+  const seen = new Set();
+  const addZone = (zone, set, location = null) => {
+    if (!zone?.id || seen.has(zone.id)) return;
+    seen.add(zone.id);
+    const zoneLabel = zone?.name || zone.id;
+    const setLabel = set?.name || set?.id || 'Fulfillment set';
+    const label = location
+      ? `${location?.name || location?.id || 'Location'} / ${setLabel} - ${zoneLabel}`
+      : `${setLabel} - ${zoneLabel}`;
+    zones.push({ id: zone.id, name: label });
+  };
+
+  const sets = getArrayFromPayload(payload, 'fulfillment_sets');
+  if (sets.length) {
+    sets.forEach((set) => {
+      const serviceZones = Array.isArray(set?.service_zones) ? set.service_zones : [];
+      serviceZones.forEach((zone) => addZone(zone, set));
+    });
+    return zones;
+  }
+
+  const locations = getArrayFromPayload(payload, 'stock_locations');
+  locations.forEach((location) => {
+    const fulfillmentSets = Array.isArray(location?.fulfillment_sets)
+      ? location.fulfillment_sets
+      : [];
+    fulfillmentSets.forEach((set) => {
+      const serviceZones = Array.isArray(set?.service_zones) ? set.service_zones : [];
+      serviceZones.forEach((zone) => addZone(zone, set, location));
+    });
+  });
+  return zones;
+};
+
 const OPS_META_LABELS = {
   paymentProviders: 'Payment providers',
   fulfillmentProviders: 'Fulfillment providers',
@@ -2332,7 +2368,10 @@ const ResourceDetail = ({ resource }) => {
       const tasks = [];
 
       if (isRegion) {
-        tasks.push({ key: 'paymentProviders', promise: getList('/admin/payment-providers', { limit: 200 }) });
+        tasks.push({
+          key: 'paymentProviders',
+          promise: getList('/admin/payments/payment-providers', { limit: 200 })
+        });
       }
       if (isShippingOption) {
         tasks.push({
@@ -2349,7 +2388,10 @@ const ResourceDetail = ({ resource }) => {
         });
         tasks.push({
           key: 'serviceZones',
-          promise: getList('/admin/fulfillment-sets', { limit: 200, fields: '+service_zones' })
+          promise: getList('/admin/stock-locations', {
+            limit: 200,
+            fields: '+fulfillment_sets,+fulfillment_sets.service_zones'
+          })
         });
       }
       if (isTaxRegion) {
@@ -2414,19 +2456,7 @@ const ResourceDetail = ({ resource }) => {
             nextMeta.taxRegions = getArrayFromPayload(payload, 'tax_regions');
             break;
           case 'serviceZones': {
-            const sets = getArrayFromPayload(payload, 'fulfillment_sets');
-            const zones = [];
-            sets.forEach((set) => {
-              const serviceZones = Array.isArray(set?.service_zones) ? set.service_zones : [];
-              serviceZones.forEach((zone) => {
-                if (!zone?.id) return;
-                zones.push({
-                  id: zone.id,
-                  name: `${set?.name || set?.id || 'Fulfillment set'} - ${zone?.name || zone.id}`
-                });
-              });
-            });
-            nextMeta.serviceZones = zones;
+            nextMeta.serviceZones = extractServiceZones(payload);
             break;
           }
           default:
