@@ -31,6 +31,50 @@ const formatMoneyOrDash = (amount, currency) => {
   return formatMoney(numeric, currency);
 };
 
+const GEO_ZONE_TYPE_OPTIONS = [
+  { value: 'country', label: 'Country' },
+  { value: 'province', label: 'Province' },
+  { value: 'city', label: 'City' },
+  { value: 'zip', label: 'Postal code' }
+];
+
+const buildGeoZoneDraft = (zone = {}) => ({
+  id: zone?.id,
+  type: zone?.type || 'country',
+  country_code: zone?.country_code || '',
+  province_code: zone?.province_code || '',
+  city: zone?.city || '',
+  postal_expression: zone?.postal_expression
+    ? JSON.stringify(zone.postal_expression, null, 2)
+    : ''
+});
+
+const buildServiceZoneDraft = (zone = {}) => ({
+  name: zone?.name || '',
+  geo_zones: Array.isArray(zone?.geo_zones) ? zone.geo_zones.map(buildGeoZoneDraft) : []
+});
+
+const formatGeoZoneSummary = (zone) => {
+  if (!zone) return 'Unknown zone';
+  const type = zone.type || 'country';
+  const country = zone.country_code ? zone.country_code.toUpperCase() : '-';
+  if (type === 'country') return `Country: ${country}`;
+  if (type === 'province') {
+    const province = zone.province_code ? zone.province_code.toUpperCase() : '-';
+    return `Province: ${country}-${province}`;
+  }
+  if (type === 'city') {
+    const province = zone.province_code ? zone.province_code.toUpperCase() : '-';
+    return `City: ${zone.city || '-'} (${country}-${province})`;
+  }
+  if (type === 'zip') {
+    const province = zone.province_code ? zone.province_code.toUpperCase() : '-';
+    const postal = zone.postal_expression ? JSON.stringify(zone.postal_expression) : '-';
+    return `Postal: ${zone.city || '-'} (${country}-${province}) ${postal}`;
+  }
+  return `${type}: ${country}`;
+};
+
 const extractServiceZones = (payload) => {
   const zones = [];
   const seen = new Set();
@@ -1266,6 +1310,40 @@ const ResourceDetail = ({ resource }) => {
     error: '',
     success: ''
   });
+  const [stockLocationMeta, setStockLocationMeta] = useState({
+    salesChannels: [],
+    fulfillmentProviders: []
+  });
+  const [stockLocationMetaLoading, setStockLocationMetaLoading] = useState(false);
+  const [stockLocationMetaError, setStockLocationMetaError] = useState('');
+  const [fulfillmentSetDraft, setFulfillmentSetDraft] = useState({
+    name: '',
+    type: ''
+  });
+  const [fulfillmentSetState, setFulfillmentSetState] = useState({
+    saving: false,
+    deletingId: null,
+    error: '',
+    success: ''
+  });
+  const [serviceZoneDrafts, setServiceZoneDrafts] = useState({});
+  const [serviceZoneEdits, setServiceZoneEdits] = useState({});
+  const [serviceZoneState, setServiceZoneState] = useState({
+    savingId: null,
+    deletingId: null,
+    error: '',
+    success: ''
+  });
+  const [locationSalesChannelState, setLocationSalesChannelState] = useState({
+    savingId: null,
+    error: '',
+    success: ''
+  });
+  const [locationProviderState, setLocationProviderState] = useState({
+    savingId: null,
+    error: '',
+    success: ''
+  });
   const [collectionDraft, setCollectionDraft] = useState({
     title: '',
     handle: '',
@@ -1822,6 +1900,31 @@ const ResourceDetail = ({ resource }) => {
     return options;
   }, [isReturnReason, returnReasons, record, returnReasonDraft.parent_return_reason_id]);
 
+  const stockLocationFulfillmentSets = useMemo(
+    () => (Array.isArray(record?.fulfillment_sets) ? record.fulfillment_sets : []),
+    [record?.fulfillment_sets]
+  );
+  const stockLocationSalesChannels = useMemo(
+    () => (Array.isArray(record?.sales_channels) ? record.sales_channels : []),
+    [record?.sales_channels]
+  );
+  const stockLocationFulfillmentProviders = useMemo(
+    () => (Array.isArray(record?.fulfillment_providers) ? record.fulfillment_providers : []),
+    [record?.fulfillment_providers]
+  );
+  const availableStockLocationSalesChannels = useMemo(() => {
+    const assigned = new Set(stockLocationSalesChannels.map((channel) => channel?.id).filter(Boolean));
+    return (stockLocationMeta.salesChannels || []).filter((channel) => channel?.id && !assigned.has(channel.id));
+  }, [stockLocationMeta.salesChannels, stockLocationSalesChannels]);
+  const availableStockLocationProviders = useMemo(() => {
+    const assigned = new Set(
+      stockLocationFulfillmentProviders.map((provider) => provider?.id).filter(Boolean)
+    );
+    return (stockLocationMeta.fulfillmentProviders || []).filter(
+      (provider) => provider?.id && !assigned.has(provider.id)
+    );
+  }, [stockLocationMeta.fulfillmentProviders, stockLocationFulfillmentProviders]);
+
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -1843,13 +1946,16 @@ const ResourceDetail = ({ resource }) => {
               : isPriceList
                 ? { fields: '+prices,+prices.variant,+prices.variant.product' }
                 : isCustomer
-                  ? { fields: '+groups' }
-                  : isCustomerGroup
-                    ? { fields: '+customers' }
-                    : isInventoryItem
-                      ? { fields: '+location_levels' }
-                      : isStockLocation
-                        ? { fields: '+address' }
+                    ? { fields: '+groups' }
+                    : isCustomerGroup
+                      ? { fields: '+customers' }
+                      : isInventoryItem
+                        ? { fields: '+location_levels' }
+                        : isStockLocation
+                        ? {
+                            fields:
+                              '+address,+sales_channels,+fulfillment_providers,+fulfillment_sets,+fulfillment_sets.service_zones,+fulfillment_sets.service_zones.geo_zones'
+                          }
                         : undefined;
           const payload = await getDetail(resource.endpoint, id, detailParams);
           setRecord(getObjectFromPayload(payload, resource.detailKey));
@@ -2634,6 +2740,57 @@ const ResourceDetail = ({ resource }) => {
       isActive = false;
     };
   }, [isInventoryItem]);
+
+  useEffect(() => {
+    if (!isStockLocation) {
+      setStockLocationMeta({ salesChannels: [], fulfillmentProviders: [] });
+      setStockLocationMetaLoading(false);
+      setStockLocationMetaError('');
+      return;
+    }
+    let isActive = true;
+
+    const loadStockLocationMeta = async () => {
+      setStockLocationMetaLoading(true);
+      setStockLocationMetaError('');
+      const results = await Promise.allSettled([
+        getList('/admin/sales-channels', { limit: 200 }),
+        getList('/admin/fulfillment-providers', { limit: 200 })
+      ]);
+
+      if (!isActive) return;
+
+      const [salesChannelsResult, fulfillmentProvidersResult] = results;
+
+      const salesChannelsPayload =
+        salesChannelsResult.status === 'fulfilled' ? salesChannelsResult.value : null;
+      const fulfillmentProvidersPayload =
+        fulfillmentProvidersResult.status === 'fulfilled' ? fulfillmentProvidersResult.value : null;
+
+      setStockLocationMeta({
+        salesChannels: sortByLabel(
+          getArrayFromPayload(salesChannelsPayload, 'sales_channels'),
+          (channel) => channel?.name || channel?.id
+        ),
+        fulfillmentProviders: sortByLabel(
+          getArrayFromPayload(fulfillmentProvidersPayload, 'fulfillment_providers'),
+          (provider) => provider?.id
+        )
+      });
+
+      const failedCount = results.filter((result) => result.status === 'rejected').length;
+      if (failedCount) {
+        setStockLocationMetaError('Some location settings failed to load.');
+      }
+      setStockLocationMetaLoading(false);
+    };
+
+    loadStockLocationMeta();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isStockLocation]);
 
   useEffect(() => {
     if (!isStore) {
@@ -3959,6 +4116,23 @@ const ResourceDetail = ({ resource }) => {
     }
   };
 
+  const refreshStockLocation = async () => {
+    if (!isStockLocation || !record?.id) return;
+    try {
+      const payload = await getDetail(resource.endpoint, record.id, {
+        fields:
+          '+address,+sales_channels,+fulfillment_providers,+fulfillment_sets,+fulfillment_sets.service_zones,+fulfillment_sets.service_zones.geo_zones'
+      });
+      const updated = getObjectFromPayload(payload, resource?.detailKey);
+      if (updated) setRecord(updated);
+    } catch (err) {
+      setStockLocationState((prev) => ({
+        ...prev,
+        error: err?.message || 'Unable to refresh stock location.'
+      }));
+    }
+  };
+
   const refreshInventoryReservations = async () => {
     if (!isInventoryItem || !record?.id) return;
     setInventoryReservationsLoading(true);
@@ -5242,6 +5416,404 @@ const ResourceDetail = ({ resource }) => {
         saving: false,
         deleting: false,
         error: err?.message || 'Unable to delete stock location.',
+        success: ''
+      });
+    }
+  };
+
+  const buildEmptyServiceZoneDraft = () => ({
+    name: '',
+    geo_zones: [buildGeoZoneDraft()]
+  });
+
+  const updateServiceZoneDraftState = (setter, key, updater) => {
+    setter((prev) => {
+      const current = prev[key] || buildEmptyServiceZoneDraft();
+      return { ...prev, [key]: updater(current) };
+    });
+  };
+
+  const handleFulfillmentSetDraftChange = (field) => (event) => {
+    const value = event.target.value;
+    setFulfillmentSetDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const normalizeGeoZones = (drafts = []) => {
+    const zones = [];
+    for (let index = 0; index < drafts.length; index += 1) {
+      const draft = drafts[index] || {};
+      const type = (draft.type || 'country').trim();
+      const country = String(draft.country_code || '').trim().toLowerCase();
+      const province = String(draft.province_code || '').trim().toLowerCase();
+      const city = String(draft.city || '').trim();
+      const postalExpression = String(draft.postal_expression || '').trim();
+      const hasData = country || province || city || postalExpression;
+      if (!hasData) continue;
+      if (!country) {
+        return { zones: [], error: `Geo zone ${index + 1}: country code is required.` };
+      }
+      if (['province', 'city', 'zip'].includes(type) && !province) {
+        return { zones: [], error: `Geo zone ${index + 1}: province code is required.` };
+      }
+      if (['city', 'zip'].includes(type) && !city) {
+        return { zones: [], error: `Geo zone ${index + 1}: city is required.` };
+      }
+      const payload = {
+        type,
+        country_code: country,
+        ...(province ? { province_code: province } : {}),
+        ...(city ? { city } : {})
+      };
+      if (type === 'zip') {
+        const { data, error } = parseJsonInput(postalExpression || '{}');
+        if (error) {
+          return { zones: [], error: `Geo zone ${index + 1}: postal expression ${error}` };
+        }
+        payload.postal_expression = data || {};
+      }
+      if (draft.id) payload.id = draft.id;
+      zones.push(payload);
+    }
+    return { zones, error: '' };
+  };
+
+  const handleCreateFulfillmentSet = async (event) => {
+    event.preventDefault();
+    if (!record?.id) return;
+    const name = fulfillmentSetDraft.name.trim();
+    const type = fulfillmentSetDraft.type.trim();
+    if (!name || !type) {
+      setFulfillmentSetState({
+        saving: false,
+        deletingId: null,
+        error: 'Name and type are required.',
+        success: ''
+      });
+      return;
+    }
+    setFulfillmentSetState({ saving: true, deletingId: null, error: '', success: '' });
+    try {
+      await request(`/admin/stock-locations/${record.id}/fulfillment-sets`, {
+        method: 'POST',
+        body: { name, type }
+      });
+      setFulfillmentSetDraft({ name: '', type: '' });
+      setFulfillmentSetState({
+        saving: false,
+        deletingId: null,
+        error: '',
+        success: 'Fulfillment set created.'
+      });
+      await refreshStockLocation();
+    } catch (err) {
+      setFulfillmentSetState({
+        saving: false,
+        deletingId: null,
+        error: err?.message || 'Unable to create fulfillment set.',
+        success: ''
+      });
+    }
+  };
+
+  const handleDeleteFulfillmentSet = async (setId) => {
+    if (!setId) return;
+    if (!window.confirm('Delete this fulfillment set?')) return;
+    setFulfillmentSetState({ saving: false, deletingId: setId, error: '', success: '' });
+    try {
+      await request(`/admin/fulfillment-sets/${setId}`, { method: 'DELETE' });
+      setFulfillmentSetState({
+        saving: false,
+        deletingId: null,
+        error: '',
+        success: 'Fulfillment set deleted.'
+      });
+      await refreshStockLocation();
+    } catch (err) {
+      setFulfillmentSetState({
+        saving: false,
+        deletingId: null,
+        error: err?.message || 'Unable to delete fulfillment set.',
+        success: ''
+      });
+    }
+  };
+
+  const handleServiceZoneDraftChange = (setId, field) => (event) => {
+    const value = event.target.value;
+    updateServiceZoneDraftState(setServiceZoneDrafts, setId, (current) => ({
+      ...current,
+      [field]: value
+    }));
+  };
+
+  const handleServiceZoneGeoZoneChange = (setId, index, field) => (event) => {
+    const value = event.target.value;
+    updateServiceZoneDraftState(setServiceZoneDrafts, setId, (current) => {
+      const zones = Array.isArray(current.geo_zones) ? [...current.geo_zones] : [];
+      zones[index] = { ...(zones[index] || buildGeoZoneDraft()), [field]: value };
+      return { ...current, geo_zones: zones };
+    });
+  };
+
+  const handleAddServiceZoneGeoZone = (setId) => {
+    updateServiceZoneDraftState(setServiceZoneDrafts, setId, (current) => ({
+      ...current,
+      geo_zones: [...(current.geo_zones || []), buildGeoZoneDraft()]
+    }));
+  };
+
+  const handleRemoveServiceZoneGeoZone = (setId, index) => {
+    updateServiceZoneDraftState(setServiceZoneDrafts, setId, (current) => {
+      const zones = Array.isArray(current.geo_zones) ? [...current.geo_zones] : [];
+      zones.splice(index, 1);
+      return { ...current, geo_zones: zones };
+    });
+  };
+
+  const handleStartServiceZoneEdit = (zone) => {
+    if (!zone?.id) return;
+    setServiceZoneEdits((prev) => ({ ...prev, [zone.id]: buildServiceZoneDraft(zone) }));
+  };
+
+  const handleCancelServiceZoneEdit = (zoneId) => {
+    if (!zoneId) return;
+    setServiceZoneEdits((prev) => {
+      const next = { ...prev };
+      delete next[zoneId];
+      return next;
+    });
+  };
+
+  const handleServiceZoneEditChange = (zoneId, field) => (event) => {
+    const value = event.target.value;
+    updateServiceZoneDraftState(setServiceZoneEdits, zoneId, (current) => ({
+      ...current,
+      [field]: value
+    }));
+  };
+
+  const handleServiceZoneEditGeoZoneChange = (zoneId, index, field) => (event) => {
+    const value = event.target.value;
+    updateServiceZoneDraftState(setServiceZoneEdits, zoneId, (current) => {
+      const zones = Array.isArray(current.geo_zones) ? [...current.geo_zones] : [];
+      zones[index] = { ...(zones[index] || buildGeoZoneDraft()), [field]: value };
+      return { ...current, geo_zones: zones };
+    });
+  };
+
+  const handleAddServiceZoneEditGeoZone = (zoneId) => {
+    updateServiceZoneDraftState(setServiceZoneEdits, zoneId, (current) => ({
+      ...current,
+      geo_zones: [...(current.geo_zones || []), buildGeoZoneDraft()]
+    }));
+  };
+
+  const handleRemoveServiceZoneEditGeoZone = (zoneId, index) => {
+    updateServiceZoneDraftState(setServiceZoneEdits, zoneId, (current) => {
+      const zones = Array.isArray(current.geo_zones) ? [...current.geo_zones] : [];
+      zones.splice(index, 1);
+      return { ...current, geo_zones: zones };
+    });
+  };
+
+  const handleCreateServiceZone = async (setId) => {
+    const draft = serviceZoneDrafts[setId] || buildEmptyServiceZoneDraft();
+    const name = draft.name.trim();
+    if (!name) {
+      setServiceZoneState({
+        savingId: null,
+        deletingId: null,
+        error: 'Service zone name is required.',
+        success: ''
+      });
+      return;
+    }
+    const { zones, error } = normalizeGeoZones(draft.geo_zones || []);
+    if (error) {
+      setServiceZoneState({ savingId: null, deletingId: null, error, success: '' });
+      return;
+    }
+    setServiceZoneState({ savingId: setId, deletingId: null, error: '', success: '' });
+    try {
+      await request(`/admin/fulfillment-sets/${setId}/service-zones`, {
+        method: 'POST',
+        body: {
+          name,
+          ...(zones.length ? { geo_zones: zones } : {})
+        }
+      });
+      setServiceZoneDrafts((prev) => ({ ...prev, [setId]: buildEmptyServiceZoneDraft() }));
+      setServiceZoneState({
+        savingId: null,
+        deletingId: null,
+        error: '',
+        success: 'Service zone created.'
+      });
+      await refreshStockLocation();
+    } catch (err) {
+      setServiceZoneState({
+        savingId: null,
+        deletingId: null,
+        error: err?.message || 'Unable to create service zone.',
+        success: ''
+      });
+    }
+  };
+
+  const handleSaveServiceZoneEdit = async (setId, zoneId) => {
+    const draft = serviceZoneEdits[zoneId];
+    if (!draft) return;
+    const name = draft.name.trim();
+    const { zones, error } = normalizeGeoZones(draft.geo_zones || []);
+    if (error) {
+      setServiceZoneState({ savingId: null, deletingId: null, error, success: '' });
+      return;
+    }
+    setServiceZoneState({ savingId: zoneId, deletingId: null, error: '', success: '' });
+    try {
+      await request(`/admin/fulfillment-sets/${setId}/service-zones/${zoneId}`, {
+        method: 'POST',
+        body: {
+          ...(name ? { name } : {}),
+          ...(zones.length ? { geo_zones: zones } : {})
+        }
+      });
+      setServiceZoneState({
+        savingId: null,
+        deletingId: null,
+        error: '',
+        success: 'Service zone updated.'
+      });
+      handleCancelServiceZoneEdit(zoneId);
+      await refreshStockLocation();
+    } catch (err) {
+      setServiceZoneState({
+        savingId: null,
+        deletingId: null,
+        error: err?.message || 'Unable to update service zone.',
+        success: ''
+      });
+    }
+  };
+
+  const handleDeleteServiceZone = async (setId, zoneId) => {
+    if (!zoneId) return;
+    if (!window.confirm('Delete this service zone?')) return;
+    setServiceZoneState({ savingId: null, deletingId: zoneId, error: '', success: '' });
+    try {
+      await request(`/admin/fulfillment-sets/${setId}/service-zones/${zoneId}`, { method: 'DELETE' });
+      setServiceZoneState({
+        savingId: null,
+        deletingId: null,
+        error: '',
+        success: 'Service zone deleted.'
+      });
+      await refreshStockLocation();
+    } catch (err) {
+      setServiceZoneState({
+        savingId: null,
+        deletingId: null,
+        error: err?.message || 'Unable to delete service zone.',
+        success: ''
+      });
+    }
+  };
+
+  const updateStockLocationSalesChannels = async ({ add = [], remove = [] }) => {
+    await request(`/admin/stock-locations/${record.id}/sales-channels`, {
+      method: 'POST',
+      body: {
+        ...(add.length ? { add } : {}),
+        ...(remove.length ? { remove } : {})
+      }
+    });
+  };
+
+  const handleAddStockLocationSalesChannel = async (channelId) => {
+    if (!record?.id || !channelId) return;
+    setLocationSalesChannelState({ savingId: channelId, error: '', success: '' });
+    try {
+      await updateStockLocationSalesChannels({ add: [channelId] });
+      setLocationSalesChannelState({
+        savingId: null,
+        error: '',
+        success: 'Sales channel added.'
+      });
+      await refreshStockLocation();
+    } catch (err) {
+      setLocationSalesChannelState({
+        savingId: null,
+        error: err?.message || 'Unable to update sales channels.',
+        success: ''
+      });
+    }
+  };
+
+  const handleRemoveStockLocationSalesChannel = async (channelId) => {
+    if (!record?.id || !channelId) return;
+    setLocationSalesChannelState({ savingId: channelId, error: '', success: '' });
+    try {
+      await updateStockLocationSalesChannels({ remove: [channelId] });
+      setLocationSalesChannelState({
+        savingId: null,
+        error: '',
+        success: 'Sales channel removed.'
+      });
+      await refreshStockLocation();
+    } catch (err) {
+      setLocationSalesChannelState({
+        savingId: null,
+        error: err?.message || 'Unable to update sales channels.',
+        success: ''
+      });
+    }
+  };
+
+  const updateStockLocationFulfillmentProviders = async ({ add = [], remove = [] }) => {
+    await request(`/admin/stock-locations/${record.id}/fulfillment-providers`, {
+      method: 'POST',
+      body: {
+        ...(add.length ? { add } : {}),
+        ...(remove.length ? { remove } : {})
+      }
+    });
+  };
+
+  const handleAddStockLocationFulfillmentProvider = async (providerId) => {
+    if (!record?.id || !providerId) return;
+    setLocationProviderState({ savingId: providerId, error: '', success: '' });
+    try {
+      await updateStockLocationFulfillmentProviders({ add: [providerId] });
+      setLocationProviderState({
+        savingId: null,
+        error: '',
+        success: 'Fulfillment provider added.'
+      });
+      await refreshStockLocation();
+    } catch (err) {
+      setLocationProviderState({
+        savingId: null,
+        error: err?.message || 'Unable to update fulfillment providers.',
+        success: ''
+      });
+    }
+  };
+
+  const handleRemoveStockLocationFulfillmentProvider = async (providerId) => {
+    if (!record?.id || !providerId) return;
+    setLocationProviderState({ savingId: providerId, error: '', success: '' });
+    try {
+      await updateStockLocationFulfillmentProviders({ remove: [providerId] });
+      setLocationProviderState({
+        savingId: null,
+        error: '',
+        success: 'Fulfillment provider removed.'
+      });
+      await refreshStockLocation();
+    } catch (err) {
+      setLocationProviderState({
+        savingId: null,
+        error: err?.message || 'Unable to update fulfillment providers.',
         success: ''
       });
     }
@@ -14199,6 +14771,628 @@ const ResourceDetail = ({ resource }) => {
                   </button>
                 </div>
               </form>
+            </div>
+          ) : null}
+
+          {isStockLocation ? (
+            <div className="ldc-card p-6">
+              <h3 className="font-heading text-xl text-ldc-ink">Fulfillment Sets</h3>
+              <p className="mt-2 text-sm text-ldc-ink/70">
+                Define service zones and shipping reach for this location.
+              </p>
+              {fulfillmentSetState.error ? (
+                <div className="mt-3 text-sm text-rose-600">{fulfillmentSetState.error}</div>
+              ) : null}
+              {fulfillmentSetState.success ? (
+                <div className="mt-3 text-sm text-emerald-700">{fulfillmentSetState.success}</div>
+              ) : null}
+              {serviceZoneState.error ? (
+                <div className="mt-3 text-sm text-rose-600">{serviceZoneState.error}</div>
+              ) : null}
+              {serviceZoneState.success ? (
+                <div className="mt-3 text-sm text-emerald-700">{serviceZoneState.success}</div>
+              ) : null}
+
+              <div className="mt-4 space-y-4">
+                {stockLocationFulfillmentSets.length ? (
+                  stockLocationFulfillmentSets.map((set) => {
+                    const serviceZones = Array.isArray(set?.service_zones) ? set.service_zones : [];
+                    const createDraft = serviceZoneDrafts[set.id] || buildEmptyServiceZoneDraft();
+                    return (
+                      <div key={set.id} className="rounded-2xl bg-white/70 p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-semibold text-ldc-ink">
+                              {set.name || set.id}
+                            </div>
+                            <div className="mt-1 text-xs text-ldc-ink/60">
+                              Type: {set.type || 'delivery'}{' '}
+                              {set.created_at ? `· Created ${formatDateTime(set.created_at)}` : ''}
+                            </div>
+                          </div>
+                          <button
+                            className="ldc-button-secondary"
+                            type="button"
+                            onClick={() => handleDeleteFulfillmentSet(set.id)}
+                            disabled={fulfillmentSetState.deletingId === set.id}
+                          >
+                            {fulfillmentSetState.deletingId === set.id ? 'Deleting...' : 'Delete set'}
+                          </button>
+                        </div>
+
+                        <div className="mt-4">
+                          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                            Service zones
+                          </div>
+                          <div className="mt-3 space-y-3">
+                            {serviceZones.length ? (
+                              serviceZones.map((zone) => {
+                                const editDraft = serviceZoneEdits[zone.id];
+                                const isEditing = Boolean(editDraft);
+                                const geoZones = Array.isArray(zone?.geo_zones) ? zone.geo_zones : [];
+                                return (
+                                  <div
+                                    key={zone.id}
+                                    className="rounded-2xl border border-white/70 bg-white/80 p-3"
+                                  >
+                                    <div className="flex flex-wrap items-start justify-between gap-3">
+                                      <div>
+                                        <div className="text-sm font-semibold text-ldc-ink">
+                                          {zone.name || zone.id}
+                                        </div>
+                                        <div className="mt-1 text-xs text-ldc-ink/60">
+                                          {geoZones.length
+                                            ? `${geoZones.length} geo zone(s)`
+                                            : 'No geo zones yet.'}
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        {!isEditing ? (
+                                          <button
+                                            className="ldc-button-secondary"
+                                            type="button"
+                                            onClick={() => handleStartServiceZoneEdit(zone)}
+                                          >
+                                            Edit
+                                          </button>
+                                        ) : null}
+                                        <button
+                                          className="ldc-button-secondary"
+                                          type="button"
+                                          onClick={() => handleDeleteServiceZone(set.id, zone.id)}
+                                          disabled={serviceZoneState.deletingId === zone.id}
+                                        >
+                                          {serviceZoneState.deletingId === zone.id
+                                            ? 'Deleting...'
+                                            : 'Delete'}
+                                        </button>
+                                      </div>
+                                    </div>
+
+                                    {isEditing ? (
+                                      <div className="mt-3 space-y-3">
+                                        <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                          Service zone name
+                                          <input
+                                            className="ldc-input mt-2"
+                                            value={editDraft.name}
+                                            onChange={handleServiceZoneEditChange(zone.id, 'name')}
+                                          />
+                                        </label>
+                                        <div className="space-y-2">
+                                          {(editDraft.geo_zones || []).map((geo, index) => {
+                                            const geoType = geo.type || 'country';
+                                            return (
+                                              <div
+                                                key={`${zone.id}-geo-${index}`}
+                                                className="rounded-2xl bg-white/70 p-3"
+                                              >
+                                                <div className="grid gap-3 md:grid-cols-4">
+                                                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                                    Type
+                                                    <select
+                                                      className="ldc-input mt-2"
+                                                      value={geoType}
+                                                      onChange={handleServiceZoneEditGeoZoneChange(
+                                                        zone.id,
+                                                        index,
+                                                        'type'
+                                                      )}
+                                                    >
+                                                      {GEO_ZONE_TYPE_OPTIONS.map((option) => (
+                                                        <option key={option.value} value={option.value}>
+                                                          {option.label}
+                                                        </option>
+                                                      ))}
+                                                    </select>
+                                                  </label>
+                                                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                                    Country code
+                                                    <input
+                                                      className="ldc-input mt-2"
+                                                      value={geo.country_code || ''}
+                                                      onChange={handleServiceZoneEditGeoZoneChange(
+                                                        zone.id,
+                                                        index,
+                                                        'country_code'
+                                                      )}
+                                                      placeholder="us"
+                                                    />
+                                                  </label>
+                                                  {['province', 'city', 'zip'].includes(geoType) ? (
+                                                    <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                                      Province code
+                                                      <input
+                                                        className="ldc-input mt-2"
+                                                        value={geo.province_code || ''}
+                                                        onChange={handleServiceZoneEditGeoZoneChange(
+                                                          zone.id,
+                                                          index,
+                                                          'province_code'
+                                                        )}
+                                                        placeholder="ca"
+                                                      />
+                                                    </label>
+                                                  ) : null}
+                                                  {['city', 'zip'].includes(geoType) ? (
+                                                    <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                                      City
+                                                      <input
+                                                        className="ldc-input mt-2"
+                                                        value={geo.city || ''}
+                                                        onChange={handleServiceZoneEditGeoZoneChange(
+                                                          zone.id,
+                                                          index,
+                                                          'city'
+                                                        )}
+                                                        placeholder="Los Angeles"
+                                                      />
+                                                    </label>
+                                                  ) : null}
+                                                </div>
+                                                {geoType === 'zip' ? (
+                                                  <label className="mt-3 block text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                                    Postal expression (JSON)
+                                                    <textarea
+                                                      className="ldc-input mt-2 min-h-[70px] font-mono text-xs"
+                                                      value={geo.postal_expression || ''}
+                                                      onChange={handleServiceZoneEditGeoZoneChange(
+                                                        zone.id,
+                                                        index,
+                                                        'postal_expression'
+                                                      )}
+                                                      placeholder='{"starts_with":"90"}'
+                                                    />
+                                                  </label>
+                                                ) : null}
+                                                <div className="mt-3 flex justify-end">
+                                                  <button
+                                                    className="text-xs text-rose-600"
+                                                    type="button"
+                                                    onClick={() =>
+                                                      handleRemoveServiceZoneEditGeoZone(zone.id, index)
+                                                    }
+                                                    disabled={(editDraft.geo_zones || []).length <= 1}
+                                                  >
+                                                    Remove geo zone
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                          <button
+                                            className="ldc-button-secondary"
+                                            type="button"
+                                            onClick={() => handleAddServiceZoneEditGeoZone(zone.id)}
+                                          >
+                                            Add geo zone
+                                          </button>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-3">
+                                          <button
+                                            className="ldc-button-primary"
+                                            type="button"
+                                            onClick={() => handleSaveServiceZoneEdit(set.id, zone.id)}
+                                            disabled={serviceZoneState.savingId === zone.id}
+                                          >
+                                            {serviceZoneState.savingId === zone.id
+                                              ? 'Saving...'
+                                              : 'Save changes'}
+                                          </button>
+                                          <button
+                                            className="ldc-button-secondary"
+                                            type="button"
+                                            onClick={() => handleCancelServiceZoneEdit(zone.id)}
+                                            disabled={serviceZoneState.savingId === zone.id}
+                                          >
+                                            Cancel
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="mt-3 space-y-1 text-xs text-ldc-ink/60">
+                                        {geoZones.length ? (
+                                          geoZones.map((geo, index) => (
+                                            <div key={geo.id || `${zone.id}-geo-${index}`}>
+                                              {formatGeoZoneSummary(geo)}
+                                            </div>
+                                          ))
+                                        ) : (
+                                          <div>No geo zones set.</div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })
+                            ) : (
+                              <div className="rounded-2xl bg-white/70 p-4 text-sm text-ldc-ink/70">
+                                No service zones yet.
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <form
+                          className="mt-4 rounded-2xl border border-white/70 bg-white/70 p-4"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            handleCreateServiceZone(set.id);
+                          }}
+                        >
+                          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                            Add service zone
+                          </div>
+                          <label className="mt-3 block text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Service zone name
+                            <input
+                              className="ldc-input mt-2"
+                              value={createDraft.name}
+                              onChange={handleServiceZoneDraftChange(set.id, 'name')}
+                            />
+                          </label>
+                          <div className="mt-3 space-y-2">
+                            {(createDraft.geo_zones || []).map((geo, index) => {
+                              const geoType = geo.type || 'country';
+                              return (
+                                <div
+                                  key={`${set.id}-new-geo-${index}`}
+                                  className="rounded-2xl bg-white/80 p-3"
+                                >
+                                  <div className="grid gap-3 md:grid-cols-4">
+                                    <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                      Type
+                                      <select
+                                        className="ldc-input mt-2"
+                                        value={geoType}
+                                        onChange={handleServiceZoneGeoZoneChange(
+                                          set.id,
+                                          index,
+                                          'type'
+                                        )}
+                                      >
+                                        {GEO_ZONE_TYPE_OPTIONS.map((option) => (
+                                          <option key={option.value} value={option.value}>
+                                            {option.label}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </label>
+                                    <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                      Country code
+                                      <input
+                                        className="ldc-input mt-2"
+                                        value={geo.country_code || ''}
+                                        onChange={handleServiceZoneGeoZoneChange(
+                                          set.id,
+                                          index,
+                                          'country_code'
+                                        )}
+                                        placeholder="us"
+                                      />
+                                    </label>
+                                    {['province', 'city', 'zip'].includes(geoType) ? (
+                                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                        Province code
+                                        <input
+                                          className="ldc-input mt-2"
+                                          value={geo.province_code || ''}
+                                          onChange={handleServiceZoneGeoZoneChange(
+                                            set.id,
+                                            index,
+                                            'province_code'
+                                          )}
+                                          placeholder="ca"
+                                        />
+                                      </label>
+                                    ) : null}
+                                    {['city', 'zip'].includes(geoType) ? (
+                                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                        City
+                                        <input
+                                          className="ldc-input mt-2"
+                                          value={geo.city || ''}
+                                          onChange={handleServiceZoneGeoZoneChange(
+                                            set.id,
+                                            index,
+                                            'city'
+                                          )}
+                                          placeholder="Los Angeles"
+                                        />
+                                      </label>
+                                    ) : null}
+                                  </div>
+                                  {geoType === 'zip' ? (
+                                    <label className="mt-3 block text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                      Postal expression (JSON)
+                                      <textarea
+                                        className="ldc-input mt-2 min-h-[70px] font-mono text-xs"
+                                        value={geo.postal_expression || ''}
+                                        onChange={handleServiceZoneGeoZoneChange(
+                                          set.id,
+                                          index,
+                                          'postal_expression'
+                                        )}
+                                        placeholder='{"starts_with":"90"}'
+                                      />
+                                    </label>
+                                  ) : null}
+                                  <div className="mt-3 flex justify-end">
+                                    <button
+                                      className="text-xs text-rose-600"
+                                      type="button"
+                                      onClick={() => handleRemoveServiceZoneGeoZone(set.id, index)}
+                                      disabled={(createDraft.geo_zones || []).length <= 1}
+                                    >
+                                      Remove geo zone
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                            <button
+                              className="ldc-button-secondary"
+                              type="button"
+                              onClick={() => handleAddServiceZoneGeoZone(set.id)}
+                            >
+                              Add geo zone
+                            </button>
+                          </div>
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              className="ldc-button-primary"
+                              type="submit"
+                              disabled={serviceZoneState.savingId === set.id}
+                            >
+                              {serviceZoneState.savingId === set.id
+                                ? 'Creating...'
+                                : 'Create service zone'}
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="rounded-2xl bg-white/70 p-4 text-sm text-ldc-ink/70">
+                    No fulfillment sets yet.
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 rounded-3xl border border-white/70 bg-white/70 p-4">
+                <h4 className="font-heading text-lg text-ldc-ink">Create fulfillment set</h4>
+                <form className="mt-3 grid gap-3 md:grid-cols-2" onSubmit={handleCreateFulfillmentSet}>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Name
+                    <input
+                      className="ldc-input mt-2"
+                      value={fulfillmentSetDraft.name}
+                      onChange={handleFulfillmentSetDraftChange('name')}
+                    />
+                  </label>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Type
+                    <input
+                      className="ldc-input mt-2"
+                      value={fulfillmentSetDraft.type}
+                      onChange={handleFulfillmentSetDraftChange('type')}
+                      placeholder="delivery"
+                    />
+                  </label>
+                  <div className="md:col-span-2">
+                    <button
+                      className="ldc-button-primary"
+                      type="submit"
+                      disabled={fulfillmentSetState.saving}
+                    >
+                      {fulfillmentSetState.saving ? 'Creating...' : 'Create fulfillment set'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          ) : null}
+
+          {isStockLocation ? (
+            <div className="ldc-card p-6">
+              <h3 className="font-heading text-xl text-ldc-ink">Sales Channels</h3>
+              <p className="mt-2 text-sm text-ldc-ink/70">
+                Control which channels can fulfill from this location.
+              </p>
+              {stockLocationMetaLoading ? (
+                <div className="mt-3 text-sm text-ldc-ink/60">Loading channels...</div>
+              ) : null}
+              {stockLocationMetaError ? (
+                <div className="mt-3 text-sm text-rose-600">{stockLocationMetaError}</div>
+              ) : null}
+              {locationSalesChannelState.error ? (
+                <div className="mt-3 text-sm text-rose-600">{locationSalesChannelState.error}</div>
+              ) : null}
+              {locationSalesChannelState.success ? (
+                <div className="mt-3 text-sm text-emerald-700">
+                  {locationSalesChannelState.success}
+                </div>
+              ) : null}
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div className="rounded-2xl bg-white/70 p-3">
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                    Assigned
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {stockLocationSalesChannels.length ? (
+                      stockLocationSalesChannels.map((channel) => (
+                        <div
+                          key={channel.id}
+                          className="flex items-start justify-between gap-2 text-xs text-ldc-ink"
+                        >
+                          <div>
+                            <div className="font-semibold">
+                              {channel.name || channel.id}
+                            </div>
+                            <div className="text-ldc-ink/60">{channel.id}</div>
+                          </div>
+                          <button
+                            className="text-rose-600"
+                            type="button"
+                            onClick={() => handleRemoveStockLocationSalesChannel(channel.id)}
+                            disabled={locationSalesChannelState.savingId === channel.id}
+                          >
+                            {locationSalesChannelState.savingId === channel.id
+                              ? 'Removing...'
+                              : 'Remove'}
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-xs text-ldc-ink/60">No channels assigned.</div>
+                    )}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-white/70 p-3">
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                    Available
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {availableStockLocationSalesChannels.length ? (
+                      availableStockLocationSalesChannels.map((channel) => (
+                        <div
+                          key={channel.id}
+                          className="flex items-start justify-between gap-2 text-xs text-ldc-ink"
+                        >
+                          <div>
+                            <div className="font-semibold">
+                              {channel.name || channel.id}
+                            </div>
+                            <div className="text-ldc-ink/60">{channel.id}</div>
+                          </div>
+                          <button
+                            className="ldc-button-secondary"
+                            type="button"
+                            onClick={() => handleAddStockLocationSalesChannel(channel.id)}
+                            disabled={locationSalesChannelState.savingId === channel.id}
+                          >
+                            {locationSalesChannelState.savingId === channel.id ? 'Adding...' : 'Add'}
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-xs text-ldc-ink/60">No channels available.</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {isStockLocation ? (
+            <div className="ldc-card p-6">
+              <h3 className="font-heading text-xl text-ldc-ink">Fulfillment Providers</h3>
+              <p className="mt-2 text-sm text-ldc-ink/70">
+                Manage providers available for this location.
+              </p>
+              {stockLocationMetaLoading ? (
+                <div className="mt-3 text-sm text-ldc-ink/60">Loading providers...</div>
+              ) : null}
+              {stockLocationMetaError ? (
+                <div className="mt-3 text-sm text-rose-600">{stockLocationMetaError}</div>
+              ) : null}
+              {locationProviderState.error ? (
+                <div className="mt-3 text-sm text-rose-600">{locationProviderState.error}</div>
+              ) : null}
+              {locationProviderState.success ? (
+                <div className="mt-3 text-sm text-emerald-700">
+                  {locationProviderState.success}
+                </div>
+              ) : null}
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div className="rounded-2xl bg-white/70 p-3">
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                    Assigned
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {stockLocationFulfillmentProviders.length ? (
+                      stockLocationFulfillmentProviders.map((provider) => (
+                        <div
+                          key={provider.id}
+                          className="flex items-start justify-between gap-2 text-xs text-ldc-ink"
+                        >
+                          <div>
+                            <div className="font-semibold">{provider.id}</div>
+                            <div className="text-ldc-ink/60">
+                              {provider.is_enabled ? 'Enabled' : 'Disabled'}
+                            </div>
+                          </div>
+                          <button
+                            className="text-rose-600"
+                            type="button"
+                            onClick={() => handleRemoveStockLocationFulfillmentProvider(provider.id)}
+                            disabled={locationProviderState.savingId === provider.id}
+                          >
+                            {locationProviderState.savingId === provider.id
+                              ? 'Removing...'
+                              : 'Remove'}
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-xs text-ldc-ink/60">No providers assigned.</div>
+                    )}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-white/70 p-3">
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                    Available
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {availableStockLocationProviders.length ? (
+                      availableStockLocationProviders.map((provider) => (
+                        <div
+                          key={provider.id}
+                          className="flex items-start justify-between gap-2 text-xs text-ldc-ink"
+                        >
+                          <div>
+                            <div className="font-semibold">{provider.id}</div>
+                            <div className="text-ldc-ink/60">
+                              {provider.is_enabled ? 'Enabled' : 'Disabled'}
+                            </div>
+                          </div>
+                          <button
+                            className="ldc-button-secondary"
+                            type="button"
+                            onClick={() => handleAddStockLocationFulfillmentProvider(provider.id)}
+                            disabled={locationProviderState.savingId === provider.id}
+                          >
+                            {locationProviderState.savingId === provider.id ? 'Adding...' : 'Add'}
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-xs text-ldc-ink/60">No providers available.</div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           ) : null}
 

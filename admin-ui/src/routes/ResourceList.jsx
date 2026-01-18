@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PageHeader from '../components/PageHeader.jsx';
 import DataTable from '../components/DataTable.jsx';
-import { formatApiError, getList, request, uploadFiles } from '../lib/api.js';
+import { formatMoney } from '../lib/formatters.js';
+import { formatApiError, getDetail, getList, request, uploadFiles } from '../lib/api.js';
 
 const getArrayFromPayload = (payload, key) => {
   if (!payload) return [];
@@ -33,6 +34,169 @@ const PRODUCT_ORDER_OPTIONS = [
 ];
 
 const PRODUCT_PAGE_SIZES = [20, 50, 100];
+const ARCHIVED_PRODUCTS_START = '1970-01-01T00:00:00.000Z';
+const EMPTY_PRODUCT_EXPORT_STATE = {
+  requesting: false,
+  checking: false,
+  error: '',
+  success: '',
+  fileUrl: '',
+  fileName: '',
+  transactionId: '',
+  requestedAt: ''
+};
+const EMPTY_PRODUCT_IMPORT_STATE = {
+  uploading: false,
+  confirming: false,
+  error: '',
+  success: '',
+  summary: null,
+  transactionId: '',
+  fileName: ''
+};
+
+const ORDER_STATUS_OPTIONS = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'draft', label: 'Draft' },
+  { value: 'archived', label: 'Archived' },
+  { value: 'canceled', label: 'Canceled' },
+  { value: 'requires_action', label: 'Requires Action' }
+];
+
+const PAYMENT_STATUS_OPTIONS = [
+  { value: 'not_paid', label: 'Not Paid' },
+  { value: 'awaiting', label: 'Awaiting' },
+  { value: 'authorized', label: 'Authorized' },
+  { value: 'partially_authorized', label: 'Partially Authorized' },
+  { value: 'captured', label: 'Captured' },
+  { value: 'partially_captured', label: 'Partially Captured' },
+  { value: 'partially_refunded', label: 'Partially Refunded' },
+  { value: 'refunded', label: 'Refunded' },
+  { value: 'canceled', label: 'Canceled' },
+  { value: 'requires_action', label: 'Requires Action' }
+];
+
+const FULFILLMENT_STATUS_OPTIONS = [
+  { value: 'not_fulfilled', label: 'Not Fulfilled' },
+  { value: 'partially_fulfilled', label: 'Partially Fulfilled' },
+  { value: 'fulfilled', label: 'Fulfilled' },
+  { value: 'partially_shipped', label: 'Partially Shipped' },
+  { value: 'shipped', label: 'Shipped' },
+  { value: 'partially_delivered', label: 'Partially Delivered' },
+  { value: 'delivered', label: 'Delivered' },
+  { value: 'canceled', label: 'Canceled' }
+];
+
+const ORDER_EXPORT_COLUMNS = [
+  { label: 'Order ID', value: (row) => row?.id || '' },
+  { label: 'Display ID', value: (row) => row?.display_id || '' },
+  { label: 'Email', value: (row) => row?.email || '' },
+  { label: 'Status', value: (row) => row?.status || '' },
+  { label: 'Payment Status', value: (row) => row?.payment_status || '' },
+  { label: 'Fulfillment Status', value: (row) => row?.fulfillment_status || '' },
+  { label: 'Total', value: (row) => formatMoney(row?.total, row?.currency_code) },
+  { label: 'Currency', value: (row) => row?.currency_code || '' },
+  { label: 'Created At', value: (row) => row?.created_at || '' }
+];
+
+const DRAFT_EXPORT_COLUMNS = [
+  { label: 'Draft ID', value: (row) => row?.id || '' },
+  { label: 'Display ID', value: (row) => row?.display_id || '' },
+  { label: 'Email', value: (row) => row?.email || '' },
+  { label: 'Status', value: (row) => row?.status || '' },
+  { label: 'Total', value: (row) => formatMoney(row?.total, row?.currency_code) },
+  { label: 'Currency', value: (row) => row?.currency_code || '' },
+  { label: 'Created At', value: (row) => row?.created_at || '' }
+];
+
+const ORDER_BULK_ACTIONS = [
+  { value: 'complete', label: 'Complete orders' },
+  { value: 'cancel', label: 'Cancel orders' }
+];
+
+const DRAFT_BULK_ACTIONS = [
+  { value: 'convert', label: 'Convert to order' },
+  { value: 'delete', label: 'Delete draft orders' }
+];
+
+const CUSTOMER_BULK_ACTIONS = [
+  { value: 'add-group', label: 'Add to group' },
+  { value: 'remove-group', label: 'Remove from group' }
+];
+
+const CUSTOMER_GROUP_BULK_ACTIONS = [
+  { value: 'delete-group', label: 'Delete groups' }
+];
+
+const PRODUCT_BULK_ACTIONS = [
+  { value: 'publish', label: 'Publish products' },
+  { value: 'unpublish', label: 'Unpublish products' },
+  { value: 'set-collection', label: 'Assign collection' },
+  { value: 'clear-collection', label: 'Remove collection' },
+  { value: 'add-category', label: 'Add category' },
+  { value: 'remove-category', label: 'Remove category' },
+  { value: 'add-sales-channel', label: 'Add to sales channel' },
+  { value: 'remove-sales-channel', label: 'Remove from sales channel' },
+  { value: 'archive', label: 'Archive products' }
+];
+
+const CUSTOMER_ACCOUNT_OPTIONS = [
+  { value: '', label: 'Any account' },
+  { value: 'true', label: 'Has account' },
+  { value: 'false', label: 'No account' }
+];
+
+const CUSTOMER_EXPORT_COLUMNS = [
+  { label: 'Customer ID', value: (row) => row?.id || '' },
+  { label: 'First Name', value: (row) => row?.first_name || '' },
+  { label: 'Last Name', value: (row) => row?.last_name || '' },
+  { label: 'Email', value: (row) => row?.email || '' },
+  { label: 'Company', value: (row) => row?.company_name || '' },
+  { label: 'Phone', value: (row) => row?.phone || '' },
+  { label: 'Has Account', value: (row) => (row?.has_account ? 'Yes' : 'No') },
+  {
+    label: 'Groups',
+    value: (row) =>
+      Array.isArray(row?.groups)
+        ? row.groups.map((group) => group?.name || group?.id).filter(Boolean).join('; ')
+        : ''
+  },
+  { label: 'Created At', value: (row) => row?.created_at || '' }
+];
+
+const CUSTOMER_GROUP_EXPORT_COLUMNS = [
+  { label: 'Group ID', value: (row) => row?.id || '' },
+  { label: 'Name', value: (row) => row?.name || '' },
+  { label: 'Created By', value: (row) => row?.created_by || '' },
+  { label: 'Created At', value: (row) => row?.created_at || '' }
+];
+
+const PRODUCT_EXPORT_COLUMNS = [
+  { label: 'Product ID', value: (row) => row?.id || '' },
+  { label: 'Title', value: (row) => row?.title || '' },
+  { label: 'Status', value: (row) => row?.status || '' },
+  { label: 'Handle', value: (row) => row?.handle || '' },
+  {
+    label: 'Collection',
+    value: (row) => row?.collection?.title || row?.collection_id || ''
+  },
+  {
+    label: 'Categories',
+    value: (row) =>
+      Array.isArray(row?.categories)
+        ? row.categories.map((category) => category?.name || category?.id).filter(Boolean).join('; ')
+        : ''
+  },
+  {
+    label: 'Sales Channels',
+    value: (row) =>
+      Array.isArray(row?.sales_channels)
+        ? row.sales_channels.map((channel) => channel?.name || channel?.id).filter(Boolean).join('; ')
+        : ''
+  },
+  { label: 'Created At', value: (row) => row?.created_at || '' }
+];
 
 const LIST_META_LABELS = {
   paymentProviders: 'Payment providers',
@@ -90,6 +254,17 @@ const parseDateTimeInput = (value) => {
   return date.toISOString();
 };
 
+const parseDateInput = (value, endOfDay = false) => {
+  const trimmed = String(value ?? '').trim();
+  if (!trimmed) return null;
+  const date = new Date(`${trimmed}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return null;
+  if (endOfDay) {
+    date.setHours(23, 59, 59, 999);
+  }
+  return date.toISOString();
+};
+
 const parseJsonInput = (value) => {
   const trimmed = String(value ?? '').trim();
   if (!trimmed) return { data: null, error: '' };
@@ -98,6 +273,77 @@ const parseJsonInput = (value) => {
   } catch (err) {
     return { data: null, error: err?.message || 'Invalid JSON.' };
   }
+};
+
+const buildQueryString = (params) => {
+  const query = new URLSearchParams();
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((entry) => {
+        if (entry === undefined || entry === null || entry === '') return;
+        query.append(key, String(entry));
+      });
+      return;
+    }
+    if (value === undefined || value === null || value === '') return;
+    query.set(key, String(value));
+  });
+  const suffix = query.toString();
+  return suffix ? `?${suffix}` : '';
+};
+
+const csvEscape = (value) => {
+  if (value === null || value === undefined) return '';
+  const text = String(value);
+  if (/[",\n]/.test(text)) {
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+  return text;
+};
+
+const buildCsv = (rows, columns) => {
+  const header = columns.map((col) => csvEscape(col.label)).join(',');
+  const body = rows.map((row) =>
+    columns.map((col) => csvEscape(col.value(row))).join(',')
+  );
+  return [header, ...body].join('\n');
+};
+
+const downloadCsv = (filename, content) => {
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
+const buildExportFilename = (prefix) => {
+  const date = new Date().toISOString().slice(0, 10);
+  return `${prefix}-${date}.csv`;
+};
+
+const fetchProductCategoryIds = async (productId) => {
+  const payload = await getDetail('/admin/products', productId, { fields: '+categories' });
+  const product = payload?.product || payload?.data?.product;
+  if (!product) return [];
+  return Array.isArray(product.categories)
+    ? product.categories.map((category) => category?.id).filter(Boolean)
+    : [];
+};
+
+const updateProductCategories = async (productId, updater) => {
+  const current = await fetchProductCategoryIds(productId);
+  const nextIds = updater(current);
+  await request(`/admin/products/${productId}`, {
+    method: 'POST',
+    body: {
+      categories: nextIds.map((idValue) => ({ id: idValue }))
+    }
+  });
 };
 
 const getUploadUrl = (file) =>
@@ -139,6 +385,15 @@ const resolveUploadUrl = (file) => {
   if (url.startsWith('/')) return `${MEDIA_BASE}${url}`;
   if (!url.includes('://') && url.includes('/')) return `${MEDIA_BASE}/${url}`;
   return '';
+};
+
+const resolveFileUrl = (url) => {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith('//')) return `https:${url}`;
+  if (url.startsWith('/')) return `${MEDIA_BASE}${url}`;
+  if (!url.includes('://') && url.includes('/')) return `${MEDIA_BASE}/${url}`;
+  return `${MEDIA_BASE}/${url}`;
 };
 
 const buildPriceListRules = (draft) => {
@@ -234,6 +489,9 @@ const ResourceList = ({ resource }) => {
     types: [],
     tags: []
   });
+  const [productExportState, setProductExportState] = useState(EMPTY_PRODUCT_EXPORT_STATE);
+  const [productImportState, setProductImportState] = useState(EMPTY_PRODUCT_IMPORT_STATE);
+  const [productImportFile, setProductImportFile] = useState(null);
   const [listMeta, setListMeta] = useState({
     paymentProviders: [],
     fulfillmentProviders: [],
@@ -614,6 +872,17 @@ const ResourceList = ({ resource }) => {
     error: '',
     success: ''
   });
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkAction, setBulkAction] = useState('');
+  const [bulkGroupId, setBulkGroupId] = useState('');
+  const [bulkCollectionId, setBulkCollectionId] = useState('');
+  const [bulkCategoryId, setBulkCategoryId] = useState('');
+  const [bulkSalesChannelId, setBulkSalesChannelId] = useState('');
+  const [bulkState, setBulkState] = useState({
+    loading: false,
+    error: '',
+    success: ''
+  });
 
   const renderListMetaFailures = (className) =>
     listMetaFailures.length ? (
@@ -625,6 +894,7 @@ const ResourceList = ({ resource }) => {
     ) : null;
 
   const isProductList = resource?.id === 'products';
+  const isOrderList = resource?.id === 'orders';
   const isDraftOrderList = resource?.id === 'draft-orders';
   const isCollectionList = resource?.id === 'collections';
   const isCategoryList = resource?.id === 'product-categories';
@@ -648,18 +918,36 @@ const ResourceList = ({ resource }) => {
   const isInviteList = resource?.id === 'invites';
   const isApiKeyList = resource?.id === 'api-keys';
   const isUploadList = resource?.id === 'uploads';
+  const isOrderLikeList = isOrderList || isDraftOrderList;
+  const isDateFilterList = isOrderLikeList || isCustomerList || isCustomerGroupList;
+  const isBulkList = isOrderLikeList || isCustomerList || isCustomerGroupList || isProductList;
 
   const page = Math.max(1, Number(searchParams.get('page') || 1));
   const query = searchParams.get('q') || '';
-  const limit = isProductList
-    ? parsePositiveInt(searchParams.get('limit'), 20)
-    : isUploadList
-      ? 50
-      : 20;
+  const limit =
+    isProductList || isOrderLikeList
+      ? parsePositiveInt(searchParams.get('limit'), 20)
+      : isUploadList
+        ? 50
+        : 20;
   const offset = (page - 1) * limit;
   const order = isProductList ? searchParams.get('order') || '-created_at' : undefined;
   const statusFilters = isProductList ? searchParams.getAll('status') : [];
+  const productArchived = isProductList ? searchParams.get('archived') === 'true' : false;
+  const orderStatusFilters = isOrderList ? searchParams.getAll('status') : [];
+  const draftStatusFilters = isDraftOrderList ? searchParams.getAll('status') : [];
+  const paymentStatusFilters = isOrderList ? searchParams.getAll('payment_status') : [];
+  const fulfillmentStatusFilters = isOrderList ? searchParams.getAll('fulfillment_status') : [];
+  const customerGroupFilters = isCustomerList ? searchParams.getAll('group_id') : [];
+  const customerHasAccount = isCustomerList ? searchParams.get('has_account') || '' : '';
+  const createdFrom = isDateFilterList ? searchParams.get('created_from') || '' : '';
+  const createdTo = isDateFilterList ? searchParams.get('created_to') || '' : '';
   const statusFiltersKey = statusFilters.join('|');
+  const orderStatusFiltersKey = orderStatusFilters.join('|');
+  const draftStatusFiltersKey = draftStatusFilters.join('|');
+  const paymentStatusFiltersKey = paymentStatusFilters.join('|');
+  const fulfillmentStatusFiltersKey = fulfillmentStatusFilters.join('|');
+  const customerGroupFiltersKey = customerGroupFilters.join('|');
   const collectionId = isProductList ? searchParams.get('collection_id') || '' : '';
   const categoryId = isProductList ? searchParams.get('category_id') || '' : '';
   const salesChannelId = isProductList ? searchParams.get('sales_channel_id') || '' : '';
@@ -681,6 +969,133 @@ const ResourceList = ({ resource }) => {
       return haystack.includes(term);
     });
   }, [isUploadList, rows, uploadSearch]);
+  const orderLikeStatusFilters = isOrderList ? orderStatusFilters : draftStatusFilters;
+  const createdFromIso = useMemo(
+    () => (isDateFilterList ? parseDateInput(createdFrom, false) : null),
+    [isDateFilterList, createdFrom]
+  );
+  const createdToIso = useMemo(
+    () => (isDateFilterList ? parseDateInput(createdTo, true) : null),
+    [isDateFilterList, createdTo]
+  );
+  const orderFilteredRows = useMemo(() => {
+    if (!isOrderLikeList) return rows;
+    let filtered = rows;
+    if (orderLikeStatusFilters.length) {
+      filtered = filtered.filter((row) => orderLikeStatusFilters.includes(row?.status));
+    }
+    if (isOrderList && paymentStatusFilters.length) {
+      filtered = filtered.filter((row) => paymentStatusFilters.includes(row?.payment_status));
+    }
+    if (isOrderList && fulfillmentStatusFilters.length) {
+      filtered = filtered.filter((row) =>
+        fulfillmentStatusFilters.includes(row?.fulfillment_status)
+      );
+    }
+    if (createdFromIso || createdToIso) {
+      const fromTime = createdFromIso ? new Date(createdFromIso).getTime() : null;
+      const toTime = createdToIso ? new Date(createdToIso).getTime() : null;
+      filtered = filtered.filter((row) => {
+        if (!row?.created_at) return false;
+        const createdTime = new Date(row.created_at).getTime();
+        if (Number.isNaN(createdTime)) return false;
+        if (fromTime && createdTime < fromTime) return false;
+        if (toTime && createdTime > toTime) return false;
+        return true;
+      });
+    }
+    return filtered;
+  }, [
+    isOrderLikeList,
+    isOrderList,
+    rows,
+    orderStatusFiltersKey,
+    draftStatusFiltersKey,
+    paymentStatusFiltersKey,
+    fulfillmentStatusFiltersKey,
+    createdFromIso,
+    createdToIso
+  ]);
+  const productRows = useMemo(() => {
+    if (!isProductList) return rows;
+    return rows.map((row) => {
+      if (!row?.deleted_at) return row;
+      return { ...row, status: 'archived' };
+    });
+  }, [isProductList, rows]);
+  const customerFilteredRows = useMemo(() => {
+    if (!isCustomerList) return rows;
+    let filtered = rows;
+    if (customerHasAccount === 'true') {
+      filtered = filtered.filter((row) => row?.has_account === true);
+    } else if (customerHasAccount === 'false') {
+      filtered = filtered.filter((row) => row?.has_account === false);
+    }
+    if (customerGroupFilters.length) {
+      const hasGroups = filtered.some((row) => Array.isArray(row?.groups));
+      if (hasGroups) {
+        const groupSet = new Set(customerGroupFilters);
+        filtered = filtered.filter((row) =>
+          Array.isArray(row?.groups) && row.groups.some((group) => groupSet.has(group?.id))
+        );
+      }
+    }
+    return filtered;
+  }, [isCustomerList, rows, customerHasAccount, customerGroupFiltersKey]);
+  const listRows = isOrderLikeList
+    ? orderFilteredRows
+    : isCustomerList
+      ? customerFilteredRows
+      : isProductList
+        ? productRows
+        : rows;
+
+  useEffect(() => {
+    if (!isBulkList) {
+      setSelectedIds((prev) => (prev.length ? [] : prev));
+      setBulkAction((prev) => (prev ? '' : prev));
+      setBulkGroupId((prev) => (prev ? '' : prev));
+      setBulkCollectionId((prev) => (prev ? '' : prev));
+      setBulkCategoryId((prev) => (prev ? '' : prev));
+      setBulkSalesChannelId((prev) => (prev ? '' : prev));
+      setBulkState((prev) =>
+        prev.loading || prev.error || prev.success ? { loading: false, error: '', success: '' } : prev
+      );
+      return;
+    }
+    const visibleIds = new Set(listRows.map((row) => row?.id).filter(Boolean));
+    setSelectedIds((prev) => {
+      const next = prev.filter((id) => visibleIds.has(id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [isBulkList, listRows]);
+
+  useEffect(() => {
+    if (!isCustomerList) {
+      setBulkGroupId((prev) => (prev ? '' : prev));
+    }
+  }, [isCustomerList]);
+
+  useEffect(() => {
+    if (!isProductList) {
+      setBulkCollectionId((prev) => (prev ? '' : prev));
+      setBulkCategoryId((prev) => (prev ? '' : prev));
+      setBulkSalesChannelId((prev) => (prev ? '' : prev));
+    }
+  }, [isProductList]);
+
+  useEffect(() => {
+    setSelectedIds([]);
+    setBulkAction('');
+    setBulkGroupId('');
+    setBulkCollectionId('');
+    setBulkCategoryId('');
+    setBulkSalesChannelId('');
+    setBulkState({ loading: false, error: '', success: '' });
+    setProductExportState({ ...EMPTY_PRODUCT_EXPORT_STATE });
+    setProductImportState({ ...EMPTY_PRODUCT_IMPORT_STATE });
+    setProductImportFile(null);
+  }, [resource?.id]);
   const listParams = useMemo(() => {
     if (!resource?.listParams) return {};
     if (typeof resource.listParams === 'function') {
@@ -719,13 +1134,42 @@ const ResourceList = ({ resource }) => {
     setLoading(true);
     setError('');
     try {
+      const fieldOverrides = isProductList
+        ? { fields: '+collection,+categories,+sales_channels' }
+        : isCustomerList
+          ? { fields: '+groups' }
+          : null;
       const payload = await getList(resource.endpoint, {
         ...listParams,
         limit,
         offset,
         q: isUploadList ? undefined : query || undefined,
         order: isProductList ? order : undefined,
-        status: statusFilters.length ? statusFilters : undefined,
+        with_deleted: isProductList && productArchived ? true : undefined,
+        status: isProductList
+          ? statusFilters.length
+            ? statusFilters
+            : undefined
+          : isOrderList
+            ? orderStatusFilters.length
+              ? orderStatusFilters
+              : undefined
+            : isDraftOrderList
+              ? draftStatusFilters.length
+                ? draftStatusFilters
+                : undefined
+              : undefined,
+        payment_status:
+          isOrderList && paymentStatusFilters.length ? paymentStatusFilters : undefined,
+        fulfillment_status:
+          isOrderList && fulfillmentStatusFilters.length ? fulfillmentStatusFilters : undefined,
+        'created_at[gte]': isDateFilterList ? createdFromIso || undefined : undefined,
+        'created_at[lte]': isDateFilterList ? createdToIso || undefined : undefined,
+        'deleted_at[gte]':
+          isProductList && productArchived ? ARCHIVED_PRODUCTS_START : undefined,
+        groups: isCustomerList && customerGroupFilters.length ? customerGroupFilters : undefined,
+        has_account: isCustomerList && customerHasAccount ? customerHasAccount : undefined,
+        ...(fieldOverrides || {}),
         collection_id: isProductList ? collectionId || undefined : undefined,
         category_id: isProductList ? categoryId || undefined : undefined,
         sales_channel_id: isProductList ? salesChannelId || undefined : undefined,
@@ -1288,12 +1732,26 @@ const ResourceList = ({ resource }) => {
     query,
     order,
     statusFiltersKey,
+    productArchived,
+    orderStatusFiltersKey,
+    draftStatusFiltersKey,
+    paymentStatusFiltersKey,
+    fulfillmentStatusFiltersKey,
+    customerGroupFiltersKey,
+    customerHasAccount,
+    createdFromIso,
+    createdToIso,
     collectionId,
     categoryId,
     salesChannelId,
     typeId,
     tagId,
     isProductList,
+    isOrderList,
+    isDraftOrderList,
+    isOrderLikeList,
+    isCustomerList,
+    isDateFilterList,
     listParams
   ]);
 
@@ -1388,6 +1846,535 @@ const ResourceList = ({ resource }) => {
   const handleRowClick = (row) => {
     if (isUploadList) return;
     navigate(`${resource.path}/${row.id}`);
+  };
+
+  const handleToggleRow = (rowId) => {
+    if (!rowId) return;
+    setSelectedIds((prev) =>
+      prev.includes(rowId) ? prev.filter((id) => id !== rowId) : [...prev, rowId]
+    );
+    setBulkState({ loading: false, error: '', success: '' });
+  };
+
+  const handleToggleAll = (rowIds) => {
+    if (!Array.isArray(rowIds) || !rowIds.length) return;
+    setSelectedIds((prev) => {
+      const allSelected = rowIds.every((id) => prev.includes(id));
+      return allSelected ? [] : rowIds;
+    });
+    setBulkState({ loading: false, error: '', success: '' });
+  };
+
+  const handleBulkActionChange = (event) => {
+    const nextAction = event.target.value;
+    setBulkAction(nextAction);
+    if (!['add-group', 'remove-group'].includes(nextAction)) {
+      setBulkGroupId('');
+    }
+    if (nextAction !== 'set-collection') {
+      setBulkCollectionId('');
+    }
+    if (!['add-category', 'remove-category'].includes(nextAction)) {
+      setBulkCategoryId('');
+    }
+    if (!['add-sales-channel', 'remove-sales-channel'].includes(nextAction)) {
+      setBulkSalesChannelId('');
+    }
+    setBulkState({ loading: false, error: '', success: '' });
+  };
+
+  const handleBulkGroupChange = (event) => {
+    setBulkGroupId(event.target.value);
+    setBulkState({ loading: false, error: '', success: '' });
+  };
+
+  const handleBulkCollectionChange = (event) => {
+    setBulkCollectionId(event.target.value);
+    setBulkState({ loading: false, error: '', success: '' });
+  };
+
+  const handleBulkCategoryChange = (event) => {
+    setBulkCategoryId(event.target.value);
+    setBulkState({ loading: false, error: '', success: '' });
+  };
+
+  const handleBulkSalesChannelChange = (event) => {
+    setBulkSalesChannelId(event.target.value);
+    setBulkState({ loading: false, error: '', success: '' });
+  };
+
+  const handleExportRows = () => {
+    if (!isOrderLikeList && !isCustomerList && !isCustomerGroupList && !isProductList) return;
+    const exportRows = selectedIds.length
+      ? displayRows.filter((row) => selectedIds.includes(row?.id))
+      : displayRows;
+    if (!exportRows.length) {
+      setBulkState({ loading: false, error: 'No rows available to export.', success: '' });
+      return;
+    }
+    const columns = isProductList
+      ? PRODUCT_EXPORT_COLUMNS
+      : isCustomerGroupList
+        ? CUSTOMER_GROUP_EXPORT_COLUMNS
+        : isCustomerList
+          ? CUSTOMER_EXPORT_COLUMNS
+          : isOrderList
+            ? ORDER_EXPORT_COLUMNS
+            : DRAFT_EXPORT_COLUMNS;
+    const filename = buildExportFilename(
+      isProductList
+        ? 'products'
+        : isCustomerGroupList
+          ? 'customer-groups'
+          : isCustomerList
+            ? 'customers'
+            : isOrderList
+              ? 'orders'
+              : 'draft-orders'
+    );
+    const csv = buildCsv(exportRows, columns);
+    downloadCsv(filename, csv);
+    const noun = isProductList
+      ? 'product'
+      : isCustomerGroupList
+        ? 'group'
+        : isCustomerList
+          ? 'customer'
+          : isOrderList
+            ? 'order'
+            : 'draft order';
+    setBulkState({
+      loading: false,
+      error: '',
+      success: `Exported ${exportRows.length} ${noun}${exportRows.length === 1 ? '' : 's'}.`
+    });
+  };
+
+  const handleBulkAction = async () => {
+    if (!isBulkList) return;
+    if (!selectedIds.length) {
+      setBulkState({ loading: false, error: 'Select at least one row first.', success: '' });
+      return;
+    }
+    if (!bulkAction) {
+      setBulkState({ loading: false, error: 'Select a bulk action.', success: '' });
+      return;
+    }
+    if (
+      isCustomerList &&
+      ['add-group', 'remove-group'].includes(bulkAction) &&
+      !bulkGroupId
+    ) {
+      setBulkState({ loading: false, error: 'Select a customer group.', success: '' });
+      return;
+    }
+    if (isCustomerGroupList && bulkAction === 'delete-group') {
+      const confirmDeleteGroup = window.confirm('Delete the selected customer groups?');
+      if (!confirmDeleteGroup) return;
+    }
+    if (isProductList && bulkAction === 'set-collection' && !bulkCollectionId) {
+      setBulkState({ loading: false, error: 'Select a collection.', success: '' });
+      return;
+    }
+    if (
+      isProductList &&
+      ['add-category', 'remove-category'].includes(bulkAction) &&
+      !bulkCategoryId
+    ) {
+      setBulkState({ loading: false, error: 'Select a category.', success: '' });
+      return;
+    }
+    if (
+      isProductList &&
+      ['add-sales-channel', 'remove-sales-channel'].includes(bulkAction) &&
+      !bulkSalesChannelId
+    ) {
+      setBulkState({ loading: false, error: 'Select a sales channel.', success: '' });
+      return;
+    }
+    if (bulkAction === 'cancel') {
+      const confirmCancel = window.confirm('Cancel the selected orders?');
+      if (!confirmCancel) return;
+    }
+    if (bulkAction === 'delete') {
+      const confirmDelete = window.confirm('Delete the selected draft orders?');
+      if (!confirmDelete) return;
+    }
+    if (isProductList && bulkAction === 'archive') {
+      const confirmArchive = window.confirm(
+        'Archive the selected products? They will be hidden from the storefront.'
+      );
+      if (!confirmArchive) return;
+    }
+    setBulkState({ loading: true, error: '', success: '' });
+    try {
+      let tasks = [];
+      if (isProductList) {
+        if (['add-sales-channel', 'remove-sales-channel'].includes(bulkAction)) {
+          tasks = [
+            request(`/admin/sales-channels/${bulkSalesChannelId}/products`, {
+              method: 'POST',
+              body:
+                bulkAction === 'add-sales-channel'
+                  ? { add: selectedIds }
+                  : { remove: selectedIds }
+            })
+          ];
+        } else {
+          tasks = selectedIds
+            .map((id) => {
+              if (bulkAction === 'publish') {
+                return request(`/admin/products/${id}`, {
+                  method: 'POST',
+                  body: { status: 'published' }
+                });
+              }
+              if (bulkAction === 'unpublish') {
+                return request(`/admin/products/${id}`, {
+                  method: 'POST',
+                  body: { status: 'draft' }
+                });
+              }
+              if (bulkAction === 'set-collection') {
+                return request(`/admin/products/${id}`, {
+                  method: 'POST',
+                  body: { collection_id: bulkCollectionId }
+                });
+              }
+              if (bulkAction === 'clear-collection') {
+                return request(`/admin/products/${id}`, {
+                  method: 'POST',
+                  body: { collection_id: null }
+                });
+              }
+              if (bulkAction === 'add-category') {
+                return updateProductCategories(id, (current) =>
+                  current.includes(bulkCategoryId) ? current : [...current, bulkCategoryId]
+                );
+              }
+              if (bulkAction === 'remove-category') {
+                return updateProductCategories(id, (current) =>
+                  current.filter((idValue) => idValue !== bulkCategoryId)
+                );
+              }
+              if (bulkAction === 'archive') {
+                return request(`/admin/products/${id}`, { method: 'DELETE' });
+              }
+              return null;
+            })
+            .filter(Boolean);
+        }
+      } else {
+        tasks = selectedIds
+          .map((id) => {
+            if (isCustomerGroupList) {
+              if (bulkAction === 'delete-group') {
+                return request(`/admin/customer-groups/${id}`, { method: 'DELETE' });
+              }
+            }
+            if (isOrderList) {
+              if (bulkAction === 'complete') {
+                return request(`/admin/orders/${id}/complete`, { method: 'POST' });
+              }
+              if (bulkAction === 'cancel') {
+                return request(`/admin/orders/${id}/cancel`, { method: 'POST' });
+              }
+            }
+            if (isDraftOrderList) {
+              if (bulkAction === 'convert') {
+                return request(`/admin/draft-orders/${id}/convert-to-order`, { method: 'POST' });
+              }
+              if (bulkAction === 'delete') {
+                return request(`/admin/draft-orders/${id}`, { method: 'DELETE' });
+              }
+            }
+            if (isCustomerList) {
+              if (bulkAction === 'add-group') {
+                return request(`/admin/customers/${id}/customer-groups`, {
+                  method: 'POST',
+                  body: { customer_group_ids: { add: [bulkGroupId] } }
+                });
+              }
+              if (bulkAction === 'remove-group') {
+                return request(`/admin/customers/${id}/customer-groups`, {
+                  method: 'POST',
+                  body: { customer_group_ids: { remove: [bulkGroupId] } }
+                });
+              }
+            }
+            return null;
+          })
+          .filter(Boolean);
+      }
+
+      if (!tasks.length) {
+        setBulkState({ loading: false, error: 'No actions available.', success: '' });
+        return;
+      }
+
+      const results = await Promise.allSettled(tasks);
+      let successCount = results.filter((result) => result.status === 'fulfilled').length;
+      let failureCount = results.length - successCount;
+      if (isProductList && ['add-sales-channel', 'remove-sales-channel'].includes(bulkAction)) {
+        const requestSucceeded = results[0]?.status === 'fulfilled';
+        successCount = requestSucceeded ? selectedIds.length : 0;
+        failureCount = requestSucceeded ? 0 : selectedIds.length;
+      }
+      const noun = isCustomerGroupList
+        ? 'group'
+        : isCustomerList
+          ? 'customer'
+          : isProductList
+            ? 'product'
+            : isOrderList
+              ? 'order'
+              : 'draft order';
+      const verb =
+        bulkAction === 'complete'
+          ? 'Completed'
+          : bulkAction === 'cancel'
+            ? 'Canceled'
+            : bulkAction === 'convert'
+              ? 'Converted'
+              : bulkAction === 'delete'
+                ? 'Deleted'
+                : bulkAction === 'add-group'
+                  ? 'Added'
+                  : bulkAction === 'remove-group'
+                    ? 'Removed'
+                    : bulkAction === 'publish'
+                      ? 'Published'
+                      : bulkAction === 'unpublish'
+                        ? 'Unpublished'
+                        : bulkAction === 'set-collection'
+                          ? 'Assigned to collection'
+                          : bulkAction === 'clear-collection'
+                            ? 'Removed from collection'
+                            : bulkAction === 'add-category'
+                              ? 'Added category to'
+                              : bulkAction === 'remove-category'
+                                ? 'Removed category from'
+                                : bulkAction === 'add-sales-channel'
+                                  ? 'Added to channel'
+                                  : bulkAction === 'remove-sales-channel'
+                                    ? 'Removed from channel'
+                                    : bulkAction === 'archive'
+                                      ? 'Archived'
+                                      : 'Deleted';
+
+      setBulkState({
+        loading: false,
+        error: failureCount
+          ? `${failureCount} ${noun}${failureCount === 1 ? '' : 's'} failed.`
+          : '',
+        success: successCount
+          ? `${verb} ${successCount} ${noun}${successCount === 1 ? '' : 's'}.`
+          : ''
+      });
+      setSelectedIds([]);
+      setBulkAction('');
+      setBulkGroupId('');
+      setBulkCollectionId('');
+      setBulkCategoryId('');
+      setBulkSalesChannelId('');
+      fetchList();
+    } catch (err) {
+      setBulkState({
+        loading: false,
+        error: formatApiError(err, 'Bulk update failed.'),
+        success: ''
+      });
+    }
+  };
+
+  const buildProductExportParams = () => ({
+    q: query || undefined,
+    status: statusFilters.length ? statusFilters : undefined,
+    collection_id: collectionId || undefined,
+    category_id: categoryId || undefined,
+    sales_channel_id: salesChannelId || undefined,
+    type_id: typeId || undefined,
+    tag_id: tagId || undefined,
+    with_deleted: productArchived ? true : undefined,
+    'deleted_at[gte]': productArchived ? ARCHIVED_PRODUCTS_START : undefined
+  });
+
+  const findProductExportNotification = (notifications, since) => {
+    const sinceTime = since ? new Date(since).getTime() : null;
+    return notifications.find((notice) => {
+      const data = notice?.data && typeof notice.data === 'object' ? notice.data : null;
+      const title = String(data?.title || '').toLowerCase();
+      if (!title.includes('product export')) return false;
+      if (sinceTime) {
+        const createdTime = notice?.created_at ? new Date(notice.created_at).getTime() : NaN;
+        if (!Number.isFinite(createdTime) || createdTime < sinceTime) return false;
+      }
+      return Boolean(data?.file?.url);
+    });
+  };
+
+  const handleCheckProductExport = async (requestedAtOverride) => {
+    setProductExportState((prev) => ({
+      ...prev,
+      checking: true,
+      error: '',
+      success: prev.success
+    }));
+    try {
+      const payload = await getList('/admin/notifications', {
+        channel: 'feed',
+        limit: 50,
+        order: '-created_at'
+      });
+      const notifications = getArrayFromPayload(payload, 'notifications');
+      const notice = findProductExportNotification(
+        notifications,
+        requestedAtOverride || productExportState.requestedAt
+      );
+      if (notice?.data?.file?.url) {
+        const fileName = notice?.data?.file?.filename || 'products.csv';
+        const fileUrl = resolveFileUrl(notice?.data?.file?.url || '');
+        setProductExportState((prev) => ({
+          ...prev,
+          checking: false,
+          error: '',
+          success: 'Export ready to download.',
+          fileUrl,
+          fileName
+        }));
+        return;
+      }
+      setProductExportState((prev) => ({
+        ...prev,
+        checking: false,
+        error: '',
+        success: 'Export is still processing. Check again in a moment.'
+      }));
+    } catch (err) {
+      setProductExportState((prev) => ({
+        ...prev,
+        checking: false,
+        error: formatApiError(err, 'Unable to check export status.')
+      }));
+    }
+  };
+
+  const handleProductExport = async () => {
+    setProductExportState({
+      ...EMPTY_PRODUCT_EXPORT_STATE,
+      requesting: true
+    });
+    try {
+      const queryString = buildQueryString(buildProductExportParams());
+      const payload = await request(`/admin/products/export${queryString}`, { method: 'POST' });
+      const requestedAt = new Date().toISOString();
+      setProductExportState((prev) => ({
+        ...prev,
+        requesting: false,
+        error: '',
+        success: 'Export started. We will check for the download link.',
+        transactionId: payload?.transaction_id || '',
+        requestedAt
+      }));
+      await handleCheckProductExport(requestedAt);
+    } catch (err) {
+      setProductExportState({
+        ...EMPTY_PRODUCT_EXPORT_STATE,
+        error: formatApiError(err, 'Unable to start export.')
+      });
+    }
+  };
+
+  const handleProductImportFileChange = (event) => {
+    const file = event.target.files?.[0] || null;
+    setProductImportFile(file);
+    setProductImportState({
+      ...EMPTY_PRODUCT_IMPORT_STATE,
+      fileName: file?.name || ''
+    });
+  };
+
+  const handleStartProductImport = async () => {
+    if (!productImportFile) {
+      setProductImportState((prev) => ({
+        ...prev,
+        error: 'Select a CSV file to import.',
+        success: ''
+      }));
+      return;
+    }
+    setProductImportState((prev) => ({
+      ...prev,
+      uploading: true,
+      error: '',
+      success: ''
+    }));
+    try {
+      const uploadPayload = await uploadFiles(productImportFile);
+      const uploadFile =
+        getArrayFromPayload(uploadPayload, 'files')[0] || uploadPayload?.file || null;
+      const fileKey = uploadFile?.file_key || uploadFile?.id || uploadFile?.key || '';
+      if (!fileKey) {
+        throw new Error('Upload did not return a file key.');
+      }
+      const extension =
+        getFileExtension(productImportFile.name) ||
+        (productImportFile.type ? productImportFile.type.split('/')[1] : '') ||
+        'csv';
+      const importPayload = await request('/admin/products/imports', {
+        method: 'POST',
+        body: {
+          file_key: fileKey,
+          originalname: productImportFile.name,
+          extension,
+          size: productImportFile.size,
+          mime_type: productImportFile.type || 'text/csv'
+        }
+      });
+      setProductImportState((prev) => ({
+        ...prev,
+        uploading: false,
+        error: '',
+        success: 'Import staged. Review the summary and confirm to apply.',
+        summary: importPayload?.summary || null,
+        transactionId: importPayload?.transaction_id || '',
+        fileName: productImportFile.name
+      }));
+    } catch (err) {
+      setProductImportState((prev) => ({
+        ...prev,
+        uploading: false,
+        error: formatApiError(err, 'Unable to stage import.')
+      }));
+    }
+  };
+
+  const handleConfirmProductImport = async () => {
+    if (!productImportState.transactionId) return;
+    setProductImportState((prev) => ({
+      ...prev,
+      confirming: true,
+      error: '',
+      success: prev.success
+    }));
+    try {
+      await request(`/admin/products/imports/${productImportState.transactionId}/confirm`, {
+        method: 'POST'
+      });
+      setProductImportState((prev) => ({
+        ...prev,
+        confirming: false,
+        error: '',
+        success: 'Import confirmed. Products will update in the background.'
+      }));
+      fetchList();
+    } catch (err) {
+      setProductImportState((prev) => ({
+        ...prev,
+        confirming: false,
+        error: formatApiError(err, 'Unable to confirm import.')
+      }));
+    }
   };
 
   const handleSearch = (event) => {
@@ -1534,11 +2521,39 @@ const ResourceList = ({ resource }) => {
     });
   };
 
+  const toggleFilterValue = (key, value, currentValues) => {
+    const nextValues = currentValues.includes(value)
+      ? currentValues.filter((entry) => entry !== value)
+      : [...currentValues, value];
+    setFilterParams({ [key]: nextValues });
+  };
+
   const handleStatusToggle = (value) => {
-    const nextStatuses = statusFilters.includes(value)
-      ? statusFilters.filter((status) => status !== value)
-      : [...statusFilters, value];
-    setFilterParams({ status: nextStatuses });
+    toggleFilterValue('status', value, statusFilters);
+  };
+
+  const handleProductArchivedChange = (event) => {
+    setFilterParams({ archived: event.target.value || undefined });
+  };
+
+  const handleOrderStatusToggle = (value) => {
+    toggleFilterValue('status', value, orderLikeStatusFilters);
+  };
+
+  const handlePaymentStatusToggle = (value) => {
+    toggleFilterValue('payment_status', value, paymentStatusFilters);
+  };
+
+  const handleFulfillmentStatusToggle = (value) => {
+    toggleFilterValue('fulfillment_status', value, fulfillmentStatusFilters);
+  };
+
+  const handleCustomerGroupToggle = (groupId) => {
+    toggleFilterValue('group_id', groupId, customerGroupFilters);
+  };
+
+  const handleCustomerHasAccountChange = (event) => {
+    setFilterParams({ has_account: event.target.value });
   };
 
   const handleSelectChange = (key) => (event) => {
@@ -1554,14 +2569,45 @@ const ResourceList = ({ resource }) => {
     setFilterParams({ limit: event.target.value });
   };
 
+  const handleDateFilterChange = (key) => (event) => {
+    setFilterParams({ [key]: event.target.value });
+  };
+
   const clearFilters = () => {
     setFilterParams({
       status: [],
+      archived: undefined,
       collection_id: undefined,
       category_id: undefined,
       sales_channel_id: undefined,
       type_id: undefined,
       tag_id: undefined
+    });
+  };
+
+  const clearOrderFilters = () => {
+    setFilterParams({
+      status: [],
+      payment_status: [],
+      fulfillment_status: [],
+      created_from: undefined,
+      created_to: undefined
+    });
+  };
+
+  const clearCustomerFilters = () => {
+    setFilterParams({
+      group_id: [],
+      has_account: undefined,
+      created_from: undefined,
+      created_to: undefined
+    });
+  };
+
+  const clearCustomerGroupFilters = () => {
+    setFilterParams({
+      created_from: undefined,
+      created_to: undefined
     });
   };
 
@@ -3391,14 +4437,25 @@ const ResourceList = ({ resource }) => {
     }
   };
 
-  const hasActiveFilters =
+  const hasProductFilters =
     statusFilters.length > 0 ||
+    productArchived ||
     collectionId ||
     categoryId ||
     salesChannelId ||
     typeId ||
     tagId;
-  const displayRows = isUploadList ? uploadRows : rows;
+  const hasOrderFilters =
+    isOrderLikeList &&
+    (orderLikeStatusFilters.length > 0 ||
+      paymentStatusFilters.length > 0 ||
+      fulfillmentStatusFilters.length > 0 ||
+      Boolean(createdFrom || createdTo));
+  const hasCustomerFilters =
+    isCustomerList &&
+    (customerGroupFilters.length > 0 || Boolean(customerHasAccount) || Boolean(createdFrom || createdTo));
+  const hasCustomerGroupFilters = isCustomerGroupList && Boolean(createdFrom || createdTo);
+  const displayRows = isUploadList ? uploadRows : listRows;
 
   return (
     <div>
@@ -3485,6 +4542,20 @@ const ResourceList = ({ resource }) => {
                   </label>
                 ))}
               </div>
+            </div>
+
+            <div className="min-w-[200px]">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Visibility
+              </div>
+              <select
+                className="ldc-input mt-2"
+                value={productArchived ? 'true' : ''}
+                onChange={handleProductArchivedChange}
+              >
+                <option value="">Active products</option>
+                <option value="true">Archived only</option>
+              </select>
             </div>
 
             <div className="min-w-[200px]">
@@ -3589,11 +4660,501 @@ const ResourceList = ({ resource }) => {
               className="ldc-button-secondary"
               type="button"
               onClick={clearFilters}
-              disabled={!hasActiveFilters}
+              disabled={!hasProductFilters}
             >
               Clear filters
             </button>
           </div>
+        </div>
+      ) : null}
+
+      {isProductList ? (
+        <div className="mb-6 ldc-card p-4">
+          <div className="flex flex-wrap items-start gap-8">
+            <div className="min-w-[260px] flex-1">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Export CSV
+              </div>
+              <p className="mt-2 text-sm text-ldc-ink/70">
+                Export products with the current filters to edit in bulk and re-import.
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  className="ldc-button-secondary"
+                  type="button"
+                  onClick={handleProductExport}
+                  disabled={productExportState.requesting}
+                >
+                  {productExportState.requesting ? 'Starting...' : 'Request export'}
+                </button>
+                <button
+                  className="ldc-button-secondary"
+                  type="button"
+                  onClick={() => handleCheckProductExport()}
+                  disabled={productExportState.checking || productExportState.requesting}
+                >
+                  {productExportState.checking ? 'Checking...' : 'Check export'}
+                </button>
+                {productExportState.fileUrl ? (
+                  <a
+                    className="ldc-button-primary"
+                    href={productExportState.fileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Download CSV
+                  </a>
+                ) : null}
+              </div>
+              {productExportState.success ? (
+                <div className="mt-2 text-sm text-emerald-700">{productExportState.success}</div>
+              ) : null}
+              {productExportState.error ? (
+                <div className="mt-2 text-sm text-rose-600">{productExportState.error}</div>
+              ) : null}
+            </div>
+
+            <div className="min-w-[260px] flex-1">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Import CSV
+              </div>
+              <p className="mt-2 text-sm text-ldc-ink/70">
+                Upload a CSV to create or update products. Include an ID column to update existing
+                products.
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <input
+                  className="ldc-input h-11"
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={handleProductImportFileChange}
+                />
+                <button
+                  className="ldc-button-secondary"
+                  type="button"
+                  onClick={handleStartProductImport}
+                  disabled={productImportState.uploading || !productImportFile}
+                >
+                  {productImportState.uploading ? 'Uploading...' : 'Start import'}
+                </button>
+              </div>
+              {productImportState.fileName ? (
+                <div className="mt-2 text-xs text-ldc-ink/60">
+                  Selected: {productImportState.fileName}
+                </div>
+              ) : null}
+              {productImportState.summary ? (
+                <div className="mt-2 text-sm text-ldc-ink/70">
+                  Ready to import {productImportState.summary.toCreate || 0} new and{' '}
+                  {productImportState.summary.toUpdate || 0} updates.
+                </div>
+              ) : null}
+              {productImportState.transactionId ? (
+                <button
+                  className="mt-3 ldc-button-primary"
+                  type="button"
+                  onClick={handleConfirmProductImport}
+                  disabled={productImportState.confirming}
+                >
+                  {productImportState.confirming ? 'Confirming...' : 'Confirm import'}
+                </button>
+              ) : null}
+              {productImportState.success ? (
+                <div className="mt-2 text-sm text-emerald-700">{productImportState.success}</div>
+              ) : null}
+              {productImportState.error ? (
+                <div className="mt-2 text-sm text-rose-600">{productImportState.error}</div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isOrderLikeList ? (
+        <div className="mb-6 ldc-card p-4">
+          <div className="flex flex-wrap items-start gap-4">
+            <div className="min-w-[220px]">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Status
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {ORDER_STATUS_OPTIONS.map((status) => (
+                  <label
+                    key={status.value}
+                    className="flex items-center gap-2 rounded-full border border-white/70 bg-white/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/70"
+                  >
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-ldc-plum"
+                      checked={orderLikeStatusFilters.includes(status.value)}
+                      onChange={() => handleOrderStatusToggle(status.value)}
+                    />
+                    {status.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {isOrderList ? (
+              <div className="min-w-[220px]">
+                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                  Payment status
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {PAYMENT_STATUS_OPTIONS.map((status) => (
+                    <label
+                      key={status.value}
+                      className="flex items-center gap-2 rounded-full border border-white/70 bg-white/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/70"
+                    >
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-ldc-plum"
+                        checked={paymentStatusFilters.includes(status.value)}
+                        onChange={() => handlePaymentStatusToggle(status.value)}
+                      />
+                      {status.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {isOrderList ? (
+              <div className="min-w-[220px]">
+                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                  Fulfillment status
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {FULFILLMENT_STATUS_OPTIONS.map((status) => (
+                    <label
+                      key={status.value}
+                      className="flex items-center gap-2 rounded-full border border-white/70 bg-white/70 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/70"
+                    >
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-ldc-plum"
+                        checked={fulfillmentStatusFilters.includes(status.value)}
+                        onChange={() => handleFulfillmentStatusToggle(status.value)}
+                      />
+                      {status.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="min-w-[200px]">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Created from
+              </div>
+              <input
+                className="ldc-input mt-2"
+                type="date"
+                value={createdFrom}
+                onChange={handleDateFilterChange('created_from')}
+              />
+            </div>
+
+            <div className="min-w-[200px]">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Created to
+              </div>
+              <input
+                className="ldc-input mt-2"
+                type="date"
+                value={createdTo}
+                onChange={handleDateFilterChange('created_to')}
+              />
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-ldc-ink/70">
+            <div>Filters apply to the current list view.</div>
+            <button
+              className="ldc-button-secondary"
+              type="button"
+              onClick={clearOrderFilters}
+              disabled={!hasOrderFilters}
+            >
+              Clear filters
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {isCustomerList ? (
+        <div className="mb-6 ldc-card p-4">
+          <div className="flex flex-wrap items-start gap-4">
+            <div className="min-w-[240px]">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Customer groups
+              </div>
+              <div className="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-2xl bg-white/70 p-3">
+                {customerCreateMeta.groups.length ? (
+                  customerCreateMeta.groups.map((group) => (
+                    <label key={group.id} className="flex items-center gap-2 text-xs text-ldc-ink/80">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-ldc-plum"
+                        checked={customerGroupFilters.includes(group.id)}
+                        onChange={() => handleCustomerGroupToggle(group.id)}
+                      />
+                      {group.name || group.id}
+                    </label>
+                  ))
+                ) : (
+                  <div className="text-xs text-ldc-ink/60">No customer groups found.</div>
+                )}
+              </div>
+              <div className="mt-2 text-xs text-ldc-ink/60">
+                {customerCreateMetaLoading ? 'Loading groups...' : null}
+                {!customerCreateMetaLoading && customerCreateMetaError ? (
+                  <span className="text-rose-600">{customerCreateMetaError}</span>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="min-w-[200px]">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Account status
+              </div>
+              <select
+                className="ldc-input mt-2"
+                value={customerHasAccount}
+                onChange={handleCustomerHasAccountChange}
+              >
+                {CUSTOMER_ACCOUNT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="min-w-[200px]">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Created from
+              </div>
+              <input
+                className="ldc-input mt-2"
+                type="date"
+                value={createdFrom}
+                onChange={handleDateFilterChange('created_from')}
+              />
+            </div>
+
+            <div className="min-w-[200px]">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Created to
+              </div>
+              <input
+                className="ldc-input mt-2"
+                type="date"
+                value={createdTo}
+                onChange={handleDateFilterChange('created_to')}
+              />
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-ldc-ink/70">
+            <div>Filters apply to the current list view.</div>
+            <button
+              className="ldc-button-secondary"
+              type="button"
+              onClick={clearCustomerFilters}
+              disabled={!hasCustomerFilters}
+            >
+              Clear filters
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {isCustomerGroupList ? (
+        <div className="mb-6 ldc-card p-4">
+          <div className="flex flex-wrap items-start gap-4">
+            <div className="min-w-[200px]">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Created from
+              </div>
+              <input
+                className="ldc-input mt-2"
+                type="date"
+                value={createdFrom}
+                onChange={handleDateFilterChange('created_from')}
+              />
+            </div>
+
+            <div className="min-w-[200px]">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Created to
+              </div>
+              <input
+                className="ldc-input mt-2"
+                type="date"
+                value={createdTo}
+                onChange={handleDateFilterChange('created_to')}
+              />
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-ldc-ink/70">
+            <div>Filters apply to the current list view.</div>
+            <button
+              className="ldc-button-secondary"
+              type="button"
+              onClick={clearCustomerGroupFilters}
+              disabled={!hasCustomerGroupFilters}
+            >
+              Clear filters
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {isBulkList ? (
+        <div className="mb-6 ldc-card p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                Bulk actions
+              </div>
+              <div className="mt-1 text-sm text-ldc-ink/70">
+                {selectedIds.length
+                  ? `${selectedIds.length} selected`
+                  : 'Select rows to apply bulk actions.'}
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                className="ldc-button-secondary"
+                type="button"
+                onClick={handleExportRows}
+                disabled={!displayRows.length}
+              >
+                Export CSV
+              </button>
+              <select
+                className="ldc-input h-11 w-56"
+                value={bulkAction}
+                onChange={handleBulkActionChange}
+                aria-label="Bulk action"
+              >
+                <option value="">Bulk action</option>
+                {(isProductList
+                  ? PRODUCT_BULK_ACTIONS
+                  : isCustomerGroupList
+                    ? CUSTOMER_GROUP_BULK_ACTIONS
+                  : isCustomerList
+                    ? CUSTOMER_BULK_ACTIONS
+                    : isOrderList
+                      ? ORDER_BULK_ACTIONS
+                      : DRAFT_BULK_ACTIONS
+                ).map((action) => (
+                  <option key={action.value} value={action.value}>
+                    {action.label}
+                  </option>
+                ))}
+              </select>
+              {isProductList && bulkAction === 'set-collection' ? (
+                <select
+                  className="ldc-input h-11 w-56"
+                  value={bulkCollectionId}
+                  onChange={handleBulkCollectionChange}
+                  disabled={filtersLoading}
+                  aria-label="Collection"
+                >
+                  <option value="">Select collection</option>
+                  {productFilters.collections.map((collection) => (
+                    <option key={collection.id} value={collection.id}>
+                      {collection.title || collection.handle || collection.id}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+              {isProductList && ['add-category', 'remove-category'].includes(bulkAction) ? (
+                <select
+                  className="ldc-input h-11 w-56"
+                  value={bulkCategoryId}
+                  onChange={handleBulkCategoryChange}
+                  disabled={filtersLoading}
+                  aria-label="Category"
+                >
+                  <option value="">Select category</option>
+                  {productFilters.categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name || category.handle || category.id}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+              {isProductList && ['add-sales-channel', 'remove-sales-channel'].includes(bulkAction) ? (
+                <select
+                  className="ldc-input h-11 w-56"
+                  value={bulkSalesChannelId}
+                  onChange={handleBulkSalesChannelChange}
+                  disabled={filtersLoading}
+                  aria-label="Sales channel"
+                >
+                  <option value="">Select sales channel</option>
+                  {productFilters.salesChannels.map((channel) => (
+                    <option key={channel.id} value={channel.id}>
+                      {channel.name || channel.id}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+              {isCustomerList ? (
+                <select
+                  className="ldc-input h-11 w-56"
+                  value={bulkGroupId}
+                  onChange={handleBulkGroupChange}
+                  disabled={
+                    !['add-group', 'remove-group'].includes(bulkAction) || customerCreateMetaLoading
+                  }
+                  aria-label="Customer group"
+                >
+                  <option value="">Select group</option>
+                  {customerCreateMeta.groups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.name || group.id}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+              <button
+                className="ldc-button-primary"
+                type="button"
+                onClick={handleBulkAction}
+                disabled={
+                  !selectedIds.length ||
+                  !bulkAction ||
+                  bulkState.loading ||
+                  (isCustomerList &&
+                    ['add-group', 'remove-group'].includes(bulkAction) &&
+                    !bulkGroupId)
+                  ||
+                  (isProductList && bulkAction === 'set-collection' && !bulkCollectionId)
+                  ||
+                  (isProductList &&
+                    ['add-category', 'remove-category'].includes(bulkAction) &&
+                    !bulkCategoryId)
+                  ||
+                  (isProductList &&
+                    ['add-sales-channel', 'remove-sales-channel'].includes(bulkAction) &&
+                    !bulkSalesChannelId)
+                }
+              >
+                {bulkState.loading ? 'Working...' : 'Apply'}
+              </button>
+            </div>
+          </div>
+          {bulkState.error ? (
+            <div className="mt-3 text-sm text-rose-600">{bulkState.error}</div>
+          ) : null}
+          {bulkState.success ? (
+            <div className="mt-3 text-sm text-emerald-700">{bulkState.success}</div>
+          ) : null}
         </div>
       ) : null}
 
@@ -6303,11 +7864,15 @@ const ResourceList = ({ resource }) => {
       {!isUploadList ? (
         <DataTable
           columns={columns}
-          rows={rows}
+          rows={displayRows}
           getRowId={(row) => row.id}
           onRowClick={handleRowClick}
           isLoading={loading}
           emptyText={`No ${resource.label.toLowerCase()} found.`}
+          selectable={isBulkList}
+          selectedIds={selectedIds}
+          onToggleRow={handleToggleRow}
+          onToggleAll={handleToggleAll}
         />
       ) : null}
 

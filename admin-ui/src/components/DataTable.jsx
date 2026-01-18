@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import StatusBadge from './StatusBadge.jsx';
 
 const renderThumbnail = (value, row) => {
@@ -33,9 +33,26 @@ const DataTable = ({
   getRowId,
   onRowClick,
   isLoading,
-  emptyText
+  emptyText,
+  selectable = false,
+  selectedIds = [],
+  onToggleRow,
+  onToggleAll
 }) => {
   const hasRows = Array.isArray(rows) && rows.length > 0;
+  const rowIds = useMemo(
+    () => (Array.isArray(rows) ? rows.map((row) => getRowId(row)).filter(Boolean) : []),
+    [rows, getRowId]
+  );
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const allSelected = selectable && rowIds.length > 0 && rowIds.every((id) => selectedSet.has(id));
+  const someSelected = selectable && rowIds.some((id) => selectedSet.has(id));
+  const selectAllRef = useRef(null);
+
+  useEffect(() => {
+    if (!selectAllRef.current) return;
+    selectAllRef.current.indeterminate = !allSelected && someSelected;
+  }, [allSelected, someSelected]);
 
   if (isLoading && !hasRows) {
     return (
@@ -60,6 +77,18 @@ const DataTable = ({
         <table className="min-w-full text-sm">
           <thead className="bg-white/70">
             <tr>
+              {selectable ? (
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  <input
+                    ref={selectAllRef}
+                    type="checkbox"
+                    className="h-4 w-4 accent-ldc-plum"
+                    checked={allSelected}
+                    onChange={() => onToggleAll?.(rowIds)}
+                    aria-label="Select all rows"
+                  />
+                </th>
+              ) : null}
               {columns.map((col) => (
                 <th
                   key={col.key}
@@ -73,12 +102,27 @@ const DataTable = ({
           <tbody className="divide-y divide-white/60">
             {rows.map((row) => {
               const rowId = getRowId(row);
+              const isSelected = selectable && selectedSet.has(rowId);
               return (
                 <tr
                   key={rowId}
-                  className={`transition ${onRowClick ? 'cursor-pointer hover:bg-white/80' : ''}`}
+                  className={`transition ${onRowClick ? 'cursor-pointer hover:bg-white/80' : ''} ${
+                    isSelected ? 'bg-white/80' : ''
+                  }`}
                   onClick={() => onRowClick?.(row)}
                 >
+                  {selectable ? (
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-ldc-plum"
+                        checked={isSelected}
+                        onChange={() => onToggleRow?.(rowId)}
+                        onClick={(event) => event.stopPropagation()}
+                        aria-label={`Select ${rowId}`}
+                      />
+                    </td>
+                  ) : null}
                   {columns.map((col) => {
                     const rawValue = row?.[col.key];
                     const formattedValue = col.format ? col.format(rawValue, row) : rawValue;
