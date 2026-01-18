@@ -65,6 +65,187 @@
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
 
+  const formatCurrency = (amount, currencyCode = 'USD') => {
+    const value = Number(amount);
+    if (!Number.isFinite(value)) return '';
+    const code = String(currencyCode || 'USD').toUpperCase();
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: code
+    }).format(value / 100);
+  };
+
+  const resolveAssetUrl = src => {
+    if (!src) return '';
+    if (/^https?:\/\//i.test(src)) return src;
+    if (src.startsWith('//')) return `https:${src}`;
+    if (src.startsWith('/')) return `${backendUrl}${src}`;
+    return src;
+  };
+
+  const getProductPrice = product => {
+    const variants = Array.isArray(product?.variants) ? product.variants : [];
+    const firstVariant = variants[0];
+    const priceData = firstVariant?.calculated_price;
+    const amount =
+      priceData?.calculated_amount ??
+      priceData?.original_amount ??
+      firstVariant?.prices?.[0]?.amount ??
+      null;
+    const currency =
+      priceData?.currency_code ||
+      firstVariant?.prices?.[0]?.currency_code ||
+      product?.currency_code ||
+      'USD';
+    return amount != null ? { amount, currency } : null;
+  };
+
+  const fetchStoreProducts = async () => {
+    const limit = 200;
+    let offset = 0;
+    let results = [];
+    let hasMore = true;
+
+    while (hasMore) {
+      const params = new URLSearchParams({
+        limit: String(limit),
+        offset: String(offset),
+        fields: '+variants,+thumbnail,+images,+description,+subtitle'
+      });
+      let payload = null;
+      try {
+        payload = await request(`/store/products?${params.toString()}`);
+      } catch (error) {
+        try {
+          payload = await request(`/store/products?limit=${limit}&offset=${offset}`);
+        } catch (innerError) {
+          console.warn('[commerce] Unable to fetch products:', innerError);
+          return results;
+        }
+      }
+
+      const products = payload?.products || payload?.data || [];
+      results = results.concat(products);
+      if (!Array.isArray(products) || products.length < limit) {
+        hasMore = false;
+      } else {
+        offset += limit;
+      }
+    }
+
+    return results;
+  };
+
+  const getProductContainers = () => {
+    const containers = new Map();
+    const triggers = Array.from(document.querySelectorAll('[data-product-key]'));
+    triggers.forEach(trigger => {
+      const key = trigger.dataset.productKey || trigger.closest('[data-product-key]')?.dataset.productKey;
+      if (!key) return;
+      const container = getVariantContainer(trigger) || trigger.closest('.product-card') || trigger.closest('.group');
+      if (container) {
+        containers.set(container, key);
+      }
+    });
+    return containers;
+  };
+
+  const updateProductCard = (container, product) => {
+    if (!container || !product) return;
+    const title = product.title || '';
+    if (title) {
+      const titleEls = container.querySelectorAll(
+        '[data-product-title], .tile-title, .product-title, .hero-heading, h1, h2, h3'
+      );
+      titleEls.forEach(el => {
+        if (!el) return;
+        el.textContent = title;
+      });
+    }
+
+    const priceInfo = getProductPrice(product);
+    if (priceInfo) {
+      const formatted = formatCurrency(priceInfo.amount, priceInfo.currency);
+      const priceCandidates = [
+        container.querySelector('[data-product-price]'),
+        container.querySelector('.price-line'),
+        container.querySelector('.product-price'),
+        container.querySelector('.tile-price'),
+        container.querySelector('[data-price-value]')
+      ].filter(Boolean);
+      let priceEl = priceCandidates[0];
+      if (!priceEl) {
+        priceEl = Array.from(container.querySelectorAll('span, div')).find(node =>
+          /\$\s*\d/.test(node.textContent || '')
+        );
+      }
+      if (priceEl && formatted) {
+        priceEl.textContent = formatted;
+      }
+    }
+
+    const description = product.description || product.subtitle || '';
+    if (description) {
+      let descriptionEl =
+        container.querySelector('[data-product-description]') ||
+        container.querySelector('.product-description') ||
+        container.querySelector('.tile-description') ||
+        null;
+      if (!descriptionEl) {
+        const candidates = Array.from(
+          container.querySelectorAll('div.text-xs.text-slate-600')
+        );
+        descriptionEl = candidates.find(el => !el.closest('.rating')) || null;
+      }
+      if (descriptionEl) {
+        descriptionEl.textContent = description;
+      }
+    }
+
+    const imageUrl =
+      product.thumbnail ||
+      product?.images?.[0]?.url ||
+      product?.images?.[0] ||
+      '';
+    if (imageUrl) {
+      const resolved = resolveAssetUrl(imageUrl);
+      const imageEl =
+        container.querySelector('[data-product-image]') ||
+        container.querySelector('.tile-mauve img') ||
+        container.querySelector('.product-media img') ||
+        container.querySelector('img');
+      if (imageEl && resolved) {
+        imageEl.setAttribute('src', resolved);
+        if (title) {
+          imageEl.setAttribute('alt', `${title} thumbnail`);
+        }
+      }
+    }
+  };
+
+  const hydrateProductCards = async () => {
+    const containers = getProductContainers();
+    if (!containers.size) return;
+    const products = await fetchStoreProducts();
+    if (!products.length) return;
+    const productByHandle = new Map(
+      products.map(product => [product?.handle || product?.id, product])
+    );
+
+    containers.forEach((key, container) => {
+      const product = productByHandle.get(key);
+      if (product) {
+        updateProductCard(container, product);
+        return;
+      }
+      const fallbackKey = slugify(key);
+      const fallback = productByHandle.get(fallbackKey);
+      if (fallback) {
+        updateProductCard(container, fallback);
+      }
+    });
+  };
+
   const cleanVariantLabel = value =>
     String(value || '')
       .replace(/^\s*View\s+/i, '')
@@ -684,8 +865,10 @@
     removeLineItem,
     updateLineItemQuantity,
     changeLineItemQuantity,
-    resetCart
+    resetCart,
+    hydrateProductCards
   };
 
   syncBadges();
+  hydrateProductCards();
 })();
