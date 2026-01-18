@@ -53,6 +53,95 @@ const parsePriceInput = (value) => {
   return Math.round(numeric * 100);
 };
 
+const normalizeAmountValue = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value === 'object' && value?.value !== undefined) {
+    const numeric = Number(value.value);
+    return Number.isFinite(numeric) ? numeric : null;
+  }
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+};
+
+const getPriceRuleValue = (price, attribute) => {
+  const rules = Array.isArray(price?.price_rules)
+    ? price.price_rules
+    : Array.isArray(price?.rules)
+      ? price.rules
+      : [];
+  if (!rules.length) return null;
+  const rule = rules.find((entry) => entry?.attribute === attribute);
+  if (!rule) return null;
+  if (rule?.value !== undefined && rule?.value !== null) return String(rule.value);
+  if (Array.isArray(rule?.values) && rule.values.length) {
+    const candidate = rule.values[0]?.value ?? rule.values[0];
+    if (candidate !== undefined && candidate !== null) return String(candidate);
+  }
+  return null;
+};
+
+const buildShippingPriceCandidates = (option) => {
+  const candidates = [];
+  if (!option) return candidates;
+  const prices = Array.isArray(option.prices) ? option.prices : [];
+  prices.forEach((price) => {
+    const amount = normalizeAmountValue(
+      price?.amount ?? price?.price ?? price?.value ?? price?.money_amount?.amount
+    );
+    if (!Number.isFinite(amount)) return;
+    const currencyCode = String(
+      price?.currency_code ||
+        price?.currency?.code ||
+        getPriceRuleValue(price, 'currency_code') ||
+        ''
+    )
+      .trim()
+      .toLowerCase();
+    const regionId =
+      price?.region_id ||
+      price?.region?.id ||
+      getPriceRuleValue(price, 'region_id') ||
+      '';
+    candidates.push({
+      amount,
+      currency_code: currencyCode || null,
+      region_id: regionId || null
+    });
+  });
+
+  const directAmount = normalizeAmountValue(option?.amount);
+  if (Number.isFinite(directAmount)) {
+    const currencyCode = String(option?.currency_code || '').trim().toLowerCase();
+    const regionId = option?.region_id || option?.region?.id || '';
+    candidates.push({
+      amount: directAmount,
+      currency_code: currencyCode || null,
+      region_id: regionId || null
+    });
+  }
+
+  return candidates;
+};
+
+const resolveShippingOptionAmount = (option, regionId, currencyCode) => {
+  const candidates = buildShippingPriceCandidates(option);
+  if (!candidates.length) return null;
+  const normalizedCurrency = String(currencyCode || '')
+    .trim()
+    .toLowerCase();
+  if (regionId) {
+    const regionMatch = candidates.find((price) => price.region_id === regionId);
+    if (regionMatch) return regionMatch.amount;
+  }
+  if (normalizedCurrency) {
+    const currencyMatch = candidates.find(
+      (price) => price.currency_code === normalizedCurrency
+    );
+    if (currencyMatch) return currencyMatch.amount;
+  }
+  return candidates[0].amount ?? null;
+};
+
 const buildAddressPayload = (address) => {
   if (!address) return null;
   const payload = {
@@ -452,6 +541,28 @@ const DraftOrderCreate = () => {
       .filter(Boolean);
 
     const resolvedShippingOptionId = shippingOptionId || manualShippingOptionId.trim();
+    const resolvedShippingOption = resolvedShippingOptionId
+      ? shippingOptions.find((option) => option.id === resolvedShippingOptionId) ||
+        (shippingLookup.option?.id === resolvedShippingOptionId ? shippingLookup.option : null)
+      : null;
+    if (resolvedShippingOptionId && !resolvedShippingOption) {
+      setSaveState({
+        saving: false,
+        error: 'Shipping option not found. Please reselect or lookup the option.'
+      });
+      return;
+    }
+
+    const resolvedShippingAmount = resolvedShippingOption
+      ? resolveShippingOptionAmount(resolvedShippingOption, form.region_id, currencyCode)
+      : null;
+    if (resolvedShippingOption && resolvedShippingAmount === null) {
+      setSaveState({
+        saving: false,
+        error: 'Shipping option price missing. Check the shipping option pricing.'
+      });
+      return;
+    }
 
     const payload = {
       email: form.email.trim() || undefined,
@@ -464,8 +575,18 @@ const DraftOrderCreate = () => {
       items: buildItemsPayload(),
       shipping_address: shippingPayload || undefined,
       billing_address: billingPayload || undefined,
-      shipping_methods: resolvedShippingOptionId
-        ? [{ shipping_option_id: resolvedShippingOptionId }]
+      shipping_methods: resolvedShippingOption
+        ? [
+            {
+              shipping_option_id: resolvedShippingOption.id,
+              name: resolvedShippingOption.name || 'Shipping',
+              amount: resolvedShippingAmount,
+              ...(resolvedShippingOption.data &&
+              typeof resolvedShippingOption.data === 'object'
+                ? { data: resolvedShippingOption.data }
+                : {})
+            }
+          ]
         : undefined
     };
 
