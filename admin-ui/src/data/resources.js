@@ -471,6 +471,34 @@ export const resources = [
     ]
   },
   {
+    id: 'notifications',
+    label: 'Notifications',
+    path: '/notifications',
+    endpoint: '/admin/notifications',
+    listKey: 'notifications',
+    detailKey: 'notification',
+    listParams: {
+      order: '-created_at',
+      channel: 'feed',
+      fields: '+status,+data'
+    },
+    columns: [
+      {
+        key: 'title',
+        label: 'Title',
+        format: (_, row) => row?.data?.title || row?.template || 'Notification'
+      },
+      {
+        key: 'description',
+        label: 'Message',
+        format: (_, row) => row?.data?.description || row?.data?.message || '-'
+      },
+      { key: 'channel', label: 'Channel' },
+      { key: 'status', label: 'Status', badge: true },
+      { key: 'created_at', label: 'Created', format: formatDateTime }
+    ]
+  },
+  {
     id: 'stores',
     label: 'Store Settings',
     path: '/stores',
@@ -560,6 +588,6 @@ export const resourceGroups = [
   },
   {
     label: 'Settings',
-    items: ['stores', 'sales-channels', 'users', 'invites', 'api-keys', 'uploads']
+    items: ['stores', 'sales-channels', 'users', 'invites', 'api-keys', 'notifications', 'uploads']
   }
 ];

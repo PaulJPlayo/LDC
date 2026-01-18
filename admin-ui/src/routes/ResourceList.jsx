@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PageHeader from '../components/PageHeader.jsx';
 import DataTable from '../components/DataTable.jsx';
-import { formatMoney } from '../lib/formatters.js';
+import { formatDateTime, formatMoney } from '../lib/formatters.js';
 import { formatApiError, getDetail, getList, request, uploadFiles } from '../lib/api.js';
 
 const getArrayFromPayload = (payload, key) => {
@@ -377,10 +377,26 @@ const formatUploadLabel = (file) => {
 const MEDIA_BASE = (import.meta.env.VITE_MEDUSA_BACKEND_URL || 'https://api.lovettsldc.com')
   .replace(/\/$/, '');
 
+const isLocalHost = (host) =>
+  ['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(String(host || '').toLowerCase());
+
+const normalizeBackendUrl = (url) => {
+  if (!/^https?:\/\//i.test(url)) return url;
+  try {
+    const parsed = new URL(url);
+    if (isLocalHost(parsed.hostname)) {
+      return `${MEDIA_BASE}${parsed.pathname}${parsed.search}${parsed.hash}`;
+    }
+    return url;
+  } catch {
+    return url;
+  }
+};
+
 const resolveUploadUrl = (file) => {
   const url = getUploadUrl(file);
   if (!url) return '';
-  if (/^https?:\/\//i.test(url)) return url;
+  if (/^https?:\/\//i.test(url)) return normalizeBackendUrl(url);
   if (url.startsWith('//')) return `https:${url}`;
   if (url.startsWith('/')) return `${MEDIA_BASE}${url}`;
   if (!url.includes('://') && url.includes('/')) return `${MEDIA_BASE}/${url}`;
@@ -389,7 +405,7 @@ const resolveUploadUrl = (file) => {
 
 const resolveFileUrl = (url) => {
   if (!url) return '';
-  if (/^https?:\/\//i.test(url)) return url;
+  if (/^https?:\/\//i.test(url)) return normalizeBackendUrl(url);
   if (url.startsWith('//')) return `https:${url}`;
   if (url.startsWith('/')) return `${MEDIA_BASE}${url}`;
   if (!url.includes('://') && url.includes('/')) return `${MEDIA_BASE}/${url}`;
@@ -917,6 +933,7 @@ const ResourceList = ({ resource }) => {
   const isStockLocationList = resource?.id === 'stock-locations';
   const isInviteList = resource?.id === 'invites';
   const isApiKeyList = resource?.id === 'api-keys';
+  const isNotificationList = resource?.id === 'notifications';
   const isUploadList = resource?.id === 'uploads';
   const isOrderLikeList = isOrderList || isDraftOrderList;
   const isDateFilterList = isOrderLikeList || isCustomerList || isCustomerGroupList;
@@ -956,7 +973,48 @@ const ResourceList = ({ resource }) => {
 
   const totalPages = Math.max(1, Math.ceil(count / limit));
 
-  const columns = useMemo(() => resource.columns || [], [resource]);
+  const columns = useMemo(() => {
+    if (isNotificationList) {
+      return [
+        {
+          key: 'title',
+          label: 'Title',
+          format: (_, row) => row?.data?.title || row?.template || 'Notification'
+        },
+        {
+          key: 'message',
+          label: 'Message',
+          format: (_, row) =>
+            row?.data?.description || row?.data?.message || row?.data?.text || '-'
+        },
+        { key: 'channel', label: 'Channel' },
+        { key: 'status', label: 'Status', badge: true },
+        {
+          key: 'file',
+          label: 'File',
+          format: (_, row) => {
+            const file = row?.data?.file;
+            const fileUrl = resolveFileUrl(file?.url || row?.data?.file_url || '');
+            if (!fileUrl) return '-';
+            const label = file?.filename || file?.name || 'Download';
+            return (
+              <a
+                href={fileUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-ldc-plum underline decoration-ldc-plum/40 underline-offset-4"
+                onClick={(event) => event.stopPropagation()}
+              >
+                {label}
+              </a>
+            );
+          }
+        },
+        { key: 'created_at', label: 'Created', format: formatDateTime }
+      ];
+    }
+    return resource.columns || [];
+  }, [isNotificationList, resource]);
   const uploadRows = useMemo(() => {
     if (!isUploadList) return rows;
     const term = uploadSearch.trim().toLowerCase();
@@ -1844,7 +1902,7 @@ const ResourceList = ({ resource }) => {
   }, [isTaxRateList, taxRateProductSearch.query]);
 
   const handleRowClick = (row) => {
-    if (isUploadList) return;
+    if (isUploadList || isNotificationList) return;
     navigate(`${resource.path}/${row.id}`);
   };
 
