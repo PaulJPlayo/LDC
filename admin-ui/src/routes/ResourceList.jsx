@@ -1197,6 +1197,8 @@ const ResourceList = ({ resource }) => {
         : isCustomerList
           ? { fields: '+groups' }
           : null;
+      const productStatusParams =
+        isProductList && statusFilters.length ? { 'status[]': statusFilters } : {};
       const payload = await getList(resource.endpoint, {
         ...listParams,
         limit,
@@ -1204,10 +1206,9 @@ const ResourceList = ({ resource }) => {
         q: isUploadList ? undefined : query || undefined,
         order: isProductList ? order : undefined,
         with_deleted: isProductList && productArchived ? true : undefined,
+        ...productStatusParams,
         status: isProductList
-          ? statusFilters.length
-            ? statusFilters
-            : undefined
+          ? undefined
           : isOrderList
             ? orderStatusFilters.length
               ? orderStatusFilters
