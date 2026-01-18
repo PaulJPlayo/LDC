@@ -575,6 +575,7 @@ const buildVariantDrafts = (record) => {
     id: variant.id,
     title: variant.title || '',
     sku: variant.sku || '',
+    thumbnail: variant.thumbnail || '',
     manage_inventory: variant.manage_inventory !== false,
     allow_backorder: Boolean(variant.allow_backorder),
     options: buildVariantOptionMap(variant, productOptions),
@@ -598,6 +599,7 @@ const buildNewVariantDraft = (record, defaultCurrency) => {
   return {
     title: '',
     sku: '',
+    thumbnail: '',
     manage_inventory: true,
     allow_backorder: false,
     options,
@@ -635,6 +637,7 @@ const mapRecordToDraft = (record) => ({
   handle: record?.handle ?? '',
   status: record?.status || 'draft',
   description: record?.description ?? '',
+  thumbnail: record?.thumbnail || '',
   is_giftcard: Boolean(record?.is_giftcard),
   discountable: record?.discountable !== false,
   collection_id: record?.collection_id || record?.collection?.id || '',
@@ -974,6 +977,11 @@ const ResourceDetail = ({ resource }) => {
   const [inventoryCounts, setInventoryCounts] = useState({});
   const [productDraft, setProductDraft] = useState(null);
   const [saveState, setSaveState] = useState({ saving: false, error: '', success: '' });
+  const [productUploadState, setProductUploadState] = useState({
+    uploading: false,
+    error: '',
+    success: ''
+  });
   const [productMeta, setProductMeta] = useState({
     collections: [],
     categories: [],
@@ -993,6 +1001,11 @@ const ResourceDetail = ({ resource }) => {
   const [optionMessage, setOptionMessage] = useState('');
   const [newOption, setNewOption] = useState({ title: '', values: '' });
   const [variantDrafts, setVariantDrafts] = useState([]);
+  const [variantUploadState, setVariantUploadState] = useState({
+    uploadingId: null,
+    error: '',
+    success: ''
+  });
   const [variantSavingId, setVariantSavingId] = useState(null);
   const [variantDeletingId, setVariantDeletingId] = useState(null);
   const [variantError, setVariantError] = useState('');
@@ -1940,7 +1953,7 @@ const ResourceDetail = ({ resource }) => {
           setRecord(variants?.[0] || null);
         } else {
           const detailParams = isProduct
-            ? { fields: '+categories' }
+            ? { fields: '+categories,+images' }
             : isOrder
               ? orderDetailParams
               : isPriceList
@@ -2312,22 +2325,26 @@ const ResourceDetail = ({ resource }) => {
       setOptionDrafts([]);
       setVariantDrafts([]);
       setNewVariant(null);
+      setProductUploadState({ uploading: false, error: '', success: '' });
       return;
     }
     setProductDraft(mapRecordToDraft(record));
     setOptionDrafts(buildOptionDrafts(record));
     setVariantDrafts(buildVariantDrafts(record));
     setNewVariant(buildNewVariantDraft(record, getDefaultCurrency(record)));
+    setProductUploadState({ uploading: false, error: '', success: '' });
   }, [isProduct, record]);
 
   useEffect(() => {
     if (!isVariant || !record) {
       setVariantDrafts([]);
+      setVariantUploadState({ uploadingId: null, error: '', success: '' });
       return;
     }
     const productOptions = variantProduct?.options || record?.product?.options || [];
     setVariantDrafts([buildVariantDrafts({ variants: [record], options: productOptions })[0]]);
     setNewVariant(buildNewVariantDraft({ options: productOptions }, getDefaultCurrency(record)));
+    setVariantUploadState({ uploadingId: null, error: '', success: '' });
   }, [isVariant, record, variantProduct]);
 
   useEffect(() => {
@@ -4188,12 +4205,39 @@ const ResourceDetail = ({ resource }) => {
     if (!record) return;
     setProductDraft(mapRecordToDraft(record));
     setSaveState({ saving: false, error: '', success: '' });
+    setProductUploadState({ uploading: false, error: '', success: '' });
+  };
+
+  const handleProductThumbnailUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setProductUploadState({ uploading: true, error: '', success: '' });
+    try {
+      const payload = await uploadFiles(file);
+      const files = getArrayFromPayload(payload, 'files');
+      const uploaded = files[0] || getObjectFromPayload(payload, 'file');
+      const url = uploaded?.url || uploaded?.id;
+      if (!url) {
+        throw new Error('Upload response missing file URL.');
+      }
+      setProductDraft((prev) => (prev ? { ...prev, thumbnail: url } : prev));
+      setProductUploadState({ uploading: false, error: '', success: 'Thumbnail uploaded.' });
+    } catch (err) {
+      setProductUploadState({
+        uploading: false,
+        error: err?.message || 'Unable to upload thumbnail.',
+        success: ''
+      });
+    } finally {
+      event.target.value = '';
+    }
   };
 
   const handleSaveProduct = async () => {
     if (!record || !productDraft) return;
     setSaveState({ saving: true, error: '', success: '' });
     try {
+      const thumbnail = productDraft.thumbnail.trim();
       const payload = await request(`${resource.endpoint}/${record.id}`, {
         method: 'POST',
         body: {
@@ -4202,6 +4246,7 @@ const ResourceDetail = ({ resource }) => {
           handle: productDraft.handle || null,
           status: productDraft.status || undefined,
           description: productDraft.description || null,
+          thumbnail: thumbnail || null,
           is_giftcard: productDraft.is_giftcard,
           discountable: productDraft.discountable,
           collection_id: productDraft.collection_id || null,
@@ -8324,6 +8369,39 @@ const ResourceDetail = ({ resource }) => {
     );
   };
 
+  const handleVariantThumbnailUpload = (variantId) => async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setVariantUploadState({ uploadingId: variantId, error: '', success: '' });
+    try {
+      const payload = await uploadFiles(file);
+      const files = getArrayFromPayload(payload, 'files');
+      const uploaded = files[0] || getObjectFromPayload(payload, 'file');
+      const url = uploaded?.url || uploaded?.id;
+      if (!url) {
+        throw new Error('Upload response missing file URL.');
+      }
+      if (variantId === 'new') {
+        setNewVariant((prev) => (prev ? { ...prev, thumbnail: url } : prev));
+      } else {
+        setVariantDrafts((prev) =>
+          prev.map((variant) =>
+            variant.id === variantId ? { ...variant, thumbnail: url } : variant
+          )
+        );
+      }
+      setVariantUploadState({ uploadingId: null, error: '', success: 'Thumbnail uploaded.' });
+    } catch (err) {
+      setVariantUploadState({
+        uploadingId: null,
+        error: err?.message || 'Unable to upload thumbnail.',
+        success: ''
+      });
+    } finally {
+      event.target.value = '';
+    }
+  };
+
   const handleSaveVariant = async (variant) => {
     if (!record || !variant?.id) return;
     const productId = isVariant ? record?.product_id || record?.product?.id : record?.id;
@@ -8338,6 +8416,7 @@ const ResourceDetail = ({ resource }) => {
       setVariantMessage('');
       return;
     }
+    const thumbnail = String(variant.thumbnail || '').trim();
     const { payload: optionsPayload, missing } = buildVariantOptionsPayload(
       variant.options,
       variantOptionList,
@@ -8363,6 +8442,7 @@ const ResourceDetail = ({ resource }) => {
         body: {
           title,
           sku: variant.sku || null,
+          thumbnail: thumbnail || null,
           manage_inventory: variant.manage_inventory,
           allow_backorder: variant.allow_backorder,
           options: Object.keys(optionsPayload).length ? optionsPayload : undefined,
@@ -8482,6 +8562,7 @@ const ResourceDetail = ({ resource }) => {
       setVariantMessage('');
       return;
     }
+    const thumbnail = String(newVariant.thumbnail || '').trim();
     const { payload: optionsPayload, missing } = buildVariantOptionsPayload(
       newVariant.options,
       variantOptionList,
@@ -8507,6 +8588,7 @@ const ResourceDetail = ({ resource }) => {
         body: {
           title,
           sku: newVariant.sku || null,
+          thumbnail: thumbnail || null,
           manage_inventory: newVariant.manage_inventory,
           allow_backorder: newVariant.allow_backorder,
           options: Object.keys(optionsPayload).length ? optionsPayload : undefined,
@@ -13518,6 +13600,33 @@ const ResourceDetail = ({ resource }) => {
 
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Thumbnail URL
+                  <input
+                    className="ldc-input mt-2"
+                    value={productDraft.thumbnail}
+                    onChange={handleDraftField('thumbnail')}
+                  />
+                </label>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Upload thumbnail
+                  <input
+                    className="mt-2 block w-full text-sm text-ldc-ink/70"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProductThumbnailUpload}
+                    disabled={productUploadState.uploading}
+                  />
+                </label>
+              </div>
+              {productUploadState.error ? (
+                <div className="mt-2 text-sm text-rose-600">{productUploadState.error}</div>
+              ) : null}
+              {productUploadState.success ? (
+                <div className="mt-2 text-sm text-emerald-700">{productUploadState.success}</div>
+              ) : null}
+
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
                   Collection
                   <select
                     className="ldc-input mt-2"
@@ -13823,6 +13932,12 @@ const ResourceDetail = ({ resource }) => {
               {variantMessage ? (
                 <div className="mt-3 text-sm text-emerald-700">{variantMessage}</div>
               ) : null}
+              {variantUploadState.error ? (
+                <div className="mt-3 text-sm text-rose-600">{variantUploadState.error}</div>
+              ) : null}
+              {variantUploadState.success ? (
+                <div className="mt-3 text-sm text-emerald-700">{variantUploadState.success}</div>
+              ) : null}
               {isVariant && variantProductError ? (
                 <div className="mt-3 text-sm text-rose-600">{variantProductError}</div>
               ) : null}
@@ -13875,6 +13990,24 @@ const ResourceDetail = ({ resource }) => {
                             className="ldc-input mt-2"
                             value={variant.sku}
                             onChange={handleVariantFieldChange(variant.id, 'sku')}
+                          />
+                        </label>
+                        <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                          Thumbnail URL
+                          <input
+                            className="ldc-input mt-2"
+                            value={variant.thumbnail}
+                            onChange={handleVariantFieldChange(variant.id, 'thumbnail')}
+                          />
+                        </label>
+                        <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                          Upload thumbnail
+                          <input
+                            className="mt-2 block w-full text-sm text-ldc-ink/70"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleVariantThumbnailUpload(variant.id)}
+                            disabled={variantUploadState.uploadingId === variant.id}
                           />
                         </label>
                       </div>
@@ -14003,6 +14136,24 @@ const ResourceDetail = ({ resource }) => {
                         className="ldc-input mt-2"
                         value={newVariant.sku}
                         onChange={handleNewVariantField('sku')}
+                      />
+                    </label>
+                    <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                      Thumbnail URL
+                      <input
+                        className="ldc-input mt-2"
+                        value={newVariant.thumbnail}
+                        onChange={handleNewVariantField('thumbnail')}
+                      />
+                    </label>
+                    <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                      Upload thumbnail
+                      <input
+                        className="mt-2 block w-full text-sm text-ldc-ink/70"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleVariantThumbnailUpload('new')}
+                        disabled={variantUploadState.uploadingId === 'new'}
                       />
                     </label>
                   </div>
