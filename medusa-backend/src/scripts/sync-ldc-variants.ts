@@ -21,6 +21,7 @@ type SeedProduct = {
   handle: string;
   price: number;
   image?: string | null;
+  description?: string | null;
   variants?: SeedVariant[];
 };
 
@@ -28,6 +29,7 @@ type ProductRecord = {
   id: string;
   handle: string;
   title: string;
+  description?: string | null;
 };
 
 const slugify = (value: string) =>
@@ -78,7 +80,7 @@ export default async function syncLdcVariants({ container }: ExecArgs) {
 
   const { data: products } = (await query.graph({
     entity: "product",
-    fields: ["id", "handle", "title"],
+    fields: ["id", "handle", "title", "description"],
   })) as { data: ProductRecord[] };
   const productByHandle = new Map(
     products.map((product) => [product.handle, product])
@@ -274,12 +276,16 @@ export default async function syncLdcVariants({ container }: ExecArgs) {
     );
     const shouldUpdateTitle =
       seedProduct.title && seedProduct.title !== product.title;
+    const shouldUpdateDescription =
+      seedProduct.description &&
+      seedProduct.description !== (product.description || "");
     const shouldUpdateImage = Boolean(productImage);
 
-    if (shouldUpdateTitle || shouldUpdateImage) {
+    if (shouldUpdateTitle || shouldUpdateDescription || shouldUpdateImage) {
       const updatePayload: {
         id: string;
         title?: string;
+        description?: string;
         thumbnail?: string;
       } = {
         id: product.id,
@@ -287,6 +293,9 @@ export default async function syncLdcVariants({ container }: ExecArgs) {
 
       if (shouldUpdateTitle) {
         updatePayload.title = seedProduct.title;
+      }
+      if (shouldUpdateDescription) {
+        updatePayload.description = seedProduct.description!;
       }
       if (shouldUpdateImage) {
         updatePayload.thumbnail = productImage!;

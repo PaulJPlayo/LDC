@@ -61,6 +61,7 @@ type LdcSeedProduct = {
   handle: string;
   price: number;
   image?: string | null;
+  description?: string | null;
   variants?: {
     label?: string;
     title?: string;
@@ -484,6 +485,7 @@ export default async function seedLdcData({ container }: ExecArgs) {
     .map((product) => ({
       title: product.title,
       handle: product.handle,
+      description: product.description || undefined,
       status: ProductStatus.PUBLISHED,
       shipping_profile_id: shippingProfile.id,
       thumbnail: resolveImage(product.image) || undefined,

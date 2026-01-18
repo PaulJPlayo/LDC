@@ -61,6 +61,7 @@ const titlePatterns = [
 ];
 
 const priceRegex = /\$\s?([0-9]+(?:\.[0-9]{2})?)/;
+const descriptionPattern = /<div[^>]*class="[^"]*text-xs text-slate-600[^"]*"[^>]*>/i;
 
 const findTitle = (lines, index) => {
   for (let i = index; i >= 0 && i >= index - 120; i -= 1) {
@@ -71,6 +72,31 @@ const findTitle = (lines, index) => {
         return decodeHtml(match[1].trim());
       }
     }
+  }
+  return null;
+};
+
+const findDescription = blockLines => {
+  for (let i = blockLines.length - 1; i >= 0; i -= 1) {
+    const line = blockLines[i];
+    if (!descriptionPattern.test(line)) continue;
+    let text = line.replace(descriptionPattern, '').replace(/<\/div>.*/, '').trim();
+    if (!text) {
+      for (let j = i + 1; j < blockLines.length; j += 1) {
+        const nextLine = blockLines[j];
+        if (nextLine.includes('</div>')) {
+          const partial = nextLine.replace(/<\/div>.*/, '').trim();
+          if (partial) text += (text ? ' ' : '') + partial;
+          break;
+        }
+        const trimmed = nextLine.trim();
+        if (trimmed) text += (text ? ' ' : '') + trimmed;
+      }
+    }
+    const cleaned = decodeHtml(text).replace(/\s+/g, ' ').trim();
+    if (!cleaned) continue;
+    if (/^\d+(\.\d+)?\s*\(\d+\)$/.test(cleaned)) continue;
+    return cleaned;
   }
   return null;
 };
@@ -180,12 +206,14 @@ for (const file of htmlFiles) {
         title: findTitle(lines, i),
         price: price,
         image: image,
-        swatches: swatches
+        swatches: swatches,
+        description: findDescription(block)
       };
     } else {
       if (!found[key].price) found[key].price = price;
       if (!found[key].image && image) found[key].image = image;
       found[key].swatches = mergeSwatches(found[key].swatches || [], swatches);
+      if (!found[key].description) found[key].description = findDescription(block);
     }
   }
 }
@@ -198,6 +226,7 @@ for (const key of keys) {
   const mapEntry = productMap.products[key] || {};
   const foundEntry = found[key] || {};
   const title = foundEntry.title || mapEntry.title || key;
+  const description = foundEntry.description || mapEntry.description || null;
   let price = typeof foundEntry.price === 'number' ? foundEntry.price : null;
   if (manualPrices[key]) {
     price = manualPrices[key];
@@ -223,7 +252,8 @@ for (const key of keys) {
     handle: key,
     price: priceValue,
     image,
-    variants
+    variants,
+    description
   });
 }
 

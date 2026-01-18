@@ -7,7 +7,8 @@
       "handle": "accessory-christmas-diamond",
       "price": 20,
       "image": "assets/Christmas Diamond - 20.png",
-      "variants": []
+      "variants": [],
+      "description": "Diamond | 40oz & 30oz"
     },
     {
       "key": "accessory-cowboy-glass-straws",
@@ -22,7 +23,8 @@
           "price": 3,
           "image": "assets/Cowboy Glass Straws - 3.jpg"
         }
-      ]
+      ],
+      "description": null
     },
     {
       "key": "accessory-flower-deluxe",
@@ -30,7 +32,8 @@
       "handle": "accessory-flower-deluxe",
       "price": 10,
       "image": "assets/Flower Deluxe - 10.png",
-      "variants": []
+      "variants": [],
+      "description": "Deluxe | 40oz & 30oz"
     },
     {
       "key": "accessory-flower-premium",
@@ -38,7 +41,8 @@
       "handle": "accessory-flower-premium",
       "price": 15,
       "image": "assets/Flower Premium - 15.png",
-      "variants": []
+      "variants": [],
+      "description": "Premium | 40oz & 30oz"
     },
     {
       "key": "accessory-glass-bow-straws",
@@ -46,7 +50,8 @@
       "handle": "accessory-glass-bow-straws",
       "price": 3,
       "image": "assets/Glass-Bow-Straws.png",
-      "variants": []
+      "variants": [],
+      "description": "Limited | Straws"
     },
     {
       "key": "accessory-glass-twist-straws",
@@ -54,7 +59,8 @@
       "handle": "accessory-glass-twist-straws",
       "price": 3,
       "image": "assets/Glass Twist Straws - 3.png",
-      "variants": []
+      "variants": [],
+      "description": "16oz | Glass"
     },
     {
       "key": "accessory-jelly-lids",
@@ -99,7 +105,8 @@
           "price": 3,
           "image": "assets/Jelly-Lids.png"
         }
-      ]
+      ],
+      "description": "16oz | Acrylic Hard Plastic"
     },
     {
       "key": "accessory-rhinestone-lids",
@@ -107,7 +114,8 @@
       "handle": "accessory-rhinestone-lids",
       "price": 5,
       "image": "assets/rhinestone-lids-5.png",
-      "variants": []
+      "variants": [],
+      "description": "Limited | Lids"
     },
     {
       "key": "accessory-straw-toppers",
@@ -152,7 +160,8 @@
           "price": 1,
           "image": "assets/straw toppers - sports - 1.png"
         }
-      ]
+      ],
+      "description": "2 in | Silicon + Acrylic"
     },
     {
       "key": "attire-custom",
@@ -160,7 +169,8 @@
       "handle": "attire-custom",
       "price": 20,
       "image": "assets/Tshirt - white.png",
-      "variants": []
+      "variants": [],
+      "description": null
     },
     {
       "key": "cup-acrylic",
@@ -193,7 +203,8 @@
           "price": 25,
           "image": "assets/acrylic.png"
         }
-      ]
+      ],
+      "description": "16oz | Glass"
     },
     {
       "key": "cup-bamboo-lid-mug",
@@ -201,7 +212,8 @@
       "handle": "cup-bamboo-lid-mug",
       "price": 20,
       "image": "assets/porcelain-sublimination.png",
-      "variants": []
+      "variants": [],
+      "description": "15oz | Porcelain"
     },
     {
       "key": "cup-frosted-sublimation",
@@ -209,7 +221,8 @@
       "handle": "cup-frosted-sublimation",
       "price": 25,
       "image": "assets/frosted-sublimination.png",
-      "variants": []
+      "variants": [],
+      "description": "16oz | Glass"
     },
     {
       "key": "cup-glass",
@@ -230,7 +243,8 @@
           "price": 20,
           "image": "assets/glass.png"
         }
-      ]
+      ],
+      "description": "12oz | Glass"
     },
     {
       "key": "cup-glass-sublimation",
@@ -269,7 +283,8 @@
           "price": 20,
           "image": "assets/glass-sublimination.png"
         }
-      ]
+      ],
+      "description": "16oz | Glass"
     },
     {
       "key": "cup-macaron-mug",
@@ -308,7 +323,8 @@
           "price": 20,
           "image": "assets/Macaron Mug - 20.png"
         }
-      ]
+      ],
+      "description": null
     },
     {
       "key": "cup-mug-and-spoon",
@@ -347,7 +363,8 @@
           "price": 20,
           "image": "assets/Mug & Spoon - Black, White, Pink, Red - 20.jpg"
         }
-      ]
+      ],
+      "description": null
     },
     {
       "key": "cup-slim-snow-globe",
@@ -386,7 +403,8 @@
           "price": 20,
           "image": "assets/slim-snow-globe.png"
         }
-      ]
+      ],
+      "description": "20oz | Acrylic"
     },
     {
       "key": "cup-snow-globe",
@@ -394,7 +412,8 @@
       "handle": "cup-snow-globe",
       "price": 25,
       "image": "assets/snow-globe.png",
-      "variants": []
+      "variants": [],
+      "description": "16oz | Glass"
     },
     {
       "key": "cup-steel-sublimation",
@@ -409,7 +428,8 @@
           "price": 20,
           "image": "assets/steel-sublimination.png"
         }
-      ]
+      ],
+      "description": "15oz | Stainless Steel"
     },
     {
       "key": "doormat-custom",
@@ -417,7 +437,8 @@
       "handle": "doormat-custom",
       "price": 40,
       "image": "assets/Doormats 1.png",
-      "variants": []
+      "variants": [],
+      "description": null
     },
     {
       "key": "tumbler-autumn-leaves",
@@ -432,7 +453,8 @@
           "price": 45,
           "image": "assets/ldc-tumbler-8.jpeg"
         }
-      ]
+      ],
+      "description": "40oz | Stainless Steel"
     },
     {
       "key": "tumbler-glass-glow",
@@ -440,7 +462,8 @@
       "handle": "tumbler-glass-glow",
       "price": 40,
       "image": "assets/glass-glow-tumbler.jpeg",
-      "variants": []
+      "variants": [],
+      "description": null
     },
     {
       "key": "tumbler-glass-tumbler",
@@ -455,7 +478,8 @@
           "price": 40,
           "image": "assets/glass-tumbler.jpeg"
         }
-      ]
+      ],
+      "description": "40oz | Glass Handle"
     },
     {
       "key": "tumbler-gold-trim-tumbler",
@@ -470,7 +494,8 @@
           "price": 40,
           "image": "assets/Gold Trim Tumbler - 40.png"
         }
-      ]
+      ],
+      "description": null
     },
     {
       "key": "tumbler-kids-water-bottle",
@@ -509,7 +534,8 @@
           "price": 20,
           "image": "assets/kids water bottle - 12oz - 20.png"
         }
-      ]
+      ],
+      "description": "12oz - 16oz | Stainless Steel"
     },
     {
       "key": "tumbler-macaron-sublimation",
@@ -542,7 +568,8 @@
           "price": 40,
           "image": "assets/Macaron Sublimation - 40.png"
         }
-      ]
+      ],
+      "description": null
     },
     {
       "key": "tumbler-pink-flamingo",
@@ -557,7 +584,8 @@
           "price": 40,
           "image": "assets/ldc-tumbler-6.jpeg"
         }
-      ]
+      ],
+      "description": "40oz | Silver Rim"
     },
     {
       "key": "tumbler-pumpkin-spice",
@@ -572,7 +600,8 @@
           "price": 40,
           "image": "assets/ldc-tumbler-7.jpeg"
         }
-      ]
+      ],
+      "description": "40oz | Silver Rim"
     },
     {
       "key": "tumbler-silver-trim-tumbler",
@@ -611,7 +640,8 @@
           "price": 40,
           "image": "assets/Silver Trim Tumbler - 40.png"
         }
-      ]
+      ],
+      "description": "40oz | Stainless Steel"
     },
     {
       "key": "tumbler-sip-cup",
@@ -619,7 +649,8 @@
       "handle": "tumbler-sip-cup",
       "price": 40,
       "image": "assets/Sip Cup - 40.png",
-      "variants": []
+      "variants": [],
+      "description": null
     },
     {
       "key": "tumbler-sublimation",
@@ -658,7 +689,8 @@
           "price": 25,
           "image": "assets/Sublimination - 25.png"
         }
-      ]
+      ],
+      "description": "20oz | Slim Stainless Steel"
     },
     {
       "key": "tumbler-sublimation-tumblers",
@@ -691,7 +723,8 @@
           "price": 40,
           "image": "assets/Sublimination Tumblers - 40.png"
         }
-      ]
+      ],
+      "description": null
     },
     {
       "key": "tumbler-sublimation-water-bottle",
@@ -706,7 +739,8 @@
           "price": 30,
           "image": "assets/Sublimation Water Bottle - 30.jpg"
         }
-      ]
+      ],
+      "description": null
     },
     {
       "key": "tumbler-tumbler-heaven",
@@ -745,7 +779,8 @@
           "price": 40,
           "image": "assets/Tumbler Heaven - 40.png"
         }
-      ]
+      ],
+      "description": null
     },
     {
       "key": "tumbler-water-bottle-tumbler",
@@ -808,7 +843,8 @@
           "price": 40,
           "image": "assets/Water Bottle Tumbler - 40.png"
         }
-      ]
+      ],
+      "description": "40oz | Stainless Steel"
     }
   ]
 }
