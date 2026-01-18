@@ -13880,7 +13880,9 @@ const ResourceDetail = ({ resource }) => {
                 Medusa product thumbnails and gallery images.
               </p>
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {imageUrls.map((url, index) => (
+                {imageUrls.map((url, index) => {
+                  const isCurrentThumbnail = productDraft?.thumbnail === url;
+                  return (
                   <div
                     key={`${url}-${index}`}
                     className="rounded-3xl bg-white/70 p-3 shadow-glow"
@@ -13894,8 +13896,19 @@ const ResourceDetail = ({ resource }) => {
                     <div className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
                       Image {index + 1}
                     </div>
+                    <button
+                      type="button"
+                      className="mt-2 inline-flex items-center rounded-full border border-white/70 bg-white/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-ldc-ink/70 transition hover:text-ldc-plum disabled:cursor-default disabled:text-ldc-ink/40"
+                      onClick={() =>
+                        setProductDraft((prev) => (prev ? { ...prev, thumbnail: url } : prev))
+                      }
+                      disabled={isCurrentThumbnail}
+                    >
+                      {isCurrentThumbnail ? 'Current thumbnail' : 'Set as thumbnail'}
+                    </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ) : null}
