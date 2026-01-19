@@ -1094,6 +1094,45 @@ const ResourceDetail = ({ resource }) => {
   const [variantProduct, setVariantProduct] = useState(null);
   const [variantProductError, setVariantProductError] = useState('');
   const [orderActionState, setOrderActionState] = useState({ saving: false, error: '', success: '' });
+  const [orderArchiveState, setOrderArchiveState] = useState({
+    saving: false,
+    error: '',
+    success: ''
+  });
+  const [orderTransferDraft, setOrderTransferDraft] = useState({
+    customer_id: '',
+    description: '',
+    internal_note: ''
+  });
+  const [orderTransferSearch, setOrderTransferSearch] = useState({
+    query: '',
+    results: [],
+    loading: false,
+    error: ''
+  });
+  const [orderTransferState, setOrderTransferState] = useState({
+    saving: false,
+    canceling: false,
+    error: '',
+    success: ''
+  });
+  const [orderTransferTarget, setOrderTransferTarget] = useState(null);
+  const [orderTransferTargetState, setOrderTransferTargetState] = useState({
+    loading: false,
+    error: ''
+  });
+  const [orderCreditDraft, setOrderCreditDraft] = useState({
+    amount: '',
+    reference: 'refund',
+    reference_id: '',
+    metadata: '',
+    is_credit: true
+  });
+  const [orderCreditState, setOrderCreditState] = useState({
+    saving: false,
+    error: '',
+    success: ''
+  });
   const [orderDetailDraft, setOrderDetailDraft] = useState(null);
   const [orderDetailState, setOrderDetailState] = useState({
     saving: false,
@@ -1941,7 +1980,7 @@ const ResourceDetail = ({ resource }) => {
       isOrder
         ? {
             fields:
-              '+fulfillments,+fulfillments.shipments,+fulfillments.tracking_links,+fulfillments.labels,+transactions'
+              '+fulfillments,+fulfillments.shipments,+fulfillments.tracking_links,+fulfillments.labels,+transactions,+credit_lines'
           }
         : undefined,
     [isOrder]
@@ -1956,6 +1995,37 @@ const ResourceDetail = ({ resource }) => {
       return bTime - aTime;
     });
   }, [orderChanges]);
+
+  const orderTransferChanges = useMemo(() => {
+    if (!orderChanges.length) return [];
+    const transfers = orderChanges.filter((change) => change?.change_type === 'transfer');
+    return transfers.sort((a, b) => {
+      const aTime = new Date(a?.created_at || 0).getTime();
+      const bTime = new Date(b?.created_at || 0).getTime();
+      return bTime - aTime;
+    });
+  }, [orderChanges]);
+
+  const orderTransferActiveChange = useMemo(
+    () =>
+      orderTransferChanges.find(
+        (change) =>
+          !change?.confirmed_at && !change?.declined_at && !change?.canceled_at
+      ) || null,
+    [orderTransferChanges]
+  );
+
+  const orderTransferLastChange = orderTransferChanges[0] || null;
+  const orderTransferChange = orderTransferActiveChange || orderTransferLastChange;
+  const orderTransferAction = Array.isArray(orderTransferChange?.actions)
+    ? orderTransferChange.actions[0]
+    : null;
+  const orderTransferTargetId =
+    orderTransferAction?.reference_id ||
+    orderTransferAction?.details?.reference_id ||
+    orderTransferAction?.reference ||
+    '';
+  const orderTransferOriginalEmail = orderTransferAction?.details?.original_email || '';
 
   const orderEditActiveChange = useMemo(
     () =>
@@ -2143,6 +2213,22 @@ const ResourceDetail = ({ resource }) => {
         billing_address: buildAddressDraft(record?.billing_address || {})
       });
       setOrderDetailState({ saving: false, error: '', success: '' });
+    }
+    if (isOrder) {
+      setOrderTransferDraft({ customer_id: '', description: '', internal_note: '' });
+      setOrderTransferSearch({ query: '', results: [], loading: false, error: '' });
+      setOrderTransferState({ saving: false, canceling: false, error: '', success: '' });
+      setOrderTransferTarget(null);
+      setOrderTransferTargetState({ loading: false, error: '' });
+      setOrderArchiveState({ saving: false, error: '', success: '' });
+      setOrderCreditDraft({
+        amount: '',
+        reference: 'refund',
+        reference_id: record?.id || '',
+        metadata: '',
+        is_credit: true
+      });
+      setOrderCreditState({ saving: false, error: '', success: '' });
     }
     if (isRegion) {
       setRegionDraft({
@@ -2433,6 +2519,7 @@ const ResourceDetail = ({ resource }) => {
   }, [
     record,
     isOrderLike,
+    isOrder,
     isRegion,
     isShippingProfile,
     isShippingOption,
@@ -3232,6 +3319,91 @@ const ResourceDetail = ({ resource }) => {
       isActive = false;
     };
   }, [isCustomerGroup, groupCustomerSearch.query]);
+
+  useEffect(() => {
+    if (!isOrder) {
+      setOrderTransferTarget(null);
+      setOrderTransferTargetState({ loading: false, error: '' });
+      return;
+    }
+    if (!orderTransferTargetId) {
+      setOrderTransferTarget(null);
+      setOrderTransferTargetState({ loading: false, error: '' });
+      return;
+    }
+    let isActive = true;
+    const loadTransferTarget = async () => {
+      setOrderTransferTargetState({ loading: true, error: '' });
+      try {
+        const payload = await getDetail('/admin/customers', orderTransferTargetId);
+        if (!isActive) return;
+        const customer = getObjectFromPayload(payload, 'customer');
+        setOrderTransferTarget(customer || null);
+        setOrderTransferTargetState({ loading: false, error: '' });
+      } catch (err) {
+        if (!isActive) return;
+        setOrderTransferTarget(null);
+        setOrderTransferTargetState({
+          loading: false,
+          error: err?.message || 'Unable to load transfer customer.'
+        });
+      }
+    };
+
+    loadTransferTarget();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isOrder, orderTransferTargetId]);
+
+  useEffect(() => {
+    if (!isOrder) {
+      setOrderTransferSearch({ query: '', results: [], loading: false, error: '' });
+      return;
+    }
+    const query = orderTransferSearch.query.trim();
+    if (!query) {
+      setOrderTransferSearch((prev) => ({
+        ...prev,
+        results: [],
+        loading: false,
+        error: ''
+      }));
+      return;
+    }
+    let isActive = true;
+    const loadCustomers = async () => {
+      setOrderTransferSearch((prev) => ({ ...prev, loading: true, error: '' }));
+      try {
+        const payload = await getList('/admin/customers', {
+          q: query,
+          limit: 20,
+          has_account: true
+        });
+        if (!isActive) return;
+        setOrderTransferSearch((prev) => ({
+          ...prev,
+          results: getArrayFromPayload(payload, 'customers'),
+          loading: false
+        }));
+      } catch (err) {
+        if (!isActive) return;
+        setOrderTransferSearch((prev) => ({
+          ...prev,
+          results: [],
+          loading: false,
+          error: err?.message || 'Unable to search customers.'
+        }));
+      }
+    };
+
+    loadCustomers();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isOrder, orderTransferSearch.query]);
 
   useEffect(() => {
     if (!isTaxRate) {
@@ -9022,6 +9194,169 @@ const ResourceDetail = ({ resource }) => {
     }
   };
 
+  const handleOrderArchive = async () => {
+    if (!record?.id) return;
+    if (!window.confirm('Archive this order?')) return;
+    setOrderArchiveState({ saving: true, error: '', success: '' });
+    try {
+      const payload = await request(`/admin/orders/${record.id}/archive`, {
+        method: 'POST'
+      });
+      applyOrderPayload(payload);
+      setOrderArchiveState({ saving: false, error: '', success: 'Order archived.' });
+    } catch (err) {
+      setOrderArchiveState({
+        saving: false,
+        error: err?.message || 'Unable to archive order.',
+        success: ''
+      });
+    }
+  };
+
+  const handleOrderTransferSearchChange = (event) => {
+    const value = event.target.value;
+    setOrderTransferSearch((prev) => ({ ...prev, query: value }));
+  };
+
+  const handleSelectOrderTransferCustomer = (customer) => {
+    if (!customer?.id) return;
+    setOrderTransferDraft((prev) => ({
+      ...prev,
+      customer_id: customer.id
+    }));
+    setOrderTransferSearch((prev) => ({ ...prev, results: [] }));
+  };
+
+  const handleOrderTransferDraftChange = (field) => (event) => {
+    const value = event.target.value;
+    setOrderTransferDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleRequestOrderTransfer = async () => {
+    if (!record?.id) return;
+    if (!orderTransferDraft.customer_id) {
+      setOrderTransferState({
+        saving: false,
+        canceling: false,
+        error: 'Select a customer to transfer this order.',
+        success: ''
+      });
+      return;
+    }
+    setOrderTransferState({ saving: true, canceling: false, error: '', success: '' });
+    try {
+      await request(`/admin/orders/${record.id}/transfer`, {
+        method: 'POST',
+        body: {
+          customer_id: orderTransferDraft.customer_id,
+          description: orderTransferDraft.description.trim() || undefined,
+          internal_note: orderTransferDraft.internal_note.trim() || undefined
+        }
+      });
+      setOrderTransferState({
+        saving: false,
+        canceling: false,
+        error: '',
+        success: 'Transfer request sent.'
+      });
+      refreshOrderChanges();
+    } catch (err) {
+      setOrderTransferState({
+        saving: false,
+        canceling: false,
+        error: err?.message || 'Unable to request transfer.',
+        success: ''
+      });
+    }
+  };
+
+  const handleCancelOrderTransfer = async () => {
+    if (!record?.id) return;
+    if (!window.confirm('Cancel the active transfer request?')) return;
+    setOrderTransferState({ saving: false, canceling: true, error: '', success: '' });
+    try {
+      await request(`/admin/orders/${record.id}/transfer/cancel`, {
+        method: 'POST'
+      });
+      setOrderTransferState({
+        saving: false,
+        canceling: false,
+        error: '',
+        success: 'Transfer request canceled.'
+      });
+      refreshOrderChanges();
+    } catch (err) {
+      setOrderTransferState({
+        saving: false,
+        canceling: false,
+        error: err?.message || 'Unable to cancel transfer.',
+        success: ''
+      });
+    }
+  };
+
+  const handleOrderCreditDraftChange = (field) => (event) => {
+    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
+    setOrderCreditDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleCreateOrderCreditLine = async () => {
+    if (!record?.id) return;
+    const amount = parsePriceInput(orderCreditDraft.amount);
+    const reference = orderCreditDraft.reference.trim();
+    const referenceId = orderCreditDraft.reference_id.trim();
+    if (!amount) {
+      setOrderCreditState({
+        saving: false,
+        error: 'Enter a valid amount.',
+        success: ''
+      });
+      return;
+    }
+    if (!reference || !referenceId) {
+      setOrderCreditState({
+        saving: false,
+        error: 'Reference and reference ID are required.',
+        success: ''
+      });
+      return;
+    }
+    const { data: metadata, error: metadataError } = parseJsonInput(orderCreditDraft.metadata);
+    if (metadataError) {
+      setOrderCreditState({
+        saving: false,
+        error: `Metadata: ${metadataError}`,
+        success: ''
+      });
+      return;
+    }
+    const signedAmount = orderCreditDraft.is_credit ? -Math.abs(amount) : Math.abs(amount);
+    setOrderCreditState({ saving: true, error: '', success: '' });
+    try {
+      const payload = await request(`/admin/orders/${record.id}/credit-lines`, {
+        method: 'POST',
+        body: {
+          amount: signedAmount,
+          reference,
+          reference_id: referenceId,
+          metadata
+        }
+      });
+      applyOrderPayload(payload);
+      setOrderCreditState({
+        saving: false,
+        error: '',
+        success: 'Credit line created.'
+      });
+    } catch (err) {
+      setOrderCreditState({
+        saving: false,
+        error: err?.message || 'Unable to create credit line.',
+        success: ''
+      });
+    }
+  };
+
   const handleOrderEditDraftChange = (field) => (event) => {
     const value = event.target.value;
     setOrderEditDraft((prev) => ({ ...prev, [field]: value }));
@@ -11222,7 +11557,7 @@ const ResourceDetail = ({ resource }) => {
         currency_code: item?.currency_code || record.currency_code || orderCurrency
       };
     });
-  }, [isOrderLike, record, orderCurrency]);
+  }, [isOrder, record, orderCurrency]);
 
   const orderItemColumns = useMemo(
     () => [
@@ -11445,6 +11780,33 @@ const ResourceDetail = ({ resource }) => {
   const transactionColumns = useMemo(
     () => [
       { key: 'reference', label: 'Reference' },
+      {
+        key: 'amount',
+        label: 'Amount',
+        format: (value, row) => formatMoneyOrDash(value, row?.currency_code || orderCurrency)
+      },
+      { key: 'created_at', label: 'Created', format: formatDateTime }
+    ],
+    [orderCurrency]
+  );
+
+  const creditLineRows = useMemo(() => {
+    if (!isOrder || !record) return [];
+    const lines = Array.isArray(record.credit_lines) ? record.credit_lines : [];
+    return lines.map((line, index) => ({
+      id: line?.id || `${record.id || 'order'}-credit-${index}`,
+      reference: line?.reference || line?.reference_id || '-',
+      reference_id: line?.reference_id || '-',
+      amount: line?.amount,
+      currency_code: line?.currency_code || record.currency_code || orderCurrency,
+      created_at: line?.created_at
+    }));
+  }, [isOrderLike, record, orderCurrency]);
+
+  const creditLineColumns = useMemo(
+    () => [
+      { key: 'reference', label: 'Reference' },
+      { key: 'reference_id', label: 'Reference ID' },
       {
         key: 'amount',
         label: 'Amount',
@@ -12657,6 +13019,94 @@ const ResourceDetail = ({ resource }) => {
                 </div>
               </div>
 
+              {isOrder ? (
+                <div className="ldc-card p-6">
+                  <h3 className="font-heading text-xl text-ldc-ink">Credit Lines</h3>
+                  <p className="mt-2 text-sm text-ldc-ink/70">
+                    Apply credits to this order and review existing lines.
+                  </p>
+                  <div className="mt-4">
+                    <DataTable
+                      columns={creditLineColumns}
+                      rows={creditLineRows}
+                      getRowId={(row) => row.id}
+                      isLoading={false}
+                      emptyText="No credit lines yet."
+                    />
+                  </div>
+
+                  <div className="mt-6 rounded-2xl bg-white/70 p-4">
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                      Create credit line
+                    </div>
+                    <div className="mt-3 grid gap-4 md:grid-cols-2">
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        Amount (major units)
+                        <input
+                          className="ldc-input mt-2"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={orderCreditDraft.amount}
+                          onChange={handleOrderCreditDraftChange('amount')}
+                        />
+                      </label>
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        Reference
+                        <input
+                          className="ldc-input mt-2"
+                          value={orderCreditDraft.reference}
+                          onChange={handleOrderCreditDraftChange('reference')}
+                        />
+                      </label>
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        Reference ID
+                        <input
+                          className="ldc-input mt-2"
+                          value={orderCreditDraft.reference_id}
+                          onChange={handleOrderCreditDraftChange('reference_id')}
+                        />
+                      </label>
+                      <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 accent-ldc-plum"
+                          checked={orderCreditDraft.is_credit}
+                          onChange={handleOrderCreditDraftChange('is_credit')}
+                        />
+                        Apply as credit (negative)
+                      </label>
+                    </div>
+                    <label className="mt-4 block text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                      Metadata (JSON)
+                      <textarea
+                        className="ldc-input mt-2 min-h-[100px] font-mono text-xs"
+                        value={orderCreditDraft.metadata}
+                        onChange={handleOrderCreditDraftChange('metadata')}
+                      />
+                    </label>
+                    {orderCreditState.error ? (
+                      <div className="mt-3 text-sm text-rose-600">{orderCreditState.error}</div>
+                    ) : null}
+                    {orderCreditState.success ? (
+                      <div className="mt-3 text-sm text-emerald-700">
+                        {orderCreditState.success}
+                      </div>
+                    ) : null}
+                    <div className="mt-4">
+                      <button
+                        className="ldc-button-primary"
+                        type="button"
+                        onClick={handleCreateOrderCreditLine}
+                        disabled={orderCreditState.saving}
+                      >
+                        {orderCreditState.saving ? 'Creating...' : 'Create credit line'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
               <div className="ldc-card p-6">
                 <h3 className="font-heading text-xl text-ldc-ink">Shipping & Fulfillment</h3>
                 <p className="mt-2 text-sm text-ldc-ink/70">
@@ -12710,6 +13160,16 @@ const ResourceDetail = ({ resource }) => {
                           {orderActionState.success}
                         </div>
                       ) : null}
+                      {orderArchiveState.error ? (
+                        <div className="mt-3 text-sm text-rose-600">
+                          {orderArchiveState.error}
+                        </div>
+                      ) : null}
+                      {orderArchiveState.success ? (
+                        <div className="mt-3 text-sm text-emerald-700">
+                          {orderArchiveState.success}
+                        </div>
+                      ) : null}
                       <div className="mt-4 flex flex-wrap items-center gap-3">
                         <button
                           className="ldc-button-primary"
@@ -12727,7 +13187,162 @@ const ResourceDetail = ({ resource }) => {
                         >
                           Cancel Order
                         </button>
+                        <button
+                          className="ldc-button-secondary"
+                          type="button"
+                          onClick={handleOrderArchive}
+                          disabled={orderArchiveState.saving}
+                        >
+                          {orderArchiveState.saving ? 'Archiving...' : 'Archive Order'}
+                        </button>
                       </div>
+                    </div>
+                  ) : null}
+
+                  {isOrder ? (
+                    <div className="ldc-card p-6">
+                      <h3 className="font-heading text-xl text-ldc-ink">Order Transfer</h3>
+                      <p className="mt-2 text-sm text-ldc-ink/70">
+                        Move ownership of this order to another customer.
+                      </p>
+
+                      {orderTransferChange ? (
+                        <div className="mt-4 rounded-2xl bg-white/70 p-4 text-sm text-ldc-ink">
+                          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                            Transfer status
+                          </div>
+                          <div className="mt-2">
+                            {orderTransferChange.confirmed_at
+                              ? 'Confirmed'
+                              : orderTransferChange.declined_at
+                                ? 'Declined'
+                                : orderTransferChange.canceled_at
+                                  ? 'Canceled'
+                                  : 'Requested'}
+                          </div>
+                          {orderTransferOriginalEmail ? (
+                            <div className="mt-2 text-xs text-ldc-ink/60">
+                              From: {orderTransferOriginalEmail}
+                            </div>
+                          ) : null}
+                          {orderTransferTargetId ? (
+                            <div className="mt-2 text-xs text-ldc-ink/60">
+                              To:{' '}
+                              {orderTransferTarget
+                                ? `${orderTransferTarget.first_name || ''} ${orderTransferTarget.last_name || ''}`.trim() ||
+                                  orderTransferTarget.email ||
+                                  orderTransferTargetId
+                                : orderTransferTargetId}
+                            </div>
+                          ) : null}
+                          <div className="mt-2 text-xs text-ldc-ink/60">
+                            Requested {formatDateTime(orderTransferChange.created_at)}
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="mt-4 text-sm text-ldc-ink/60">
+                          No transfer requests yet.
+                        </p>
+                      )}
+
+                      {orderTransferTargetState.error ? (
+                        <div className="mt-3 text-sm text-rose-600">
+                          {orderTransferTargetState.error}
+                        </div>
+                      ) : null}
+                      {orderTransferState.error ? (
+                        <div className="mt-3 text-sm text-rose-600">{orderTransferState.error}</div>
+                      ) : null}
+                      {orderTransferState.success ? (
+                        <div className="mt-3 text-sm text-emerald-700">
+                          {orderTransferState.success}
+                        </div>
+                      ) : null}
+
+                      {orderTransferActiveChange ? (
+                        <div className="mt-4">
+                          <button
+                            className="ldc-button-secondary"
+                            type="button"
+                            onClick={handleCancelOrderTransfer}
+                            disabled={orderTransferState.canceling}
+                          >
+                            {orderTransferState.canceling ? 'Canceling...' : 'Cancel transfer'}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="mt-4 space-y-4">
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Search customer
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderTransferSearch.query}
+                              onChange={handleOrderTransferSearchChange}
+                              placeholder="Search by name or email"
+                            />
+                          </label>
+                          {orderTransferSearch.loading ? (
+                            <div className="text-sm text-ldc-ink/60">Searching customers...</div>
+                          ) : null}
+                          {orderTransferSearch.error ? (
+                            <div className="text-sm text-rose-600">
+                              {orderTransferSearch.error}
+                            </div>
+                          ) : null}
+                          {orderTransferSearch.results.length ? (
+                            <div className="grid gap-2 md:grid-cols-2">
+                              {orderTransferSearch.results.map((customer) => (
+                                <button
+                                  key={customer.id}
+                                  type="button"
+                                  className="rounded-2xl border border-white/70 bg-white/70 px-3 py-2 text-left text-xs text-ldc-ink"
+                                  onClick={() => handleSelectOrderTransferCustomer(customer)}
+                                >
+                                  <div className="font-semibold">
+                                    {customer.first_name || customer.last_name
+                                      ? `${customer.first_name || ''} ${customer.last_name || ''}`.trim()
+                                      : customer.email || customer.id}
+                                  </div>
+                                  <div className="text-ldc-ink/60">
+                                    {customer.email || customer.id}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          ) : null}
+                          {orderTransferDraft.customer_id ? (
+                            <div className="text-xs text-ldc-ink/60">
+                              Selected customer ID: {orderTransferDraft.customer_id}
+                            </div>
+                          ) : null}
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                              Description (optional)
+                              <input
+                                className="ldc-input mt-2"
+                                value={orderTransferDraft.description}
+                                onChange={handleOrderTransferDraftChange('description')}
+                              />
+                            </label>
+                            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                              Internal note (optional)
+                              <input
+                                className="ldc-input mt-2"
+                                value={orderTransferDraft.internal_note}
+                                onChange={handleOrderTransferDraftChange('internal_note')}
+                              />
+                            </label>
+                          </div>
+                          <button
+                            className="ldc-button-primary"
+                            type="button"
+                            onClick={handleRequestOrderTransfer}
+                            disabled={orderTransferState.saving}
+                          >
+                            {orderTransferState.saving ? 'Requesting...' : 'Request transfer'}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ) : null}
 
