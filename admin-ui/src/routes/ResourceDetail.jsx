@@ -1133,6 +1133,12 @@ const ResourceDetail = ({ resource }) => {
     error: '',
     success: ''
   });
+  const [orderNoteDraft, setOrderNoteDraft] = useState('');
+  const [orderNoteState, setOrderNoteState] = useState({
+    saving: false,
+    error: '',
+    success: ''
+  });
   const [orderDetailDraft, setOrderDetailDraft] = useState(null);
   const [orderDetailState, setOrderDetailState] = useState({
     saving: false,
@@ -1936,6 +1942,13 @@ const ResourceDetail = ({ resource }) => {
     return [];
   }, [isOrder, orderItems, isExchange, linkedOrderItems, exchangeInboundItems]);
 
+  const orderCurrency =
+    record?.currency_code ||
+    record?.currency ||
+    record?.region?.currency_code ||
+    record?.region?.currency?.code ||
+    'usd';
+
   const orderPayments = useMemo(() => {
     if (!isOrder || !record) return [];
     const collections = Array.isArray(record.payment_collections) ? record.payment_collections : [];
@@ -1950,6 +1963,265 @@ const ResourceDetail = ({ resource }) => {
     });
     return payments;
   }, [isOrder, record]);
+
+  const orderNotes = useMemo(() => {
+    if (!isOrder || !record) return [];
+    const metadata =
+      record?.metadata && typeof record.metadata === 'object' ? record.metadata : {};
+    const notes = Array.isArray(metadata.notes) ? metadata.notes : [];
+    const normalized = [];
+
+    notes.forEach((note, index) => {
+      if (!note) return;
+      if (typeof note === 'string') {
+        normalized.push({
+          id: `note-${index}`,
+          text: note,
+          created_at: record?.updated_at || record?.created_at
+        });
+        return;
+      }
+      if (typeof note !== 'object') return;
+      const text = note.text || note.note || note.message || '';
+      if (!text) return;
+      normalized.push({
+        id: note.id || `note-${index}`,
+        text: String(text),
+        created_at: note.created_at || note.updated_at || record?.updated_at || record?.created_at,
+        author: note.author || note.created_by || note.user || ''
+      });
+    });
+
+    if (!normalized.length) {
+      const fallback = metadata.note || (typeof metadata.notes === 'string' ? metadata.notes : '');
+      if (fallback) {
+        normalized.push({
+          id: 'note-legacy',
+          text: String(fallback),
+          created_at: record?.updated_at || record?.created_at
+        });
+      }
+    }
+
+    return normalized.sort((a, b) => {
+      const aTime = new Date(a?.created_at || 0).getTime();
+      const bTime = new Date(b?.created_at || 0).getTime();
+      return bTime - aTime;
+    });
+  }, [isOrder, record]);
+
+  const orderTimelineItems = useMemo(() => {
+    if (!isOrder || !record) return [];
+    const items = [];
+    const pushItem = (entry) => {
+      if (!entry?.timestamp) return;
+      const time = new Date(entry.timestamp).getTime();
+      if (!Number.isFinite(time)) return;
+      items.push({ ...entry, time });
+    };
+    const joinDetails = (parts) => parts.filter(Boolean).join(' · ');
+
+    const orderLabel = record?.display_id ? `Order #${record.display_id}` : record?.id || '';
+    pushItem({
+      id: `order-${record.id}-created`,
+      title: 'Order placed',
+      detail: orderLabel || undefined,
+      timestamp: record?.created_at
+    });
+
+    orderNotes.forEach((note, index) => {
+      pushItem({
+        id: note.id || `note-${index}`,
+        title: 'Internal note',
+        detail: note.text,
+        timestamp: note.created_at
+      });
+    });
+
+    orderChanges.forEach((change, index) => {
+      if (!change) return;
+      const type = change.change_type || 'change';
+      const typeLabel =
+        type === 'edit' ? 'Order edit' : type === 'transfer' ? 'Order transfer' : `Order ${type}`;
+      const details = joinDetails([
+        change.status ? `Status ${change.status}` : '',
+        change.description || '',
+        change.internal_note ? `Note: ${change.internal_note}` : ''
+      ]);
+      pushItem({
+        id: change.id || `change-${index}`,
+        title: typeLabel,
+        detail: details || undefined,
+        timestamp: change.created_at
+      });
+    });
+
+    const creditLines = Array.isArray(record.credit_lines) ? record.credit_lines : [];
+    creditLines.forEach((line, index) => {
+      const amount = formatMoneyOrDash(
+        line?.amount,
+        line?.currency_code || record.currency_code || orderCurrency
+      );
+      const details = joinDetails([
+        amount !== '-' ? `Amount ${amount}` : '',
+        line?.reference || '',
+        line?.reference_id ? `Ref ${line.reference_id}` : ''
+      ]);
+      pushItem({
+        id: line?.id || `credit-${index}`,
+        title: 'Credit line created',
+        detail: details || undefined,
+        timestamp: line?.created_at
+      });
+    });
+
+    const transactions = Array.isArray(record.transactions) ? record.transactions : [];
+    transactions.forEach((transaction, index) => {
+      const label =
+        transaction?.type ||
+        transaction?.transaction_type ||
+        transaction?.action ||
+        'Transaction';
+      const amount = formatMoneyOrDash(
+        transaction?.amount,
+        transaction?.currency_code || record.currency_code || orderCurrency
+      );
+      const details = joinDetails([
+        amount !== '-' ? amount : '',
+        transaction?.reference || transaction?.reference_id
+          ? `Ref ${transaction.reference || transaction.reference_id}`
+          : ''
+      ]);
+      pushItem({
+        id: transaction?.id || `txn-${index}`,
+        title: label,
+        detail: details || undefined,
+        timestamp: transaction?.created_at
+      });
+    });
+
+    const fulfillments = Array.isArray(record.fulfillments) ? record.fulfillments : [];
+    fulfillments.forEach((fulfillment, index) => {
+      if (!fulfillment) return;
+      const provider = fulfillment?.provider_id || fulfillment?.provider?.id || '';
+      const providerDetail = provider ? `Provider ${provider}` : '';
+      pushItem({
+        id: fulfillment.id || `fulfillment-${index}`,
+        title: 'Fulfillment created',
+        detail: providerDetail || undefined,
+        timestamp: fulfillment.created_at
+      });
+      if (fulfillment.shipped_at) {
+        pushItem({
+          id: `${fulfillment.id || `fulfillment-${index}`}-shipped`,
+          title: 'Fulfillment shipped',
+          detail: providerDetail || undefined,
+          timestamp: fulfillment.shipped_at
+        });
+      }
+      if (fulfillment.delivered_at) {
+        pushItem({
+          id: `${fulfillment.id || `fulfillment-${index}`}-delivered`,
+          title: 'Fulfillment delivered',
+          detail: providerDetail || undefined,
+          timestamp: fulfillment.delivered_at
+        });
+      }
+      if (fulfillment.canceled_at) {
+        pushItem({
+          id: `${fulfillment.id || `fulfillment-${index}`}-canceled`,
+          title: 'Fulfillment canceled',
+          detail: providerDetail || undefined,
+          timestamp: fulfillment.canceled_at
+        });
+      }
+
+      const shipments = Array.isArray(fulfillment.shipments) ? fulfillment.shipments : [];
+      shipments.forEach((shipment, shipIndex) => {
+        if (!shipment) return;
+        const trackingNumbers = Array.isArray(shipment.tracking_numbers)
+          ? shipment.tracking_numbers
+          : shipment.tracking_number
+            ? [shipment.tracking_number]
+            : [];
+        const shipmentDetail = trackingNumbers.length
+          ? `Tracking ${trackingNumbers.join(', ')}`
+          : '';
+        pushItem({
+          id: shipment.id || `${fulfillment.id || `fulfillment-${index}`}-ship-${shipIndex}`,
+          title: 'Shipment created',
+          detail: shipmentDetail || undefined,
+          timestamp: shipment.created_at
+        });
+        if (shipment.delivered_at) {
+          pushItem({
+            id:
+              (shipment.id || `${fulfillment.id || `fulfillment-${index}`}-ship-${shipIndex}`) +
+              '-delivered',
+            title: 'Shipment delivered',
+            detail: shipmentDetail || undefined,
+            timestamp: shipment.delivered_at
+          });
+        }
+      });
+    });
+
+    orderReturns.forEach((orderReturn, index) => {
+      if (!orderReturn) return;
+      const detail = orderReturn.status ? `Status ${orderReturn.status}` : '';
+      pushItem({
+        id: orderReturn.id || `return-${index}`,
+        title: 'Return created',
+        detail: detail || undefined,
+        timestamp: orderReturn.created_at
+      });
+      if (orderReturn.received_at) {
+        pushItem({
+          id: `${orderReturn.id || `return-${index}`}-received`,
+          title: 'Return received',
+          detail: detail || undefined,
+          timestamp: orderReturn.received_at
+        });
+      }
+      if (orderReturn.canceled_at) {
+        pushItem({
+          id: `${orderReturn.id || `return-${index}`}-canceled`,
+          title: 'Return canceled',
+          detail: detail || undefined,
+          timestamp: orderReturn.canceled_at
+        });
+      }
+    });
+
+    orderExchanges.forEach((exchange, index) => {
+      if (!exchange) return;
+      const detail = exchange.status ? `Status ${exchange.status}` : '';
+      pushItem({
+        id: exchange.id || `exchange-${index}`,
+        title: 'Exchange created',
+        detail: detail || undefined,
+        timestamp: exchange.created_at
+      });
+      if (exchange.canceled_at) {
+        pushItem({
+          id: `${exchange.id || `exchange-${index}`}-canceled`,
+          title: 'Exchange canceled',
+          detail: detail || undefined,
+          timestamp: exchange.canceled_at
+        });
+      }
+    });
+
+    return items.sort((a, b) => b.time - a.time);
+  }, [
+    isOrder,
+    record,
+    orderNotes,
+    orderChanges,
+    orderReturns,
+    orderExchanges,
+    orderCurrency
+  ]);
 
   const outboundShippingOptions = useMemo(() => {
     const options = Array.isArray(fulfillmentMeta.shippingOptions)
@@ -2229,6 +2501,8 @@ const ResourceDetail = ({ resource }) => {
         is_credit: true
       });
       setOrderCreditState({ saving: false, error: '', success: '' });
+      setOrderNoteDraft('');
+      setOrderNoteState({ saving: false, error: '', success: '' });
     }
     if (isRegion) {
       setRegionDraft({
@@ -9357,6 +9631,72 @@ const ResourceDetail = ({ resource }) => {
     }
   };
 
+  const handleOrderNoteChange = (event) => {
+    setOrderNoteDraft(event.target.value);
+  };
+
+  const handleAddOrderNote = async () => {
+    if (!record?.id) return;
+    const text = String(orderNoteDraft || '').trim();
+    if (!text) {
+      setOrderNoteState({ saving: false, error: 'Enter a note before saving.', success: '' });
+      return;
+    }
+    setOrderNoteState({ saving: true, error: '', success: '' });
+    try {
+      const now = Date.now();
+      const nowIso = new Date().toISOString();
+      const metadataSource =
+        record?.metadata && typeof record.metadata === 'object' ? { ...record.metadata } : {};
+      let notes = [];
+
+      if (Array.isArray(metadataSource.notes)) {
+        notes = metadataSource.notes.filter(Boolean);
+      } else if (typeof metadataSource.notes === 'string') {
+        const legacy = metadataSource.notes.trim();
+        if (legacy) {
+          notes.push({
+            id: `note-${now}-legacy`,
+            text: legacy,
+            created_at: record?.updated_at || record?.created_at
+          });
+        }
+      }
+
+      if (!notes.length && metadataSource.note) {
+        notes.push({
+          id: `note-${now}-legacy`,
+          text: String(metadataSource.note),
+          created_at: record?.updated_at || record?.created_at
+        });
+      }
+
+      notes.push({
+        id: `note-${now}`,
+        text,
+        created_at: nowIso
+      });
+
+      metadataSource.notes = notes;
+      if (metadataSource.note) delete metadataSource.note;
+
+      const payload = await request(`/admin/orders/${record.id}`, {
+        method: 'POST',
+        body: { metadata: metadataSource }
+      });
+      const updated = payload?.order || getObjectFromPayload(payload, resource?.detailKey);
+      if (updated) setRecord(updated);
+      setOrderNoteDraft('');
+      setOrderNoteState({ saving: false, error: '', success: 'Note added.' });
+    } catch (err) {
+      setOrderNoteState({
+        saving: false,
+        error: err?.message || 'Unable to add note.',
+        success: ''
+      });
+    }
+  };
+
   const handleOrderEditDraftChange = (field) => (event) => {
     const value = event.target.value;
     setOrderEditDraft((prev) => ({ ...prev, [field]: value }));
@@ -11469,13 +11809,6 @@ const ResourceDetail = ({ resource }) => {
     );
   }, [record]);
 
-  const orderCurrency =
-    record?.currency_code ||
-    record?.currency ||
-    record?.region?.currency_code ||
-    record?.region?.currency?.code ||
-    'usd';
-
   const returnOrderId = isReturn ? record?.order_id || record?.order?.id : null;
   const returnRefundAmount = isReturn
     ? record?.refund_amount ??
@@ -12942,6 +13275,61 @@ const ResourceDetail = ({ resource }) => {
                 ) : null}
               </div>
 
+              {isOrder ? (
+                <div className="ldc-card p-6">
+                  <h3 className="font-heading text-xl text-ldc-ink">Internal Notes</h3>
+                  <p className="mt-2 text-sm text-ldc-ink/70">
+                    Capture private notes for internal order handling.
+                  </p>
+
+                  {orderNotes.length ? (
+                    <div className="mt-4 space-y-3">
+                      {orderNotes.map((note, index) => (
+                        <div
+                          key={note.id || `${note.created_at || 'note'}-${index}`}
+                          className="rounded-2xl bg-white/70 p-4 text-sm text-ldc-ink"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-ldc-ink/60">
+                            <span>{note.author ? `By ${note.author}` : 'Admin note'}</span>
+                            <span>{note.created_at ? formatDateTime(note.created_at) : '-'}</span>
+                          </div>
+                          <div className="mt-2 whitespace-pre-line">{note.text}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-ldc-ink/60">No internal notes yet.</p>
+                  )}
+
+                  {orderNoteState.error ? (
+                    <div className="mt-3 text-sm text-rose-600">{orderNoteState.error}</div>
+                  ) : null}
+                  {orderNoteState.success ? (
+                    <div className="mt-3 text-sm text-emerald-700">{orderNoteState.success}</div>
+                  ) : null}
+
+                  <label className="mt-4 block text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Add note
+                    <textarea
+                      className="ldc-input mt-2 min-h-[120px]"
+                      value={orderNoteDraft}
+                      onChange={handleOrderNoteChange}
+                      placeholder="Add a private note about this order."
+                    />
+                  </label>
+                  <div className="mt-3">
+                    <button
+                      className="ldc-button-primary"
+                      type="button"
+                      onClick={handleAddOrderNote}
+                      disabled={orderNoteState.saving}
+                    >
+                      {orderNoteState.saving ? 'Saving...' : 'Save note'}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
               <div className="ldc-card p-6">
                 <h3 className="font-heading text-xl text-ldc-ink">Line Items</h3>
                 <p className="mt-2 text-sm text-ldc-ink/70">
@@ -13196,6 +13584,41 @@ const ResourceDetail = ({ resource }) => {
                           {orderArchiveState.saving ? 'Archiving...' : 'Archive Order'}
                         </button>
                       </div>
+                    </div>
+                  ) : null}
+
+                  {isOrder ? (
+                    <div className="ldc-card p-6">
+                      <h3 className="font-heading text-xl text-ldc-ink">Order Activity</h3>
+                      <p className="mt-2 text-sm text-ldc-ink/70">
+                        Timeline of payments, fulfillment, returns, and internal updates.
+                      </p>
+                      {orderTimelineItems.length ? (
+                        <div className="mt-4 space-y-3">
+                          {orderTimelineItems.map((item, index) => (
+                            <div
+                              key={item.id || `${item.title}-${index}`}
+                              className="rounded-2xl bg-white/70 p-4"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-ldc-ink/60">
+                                <span className="font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                                  {item.title}
+                                </span>
+                                <span>
+                                  {item.timestamp ? formatDateTime(item.timestamp) : '-'}
+                                </span>
+                              </div>
+                              {item.detail ? (
+                                <div className="mt-2 whitespace-pre-line text-sm text-ldc-ink">
+                                  {item.detail}
+                                </div>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-3 text-sm text-ldc-ink/60">No activity yet.</p>
+                      )}
                     </div>
                   ) : null}
 
