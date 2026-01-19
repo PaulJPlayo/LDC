@@ -585,6 +585,18 @@ const buildVariantDrafts = (record) => {
     id: variant.id,
     title: variant.title || '',
     sku: variant.sku || '',
+    ean: variant.ean || '',
+    upc: variant.upc || '',
+    barcode: variant.barcode || '',
+    hs_code: variant.hs_code || '',
+    mid_code: variant.mid_code || '',
+    origin_country: variant.origin_country || '',
+    material: variant.material || '',
+    weight: toNumber(variant.weight) == null ? '' : String(toNumber(variant.weight)),
+    length: toNumber(variant.length) == null ? '' : String(toNumber(variant.length)),
+    height: toNumber(variant.height) == null ? '' : String(toNumber(variant.height)),
+    width: toNumber(variant.width) == null ? '' : String(toNumber(variant.width)),
+    metadata: formatJsonValue(variant.metadata),
     thumbnail: variant.thumbnail || '',
     manage_inventory: variant.manage_inventory !== false,
     allow_backorder: Boolean(variant.allow_backorder),
@@ -609,6 +621,18 @@ const buildNewVariantDraft = (record, defaultCurrency) => {
   return {
     title: '',
     sku: '',
+    ean: '',
+    upc: '',
+    barcode: '',
+    hs_code: '',
+    mid_code: '',
+    origin_country: '',
+    material: '',
+    weight: '',
+    length: '',
+    height: '',
+    width: '',
+    metadata: '',
     thumbnail: '',
     manage_inventory: true,
     allow_backorder: false,
@@ -648,10 +672,21 @@ const mapRecordToDraft = (record) => ({
   status: record?.status || 'draft',
   description: record?.description ?? '',
   thumbnail: record?.thumbnail || '',
+  external_id: record?.external_id ?? '',
   is_giftcard: Boolean(record?.is_giftcard),
   discountable: record?.discountable !== false,
   collection_id: record?.collection_id || record?.collection?.id || '',
   type_id: record?.type_id || record?.type?.id || '',
+  shipping_profile_id: record?.shipping_profile_id || record?.shipping_profile?.id || '',
+  weight: toNumber(record?.weight) == null ? '' : String(toNumber(record?.weight)),
+  length: toNumber(record?.length) == null ? '' : String(toNumber(record?.length)),
+  height: toNumber(record?.height) == null ? '' : String(toNumber(record?.height)),
+  width: toNumber(record?.width) == null ? '' : String(toNumber(record?.width)),
+  hs_code: record?.hs_code ?? '',
+  mid_code: record?.mid_code ?? '',
+  origin_country: record?.origin_country ?? '',
+  material: record?.material ?? '',
+  metadata: formatJsonValue(record?.metadata),
   sales_channel_ids: (record?.sales_channels || []).map((channel) => channel.id),
   tag_ids: (record?.tags || []).map((tag) => tag.id),
   category_ids: (record?.categories || []).map((category) => category.id)
@@ -998,7 +1033,8 @@ const ResourceDetail = ({ resource }) => {
     categories: [],
     salesChannels: [],
     types: [],
-    tags: []
+    tags: [],
+    shippingProfiles: []
   });
   const [metaLoading, setMetaLoading] = useState(false);
   const [metaError, setMetaError] = useState('');
@@ -2006,7 +2042,7 @@ const ResourceDetail = ({ resource }) => {
           setRecord(variants?.[0] || null);
         } else {
           const detailParams = isProduct
-            ? { fields: '+categories,+images' }
+            ? { fields: '+categories,+images,+shipping_profile_id,+shipping_profile' }
             : isOrder
               ? orderDetailParams
               : isPriceList
@@ -2455,7 +2491,8 @@ const ResourceDetail = ({ resource }) => {
           getList('/admin/product-categories', { limit: 200 }),
           getList('/admin/sales-channels', { limit: 200 }),
           getList('/admin/product-types', { limit: 200 }),
-          getList('/admin/product-tags', { limit: 200 })
+          getList('/admin/product-tags', { limit: 200 }),
+          getList('/admin/shipping-profiles', { limit: 200 })
         ]);
 
         if (!isActive) return;
@@ -2465,7 +2502,8 @@ const ResourceDetail = ({ resource }) => {
           categoriesResult,
           salesChannelsResult,
           typesResult,
-          tagsResult
+          tagsResult,
+          shippingProfilesResult
         ] = results;
 
         const collectionsPayload =
@@ -2476,6 +2514,8 @@ const ResourceDetail = ({ resource }) => {
           salesChannelsResult.status === 'fulfilled' ? salesChannelsResult.value : null;
         const typesPayload = typesResult.status === 'fulfilled' ? typesResult.value : null;
         const tagsPayload = tagsResult.status === 'fulfilled' ? tagsResult.value : null;
+        const shippingProfilesPayload =
+          shippingProfilesResult.status === 'fulfilled' ? shippingProfilesResult.value : null;
 
         setProductMeta({
           collections: sortByLabel(
@@ -2497,6 +2537,10 @@ const ResourceDetail = ({ resource }) => {
           tags: sortByLabel(
             getArrayFromPayload(tagsPayload, 'product_tags'),
             (item) => item?.value || item?.id
+          ),
+          shippingProfiles: sortByLabel(
+            getArrayFromPayload(shippingProfilesPayload, 'shipping_profiles'),
+            (item) => item?.name || item?.id
           )
         });
 
@@ -4328,6 +4372,33 @@ const ResourceDetail = ({ resource }) => {
     setSaveState({ saving: true, error: '', success: '' });
     try {
       const thumbnail = productDraft.thumbnail.trim();
+      const weightResult = parseNullableNumberInput(productDraft.weight);
+      const lengthResult = parseNullableNumberInput(productDraft.length);
+      const heightResult = parseNullableNumberInput(productDraft.height);
+      const widthResult = parseNullableNumberInput(productDraft.width);
+      const numberError = [
+        { label: 'Weight', result: weightResult },
+        { label: 'Length', result: lengthResult },
+        { label: 'Height', result: heightResult },
+        { label: 'Width', result: widthResult }
+      ].find((entry) => entry.result.error);
+      if (numberError) {
+        setSaveState({
+          saving: false,
+          error: `${numberError.label}: ${numberError.result.error}`,
+          success: ''
+        });
+        return;
+      }
+      const { data: metadata, error: metadataError } = parseJsonInput(productDraft.metadata);
+      if (metadataError) {
+        setSaveState({
+          saving: false,
+          error: `Metadata: ${metadataError}`,
+          success: ''
+        });
+        return;
+      }
       const payload = await request(`${resource.endpoint}/${record.id}`, {
         method: 'POST',
         body: {
@@ -4337,10 +4408,21 @@ const ResourceDetail = ({ resource }) => {
           status: productDraft.status || undefined,
           description: productDraft.description || null,
           thumbnail: thumbnail || null,
+          external_id: productDraft.external_id.trim() || null,
           is_giftcard: productDraft.is_giftcard,
           discountable: productDraft.discountable,
           collection_id: productDraft.collection_id || null,
           type_id: productDraft.type_id || null,
+          shipping_profile_id: productDraft.shipping_profile_id || null,
+          weight: weightResult.value,
+          length: lengthResult.value,
+          height: heightResult.value,
+          width: widthResult.value,
+          hs_code: productDraft.hs_code.trim() || null,
+          mid_code: productDraft.mid_code.trim() || null,
+          origin_country: productDraft.origin_country.trim() || null,
+          material: productDraft.material.trim() || null,
+          metadata,
           sales_channels: (productDraft.sales_channel_ids || []).map((idValue) => ({ id: idValue })),
           tags: (productDraft.tag_ids || []).map((idValue) => ({ id: idValue })),
           categories: (productDraft.category_ids || []).map((idValue) => ({ id: idValue }))
@@ -8523,6 +8605,27 @@ const ResourceDetail = ({ resource }) => {
       setVariantMessage('');
       return;
     }
+    const weightResult = parseNullableNumberInput(variant.weight);
+    const lengthResult = parseNullableNumberInput(variant.length);
+    const heightResult = parseNullableNumberInput(variant.height);
+    const widthResult = parseNullableNumberInput(variant.width);
+    const numberError = [
+      { label: 'Weight', result: weightResult },
+      { label: 'Length', result: lengthResult },
+      { label: 'Height', result: heightResult },
+      { label: 'Width', result: widthResult }
+    ].find((entry) => entry.result.error);
+    if (numberError) {
+      setVariantError(`${numberError.label}: ${numberError.result.error}`);
+      setVariantMessage('');
+      return;
+    }
+    const { data: metadata, error: metadataError } = parseJsonInput(variant.metadata);
+    if (metadataError) {
+      setVariantError(`Metadata: ${metadataError}`);
+      setVariantMessage('');
+      return;
+    }
     setVariantSavingId(variant.id);
     setVariantError('');
     setVariantMessage('');
@@ -8532,6 +8635,18 @@ const ResourceDetail = ({ resource }) => {
         body: {
           title,
           sku: variant.sku || null,
+          ean: String(variant.ean || '').trim() || null,
+          upc: String(variant.upc || '').trim() || null,
+          barcode: String(variant.barcode || '').trim() || null,
+          hs_code: String(variant.hs_code || '').trim() || null,
+          mid_code: String(variant.mid_code || '').trim() || null,
+          origin_country: String(variant.origin_country || '').trim() || null,
+          material: String(variant.material || '').trim() || null,
+          weight: weightResult.value,
+          length: lengthResult.value,
+          height: heightResult.value,
+          width: widthResult.value,
+          metadata,
           thumbnail: thumbnail || null,
           manage_inventory: variant.manage_inventory,
           allow_backorder: variant.allow_backorder,
@@ -8669,6 +8784,27 @@ const ResourceDetail = ({ resource }) => {
       setVariantMessage('');
       return;
     }
+    const weightResult = parseNullableNumberInput(newVariant.weight);
+    const lengthResult = parseNullableNumberInput(newVariant.length);
+    const heightResult = parseNullableNumberInput(newVariant.height);
+    const widthResult = parseNullableNumberInput(newVariant.width);
+    const numberError = [
+      { label: 'Weight', result: weightResult },
+      { label: 'Length', result: lengthResult },
+      { label: 'Height', result: heightResult },
+      { label: 'Width', result: widthResult }
+    ].find((entry) => entry.result.error);
+    if (numberError) {
+      setVariantError(`${numberError.label}: ${numberError.result.error}`);
+      setVariantMessage('');
+      return;
+    }
+    const { data: metadata, error: metadataError } = parseJsonInput(newVariant.metadata);
+    if (metadataError) {
+      setVariantError(`Metadata: ${metadataError}`);
+      setVariantMessage('');
+      return;
+    }
     setVariantSavingId('new');
     setVariantError('');
     setVariantMessage('');
@@ -8678,6 +8814,18 @@ const ResourceDetail = ({ resource }) => {
         body: {
           title,
           sku: newVariant.sku || null,
+          ean: String(newVariant.ean || '').trim() || null,
+          upc: String(newVariant.upc || '').trim() || null,
+          barcode: String(newVariant.barcode || '').trim() || null,
+          hs_code: String(newVariant.hs_code || '').trim() || null,
+          mid_code: String(newVariant.mid_code || '').trim() || null,
+          origin_country: String(newVariant.origin_country || '').trim() || null,
+          material: String(newVariant.material || '').trim() || null,
+          weight: weightResult.value,
+          length: lengthResult.value,
+          height: heightResult.value,
+          width: widthResult.value,
+          metadata,
           thumbnail: thumbnail || null,
           manage_inventory: newVariant.manage_inventory,
           allow_backorder: newVariant.allow_backorder,
@@ -14317,6 +14465,142 @@ const ResourceDetail = ({ resource }) => {
                   )}
                 </div>
               </div>
+
+              <div className="mt-6">
+                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                  Shipping & Identifiers
+                </div>
+                <div className="mt-2 grid gap-4 md:grid-cols-2">
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Shipping profile
+                    {productMeta.shippingProfiles.length ? (
+                      <select
+                        className="ldc-input mt-2"
+                        value={productDraft.shipping_profile_id}
+                        onChange={handleDraftField('shipping_profile_id')}
+                      >
+                        <option value="">Default profile</option>
+                        {productMeta.shippingProfiles.map((profile) => (
+                          <option key={profile.id} value={profile.id}>
+                            {profile.name || profile.id}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        className="ldc-input mt-2"
+                        value={productDraft.shipping_profile_id}
+                        onChange={handleDraftField('shipping_profile_id')}
+                        placeholder="profile id"
+                      />
+                    )}
+                  </label>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    External ID
+                    <input
+                      className="ldc-input mt-2"
+                      value={productDraft.external_id}
+                      onChange={handleDraftField('external_id')}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                  Attributes
+                </div>
+                <div className="mt-2 grid gap-4 md:grid-cols-4">
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Weight
+                    <input
+                      className="ldc-input mt-2"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={productDraft.weight}
+                      onChange={handleDraftField('weight')}
+                    />
+                  </label>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Length
+                    <input
+                      className="ldc-input mt-2"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={productDraft.length}
+                      onChange={handleDraftField('length')}
+                    />
+                  </label>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Width
+                    <input
+                      className="ldc-input mt-2"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={productDraft.width}
+                      onChange={handleDraftField('width')}
+                    />
+                  </label>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Height
+                    <input
+                      className="ldc-input mt-2"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={productDraft.height}
+                      onChange={handleDraftField('height')}
+                    />
+                  </label>
+                </div>
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    HS code
+                    <input
+                      className="ldc-input mt-2"
+                      value={productDraft.hs_code}
+                      onChange={handleDraftField('hs_code')}
+                    />
+                  </label>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    MID code
+                    <input
+                      className="ldc-input mt-2"
+                      value={productDraft.mid_code}
+                      onChange={handleDraftField('mid_code')}
+                    />
+                  </label>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Origin country
+                    <input
+                      className="ldc-input mt-2"
+                      value={productDraft.origin_country}
+                      onChange={handleDraftField('origin_country')}
+                      placeholder="US"
+                    />
+                  </label>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Material
+                    <input
+                      className="ldc-input mt-2"
+                      value={productDraft.material}
+                      onChange={handleDraftField('material')}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <label className="mt-6 block text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                Metadata (JSON)
+                <textarea
+                  className="ldc-input mt-2 min-h-[110px] font-mono text-xs"
+                  value={productDraft.metadata}
+                  onChange={handleDraftField('metadata')}
+                />
+              </label>
             </div>
           ) : null}
 
@@ -14589,6 +14873,125 @@ const ResourceDetail = ({ resource }) => {
                         </label>
                       </div>
 
+                      <div className="mt-4">
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                          Identifiers & Attributes
+                        </div>
+                        <div className="mt-2 grid gap-3 md:grid-cols-3">
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Barcode
+                            <input
+                              className="ldc-input mt-2"
+                              value={variant.barcode}
+                              onChange={handleVariantFieldChange(variant.id, 'barcode')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            EAN
+                            <input
+                              className="ldc-input mt-2"
+                              value={variant.ean}
+                              onChange={handleVariantFieldChange(variant.id, 'ean')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            UPC
+                            <input
+                              className="ldc-input mt-2"
+                              value={variant.upc}
+                              onChange={handleVariantFieldChange(variant.id, 'upc')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            HS code
+                            <input
+                              className="ldc-input mt-2"
+                              value={variant.hs_code}
+                              onChange={handleVariantFieldChange(variant.id, 'hs_code')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            MID code
+                            <input
+                              className="ldc-input mt-2"
+                              value={variant.mid_code}
+                              onChange={handleVariantFieldChange(variant.id, 'mid_code')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Origin country
+                            <input
+                              className="ldc-input mt-2"
+                              value={variant.origin_country}
+                              onChange={handleVariantFieldChange(variant.id, 'origin_country')}
+                              placeholder="US"
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Material
+                            <input
+                              className="ldc-input mt-2"
+                              value={variant.material}
+                              onChange={handleVariantFieldChange(variant.id, 'material')}
+                            />
+                          </label>
+                        </div>
+                        <div className="mt-3 grid gap-3 md:grid-cols-4">
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Weight
+                            <input
+                              className="ldc-input mt-2"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={variant.weight}
+                              onChange={handleVariantFieldChange(variant.id, 'weight')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Length
+                            <input
+                              className="ldc-input mt-2"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={variant.length}
+                              onChange={handleVariantFieldChange(variant.id, 'length')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Width
+                            <input
+                              className="ldc-input mt-2"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={variant.width}
+                              onChange={handleVariantFieldChange(variant.id, 'width')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Height
+                            <input
+                              className="ldc-input mt-2"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={variant.height}
+                              onChange={handleVariantFieldChange(variant.id, 'height')}
+                            />
+                          </label>
+                        </div>
+                        <label className="mt-3 block text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                          Metadata (JSON)
+                          <textarea
+                            className="ldc-input mt-2 min-h-[90px] font-mono text-xs"
+                            value={variant.metadata}
+                            onChange={handleVariantFieldChange(variant.id, 'metadata')}
+                          />
+                        </label>
+                      </div>
+
                       {variantOptionList.length ? (
                         <div className="mt-4">
                           <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
@@ -14732,6 +15135,125 @@ const ResourceDetail = ({ resource }) => {
                         onChange={handleNewVariantToggle('allow_backorder')}
                       />
                       Allow backorder
+                    </label>
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                      Identifiers & Attributes
+                    </div>
+                    <div className="mt-2 grid gap-3 md:grid-cols-3">
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        Barcode
+                        <input
+                          className="ldc-input mt-2"
+                          value={newVariant.barcode}
+                          onChange={handleNewVariantField('barcode')}
+                        />
+                      </label>
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        EAN
+                        <input
+                          className="ldc-input mt-2"
+                          value={newVariant.ean}
+                          onChange={handleNewVariantField('ean')}
+                        />
+                      </label>
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        UPC
+                        <input
+                          className="ldc-input mt-2"
+                          value={newVariant.upc}
+                          onChange={handleNewVariantField('upc')}
+                        />
+                      </label>
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        HS code
+                        <input
+                          className="ldc-input mt-2"
+                          value={newVariant.hs_code}
+                          onChange={handleNewVariantField('hs_code')}
+                        />
+                      </label>
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        MID code
+                        <input
+                          className="ldc-input mt-2"
+                          value={newVariant.mid_code}
+                          onChange={handleNewVariantField('mid_code')}
+                        />
+                      </label>
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        Origin country
+                        <input
+                          className="ldc-input mt-2"
+                          value={newVariant.origin_country}
+                          onChange={handleNewVariantField('origin_country')}
+                          placeholder="US"
+                        />
+                      </label>
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        Material
+                        <input
+                          className="ldc-input mt-2"
+                          value={newVariant.material}
+                          onChange={handleNewVariantField('material')}
+                        />
+                      </label>
+                    </div>
+                    <div className="mt-3 grid gap-3 md:grid-cols-4">
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        Weight
+                        <input
+                          className="ldc-input mt-2"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={newVariant.weight}
+                          onChange={handleNewVariantField('weight')}
+                        />
+                      </label>
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        Length
+                        <input
+                          className="ldc-input mt-2"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={newVariant.length}
+                          onChange={handleNewVariantField('length')}
+                        />
+                      </label>
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        Width
+                        <input
+                          className="ldc-input mt-2"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={newVariant.width}
+                          onChange={handleNewVariantField('width')}
+                        />
+                      </label>
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        Height
+                        <input
+                          className="ldc-input mt-2"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={newVariant.height}
+                          onChange={handleNewVariantField('height')}
+                        />
+                      </label>
+                    </div>
+                    <label className="mt-3 block text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                      Metadata (JSON)
+                      <textarea
+                        className="ldc-input mt-2 min-h-[90px] font-mono text-xs"
+                        value={newVariant.metadata}
+                        onChange={handleNewVariantField('metadata')}
+                      />
                     </label>
                   </div>
 
