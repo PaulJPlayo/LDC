@@ -164,6 +164,16 @@ const getLineItemThumbnail = (item) => {
   );
 };
 
+const extractPromotionCodes = (promotions) => {
+  if (!Array.isArray(promotions)) return [];
+  const codes = promotions
+    .map((promo) => promo?.code || promo?.promotion?.code || promo?.promotion_code || promo?.id)
+    .filter(Boolean)
+    .map((code) => String(code).trim())
+    .filter(Boolean);
+  return Array.from(new Set(codes));
+};
+
 const getReturnItemLine = (entry) =>
   entry?.item || entry?.line_item || entry?.detail || entry?.order_item || entry?.item_detail || entry;
 
@@ -946,7 +956,8 @@ const ResourceDetail = ({ resource }) => {
   const isProductType = resource?.id === 'product-types';
   const isProductTag = resource?.id === 'product-tags';
   const isOrder = resource?.id === 'orders';
-  const isOrderLike = isOrder || resource?.id === 'draft-orders';
+  const isDraftOrder = resource?.id === 'draft-orders';
+  const isOrderLike = isOrder || isDraftOrder;
   const isReturn = resource?.id === 'returns';
   const isExchange = resource?.id === 'exchanges';
   const isRegion = resource?.id === 'regions';
@@ -1104,6 +1115,19 @@ const ResourceDetail = ({ resource }) => {
   const [orderEditShippingState, setOrderEditShippingState] = useState({
     savingId: null,
     action: '',
+    error: '',
+    success: ''
+  });
+  const [draftOrderShippingMethodDrafts, setDraftOrderShippingMethodDrafts] = useState({});
+  const [draftOrderPromoDraft, setDraftOrderPromoDraft] = useState('');
+  const [draftOrderPromoState, setDraftOrderPromoState] = useState({
+    saving: false,
+    action: '',
+    error: '',
+    success: ''
+  });
+  const [draftOrderActionState, setDraftOrderActionState] = useState({
+    saving: false,
     error: '',
     success: ''
   });
@@ -1737,9 +1761,9 @@ const ResourceDetail = ({ resource }) => {
   const [priceListSelectedProducts, setPriceListSelectedProducts] = useState([]);
 
   const orderItems = useMemo(() => {
-    if (!isOrder || !record) return [];
+    if (!isOrderLike || !record) return [];
     return Array.isArray(record.items) ? record.items : [];
-  }, [isOrder, record]);
+  }, [isOrderLike, record]);
 
   const returnRecordItems = useMemo(() => {
     if (!isReturn || !record) return [];
@@ -1896,6 +1920,35 @@ const ResourceDetail = ({ resource }) => {
     () => orderEditActions.filter((action) => action?.action === 'SHIPPING_ADD'),
     [orderEditActions]
   );
+  const draftOrderAddedShippingIds = useMemo(() => {
+    const ids = new Set();
+    orderEditShippingActions.forEach((action) => {
+      const referenceId =
+        action?.reference_id || action?.details?.reference_id || action?.reference;
+      if (referenceId) ids.add(referenceId);
+    });
+    return ids;
+  }, [orderEditShippingActions]);
+  const draftOrderShippingMethods = useMemo(() => {
+    if (!isDraftOrder) return [];
+    const methods =
+      Array.isArray(orderPreview?.shipping_methods) && orderPreview.shipping_methods.length
+        ? orderPreview.shipping_methods
+        : record?.shipping_methods;
+    return Array.isArray(methods) ? methods : [];
+  }, [isDraftOrder, orderPreview?.shipping_methods, record?.shipping_methods]);
+  const draftOrderExistingShippingMethods = useMemo(
+    () =>
+      draftOrderShippingMethods.filter(
+        (method) => method?.id && !draftOrderAddedShippingIds.has(method.id)
+      ),
+    [draftOrderShippingMethods, draftOrderAddedShippingIds]
+  );
+  const draftOrderPromotionCodes = useMemo(() => {
+    if (!isDraftOrder) return [];
+    const promotions = orderPreview?.promotions || record?.promotions || [];
+    return extractPromotionCodes(promotions);
+  }, [isDraftOrder, orderPreview?.promotions, record?.promotions]);
   const returnReasonParentOptions = useMemo(() => {
     if (!isReturnReason) return [];
     const options = returnReasons.filter((reason) => reason?.id && reason.id !== record?.id);
@@ -3378,13 +3431,13 @@ const ResourceDetail = ({ resource }) => {
   }, [isSalesChannel, salesChannelProductSearch.query]);
 
   useEffect(() => {
-    if (!isOrder && !isExchange) {
+    if (!isOrderLike && !isExchange) {
       setFulfillmentMeta({ locations: [], shippingOptions: [] });
       setFulfillmentMetaError('');
       setFulfillmentMetaLoading(false);
       return;
     }
-    const orderId = isOrder ? record?.id : record?.order_id || record?.order?.id;
+    const orderId = isExchange ? record?.order_id || record?.order?.id : record?.id;
     if (!orderId) {
       setFulfillmentMeta({ locations: [], shippingOptions: [] });
       setFulfillmentMetaError('');
@@ -3437,7 +3490,7 @@ const ResourceDetail = ({ resource }) => {
     return () => {
       isActive = false;
     };
-  }, [isOrder, isExchange, record?.id, record?.order_id, record?.order?.id]);
+  }, [isOrderLike, isExchange, record?.id, record?.order_id, record?.order?.id]);
 
   useEffect(() => {
     if (!isOrder || !record?.items) {
@@ -3555,13 +3608,13 @@ const ResourceDetail = ({ resource }) => {
   }, [isExchange, record?.order_id, record?.order?.id]);
 
   useEffect(() => {
-    if (!isOrder && !isExchange) {
+    if (!isOrderLike && !isExchange) {
       setOrderPreview(null);
       setOrderPreviewError('');
       setOrderPreviewLoading(false);
       return;
     }
-    const orderId = isOrder ? record?.id : record?.order_id || record?.order?.id;
+    const orderId = isExchange ? record?.order_id || record?.order?.id : record?.id;
     if (!orderId) {
       setOrderPreview(null);
       setOrderPreviewError('');
@@ -3569,17 +3622,17 @@ const ResourceDetail = ({ resource }) => {
       return;
     }
     refreshOrderPreview(orderId);
-  }, [isOrder, isExchange, record?.id, record?.order_id, record?.order?.id]);
+  }, [isOrderLike, isExchange, record?.id, record?.order_id, record?.order?.id]);
 
   useEffect(() => {
-    if (!isOrder || !record?.id) {
+    if (!isOrderLike || !record?.id) {
       setOrderChanges([]);
       setOrderChangesError('');
       setOrderChangesLoading(false);
       return;
     }
     refreshOrderChanges();
-  }, [isOrder, record?.id]);
+  }, [isOrderLike, record?.id]);
 
   useEffect(() => {
     if (!isReturn && !isExchange) {
@@ -3626,7 +3679,7 @@ const ResourceDetail = ({ resource }) => {
   ]);
 
   useEffect(() => {
-    if (!isOrder) {
+    if (!isOrderLike) {
       setOrderEditItemDrafts({});
       return;
     }
@@ -3668,10 +3721,10 @@ const ResourceDetail = ({ resource }) => {
       });
       return next;
     });
-  }, [isOrder, record?.items, orderEditItemUpdateMap]);
+  }, [isOrderLike, record?.items, orderEditItemUpdateMap]);
 
   useEffect(() => {
-    if (!isOrder) {
+    if (!isOrderLike) {
       setOrderEditAddActionDrafts({});
       return;
     }
@@ -3705,10 +3758,10 @@ const ResourceDetail = ({ resource }) => {
       });
       return next;
     });
-  }, [isOrder, orderEditAddActions]);
+  }, [isOrderLike, orderEditAddActions]);
 
   useEffect(() => {
-    if (!isOrder) {
+    if (!isOrderLike) {
       setOrderEditShippingActionDrafts({});
       return;
     }
@@ -3741,10 +3794,41 @@ const ResourceDetail = ({ resource }) => {
       });
       return next;
     });
-  }, [isOrder, orderEditShippingActions, orderPreview?.shipping_methods]);
+  }, [isOrderLike, orderEditShippingActions, orderPreview?.shipping_methods]);
 
   useEffect(() => {
-    if (!isOrder || !orderEditActive) {
+    if (!isDraftOrder) {
+      setDraftOrderShippingMethodDrafts({});
+      return;
+    }
+    if (!draftOrderExistingShippingMethods.length) {
+      setDraftOrderShippingMethodDrafts({});
+      return;
+    }
+    setDraftOrderShippingMethodDrafts((prev) => {
+      const next = { ...prev };
+      draftOrderExistingShippingMethods.forEach((method) => {
+        if (!method?.id) return;
+        if (!next[method.id]) {
+          next[method.id] = {
+            custom_amount:
+              method?.amount !== undefined && method?.amount !== null
+                ? formatPriceInput(method.amount)
+                : ''
+          };
+        }
+      });
+      Object.keys(next).forEach((methodId) => {
+        if (!draftOrderExistingShippingMethods.some((method) => method?.id === methodId)) {
+          delete next[methodId];
+        }
+      });
+      return next;
+    });
+  }, [isDraftOrder, draftOrderExistingShippingMethods]);
+
+  useEffect(() => {
+    if (!isOrderLike || !orderEditActive) {
       setOrderEditVariantSearch({ query: '', results: [], loading: false, error: '' });
       setOrderEditSelectedVariant(null);
       return;
@@ -3781,7 +3865,7 @@ const ResourceDetail = ({ resource }) => {
     return () => {
       isActive = false;
     };
-  }, [isOrder, orderEditActive, orderEditVariantSearch.query]);
+  }, [isOrderLike, orderEditActive, orderEditVariantSearch.query]);
 
   useEffect(() => {
     if (!isOrder) return;
@@ -3966,6 +4050,8 @@ const ResourceDetail = ({ resource }) => {
   }, [isProduct, record?.id, record?.variants?.length]);
 
 
+  const orderLabel = isDraftOrder ? 'draft order' : 'order';
+  const orderEditLabel = isDraftOrder ? 'draft order edit' : 'order edit';
   const primaryTitle = record?.title || record?.name || record?.email || record?.code || record?.id || '';
 
   const applyProductPayload = (payload) => {
@@ -3986,7 +4072,8 @@ const ResourceDetail = ({ resource }) => {
   };
 
   const applyOrderPreviewPayload = (payload) => {
-    const preview = payload?.order_preview || payload?.order || payload?.preview;
+    const preview =
+      payload?.draft_order_preview || payload?.order_preview || payload?.order || payload?.preview;
     if (!preview) return;
     setOrderPreview(preview);
   };
@@ -4048,9 +4135,13 @@ const ResourceDetail = ({ resource }) => {
   };
 
   const refreshOrder = async () => {
-    if (!isOrder || !record?.id) return;
+    if (!isOrderLike || !record?.id) return;
     try {
-      const payload = await getDetail(resource.endpoint, record.id, orderDetailParams);
+      const payload = await getDetail(
+        resource.endpoint,
+        record.id,
+        isOrder ? orderDetailParams : undefined
+      );
       const updated = getObjectFromPayload(payload, resource?.detailKey);
       if (updated) setRecord(updated);
     } catch (err) {
@@ -4081,9 +4172,8 @@ const ResourceDetail = ({ resource }) => {
   };
 
   const refreshOrderPreview = async (orderIdOverride = null) => {
-    if (!isOrder && !isExchange && !orderIdOverride) return;
-    const orderId =
-      orderIdOverride || (isOrder ? record?.id : record?.order_id || record?.order?.id);
+    if (!isOrderLike && !isExchange && !orderIdOverride) return;
+    const orderId = orderIdOverride || (isExchange ? record?.order_id || record?.order?.id : record?.id);
     if (!orderId) return;
     setOrderPreviewLoading(true);
     setOrderPreviewError('');
@@ -4100,7 +4190,7 @@ const ResourceDetail = ({ resource }) => {
   };
 
   const refreshOrderChanges = async () => {
-    if (!isOrder || !record?.id) return;
+    if (!isOrderLike || !record?.id) return;
     setOrderChangesLoading(true);
     setOrderChangesError('');
     try {
@@ -8660,6 +8750,31 @@ const ResourceDetail = ({ resource }) => {
   const handleStartOrderEdit = async (event) => {
     event.preventDefault();
     if (!record?.id) return;
+    if (isDraftOrder) {
+      setOrderEditState({ saving: true, action: 'start', error: '', success: '' });
+      try {
+        const payload = await request(`/admin/draft-orders/${record.id}/edit`, {
+          method: 'POST'
+        });
+        applyOrderPreviewPayload(payload);
+        setOrderEditState({
+          saving: false,
+          action: '',
+          error: '',
+          success: 'Draft order edit started.'
+        });
+        refreshOrderChanges();
+        refreshOrderPreview();
+      } catch (err) {
+        setOrderEditState({
+          saving: false,
+          action: '',
+          error: err?.message || 'Unable to start draft order edit.',
+          success: ''
+        });
+      }
+      return;
+    }
     const description = orderEditDraft.description.trim();
     const internal_note = orderEditDraft.internal_note.trim();
     setOrderEditState({ saving: true, action: 'start', error: '', success: '' });
@@ -8696,20 +8811,24 @@ const ResourceDetail = ({ resource }) => {
       setOrderEditState({
         saving: false,
         action: '',
-        error: 'Start an order edit before canceling.',
+        error: `Start an ${orderEditLabel} before canceling.`,
         success: ''
       });
       return;
     }
-    if (!window.confirm('Cancel this order edit?')) return;
+    if (!window.confirm(`Cancel this ${orderEditLabel}?`)) return;
     setOrderEditState({ saving: true, action: 'cancel', error: '', success: '' });
     try {
-      await request(`/admin/order-edits/${orderEditChange.id}`, { method: 'DELETE' });
+      if (isDraftOrder) {
+        await request(`/admin/draft-orders/${record.id}/edit`, { method: 'DELETE' });
+      } else {
+        await request(`/admin/order-edits/${orderEditChange.id}`, { method: 'DELETE' });
+      }
       setOrderEditState({
         saving: false,
         action: '',
         error: '',
-        success: 'Order edit canceled.'
+        success: `${orderLabel.charAt(0).toUpperCase() + orderLabel.slice(1)} edit canceled.`
       });
       refreshOrderChanges();
       refreshOrderPreview();
@@ -8717,7 +8836,7 @@ const ResourceDetail = ({ resource }) => {
       setOrderEditState({
         saving: false,
         action: '',
-        error: err?.message || 'Unable to cancel order edit.',
+        error: err?.message || `Unable to cancel ${orderEditLabel}.`,
         success: ''
       });
     }
@@ -8728,29 +8847,29 @@ const ResourceDetail = ({ resource }) => {
       setOrderEditState({
         saving: false,
         action: '',
-        error: 'Start an order edit before requesting.',
+        error: `Start an ${orderEditLabel} before requesting.`,
         success: ''
       });
       return;
     }
     setOrderEditState({ saving: true, action: 'request', error: '', success: '' });
     try {
-      const payload = await request(`/admin/order-edits/${orderEditChange.id}/request`, {
-        method: 'POST'
-      });
+      const payload = isDraftOrder
+        ? await request(`/admin/draft-orders/${record.id}/edit/request`, { method: 'POST' })
+        : await request(`/admin/order-edits/${orderEditChange.id}/request`, { method: 'POST' });
       applyOrderPreviewPayload(payload);
       setOrderEditState({
         saving: false,
         action: '',
         error: '',
-        success: 'Order edit requested.'
+        success: `${orderLabel.charAt(0).toUpperCase() + orderLabel.slice(1)} edit requested.`
       });
       refreshOrderChanges();
     } catch (err) {
       setOrderEditState({
         saving: false,
         action: '',
-        error: err?.message || 'Unable to request order edit.',
+        error: err?.message || `Unable to request ${orderEditLabel}.`,
         success: ''
       });
     }
@@ -8761,23 +8880,23 @@ const ResourceDetail = ({ resource }) => {
       setOrderEditState({
         saving: false,
         action: '',
-        error: 'Start an order edit before confirming.',
+        error: `Start an ${orderEditLabel} before confirming.`,
         success: ''
       });
       return;
     }
-    if (!window.confirm('Confirm and apply this order edit?')) return;
+    if (!window.confirm(`Confirm and apply this ${orderEditLabel}?`)) return;
     setOrderEditState({ saving: true, action: 'confirm', error: '', success: '' });
     try {
-      const payload = await request(`/admin/order-edits/${orderEditChange.id}/confirm`, {
-        method: 'POST'
-      });
+      const payload = isDraftOrder
+        ? await request(`/admin/draft-orders/${record.id}/edit/confirm`, { method: 'POST' })
+        : await request(`/admin/order-edits/${orderEditChange.id}/confirm`, { method: 'POST' });
       applyOrderPreviewPayload(payload);
       setOrderEditState({
         saving: false,
         action: '',
         error: '',
-        success: 'Order edit confirmed.'
+        success: `${orderLabel.charAt(0).toUpperCase() + orderLabel.slice(1)} edit confirmed.`
       });
       refreshOrderChanges();
       refreshOrder();
@@ -8785,7 +8904,7 @@ const ResourceDetail = ({ resource }) => {
       setOrderEditState({
         saving: false,
         action: '',
-        error: err?.message || 'Unable to confirm order edit.',
+        error: err?.message || `Unable to confirm ${orderEditLabel}.`,
         success: ''
       });
     }
@@ -8808,7 +8927,7 @@ const ResourceDetail = ({ resource }) => {
       setOrderEditItemState({
         savingId: itemId,
         action: 'update',
-        error: 'Start an order edit before updating items.',
+        error: `Start an ${orderEditLabel} before updating items.`,
         success: ''
       });
       return;
@@ -8817,7 +8936,7 @@ const ResourceDetail = ({ resource }) => {
       setOrderEditItemState({
         savingId: itemId,
         action: 'update',
-        error: 'Order edit not found. Refresh and try again.',
+        error: `${orderEditLabel.charAt(0).toUpperCase() + orderEditLabel.slice(1)} not found. Refresh and try again.`,
         success: ''
       });
       return;
@@ -8864,7 +8983,9 @@ const ResourceDetail = ({ resource }) => {
     });
     try {
       const payload = await request(
-        `/admin/order-edits/${orderEditChange.id}/items/item/${itemId}`,
+        isDraftOrder
+          ? `/admin/draft-orders/${record.id}/edit/items/item/${itemId}`
+          : `/admin/order-edits/${orderEditChange.id}/items/item/${itemId}`,
         {
           method: 'POST',
           body: {
@@ -8887,7 +9008,7 @@ const ResourceDetail = ({ resource }) => {
       setOrderEditItemState({
         savingId: null,
         action: '',
-        error: err?.message || 'Unable to update order item.',
+        error: err?.message || `Unable to update ${orderLabel} item.`,
         success: ''
       });
     }
@@ -8916,7 +9037,7 @@ const ResourceDetail = ({ resource }) => {
     if (!orderEditActive) {
       setOrderEditAddState({
         saving: false,
-        error: 'Start an order edit before adding items.',
+        error: `Start an ${orderEditLabel} before adding items.`,
         success: ''
       });
       return;
@@ -8924,7 +9045,7 @@ const ResourceDetail = ({ resource }) => {
     if (!orderEditChange?.id) {
       setOrderEditAddState({
         saving: false,
-        error: 'Order edit not found. Refresh and try again.',
+        error: `${orderEditLabel.charAt(0).toUpperCase() + orderEditLabel.slice(1)} not found. Refresh and try again.`,
         success: ''
       });
       return;
@@ -8957,23 +9078,28 @@ const ResourceDetail = ({ resource }) => {
     }
     setOrderEditAddState({ saving: true, error: '', success: '' });
     try {
-      const payload = await request(`/admin/order-edits/${orderEditChange.id}/items`, {
-        method: 'POST',
-        body: {
-          items: [
-            {
-              variant_id: variantId,
-              quantity: quantityValue,
-              ...(unitPrice !== null ? { unit_price: unitPrice } : {}),
-              ...(compareAt !== null ? { compare_at_unit_price: compareAt } : {}),
-              allow_backorder: Boolean(orderEditAddDraft.allow_backorder),
-              ...(orderEditAddDraft.internal_note?.trim()
-                ? { internal_note: orderEditAddDraft.internal_note.trim() }
-                : {})
-            }
-          ]
+      const payload = await request(
+        isDraftOrder
+          ? `/admin/draft-orders/${record.id}/edit/items`
+          : `/admin/order-edits/${orderEditChange.id}/items`,
+        {
+          method: 'POST',
+          body: {
+            items: [
+              {
+                variant_id: variantId,
+                quantity: quantityValue,
+                ...(unitPrice !== null ? { unit_price: unitPrice } : {}),
+                ...(compareAt !== null ? { compare_at_unit_price: compareAt } : {}),
+                allow_backorder: Boolean(orderEditAddDraft.allow_backorder),
+                ...(orderEditAddDraft.internal_note?.trim()
+                  ? { internal_note: orderEditAddDraft.internal_note.trim() }
+                  : {})
+              }
+            ]
+          }
         }
-      });
+      );
       applyOrderPreviewPayload(payload);
       setOrderEditAddDraft({
         variant_id: '',
@@ -8993,7 +9119,7 @@ const ResourceDetail = ({ resource }) => {
     } catch (err) {
       setOrderEditAddState({
         saving: false,
-        error: err?.message || 'Unable to add item to order edit.',
+        error: err?.message || `Unable to add item to ${orderEditLabel}.`,
         success: ''
       });
     }
@@ -9016,7 +9142,7 @@ const ResourceDetail = ({ resource }) => {
       setOrderEditItemState({
         savingId: actionId,
         action: 'add-update',
-        error: 'Start an order edit before updating added items.',
+        error: `Start an ${orderEditLabel} before updating added items.`,
         success: ''
       });
       return;
@@ -9025,7 +9151,7 @@ const ResourceDetail = ({ resource }) => {
       setOrderEditItemState({
         savingId: actionId,
         action: 'add-update',
-        error: 'Order edit not found. Refresh and try again.',
+        error: `${orderEditLabel.charAt(0).toUpperCase() + orderEditLabel.slice(1)} not found. Refresh and try again.`,
         success: ''
       });
       return;
@@ -9065,15 +9191,20 @@ const ResourceDetail = ({ resource }) => {
     }
     setOrderEditItemState({ savingId: actionId, action: 'add-update', error: '', success: '' });
     try {
-      const payload = await request(`/admin/order-edits/${orderEditChange.id}/items/${actionId}`, {
-        method: 'POST',
-        body: {
-          quantity: quantityValue,
-          ...(unitPrice !== null ? { unit_price: unitPrice } : {}),
-          ...(compareAt !== null ? { compare_at_unit_price: compareAt } : {}),
-          ...(draft.internal_note?.trim() ? { internal_note: draft.internal_note.trim() } : {})
+      const payload = await request(
+        isDraftOrder
+          ? `/admin/draft-orders/${record.id}/edit/items/${actionId}`
+          : `/admin/order-edits/${orderEditChange.id}/items/${actionId}`,
+        {
+          method: 'POST',
+          body: {
+            quantity: quantityValue,
+            ...(unitPrice !== null ? { unit_price: unitPrice } : {}),
+            ...(compareAt !== null ? { compare_at_unit_price: compareAt } : {}),
+            ...(draft.internal_note?.trim() ? { internal_note: draft.internal_note.trim() } : {})
+          }
         }
-      });
+      );
       applyOrderPreviewPayload(payload);
       setOrderEditItemState({
         savingId: null,
@@ -9098,7 +9229,7 @@ const ResourceDetail = ({ resource }) => {
       setOrderEditItemState({
         savingId: actionId,
         action: 'add-remove',
-        error: 'Order edit not found. Refresh and try again.',
+        error: `${orderEditLabel.charAt(0).toUpperCase() + orderEditLabel.slice(1)} not found. Refresh and try again.`,
         success: ''
       });
       return;
@@ -9106,9 +9237,12 @@ const ResourceDetail = ({ resource }) => {
     if (!window.confirm('Remove this added item from the edit?')) return;
     setOrderEditItemState({ savingId: actionId, action: 'add-remove', error: '', success: '' });
     try {
-      const payload = await request(`/admin/order-edits/${orderEditChange.id}/items/${actionId}`, {
-        method: 'DELETE'
-      });
+      const payload = await request(
+        isDraftOrder
+          ? `/admin/draft-orders/${record.id}/edit/items/${actionId}`
+          : `/admin/order-edits/${orderEditChange.id}/items/${actionId}`,
+        { method: 'DELETE' }
+      );
       applyOrderPreviewPayload(payload);
       setOrderEditItemState({
         savingId: null,
@@ -9150,7 +9284,7 @@ const ResourceDetail = ({ resource }) => {
       setOrderEditShippingState({
         savingId: 'new',
         action: 'add',
-        error: 'Start an order edit before adding shipping.',
+        error: `Start an ${orderEditLabel} before adding shipping.`,
         success: ''
       });
       return;
@@ -9159,7 +9293,7 @@ const ResourceDetail = ({ resource }) => {
       setOrderEditShippingState({
         savingId: 'new',
         action: 'add',
-        error: 'Order edit not found. Refresh and try again.',
+        error: `${orderEditLabel.charAt(0).toUpperCase() + orderEditLabel.slice(1)} not found. Refresh and try again.`,
         success: ''
       });
       return;
@@ -9187,19 +9321,24 @@ const ResourceDetail = ({ resource }) => {
     }
     setOrderEditShippingState({ savingId: 'new', action: 'add', error: '', success: '' });
     try {
-      const payload = await request(`/admin/order-edits/${orderEditChange.id}/shipping-method`, {
-        method: 'POST',
-        body: {
-          shipping_option_id: shippingOptionId,
-          ...(customAmount !== null ? { custom_amount: customAmount } : {}),
-          ...(orderEditShippingDraft.description?.trim()
-            ? { description: orderEditShippingDraft.description.trim() }
-            : {}),
-          ...(orderEditShippingDraft.internal_note?.trim()
-            ? { internal_note: orderEditShippingDraft.internal_note.trim() }
-            : {})
+      const payload = await request(
+        isDraftOrder
+          ? `/admin/draft-orders/${record.id}/edit/shipping-methods`
+          : `/admin/order-edits/${orderEditChange.id}/shipping-method`,
+        {
+          method: 'POST',
+          body: {
+            shipping_option_id: shippingOptionId,
+            ...(customAmount !== null ? { custom_amount: customAmount } : {}),
+            ...(orderEditShippingDraft.description?.trim()
+              ? { description: orderEditShippingDraft.description.trim() }
+              : {}),
+            ...(orderEditShippingDraft.internal_note?.trim()
+              ? { internal_note: orderEditShippingDraft.internal_note.trim() }
+              : {})
+          }
         }
-      });
+      );
       applyOrderPreviewPayload(payload);
       setOrderEditShippingDraft({
         shipping_option_id: '',
@@ -9218,7 +9357,7 @@ const ResourceDetail = ({ resource }) => {
       setOrderEditShippingState({
         savingId: null,
         action: '',
-        error: err?.message || 'Unable to add shipping method.',
+        error: err?.message || `Unable to add shipping method to ${orderEditLabel}.`,
         success: ''
       });
     }
@@ -9230,7 +9369,7 @@ const ResourceDetail = ({ resource }) => {
       setOrderEditShippingState({
         savingId: actionId,
         action: 'update',
-        error: 'Order edit not found. Refresh and try again.',
+        error: `${orderEditLabel.charAt(0).toUpperCase() + orderEditLabel.slice(1)} not found. Refresh and try again.`,
         success: ''
       });
       return;
@@ -9250,7 +9389,9 @@ const ResourceDetail = ({ resource }) => {
     setOrderEditShippingState({ savingId: actionId, action: 'update', error: '', success: '' });
     try {
       const payload = await request(
-        `/admin/order-edits/${orderEditChange.id}/shipping-method/${actionId}`,
+        isDraftOrder
+          ? `/admin/draft-orders/${record.id}/edit/shipping-methods/${actionId}`
+          : `/admin/order-edits/${orderEditChange.id}/shipping-method/${actionId}`,
         {
           method: 'POST',
           body: {
@@ -9283,7 +9424,7 @@ const ResourceDetail = ({ resource }) => {
       setOrderEditShippingState({
         savingId: actionId,
         action: 'remove',
-        error: 'Order edit not found. Refresh and try again.',
+        error: `${orderEditLabel.charAt(0).toUpperCase() + orderEditLabel.slice(1)} not found. Refresh and try again.`,
         success: ''
       });
       return;
@@ -9292,7 +9433,9 @@ const ResourceDetail = ({ resource }) => {
     setOrderEditShippingState({ savingId: actionId, action: 'remove', error: '', success: '' });
     try {
       const payload = await request(
-        `/admin/order-edits/${orderEditChange.id}/shipping-method/${actionId}`,
+        isDraftOrder
+          ? `/admin/draft-orders/${record.id}/edit/shipping-methods/${actionId}`
+          : `/admin/order-edits/${orderEditChange.id}/shipping-method/${actionId}`,
         { method: 'DELETE' }
       );
       applyOrderPreviewPayload(payload);
@@ -9308,6 +9451,231 @@ const ResourceDetail = ({ resource }) => {
         savingId: null,
         action: '',
         error: err?.message || 'Unable to remove shipping method.',
+        success: ''
+      });
+    }
+  };
+
+  const handleDraftOrderShippingMethodDraftChange = (methodId, field) => (event) => {
+    const value = event.target.value;
+    setDraftOrderShippingMethodDrafts((prev) => ({
+      ...prev,
+      [methodId]: {
+        ...(prev[methodId] || {}),
+        [field]: value
+      }
+    }));
+  };
+
+  const handleUpdateDraftOrderShippingMethod = async (methodId) => {
+    if (!isDraftOrder || !record?.id) return;
+    if (!orderEditActive) {
+      setOrderEditShippingState({
+        savingId: methodId,
+        action: 'update-existing',
+        error: `Start an ${orderEditLabel} before updating shipping methods.`,
+        success: ''
+      });
+      return;
+    }
+    const draft = draftOrderShippingMethodDrafts[methodId] || {};
+    const customAmountInput = String(draft.custom_amount ?? '').trim();
+    const customAmount = customAmountInput ? parsePriceInput(customAmountInput) : null;
+    if (customAmountInput && customAmount === null) {
+      setOrderEditShippingState({
+        savingId: methodId,
+        action: 'update-existing',
+        error: 'Custom amount must be a number.',
+        success: ''
+      });
+      return;
+    }
+    setOrderEditShippingState({
+      savingId: methodId,
+      action: 'update-existing',
+      error: '',
+      success: ''
+    });
+    try {
+      const payload = await request(
+        `/admin/draft-orders/${record.id}/edit/shipping-methods/method/${methodId}`,
+        {
+          method: 'POST',
+          body: {
+            ...(customAmount !== null ? { custom_amount: customAmount } : {})
+          }
+        }
+      );
+      applyOrderPreviewPayload(payload);
+      setOrderEditShippingState({
+        savingId: null,
+        action: '',
+        error: '',
+        success: 'Shipping method updated.'
+      });
+      refreshOrderChanges();
+    } catch (err) {
+      setOrderEditShippingState({
+        savingId: null,
+        action: '',
+        error: err?.message || 'Unable to update shipping method.',
+        success: ''
+      });
+    }
+  };
+
+  const handleRemoveDraftOrderShippingMethod = async (methodId) => {
+    if (!isDraftOrder || !record?.id) return;
+    if (!orderEditActive) {
+      setOrderEditShippingState({
+        savingId: methodId,
+        action: 'remove-existing',
+        error: `Start an ${orderEditLabel} before removing shipping methods.`,
+        success: ''
+      });
+      return;
+    }
+    if (!window.confirm('Remove this shipping method from the draft order edit?')) return;
+    setOrderEditShippingState({
+      savingId: methodId,
+      action: 'remove-existing',
+      error: '',
+      success: ''
+    });
+    try {
+      const payload = await request(
+        `/admin/draft-orders/${record.id}/edit/shipping-methods/method/${methodId}`,
+        { method: 'DELETE' }
+      );
+      applyOrderPreviewPayload(payload);
+      setOrderEditShippingState({
+        savingId: null,
+        action: '',
+        error: '',
+        success: 'Shipping method removed.'
+      });
+      refreshOrderChanges();
+    } catch (err) {
+      setOrderEditShippingState({
+        savingId: null,
+        action: '',
+        error: err?.message || 'Unable to remove shipping method.',
+        success: ''
+      });
+    }
+  };
+
+  const handleDraftOrderPromotionAdd = async (event) => {
+    event.preventDefault();
+    if (!isDraftOrder || !record?.id) return;
+    if (!orderEditActive) {
+      setDraftOrderPromoState({
+        saving: false,
+        action: 'add',
+        error: `Start an ${orderEditLabel} before adding promotions.`,
+        success: ''
+      });
+      return;
+    }
+    const codes = draftOrderPromoDraft
+      .split(',')
+      .map((code) => code.trim())
+      .filter(Boolean);
+    if (!codes.length) {
+      setDraftOrderPromoState({
+        saving: false,
+        action: 'add',
+        error: 'Enter at least one promo code.',
+        success: ''
+      });
+      return;
+    }
+    setDraftOrderPromoState({ saving: true, action: 'add', error: '', success: '' });
+    try {
+      const payload = await request(`/admin/draft-orders/${record.id}/edit/promotions`, {
+        method: 'POST',
+        body: { promo_codes: codes }
+      });
+      applyOrderPreviewPayload(payload);
+      setDraftOrderPromoDraft('');
+      setDraftOrderPromoState({
+        saving: false,
+        action: '',
+        error: '',
+        success: 'Promotion(s) added.'
+      });
+      refreshOrderChanges();
+    } catch (err) {
+      setDraftOrderPromoState({
+        saving: false,
+        action: '',
+        error: err?.message || 'Unable to add promotions.',
+        success: ''
+      });
+    }
+  };
+
+  const handleDraftOrderPromotionRemove = async (code) => {
+    if (!isDraftOrder || !record?.id) return;
+    if (!orderEditActive) {
+      setDraftOrderPromoState({
+        saving: false,
+        action: 'remove',
+        error: `Start an ${orderEditLabel} before removing promotions.`,
+        success: ''
+      });
+      return;
+    }
+    if (!code) return;
+    setDraftOrderPromoState({ saving: true, action: 'remove', error: '', success: '' });
+    try {
+      const payload = await request(`/admin/draft-orders/${record.id}/edit/promotions`, {
+        method: 'DELETE',
+        body: { promo_codes: [code] }
+      });
+      applyOrderPreviewPayload(payload);
+      setDraftOrderPromoState({
+        saving: false,
+        action: '',
+        error: '',
+        success: 'Promotion removed.'
+      });
+      refreshOrderChanges();
+    } catch (err) {
+      setDraftOrderPromoState({
+        saving: false,
+        action: '',
+        error: err?.message || 'Unable to remove promotion.',
+        success: ''
+      });
+    }
+  };
+
+  const handleConvertDraftOrder = async () => {
+    if (!isDraftOrder || !record?.id) return;
+    if (!window.confirm('Convert this draft order into a live order?')) return;
+    setDraftOrderActionState({ saving: true, error: '', success: '' });
+    try {
+      const payload = await request(`/admin/draft-orders/${record.id}/convert-to-order`, {
+        method: 'POST'
+      });
+      const order =
+        payload?.order ||
+        payload?.draft_order ||
+        payload?.parent ||
+        getObjectFromPayload(payload, 'order');
+      setDraftOrderActionState({
+        saving: false,
+        error: '',
+        success: 'Draft order converted.'
+      });
+      if (order?.id) {
+        navigate(`/orders/${order.id}`);
+      }
+    } catch (err) {
+      setDraftOrderActionState({
+        saving: false,
+        error: err?.message || 'Unable to convert draft order.',
         success: ''
       });
     }
@@ -11794,46 +12162,85 @@ const ResourceDetail = ({ resource }) => {
                 </div>
               </div>
 
-              {isOrder ? (
+              {isOrder || isDraftOrder ? (
                 <>
-                  <div className="ldc-card p-6">
-                    <h3 className="font-heading text-xl text-ldc-ink">Order Actions</h3>
-                    <p className="mt-2 text-sm text-ldc-ink/70">
-                      Cancel or complete the order from the LDC Admin Studio.
-                    </p>
-                    {orderActionState.error ? (
-                      <div className="mt-3 text-sm text-rose-600">{orderActionState.error}</div>
-                    ) : null}
-                    {orderActionState.success ? (
-                      <div className="mt-3 text-sm text-emerald-700">{orderActionState.success}</div>
-                    ) : null}
-                    <div className="mt-4 flex flex-wrap items-center gap-3">
-                      <button
-                        className="ldc-button-primary"
-                        type="button"
-                        onClick={handleOrderComplete}
-                        disabled={orderActionState.saving || record?.status === 'completed'}
-                      >
-                        {orderActionState.saving ? 'Working...' : 'Complete Order'}
-                      </button>
-                      <button
-                        className="ldc-button-secondary"
-                        type="button"
-                        onClick={handleOrderCancel}
-                        disabled={orderActionState.saving || record?.status === 'canceled'}
-                      >
-                        Cancel Order
-                      </button>
+                  {isOrder ? (
+                    <div className="ldc-card p-6">
+                      <h3 className="font-heading text-xl text-ldc-ink">Order Actions</h3>
+                      <p className="mt-2 text-sm text-ldc-ink/70">
+                        Cancel or complete the order from the LDC Admin Studio.
+                      </p>
+                      {orderActionState.error ? (
+                        <div className="mt-3 text-sm text-rose-600">{orderActionState.error}</div>
+                      ) : null}
+                      {orderActionState.success ? (
+                        <div className="mt-3 text-sm text-emerald-700">
+                          {orderActionState.success}
+                        </div>
+                      ) : null}
+                      <div className="mt-4 flex flex-wrap items-center gap-3">
+                        <button
+                          className="ldc-button-primary"
+                          type="button"
+                          onClick={handleOrderComplete}
+                          disabled={orderActionState.saving || record?.status === 'completed'}
+                        >
+                          {orderActionState.saving ? 'Working...' : 'Complete Order'}
+                        </button>
+                        <button
+                          className="ldc-button-secondary"
+                          type="button"
+                          onClick={handleOrderCancel}
+                          disabled={orderActionState.saving || record?.status === 'canceled'}
+                        >
+                          Cancel Order
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
+
+                  {isDraftOrder ? (
+                    <div className="ldc-card p-6">
+                      <h3 className="font-heading text-xl text-ldc-ink">Draft Order Actions</h3>
+                      <p className="mt-2 text-sm text-ldc-ink/70">
+                        Convert this draft order into a live order when it is ready.
+                      </p>
+                      {draftOrderActionState.error ? (
+                        <div className="mt-3 text-sm text-rose-600">
+                          {draftOrderActionState.error}
+                        </div>
+                      ) : null}
+                      {draftOrderActionState.success ? (
+                        <div className="mt-3 text-sm text-emerald-700">
+                          {draftOrderActionState.success}
+                        </div>
+                      ) : null}
+                      <div className="mt-4 flex flex-wrap items-center gap-3">
+                        <button
+                          className="ldc-button-primary"
+                          type="button"
+                          onClick={handleConvertDraftOrder}
+                          disabled={draftOrderActionState.saving}
+                        >
+                          {draftOrderActionState.saving ? 'Converting...' : 'Convert to order'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
 
                   <div className="ldc-card p-6">
-                    <h3 className="font-heading text-xl text-ldc-ink">Order Edit</h3>
+                    <h3 className="font-heading text-xl text-ldc-ink">
+                      {isDraftOrder ? 'Draft Order Edit' : 'Order Edit'}
+                    </h3>
                     <p className="mt-2 text-sm text-ldc-ink/70">
-                      Adjust line items and shipping before confirming the update.
+                      {isDraftOrder
+                        ? 'Edit items, shipping, and promotions before confirming the draft.'
+                        : 'Adjust line items and shipping before confirming the update.'}
                     </p>
                     {orderChangesLoading ? (
-                      <div className="mt-3 text-sm text-ldc-ink/60">Loading order edits...</div>
+                      <div className="mt-3 text-sm text-ldc-ink/60">
+                        Loading {isDraftOrder ? 'draft order edits' : 'order edits'}...
+                      </div>
                     ) : null}
                     {orderChangesError ? (
                       <div className="mt-3 text-sm text-rose-600">{orderChangesError}</div>
@@ -11927,25 +12334,32 @@ const ResourceDetail = ({ resource }) => {
                         </div>
                       </>
                     ) : (
-                      <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleStartOrderEdit}>
-                        <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                          Description (optional)
-                          <input
-                            className="ldc-input mt-2"
-                            value={orderEditDraft.description}
-                            onChange={handleOrderEditDraftChange('description')}
-                            placeholder="Adjust quantities or add items"
-                          />
-                        </label>
-                        <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                          Internal note (optional)
-                          <input
-                            className="ldc-input mt-2"
-                            value={orderEditDraft.internal_note}
-                            onChange={handleOrderEditDraftChange('internal_note')}
-                            placeholder="Private context for the edit"
-                          />
-                        </label>
+                      <form
+                        className={`mt-4 grid gap-4 ${isDraftOrder ? '' : 'md:grid-cols-2'}`}
+                        onSubmit={handleStartOrderEdit}
+                      >
+                        {!isDraftOrder ? (
+                          <>
+                            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                              Description (optional)
+                              <input
+                                className="ldc-input mt-2"
+                                value={orderEditDraft.description}
+                                onChange={handleOrderEditDraftChange('description')}
+                                placeholder="Adjust quantities or add items"
+                              />
+                            </label>
+                            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                              Internal note (optional)
+                              <input
+                                className="ldc-input mt-2"
+                                value={orderEditDraft.internal_note}
+                                onChange={handleOrderEditDraftChange('internal_note')}
+                                placeholder="Private context for the edit"
+                              />
+                            </label>
+                          </>
+                        ) : null}
                         {orderEditLastChange ? (
                           <div className="md:col-span-2 text-xs text-ldc-ink/60">
                             Last edit {orderEditLastChange.status || 'completed'} on{' '}
@@ -11967,7 +12381,9 @@ const ResourceDetail = ({ resource }) => {
                           type="submit"
                           disabled={orderEditState.saving}
                         >
-                          {orderEditState.saving ? 'Starting...' : 'Start order edit'}
+                          {orderEditState.saving
+                            ? 'Starting...'
+                            : `Start ${isDraftOrder ? 'draft order' : 'order'} edit`}
                         </button>
                       </form>
                     )}
@@ -12303,6 +12719,68 @@ const ResourceDetail = ({ resource }) => {
                             {orderEditShippingState.success}
                           </div>
                         ) : null}
+                        {isDraftOrder ? (
+                          <div className="space-y-3">
+                            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                              Existing shipping methods
+                            </div>
+                            {draftOrderExistingShippingMethods.length ? (
+                              draftOrderExistingShippingMethods.map((method) => {
+                                const draft = draftOrderShippingMethodDrafts[method.id] || {};
+                                const isSaving = orderEditShippingState.savingId === method.id;
+                                const label =
+                                  method?.name ||
+                                  method?.shipping_option?.name ||
+                                  method?.shipping_option_id ||
+                                  method?.id ||
+                                  'Shipping method';
+                                return (
+                                  <div key={method.id} className="rounded-2xl bg-white/70 p-4">
+                                    <div className="text-sm font-semibold text-ldc-ink">{label}</div>
+                                    <div className="mt-1 text-xs text-ldc-ink/60">
+                                      Current amount:{' '}
+                                      {formatMoneyOrDash(method?.amount, method?.currency_code || orderCurrency)}
+                                    </div>
+                                    <label className="mt-3 block text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                      Custom amount
+                                      <input
+                                        className="ldc-input mt-2"
+                                        value={draft.custom_amount ?? ''}
+                                        onChange={handleDraftOrderShippingMethodDraftChange(method.id, 'custom_amount')}
+                                      />
+                                    </label>
+                                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                                      <button
+                                        className="ldc-button-primary"
+                                        type="button"
+                                        onClick={() => handleUpdateDraftOrderShippingMethod(method.id)}
+                                        disabled={isSaving}
+                                      >
+                                        {isSaving && orderEditShippingState.action === 'update-existing'
+                                          ? 'Updating...'
+                                          : 'Update shipping'}
+                                      </button>
+                                      <button
+                                        className="ldc-button-secondary"
+                                        type="button"
+                                        onClick={() => handleRemoveDraftOrderShippingMethod(method.id)}
+                                        disabled={isSaving}
+                                      >
+                                        {isSaving && orderEditShippingState.action === 'remove-existing'
+                                          ? 'Removing...'
+                                          : 'Remove'}
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            ) : (
+                              <div className="text-sm text-ldc-ink/60">
+                                No existing shipping methods to edit.
+                              </div>
+                            )}
+                          </div>
+                        ) : null}
                         {orderEditShippingMethods.length ? (
                           <div className="space-y-3">
                             {orderEditShippingMethods.map(({ action, method, referenceId }) => {
@@ -12429,10 +12907,71 @@ const ResourceDetail = ({ resource }) => {
                       </div>
                     ) : null}
 
+                    {orderEditChange && isDraftOrder ? (
+                      <div className="mt-6 space-y-4">
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                          Promotions
+                        </div>
+                        {draftOrderPromoState.error ? (
+                          <div className="text-sm text-rose-600">{draftOrderPromoState.error}</div>
+                        ) : null}
+                        {draftOrderPromoState.success ? (
+                          <div className="text-sm text-emerald-700">{draftOrderPromoState.success}</div>
+                        ) : null}
+                        {draftOrderPromotionCodes.length ? (
+                          <div className="flex flex-wrap items-center gap-2">
+                            {draftOrderPromotionCodes.map((code) => (
+                              <div
+                                key={code}
+                                className="flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs text-ldc-ink"
+                              >
+                                <span className="font-semibold">{code}</span>
+                                <button
+                                  className="text-rose-600"
+                                  type="button"
+                                  onClick={() => handleDraftOrderPromotionRemove(code)}
+                                  disabled={draftOrderPromoState.saving}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-ldc-ink/60">No promotions applied yet.</div>
+                        )}
+                        <form
+                          className="grid gap-3 md:grid-cols-2"
+                          onSubmit={handleDraftOrderPromotionAdd}
+                        >
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Promo codes
+                            <input
+                              className="ldc-input mt-2"
+                              value={draftOrderPromoDraft}
+                              onChange={(event) => setDraftOrderPromoDraft(event.target.value)}
+                              placeholder="CODE10, VIP"
+                            />
+                          </label>
+                          <div className="flex items-end">
+                            <button
+                              className="ldc-button-primary"
+                              type="submit"
+                              disabled={draftOrderPromoState.saving}
+                            >
+                              {draftOrderPromoState.saving && draftOrderPromoState.action === 'add'
+                                ? 'Adding...'
+                                : 'Add promotions'}
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    ) : null}
+
                     {orderEditChange ? (
                       <div className="mt-6 space-y-3">
                         <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
-                          Order preview totals
+                          {isDraftOrder ? 'Draft order preview totals' : 'Order preview totals'}
                         </div>
                         {orderPreviewLoading ? (
                           <div className="text-sm text-ldc-ink/60">Loading preview...</div>
@@ -12462,7 +13001,9 @@ const ResourceDetail = ({ resource }) => {
                     ) : null}
                   </div>
 
-                  <div className="ldc-card p-6">
+                  {isOrder ? (
+                    <>
+                      <div className="ldc-card p-6">
                     <h3 className="font-heading text-xl text-ldc-ink">Fulfillment Workflow</h3>
                     <p className="mt-2 text-sm text-ldc-ink/70">
                       Create fulfillments, ship items, and mark deliveries.
@@ -13214,7 +13755,9 @@ const ResourceDetail = ({ resource }) => {
                     </div>
                   </div>
 
-                  {renderExchangeWorkflow(true)}
+                      {renderExchangeWorkflow(true)}
+                    </>
+                  ) : null}
                 </>
               ) : null}
             </>
