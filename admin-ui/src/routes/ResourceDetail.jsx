@@ -139,6 +139,39 @@ const buildAddressLines = (address) => {
   return lines;
 };
 
+const buildAddressDraft = (address = {}) => ({
+  first_name: address?.first_name || '',
+  last_name: address?.last_name || '',
+  company: address?.company || '',
+  phone: address?.phone || '',
+  address_1: address?.address_1 || '',
+  address_2: address?.address_2 || '',
+  city: address?.city || '',
+  province: address?.province || '',
+  postal_code: address?.postal_code || '',
+  country_code: address?.country_code || ''
+});
+
+const buildAddressPayload = (draft) => {
+  if (!draft) return null;
+  const payload = {
+    first_name: String(draft.first_name || '').trim() || null,
+    last_name: String(draft.last_name || '').trim() || null,
+    company: String(draft.company || '').trim() || null,
+    phone: String(draft.phone || '').trim() || null,
+    address_1: String(draft.address_1 || '').trim() || null,
+    address_2: String(draft.address_2 || '').trim() || null,
+    city: String(draft.city || '').trim() || null,
+    province: String(draft.province || '').trim() || null,
+    postal_code: String(draft.postal_code || '').trim() || null,
+    country_code: String(draft.country_code || '').trim()
+      ? String(draft.country_code).trim().toLowerCase()
+      : null
+  };
+  const hasValue = Object.values(payload).some((value) => value);
+  return hasValue ? payload : null;
+};
+
 const getLineItemTitle = (item) => {
   if (!item) return 'Item';
   const baseTitle =
@@ -1061,6 +1094,12 @@ const ResourceDetail = ({ resource }) => {
   const [variantProduct, setVariantProduct] = useState(null);
   const [variantProductError, setVariantProductError] = useState('');
   const [orderActionState, setOrderActionState] = useState({ saving: false, error: '', success: '' });
+  const [orderDetailDraft, setOrderDetailDraft] = useState(null);
+  const [orderDetailState, setOrderDetailState] = useState({
+    saving: false,
+    error: '',
+    success: ''
+  });
   const [fulfillmentMeta, setFulfillmentMeta] = useState({ locations: [], shippingOptions: [] });
   const [fulfillmentMetaLoading, setFulfillmentMetaLoading] = useState(false);
   const [fulfillmentMetaError, setFulfillmentMetaError] = useState('');
@@ -2095,6 +2134,16 @@ const ResourceDetail = ({ resource }) => {
 
   useEffect(() => {
     if (!record) return;
+    if (isOrderLike) {
+      setOrderDetailDraft({
+        email: record?.email || record?.customer?.email || '',
+        locale: record?.locale || '',
+        metadata: formatJsonValue(record?.metadata),
+        shipping_address: buildAddressDraft(record?.shipping_address || {}),
+        billing_address: buildAddressDraft(record?.billing_address || {})
+      });
+      setOrderDetailState({ saving: false, error: '', success: '' });
+    }
     if (isRegion) {
       setRegionDraft({
         name: record?.name || '',
@@ -2383,6 +2432,7 @@ const ResourceDetail = ({ resource }) => {
     }
   }, [
     record,
+    isOrderLike,
     isRegion,
     isShippingProfile,
     isShippingOption,
@@ -4434,6 +4484,88 @@ const ResourceDetail = ({ resource }) => {
       setSaveState({
         saving: false,
         error: err?.message || 'Unable to save product.',
+        success: ''
+      });
+    }
+  };
+
+  const buildOrderDetailDraft = (target) => ({
+    email: target?.email || target?.customer?.email || '',
+    locale: target?.locale || '',
+    metadata: formatJsonValue(target?.metadata),
+    shipping_address: buildAddressDraft(target?.shipping_address || {}),
+    billing_address: buildAddressDraft(target?.billing_address || {})
+  });
+
+  const handleOrderDetailField = (field) => (event) => {
+    const value = event.target.value;
+    setOrderDetailDraft((prev) => (prev ? { ...prev, [field]: value } : prev));
+  };
+
+  const handleOrderAddressField = (type, field) => (event) => {
+    const value = event.target.value;
+    setOrderDetailDraft((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        [type]: {
+          ...(prev[type] || {}),
+          [field]: value
+        }
+      };
+    });
+  };
+
+  const handleResetOrderDetails = () => {
+    if (!record) return;
+    setOrderDetailDraft(buildOrderDetailDraft(record));
+    setOrderDetailState({ saving: false, error: '', success: '' });
+  };
+
+  const handleSaveOrderDetails = async () => {
+    if (!record || !orderDetailDraft) return;
+    setOrderDetailState({ saving: true, error: '', success: '' });
+    try {
+      const { data: metadata, error: metadataError } = parseJsonInput(orderDetailDraft.metadata);
+      if (metadataError) {
+        setOrderDetailState({
+          saving: false,
+          error: `Metadata: ${metadataError}`,
+          success: ''
+        });
+        return;
+      }
+      const shippingAddress = buildAddressPayload(orderDetailDraft.shipping_address);
+      const billingAddress = buildAddressPayload(orderDetailDraft.billing_address);
+      const body = {
+        email: orderDetailDraft.email.trim() || undefined,
+        locale: orderDetailDraft.locale.trim() || undefined,
+        metadata,
+        shipping_address: shippingAddress,
+        billing_address: billingAddress
+      };
+      const endpoint = isDraftOrder
+        ? `/admin/draft-orders/${record.id}`
+        : `/admin/orders/${record.id}`;
+      const payload = await request(endpoint, {
+        method: 'POST',
+        body
+      });
+      const updated = isDraftOrder
+        ? payload?.draft_order || getObjectFromPayload(payload, resource?.detailKey)
+        : payload?.order || getObjectFromPayload(payload, resource?.detailKey);
+      if (updated) {
+        setRecord(updated);
+      }
+      setOrderDetailState({
+        saving: false,
+        error: '',
+        success: `${isDraftOrder ? 'Draft order' : 'Order'} details updated.`
+      });
+    } catch (err) {
+      setOrderDetailState({
+        saving: false,
+        error: err?.message || 'Unable to update order details.',
         success: ''
       });
     }
@@ -12194,6 +12326,258 @@ const ResourceDetail = ({ resource }) => {
                     )}
                   </div>
                 </div>
+
+                {orderDetailDraft ? (
+                  <div className="mt-6 border-t border-white/70 pt-6">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                          Edit details
+                        </div>
+                        <p className="mt-2 text-sm text-ldc-ink/60">
+                          Update email, locale, addresses, and metadata for this{' '}
+                          {isDraftOrder ? 'draft order' : 'order'}.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          className="ldc-button-secondary"
+                          type="button"
+                          onClick={handleResetOrderDetails}
+                          disabled={orderDetailState.saving}
+                        >
+                          Reset
+                        </button>
+                        <button
+                          className="ldc-button-primary"
+                          type="button"
+                          onClick={handleSaveOrderDetails}
+                          disabled={orderDetailState.saving}
+                        >
+                          {orderDetailState.saving ? 'Saving...' : 'Save details'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {orderDetailState.error ? (
+                      <div className="mt-3 text-sm text-rose-600">{orderDetailState.error}</div>
+                    ) : null}
+                    {orderDetailState.success ? (
+                      <div className="mt-3 text-sm text-emerald-700">
+                        {orderDetailState.success}
+                      </div>
+                    ) : null}
+
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        Email
+                        <input
+                          className="ldc-input mt-2"
+                          value={orderDetailDraft.email}
+                          onChange={handleOrderDetailField('email')}
+                        />
+                      </label>
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        Locale
+                        <input
+                          className="ldc-input mt-2"
+                          value={orderDetailDraft.locale}
+                          onChange={handleOrderDetailField('locale')}
+                          placeholder="en-US"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-2xl bg-white/70 p-4">
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                          Shipping address
+                        </div>
+                        <div className="mt-3 grid gap-3 md:grid-cols-2">
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            First name
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.shipping_address.first_name}
+                              onChange={handleOrderAddressField('shipping_address', 'first_name')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Last name
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.shipping_address.last_name}
+                              onChange={handleOrderAddressField('shipping_address', 'last_name')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Company
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.shipping_address.company}
+                              onChange={handleOrderAddressField('shipping_address', 'company')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Phone
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.shipping_address.phone}
+                              onChange={handleOrderAddressField('shipping_address', 'phone')}
+                            />
+                          </label>
+                          <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Address line 1
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.shipping_address.address_1}
+                              onChange={handleOrderAddressField('shipping_address', 'address_1')}
+                            />
+                          </label>
+                          <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Address line 2
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.shipping_address.address_2}
+                              onChange={handleOrderAddressField('shipping_address', 'address_2')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            City
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.shipping_address.city}
+                              onChange={handleOrderAddressField('shipping_address', 'city')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            State / Province
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.shipping_address.province}
+                              onChange={handleOrderAddressField('shipping_address', 'province')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Postal code
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.shipping_address.postal_code}
+                              onChange={handleOrderAddressField('shipping_address', 'postal_code')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Country code
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.shipping_address.country_code}
+                              onChange={handleOrderAddressField('shipping_address', 'country_code')}
+                              placeholder="us"
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl bg-white/70 p-4">
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                          Billing address
+                        </div>
+                        <div className="mt-3 grid gap-3 md:grid-cols-2">
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            First name
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.billing_address.first_name}
+                              onChange={handleOrderAddressField('billing_address', 'first_name')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Last name
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.billing_address.last_name}
+                              onChange={handleOrderAddressField('billing_address', 'last_name')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Company
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.billing_address.company}
+                              onChange={handleOrderAddressField('billing_address', 'company')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Phone
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.billing_address.phone}
+                              onChange={handleOrderAddressField('billing_address', 'phone')}
+                            />
+                          </label>
+                          <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Address line 1
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.billing_address.address_1}
+                              onChange={handleOrderAddressField('billing_address', 'address_1')}
+                            />
+                          </label>
+                          <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Address line 2
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.billing_address.address_2}
+                              onChange={handleOrderAddressField('billing_address', 'address_2')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            City
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.billing_address.city}
+                              onChange={handleOrderAddressField('billing_address', 'city')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            State / Province
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.billing_address.province}
+                              onChange={handleOrderAddressField('billing_address', 'province')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Postal code
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.billing_address.postal_code}
+                              onChange={handleOrderAddressField('billing_address', 'postal_code')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Country code
+                            <input
+                              className="ldc-input mt-2"
+                              value={orderDetailDraft.billing_address.country_code}
+                              onChange={handleOrderAddressField('billing_address', 'country_code')}
+                              placeholder="us"
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <label className="mt-4 block text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                      Metadata (JSON)
+                      <textarea
+                        className="ldc-input mt-2 min-h-[120px] font-mono text-xs"
+                        value={orderDetailDraft.metadata}
+                        onChange={handleOrderDetailField('metadata')}
+                      />
+                    </label>
+                  </div>
+                ) : null}
               </div>
 
               <div className="ldc-card p-6">
