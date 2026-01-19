@@ -12928,7 +12928,7 @@ const ResourceDetail = ({ resource }) => {
       <PageHeader
         eyebrow={resource.label}
         title={primaryTitle || `${resource.label} Details`}
-        subtitle="Detailed view from Medusa Admin API."
+        subtitle="Detailed view from LDC Admin API."
         actions={
           <Link className="ldc-button-secondary" to={resource.path}>
             Back to {resource.label}
@@ -13498,7 +13498,7 @@ const ResourceDetail = ({ resource }) => {
               <div className="ldc-card p-6">
                 <h3 className="font-heading text-xl text-ldc-ink">Shipping & Fulfillment</h3>
                 <p className="mt-2 text-sm text-ldc-ink/70">
-                  Shipping methods and fulfillment updates from Medusa.
+                  Shipping methods and fulfillment updates from LDC.
                 </p>
                 <div className="mt-4 space-y-4">
                   <div>
@@ -16126,7 +16126,7 @@ const ResourceDetail = ({ resource }) => {
             <div className="ldc-card p-6">
               <h3 className="font-heading text-xl text-ldc-ink">Product Imagery</h3>
               <p className="mt-2 text-sm text-ldc-ink/70">
-                Medusa product thumbnails and gallery images.
+                LDC product thumbnails and gallery images.
               </p>
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {imageUrls.map((url, index) => {

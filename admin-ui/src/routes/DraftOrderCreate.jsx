@@ -617,7 +617,7 @@ const DraftOrderCreate = () => {
       <PageHeader
         eyebrow="Commerce"
         title="Create Draft Order"
-        subtitle="Build a draft order with LDC styling and Medusa backend data."
+        subtitle="Build a draft order with LDC styling and LDC backend data."
         actions={
           <button className="ldc-button-secondary" type="button" onClick={() => navigate('/draft-orders')}>
             Back to Draft Orders

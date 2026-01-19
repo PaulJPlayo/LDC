@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../state/auth.jsx';
+import NotificationsDrawer from './NotificationsDrawer.jsx';
 
 const Topbar = ({ onMenuToggle }) => {
   const { user, logout } = useAuth();
@@ -30,6 +31,7 @@ const Topbar = ({ onMenuToggle }) => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          <NotificationsDrawer />
           <Link
             to="/settings"
             className="ldc-button-secondary"
