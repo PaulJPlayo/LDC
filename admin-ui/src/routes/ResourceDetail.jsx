@@ -4194,7 +4194,7 @@ const ResourceDetail = ({ resource }) => {
     setOrderChangesLoading(true);
     setOrderChangesError('');
     try {
-      const payload = await getList(`/admin/orders/${record.id}/changes`, { limit: 50 });
+      const payload = await getList(`/admin/orders/${record.id}/changes`);
       setOrderChanges(getArrayFromPayload(payload, 'order_changes'));
     } catch (err) {
       setOrderChanges([]);
