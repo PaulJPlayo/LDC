@@ -1,5 +1,6 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { GIFT_CARD_MODULE } from "../../../../modules/gift-cards"
+import GiftCardModuleService from "../../../../modules/gift-cards/service"
 
 const normalizeDateInput = (value: unknown) => {
   if (value === null) return null
@@ -11,16 +12,23 @@ const normalizeDateInput = (value: unknown) => {
 }
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
-  const giftCardService = req.scope.resolve(GIFT_CARD_MODULE)
+  const giftCardService = req.scope.resolve(
+    GIFT_CARD_MODULE
+  ) as GiftCardModuleService
   const { id } = req.params
   const giftCard = await giftCardService.retrieveGiftCard(id)
   res.json({ gift_card: giftCard })
 }
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
-  const giftCardService = req.scope.resolve(GIFT_CARD_MODULE)
+  const giftCardService = req.scope.resolve(
+    GIFT_CARD_MODULE
+  ) as GiftCardModuleService
   const { id } = req.params
-  const payload = req.body ?? {}
+  const payload =
+    req.body && typeof req.body === "object"
+      ? (req.body as Record<string, any>)
+      : {}
   const update: Record<string, unknown> = {}
 
   if ("is_disabled" in payload) {
@@ -46,7 +54,9 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
 }
 
 export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
-  const giftCardService = req.scope.resolve(GIFT_CARD_MODULE)
+  const giftCardService = req.scope.resolve(
+    GIFT_CARD_MODULE
+  ) as GiftCardModuleService
   const { id } = req.params
   await giftCardService.deleteGiftCards(id)
   res.status(200).json({ id })

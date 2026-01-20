@@ -2,6 +2,7 @@ import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { Modules } from "@medusajs/utils"
 import crypto from "crypto"
 import { GIFT_CARD_MODULE } from "../../../modules/gift-cards"
+import GiftCardModuleService from "../../../modules/gift-cards/service"
 
 const parseLimit = (value: unknown, fallback = 50) => {
   const parsed = Number(value)
@@ -28,7 +29,9 @@ const generateGiftCardCode = () => {
 }
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
-  const giftCardService = req.scope.resolve(GIFT_CARD_MODULE)
+  const giftCardService = req.scope.resolve(
+    GIFT_CARD_MODULE
+  ) as GiftCardModuleService
   const limit = parseLimit(req.query.limit, 50)
   const offset = parseOffset(req.query.offset)
   const query = String(req.query.q ?? "").trim().toLowerCase()
@@ -66,9 +69,14 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 }
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
-  const giftCardService = req.scope.resolve(GIFT_CARD_MODULE)
+  const giftCardService = req.scope.resolve(
+    GIFT_CARD_MODULE
+  ) as GiftCardModuleService
   const regionService = req.scope.resolve(Modules.REGION)
-  const payload = req.body ?? {}
+  const payload =
+    req.body && typeof req.body === "object"
+      ? (req.body as Record<string, any>)
+      : {}
   const value = Number(payload.value)
   const regionId = String(payload.region_id ?? "").trim()
   const codeInput = String(payload.code ?? "").trim()
@@ -104,8 +112,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   let currencyCode = ""
   try {
     const region = await regionService.retrieveRegion(regionId)
-    currencyCode =
-      region?.currency_code || region?.currency?.code || region?.currency?.name || ""
+    currencyCode = region?.currency_code || ""
   } catch {
     res.status(404).json({ message: "Region not found." })
     return
