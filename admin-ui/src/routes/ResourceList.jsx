@@ -1104,6 +1104,8 @@ const ResourceList = ({ resource }) => {
     inventoryLowStockThresholdInput,
     LOW_STOCK_THRESHOLD
   );
+  const giftCardRegionId = isGiftCardList ? searchParams.get('region_id') || '' : '';
+  const giftCardDisabledFilter = isGiftCardList ? searchParams.get('is_disabled') || '' : '';
 
   const totalPages = Math.max(1, Math.ceil(count / limit));
 
@@ -1467,7 +1469,9 @@ const ResourceList = ({ resource }) => {
         type_id: isProductList ? typeId || undefined : undefined,
         tag_id: isProductList ? tagId || undefined : undefined,
         'location_levels[location_id]':
-          isInventoryItemList && inventoryLocationId ? inventoryLocationId : undefined
+          isInventoryItemList && inventoryLocationId ? inventoryLocationId : undefined,
+        region_id: isGiftCardList && giftCardRegionId ? giftCardRegionId : undefined,
+        is_disabled: isGiftCardList && giftCardDisabledFilter ? giftCardDisabledFilter : undefined
       });
       const items = getArrayFromPayload(payload, resource.listKey);
       setRows(items);
@@ -2085,11 +2089,14 @@ const ResourceList = ({ resource }) => {
     salesChannelId,
     typeId,
     tagId,
+    giftCardRegionId,
+    giftCardDisabledFilter,
     isProductList,
     isOrderList,
     isDraftOrderList,
     isOrderLikeList,
     isCustomerList,
+    isGiftCardList,
     isDateFilterList,
     listParams
   ]);
@@ -3073,6 +3080,13 @@ const ResourceList = ({ resource }) => {
       managed_inventory: undefined,
       low_stock: undefined,
       low_stock_threshold: undefined
+    });
+  };
+
+  const clearGiftCardFilters = () => {
+    setFilterParams({
+      region_id: undefined,
+      is_disabled: undefined
     });
   };
 
@@ -5168,6 +5182,8 @@ const ResourceList = ({ resource }) => {
   const hasCustomerGroupFilters = isCustomerGroupList && Boolean(createdFrom || createdTo);
   const hasInventoryFilters =
     isInventoryItemList && (Boolean(inventoryLocationId) || inventoryManagedFilter || inventoryLowStock);
+  const hasGiftCardFilters =
+    isGiftCardList && (Boolean(giftCardRegionId) || giftCardDisabledFilter !== '');
   const displayRows = isUploadList ? uploadRows : listRows;
   const selectedGiftCardRegion = useMemo(() => {
     if (!isGiftCardList) return null;
@@ -5675,6 +5691,71 @@ const ResourceList = ({ resource }) => {
               type="button"
               onClick={clearOrderFilters}
               disabled={!hasOrderFilters}
+            >
+              Clear filters
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {isGiftCardList ? (
+        <div className="mb-6 ldc-card p-4">
+          <div className="flex flex-wrap items-start gap-4">
+            <div className="min-w-[200px]">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Status
+              </div>
+              <select
+                className="ldc-input mt-2"
+                value={giftCardDisabledFilter}
+                onChange={handleSelectChange('is_disabled')}
+              >
+                <option value="">All statuses</option>
+                <option value="false">Active</option>
+                <option value="true">Disabled</option>
+              </select>
+            </div>
+
+            <div className="min-w-[240px]">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Region
+              </div>
+              {giftCardCreateMeta.regions.length ? (
+                <select
+                  className="ldc-input mt-2"
+                  value={giftCardRegionId}
+                  onChange={handleSelectChange('region_id')}
+                >
+                  <option value="">All regions</option>
+                  {giftCardCreateMeta.regions.map((region) => (
+                    <option key={region.id} value={region.id}>
+                      {region.name || region.currency_code?.toUpperCase() || region.id}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className="ldc-input mt-2"
+                  value={giftCardRegionId}
+                  onChange={handleSelectChange('region_id')}
+                  placeholder="reg_..."
+                />
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-ldc-ink/70">
+            <div>
+              {giftCardCreateMetaLoading ? 'Loading regions...' : null}
+              {!giftCardCreateMetaLoading && giftCardCreateMetaError ? (
+                <span className="text-rose-600">{giftCardCreateMetaError}</span>
+              ) : null}
+            </div>
+            <button
+              className="ldc-button-secondary"
+              type="button"
+              onClick={clearGiftCardFilters}
+              disabled={!hasGiftCardFilters}
             >
               Clear filters
             </button>
