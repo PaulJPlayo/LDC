@@ -42,7 +42,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   if (regionId) filters.region_id = regionId
   if (typeof isDisabled === "boolean") filters.is_disabled = isDisabled
 
-  let giftCards = []
+  let giftCards: any[] = []
   let count = 0
 
   if (query) {
