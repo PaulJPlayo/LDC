@@ -25,6 +25,18 @@ const toNumber = (value) => {
   return Number.isFinite(numeric) ? numeric : null;
 };
 
+const getInventoryLevelForLocation = (item, locationId) => {
+  if (!item || !locationId) return null;
+  const levels = Array.isArray(item.location_levels) ? item.location_levels : [];
+  return (
+    levels.find((level) => {
+      const levelLocationId =
+        level?.location_id || level?.location?.id || level?.stock_location_id;
+      return levelLocationId === locationId;
+    }) || null
+  );
+};
+
 const formatMoneyOrDash = (amount, currency) => {
   const numeric = toNumber(amount);
   if (numeric === null) return '-';
@@ -1473,6 +1485,14 @@ const ResourceDetail = ({ resource }) => {
   });
   const [stockLocationMetaLoading, setStockLocationMetaLoading] = useState(false);
   const [stockLocationMetaError, setStockLocationMetaError] = useState('');
+  const [stockLocationInventoryState, setStockLocationInventoryState] = useState({
+    items: [],
+    count: 0,
+    loading: false,
+    error: ''
+  });
+  const [stockLocationInventoryQuery, setStockLocationInventoryQuery] = useState('');
+  const [stockLocationInventorySearch, setStockLocationInventorySearch] = useState('');
   const [fulfillmentSetDraft, setFulfillmentSetDraft] = useState({
     name: '',
     type: ''
@@ -3318,6 +3338,29 @@ const ResourceDetail = ({ resource }) => {
   }, [isStockLocation]);
 
   useEffect(() => {
+    if (!isStockLocation || !record?.id) {
+      setStockLocationInventoryState({
+        items: [],
+        count: 0,
+        loading: false,
+        error: ''
+      });
+      return;
+    }
+    refreshStockLocationInventory(stockLocationInventorySearch);
+  }, [isStockLocation, record?.id, stockLocationInventorySearch]);
+
+  useEffect(() => {
+    if (!isStockLocation) {
+      setStockLocationInventoryQuery((prev) => (prev ? '' : prev));
+      setStockLocationInventorySearch((prev) => (prev ? '' : prev));
+      return;
+    }
+    setStockLocationInventoryQuery((prev) => (prev ? '' : prev));
+    setStockLocationInventorySearch((prev) => (prev ? '' : prev));
+  }, [isStockLocation, record?.id]);
+
+  useEffect(() => {
     if (!isStore) {
       setStoreMeta({ salesChannels: [], regions: [], locations: [] });
       setStoreMetaLoading(false);
@@ -4780,6 +4823,40 @@ const ResourceDetail = ({ resource }) => {
     }
   };
 
+  const refreshStockLocationInventory = async (searchTerm = '') => {
+    if (!isStockLocation || !record?.id) return;
+    setStockLocationInventoryState((prev) => ({
+      ...prev,
+      loading: true,
+      error: ''
+    }));
+    try {
+      const payload = await getList('/admin/inventory-items', {
+        limit: 50,
+        order: '-updated_at',
+        q: searchTerm || undefined,
+        'location_levels[location_id]': record.id,
+        fields: '+location_levels'
+      });
+      const items = getArrayFromPayload(payload, 'inventory_items');
+      const count =
+        typeof payload?.count === 'number' ? payload.count : items.length;
+      setStockLocationInventoryState({
+        items,
+        count,
+        loading: false,
+        error: ''
+      });
+    } catch (err) {
+      setStockLocationInventoryState({
+        items: [],
+        count: 0,
+        loading: false,
+        error: err?.message || 'Unable to load inventory for this location.'
+      });
+    }
+  };
+
   const refreshInventoryReservations = async () => {
     if (!isInventoryItem || !record?.id) return;
     setInventoryReservationsLoading(true);
@@ -6226,6 +6303,21 @@ const ResourceDetail = ({ resource }) => {
         success: ''
       });
     }
+  };
+
+  const handleStockLocationInventorySearchChange = (event) => {
+    setStockLocationInventoryQuery(event.target.value);
+  };
+
+  const handleStockLocationInventorySearch = (event) => {
+    event.preventDefault();
+    const nextQuery = stockLocationInventoryQuery.trim();
+    setStockLocationInventorySearch(nextQuery);
+  };
+
+  const handleClearStockLocationInventorySearch = () => {
+    setStockLocationInventoryQuery('');
+    setStockLocationInventorySearch('');
   };
 
   const buildEmptyServiceZoneDraft = () => ({
@@ -12388,6 +12480,50 @@ const ResourceDetail = ({ resource }) => {
     );
   }, [inventoryLevelRows, inventoryReservations, inventoryLocationMap, isInventoryItem]);
 
+  const stockLocationInventoryRows = useMemo(() => {
+    if (!isStockLocation || !record?.id) return [];
+    const items = stockLocationInventoryState.items || [];
+    return items.map((item) => {
+      const level = getInventoryLevelForLocation(item, record.id);
+      const stocked = toNumber(level?.stocked_quantity) ?? 0;
+      const reserved = toNumber(level?.reserved_quantity) ?? 0;
+      const incoming = toNumber(level?.incoming_quantity) ?? 0;
+      const available =
+        toNumber(level?.available_quantity) ?? Math.max(0, stocked - reserved);
+      return {
+        id: item.id,
+        title: item.title || item.sku || item.id,
+        sku: item.sku || '-',
+        stocked,
+        reserved,
+        incoming,
+        available,
+        updated_at: item.updated_at || level?.updated_at
+      };
+    });
+  }, [isStockLocation, record?.id, stockLocationInventoryState.items]);
+
+  const stockLocationInventoryColumns = useMemo(
+    () => [
+      {
+        key: 'title',
+        label: 'Inventory Item',
+        format: (_, row) => (
+          <Link className="text-ldc-plum underline" to={`/inventory/${row.id}`}>
+            {row.title}
+          </Link>
+        )
+      },
+      { key: 'sku', label: 'SKU' },
+      { key: 'stocked', label: 'Stocked' },
+      { key: 'reserved', label: 'Reserved' },
+      { key: 'incoming', label: 'Incoming' },
+      { key: 'available', label: 'Available' },
+      { key: 'updated_at', label: 'Updated', format: formatDateTime }
+    ],
+    []
+  );
+
   const variantEditorTitle = isVariant ? 'Variant Details' : 'Variant Manager';
   const variantEditorSubtitle = isVariant
     ? 'Edit this variant details, options, and pricing.'
@@ -12942,9 +13078,19 @@ const ResourceDetail = ({ resource }) => {
         title={primaryTitle || `${resource.label} Details`}
         subtitle="Detailed view from LDC Admin API."
         actions={
-          <Link className="ldc-button-secondary" to={resource.path}>
-            Back to {resource.label}
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {isStockLocation && record?.id ? (
+              <Link
+                className="ldc-button-secondary"
+                to={`/inventory?inventory_location_id=${record.id}`}
+              >
+                View inventory
+              </Link>
+            ) : null}
+            <Link className="ldc-button-secondary" to={resource.path}>
+              Back to {resource.label}
+            </Link>
+          </div>
         }
       />
 
@@ -17434,6 +17580,74 @@ const ResourceDetail = ({ resource }) => {
                   </button>
                 </div>
               </form>
+            </div>
+          ) : null}
+
+          {isStockLocation ? (
+            <div className="ldc-card p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-heading text-xl text-ldc-ink">Inventory at this location</h3>
+                  <p className="mt-2 text-sm text-ldc-ink/70">
+                    Review the stock levels for inventory items assigned to this location.
+                  </p>
+                </div>
+                {record?.id ? (
+                  <Link
+                    className="ldc-button-secondary"
+                    to={`/inventory?inventory_location_id=${record.id}`}
+                  >
+                    View all inventory
+                  </Link>
+                ) : null}
+              </div>
+
+              <form
+                className="mt-4 flex flex-wrap items-center gap-2"
+                onSubmit={handleStockLocationInventorySearch}
+              >
+                <input
+                  className="ldc-input h-11 w-64"
+                  value={stockLocationInventoryQuery}
+                  onChange={handleStockLocationInventorySearchChange}
+                  placeholder="Search inventory items..."
+                />
+                <button className="ldc-button-secondary" type="submit">
+                  Search
+                </button>
+                {stockLocationInventorySearch ? (
+                  <button
+                    className="ldc-button-secondary"
+                    type="button"
+                    onClick={handleClearStockLocationInventorySearch}
+                  >
+                    Clear
+                  </button>
+                ) : null}
+                <div className="text-xs text-ldc-ink/60">
+                  {stockLocationInventoryState.count
+                    ? `${stockLocationInventoryState.count} item${
+                        stockLocationInventoryState.count === 1 ? '' : 's'
+                      }`
+                    : null}
+                </div>
+              </form>
+
+              {stockLocationInventoryState.error ? (
+                <div className="mt-3 text-sm text-rose-600">
+                  {stockLocationInventoryState.error}
+                </div>
+              ) : null}
+
+              <div className="mt-4">
+                <DataTable
+                  columns={stockLocationInventoryColumns}
+                  rows={stockLocationInventoryRows}
+                  getRowId={(row) => row.id}
+                  isLoading={stockLocationInventoryState.loading}
+                  emptyText="No inventory items found for this location."
+                />
+              </div>
             </div>
           ) : null}
 
