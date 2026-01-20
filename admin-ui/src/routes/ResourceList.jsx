@@ -69,6 +69,7 @@ const SUPPORTED_IMPORT_MIME_TYPES = ['text/csv', 'application/vnd.ms-excel'];
 const SUPPORTED_IMPORT_EXTENSIONS = ['.csv'];
 const PRODUCT_IMPORT_TEMPLATE = `data:text/csv;charset=utf-8,Product Id,Product Handle,Product Title,Product Subtitle,Product Description,Product Status,Product Thumbnail,Product Weight,Product Length,Product Width,Product Height,Product HS Code,Product Origin Country,Product MID Code,Product Material,Shipping Profile Id,Product Sales Channel 1,Product Collection Id,Product Type Id,Product Tag 1,Product Discountable,Product External Id,Variant Id,Variant Title,Variant SKU,Variant Barcode,Variant Allow Backorder,Variant Manage Inventory,Variant Weight,Variant Length,Variant Width,Variant Height,Variant HS Code,Variant Origin Country,Variant MID Code,Variant Material,Variant Price EUR,Variant Price USD,Variant Option 1 Name,Variant Option 1 Value,Product Image 1 Url,Product Image 2 Url
 ,ldc-tumbler,LDC Tumbler,,Double wall tumbler.,published,https://example.com/ldc-tumbler.png,400,,,,,,,,,,,,,TRUE,,,One Size,,,FALSE,TRUE,,,,,,,,,10,12,Size,One Size,https://example.com/ldc-tumbler.png,`;
+const LOW_STOCK_THRESHOLD = 5;
 
 const ORDER_STATUS_OPTIONS = [
   { value: 'pending', label: 'Pending' },
@@ -230,6 +231,12 @@ const parsePositiveInt = (value, fallback) => {
   return fallback;
 };
 
+const parseNonNegativeInt = (value, fallback) => {
+  const parsed = Number(value);
+  if (Number.isFinite(parsed) && parsed >= 0) return parsed;
+  return fallback;
+};
+
 const sortByLabel = (items, getLabel) => {
   if (!Array.isArray(items)) return [];
   return [...items].sort((a, b) =>
@@ -276,6 +283,48 @@ const getInventoryLevelForLocation = (item, locationId) => {
       return levelLocationId === locationId;
     }) || null
   );
+};
+
+const getInventoryTotals = (item, locationId) => {
+  const levels = Array.isArray(item?.location_levels) ? item.location_levels : [];
+  if (locationId) {
+    const level = getInventoryLevelForLocation(item, locationId);
+    const stocked = normalizeNumber(level?.stocked_quantity) ?? 0;
+    const reserved = normalizeNumber(level?.reserved_quantity) ?? 0;
+    const incoming = normalizeNumber(level?.incoming_quantity) ?? 0;
+    const available =
+      normalizeNumber(level?.available_quantity) ?? Math.max(0, stocked - reserved);
+    return {
+      stocked,
+      reserved,
+      incoming,
+      available,
+      hasLevel: Boolean(level)
+    };
+  }
+  if (!levels.length) {
+    return {
+      stocked: 0,
+      reserved: 0,
+      incoming: 0,
+      available: 0,
+      hasLevel: false
+    };
+  }
+  const sum = (key) =>
+    levels.reduce((total, level) => total + (normalizeNumber(level?.[key]) || 0), 0);
+  const stocked = sum('stocked_quantity');
+  const reserved = sum('reserved_quantity');
+  const incoming = sum('incoming_quantity');
+  const availableRaw = sum('available_quantity');
+  const available = availableRaw || availableRaw === 0 ? availableRaw : Math.max(0, stocked - reserved);
+  return {
+    stocked,
+    reserved,
+    incoming,
+    available,
+    hasLevel: true
+  };
 };
 
 const parseDateTimeInput = (value) => {
@@ -1024,6 +1073,20 @@ const ResourceList = ({ resource }) => {
   const salesChannelId = isProductList ? searchParams.get('sales_channel_id') || '' : '';
   const typeId = isProductList ? searchParams.get('type_id') || '' : '';
   const tagId = isProductList ? searchParams.get('tag_id') || '' : '';
+  const inventoryLocationId = isInventoryItemList
+    ? searchParams.get('inventory_location_id') || ''
+    : '';
+  const inventoryManagedFilter = isInventoryItemList
+    ? searchParams.get('managed_inventory') || ''
+    : '';
+  const inventoryLowStock = isInventoryItemList ? searchParams.get('low_stock') === 'true' : false;
+  const inventoryLowStockThresholdInput = isInventoryItemList
+    ? searchParams.get('low_stock_threshold') || ''
+    : '';
+  const inventoryLowStockThreshold = parseNonNegativeInt(
+    inventoryLowStockThresholdInput,
+    LOW_STOCK_THRESHOLD
+  );
 
   const totalPages = Math.max(1, Math.ceil(count / limit));
 
@@ -1154,13 +1217,48 @@ const ResourceList = ({ resource }) => {
     }
     return filtered;
   }, [isCustomerList, rows, customerHasAccount, customerGroupFiltersKey]);
+  const inventoryFilteredRows = useMemo(() => {
+    if (!isInventoryItemList) return rows;
+    let filtered = rows;
+    if (inventoryLocationId) {
+      filtered = filtered.filter((row) => getInventoryLevelForLocation(row, inventoryLocationId));
+    }
+    if (inventoryManagedFilter === 'true') {
+      filtered = filtered.filter(
+        (row) => Array.isArray(row?.location_levels) && row.location_levels.length > 0
+      );
+    } else if (inventoryManagedFilter === 'false') {
+      filtered = filtered.filter(
+        (row) => !Array.isArray(row?.location_levels) || row.location_levels.length === 0
+      );
+    }
+    if (inventoryLowStock) {
+      const threshold = Math.max(0, inventoryLowStockThreshold);
+      filtered = filtered.filter((row) => {
+        const totals = getInventoryTotals(row, inventoryLocationId);
+        const available = normalizeNumber(totals.available);
+        const availableValue = available == null ? 0 : available;
+        return availableValue <= threshold;
+      });
+    }
+    return filtered;
+  }, [
+    isInventoryItemList,
+    rows,
+    inventoryLocationId,
+    inventoryManagedFilter,
+    inventoryLowStock,
+    inventoryLowStockThreshold
+  ]);
   const listRows = isOrderLikeList
     ? orderFilteredRows
     : isCustomerList
       ? customerFilteredRows
       : isProductList
         ? productRows
-        : rows;
+        : isInventoryItemList
+          ? inventoryFilteredRows
+          : rows;
   const selectedInventoryItems = useMemo(() => {
     if (!isInventoryItemList || !selectedIds.length) return [];
     const selectedSet = new Set(selectedIds);
@@ -1341,7 +1439,9 @@ const ResourceList = ({ resource }) => {
         category_id: isProductList ? categoryId || undefined : undefined,
         sales_channel_id: isProductList ? salesChannelId || undefined : undefined,
         type_id: isProductList ? typeId || undefined : undefined,
-        tag_id: isProductList ? tagId || undefined : undefined
+        tag_id: isProductList ? tagId || undefined : undefined,
+        'location_levels[location_id]':
+          isInventoryItemList && inventoryLocationId ? inventoryLocationId : undefined
       });
       const items = getArrayFromPayload(payload, resource.listKey);
       setRows(items);
@@ -2824,6 +2924,22 @@ const ResourceList = ({ resource }) => {
     setFilterParams({ has_account: event.target.value });
   };
 
+  const handleInventoryLocationChange = (event) => {
+    setFilterParams({ inventory_location_id: event.target.value || undefined });
+  };
+
+  const handleInventoryManagedChange = (event) => {
+    setFilterParams({ managed_inventory: event.target.value || undefined });
+  };
+
+  const handleInventoryLowStockToggle = (event) => {
+    setFilterParams({ low_stock: event.target.checked ? 'true' : undefined });
+  };
+
+  const handleInventoryLowStockThresholdChange = (event) => {
+    setFilterParams({ low_stock_threshold: event.target.value || undefined });
+  };
+
   const handleSelectChange = (key) => (event) => {
     const value = event.target.value;
     setFilterParams({ [key]: value || undefined });
@@ -2876,6 +2992,15 @@ const ResourceList = ({ resource }) => {
     setFilterParams({
       created_from: undefined,
       created_to: undefined
+    });
+  };
+
+  const clearInventoryFilters = () => {
+    setFilterParams({
+      inventory_location_id: undefined,
+      managed_inventory: undefined,
+      low_stock: undefined,
+      low_stock_threshold: undefined
     });
   };
 
@@ -4883,6 +5008,8 @@ const ResourceList = ({ resource }) => {
     isCustomerList &&
     (customerGroupFilters.length > 0 || Boolean(customerHasAccount) || Boolean(createdFrom || createdTo));
   const hasCustomerGroupFilters = isCustomerGroupList && Boolean(createdFrom || createdTo);
+  const hasInventoryFilters =
+    isInventoryItemList && (Boolean(inventoryLocationId) || inventoryManagedFilter || inventoryLowStock);
   const displayRows = isUploadList ? uploadRows : listRows;
 
   return (
@@ -5510,6 +5637,102 @@ const ResourceList = ({ resource }) => {
               type="button"
               onClick={clearCustomerGroupFilters}
               disabled={!hasCustomerGroupFilters}
+            >
+              Clear filters
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {isInventoryItemList ? (
+        <div className="mb-6 ldc-card p-4">
+          <div className="flex flex-wrap items-start gap-4">
+            <div className="min-w-[220px]">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Stock location
+              </div>
+              {inventoryItemMeta.locations.length ? (
+                <select
+                  className="ldc-input mt-2"
+                  value={inventoryLocationId}
+                  onChange={handleInventoryLocationChange}
+                >
+                  <option value="">All locations</option>
+                  {inventoryItemMeta.locations.map((location) => (
+                    <option key={location.id} value={location.id}>
+                      {location.name || location.id}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className="ldc-input mt-2"
+                  value={inventoryLocationId}
+                  onChange={handleInventoryLocationChange}
+                  placeholder="loc_..."
+                />
+              )}
+            </div>
+
+            <div className="min-w-[220px]">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Inventory tracking
+              </div>
+              <select
+                className="ldc-input mt-2"
+                value={inventoryManagedFilter}
+                onChange={handleInventoryManagedChange}
+              >
+                <option value="">All items</option>
+                <option value="true">Managed inventory</option>
+                <option value="false">No stock levels</option>
+              </select>
+            </div>
+
+            <div className="min-w-[180px]">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Low stock
+              </div>
+              <label className="mt-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/70">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-ldc-plum"
+                  checked={inventoryLowStock}
+                  onChange={handleInventoryLowStockToggle}
+                />
+                Show low stock
+              </label>
+            </div>
+
+            <div className="min-w-[160px]">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Threshold
+              </div>
+              <input
+                className="ldc-input mt-2"
+                type="number"
+                min="0"
+                step="1"
+                value={inventoryLowStockThresholdInput}
+                onChange={handleInventoryLowStockThresholdChange}
+                placeholder={String(LOW_STOCK_THRESHOLD)}
+                disabled={!inventoryLowStock}
+              />
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-ldc-ink/70">
+            <div>
+              {inventoryItemMetaLoading ? 'Loading locations...' : null}
+              {!inventoryItemMetaLoading && inventoryItemMetaError ? (
+                <span className="text-rose-600">{inventoryItemMetaError}</span>
+              ) : null}
+            </div>
+            <button
+              className="ldc-button-secondary"
+              type="button"
+              onClick={clearInventoryFilters}
+              disabled={!hasInventoryFilters}
             >
               Clear filters
             </button>
