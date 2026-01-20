@@ -25,6 +25,8 @@ const toneMap = {
   partially_delivered: 'bg-amber-100 text-amber-700',
   partially_received: 'bg-amber-100 text-amber-700',
   requested: 'bg-amber-100 text-amber-700',
+  admin: 'bg-emerald-100 text-emerald-700',
+  member: 'bg-slate-100 text-slate-600',
   canceled: 'bg-rose-100 text-rose-700',
   refunded: 'bg-rose-100 text-rose-700',
   failed: 'bg-rose-100 text-rose-700',

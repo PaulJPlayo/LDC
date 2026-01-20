@@ -1721,6 +1721,7 @@ const ResourceDetail = ({ resource }) => {
   });
   const [inviteState, setInviteState] = useState({
     deleting: false,
+    resending: false,
     error: '',
     success: ''
   });
@@ -2872,7 +2873,7 @@ const ResourceDetail = ({ resource }) => {
       });
     }
     if (isInvite) {
-      setInviteState({ deleting: false, error: '', success: '' });
+      setInviteState({ deleting: false, resending: false, error: '', success: '' });
     }
     if (isApiKey) {
       setApiKeyDraft({
@@ -7022,15 +7023,37 @@ const ResourceDetail = ({ resource }) => {
   const handleDeleteInvite = async () => {
     if (!record?.id) return;
     if (!window.confirm('Cancel this invite?')) return;
-    setInviteState({ deleting: true, error: '', success: '' });
+    setInviteState({ deleting: true, resending: false, error: '', success: '' });
     try {
       await request(`${resource.endpoint}/${record.id}`, { method: 'DELETE' });
-      setInviteState({ deleting: false, error: '', success: 'Invite canceled.' });
+      setInviteState({ deleting: false, resending: false, error: '', success: 'Invite canceled.' });
       navigate(resource.path);
     } catch (err) {
       setInviteState({
         deleting: false,
+        resending: false,
         error: err?.message || 'Unable to cancel invite.',
+        success: ''
+      });
+    }
+  };
+
+  const handleResendInvite = async () => {
+    if (!record?.id) return;
+    setInviteState({ deleting: false, resending: true, error: '', success: '' });
+    try {
+      await request(`${resource.endpoint}/${record.id}/resend`, { method: 'POST' });
+      setInviteState({
+        deleting: false,
+        resending: false,
+        error: '',
+        success: 'Invite resent.'
+      });
+    } catch (err) {
+      setInviteState({
+        deleting: false,
+        resending: false,
+        error: err?.message || 'Unable to resend invite.',
         success: ''
       });
     }
@@ -20326,8 +20349,16 @@ const ResourceDetail = ({ resource }) => {
                 <button
                   className="ldc-button-secondary"
                   type="button"
+                  onClick={handleResendInvite}
+                  disabled={inviteState.resending || inviteState.deleting || record.accepted}
+                >
+                  {inviteState.resending ? 'Resending...' : 'Resend invite'}
+                </button>
+                <button
+                  className="ldc-button-secondary"
+                  type="button"
                   onClick={handleDeleteInvite}
-                  disabled={inviteState.deleting || record.accepted}
+                  disabled={inviteState.deleting || inviteState.resending || record.accepted}
                 >
                   {inviteState.deleting ? 'Canceling...' : 'Cancel invite'}
                 </button>

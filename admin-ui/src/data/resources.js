@@ -549,7 +549,7 @@ export const resources = [
     detailKey: 'user',
     columns: [
       { key: 'email', label: 'Email' },
-      { key: 'role', label: 'Role', format: formatRoleLabel },
+      { key: 'role', label: 'Role', badge: true },
       { key: 'first_name', label: 'First name' },
       { key: 'last_name', label: 'Last name' },
       { key: 'created_at', label: 'Created', format: formatDate }
@@ -564,7 +564,7 @@ export const resources = [
     detailKey: 'invite',
     columns: [
       { key: 'email', label: 'Email' },
-      { key: 'role', label: 'Role', format: formatRoleLabel },
+      { key: 'role', label: 'Role', badge: true },
       { key: 'accepted', label: 'Accepted', format: (value) => (value ? 'Yes' : 'No') },
       { key: 'expires_at', label: 'Expires', format: formatDateTime },
       { key: 'created_at', label: 'Created', format: formatDate }

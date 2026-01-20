@@ -168,6 +168,15 @@ const TEAM_ROLE_OPTIONS = [
   { value: 'admin', label: 'Admin' }
 ];
 
+const resolveRoleValue = (record) => {
+  const role =
+    record?.role ||
+    record?.metadata?.role ||
+    (Array.isArray(record?.roles) ? record.roles[0] : undefined) ||
+    (Array.isArray(record?.metadata?.roles) ? record.metadata.roles[0] : undefined);
+  return role ? String(role) : '';
+};
+
 const CUSTOMER_EXPORT_COLUMNS = [
   { label: 'Customer ID', value: (row) => row?.id || '' },
   { label: 'First Name', value: (row) => row?.first_name || '' },
@@ -1057,6 +1066,7 @@ const ResourceList = ({ resource }) => {
   const isInventoryItemList = resource?.id === 'inventory-items';
   const isStockLocationList = resource?.id === 'stock-locations';
   const isInviteList = resource?.id === 'invites';
+  const isUserList = resource?.id === 'users';
   const isApiKeyList = resource?.id === 'api-keys';
   const isNotificationList = resource?.id === 'notifications';
   const isUploadList = resource?.id === 'uploads';
@@ -1112,6 +1122,8 @@ const ResourceList = ({ resource }) => {
   );
   const giftCardRegionId = isGiftCardList ? searchParams.get('region_id') || '' : '';
   const giftCardDisabledFilter = isGiftCardList ? searchParams.get('is_disabled') || '' : '';
+  const teamRoleFilter =
+    isUserList || isInviteList ? searchParams.get('role') || '' : '';
 
   const totalPages = Math.max(1, Math.ceil(count / limit));
 
@@ -1478,11 +1490,33 @@ const ResourceList = ({ resource }) => {
         'location_levels[location_id]':
           isInventoryItemList && inventoryLocationId ? inventoryLocationId : undefined,
         region_id: isGiftCardList && giftCardRegionId ? giftCardRegionId : undefined,
-        is_disabled: isGiftCardList && giftCardDisabledFilter ? giftCardDisabledFilter : undefined
+        is_disabled: isGiftCardList && giftCardDisabledFilter ? giftCardDisabledFilter : undefined,
+        role: (isUserList || isInviteList) && teamRoleFilter ? teamRoleFilter : undefined
       });
       const items = getArrayFromPayload(payload, resource.listKey);
-      setRows(items);
-      setCount(getCountFromPayload(payload, items.length));
+      const withRoles =
+        isUserList || isInviteList
+          ? items.map((row) => {
+              const resolved = resolveRoleValue(row);
+              if (!resolved || row?.role === resolved) return row;
+              return { ...row, role: resolved };
+            })
+          : items;
+      const normalizedRole = teamRoleFilter.toLowerCase();
+      const filtered =
+        (isUserList || isInviteList) && normalizedRole
+          ? withRoles.filter((row) =>
+              String(row?.role || resolveRoleValue(row))
+                .toLowerCase()
+                .includes(normalizedRole)
+            )
+          : withRoles;
+      setRows(filtered);
+      setCount(
+        (isUserList || isInviteList) && normalizedRole
+          ? filtered.length
+          : getCountFromPayload(payload, items.length)
+      );
     } catch (err) {
       setRows([]);
       setCount(0);
@@ -2098,11 +2132,14 @@ const ResourceList = ({ resource }) => {
     tagId,
     giftCardRegionId,
     giftCardDisabledFilter,
+    teamRoleFilter,
     isProductList,
     isOrderList,
     isDraftOrderList,
     isOrderLikeList,
     isCustomerList,
+    isUserList,
+    isInviteList,
     isGiftCardList,
     isDateFilterList,
     listParams
@@ -3094,6 +3131,12 @@ const ResourceList = ({ resource }) => {
     setFilterParams({
       region_id: undefined,
       is_disabled: undefined
+    });
+  };
+
+  const clearTeamFilters = () => {
+    setFilterParams({
+      role: undefined
     });
   };
 
@@ -5196,6 +5239,7 @@ const ResourceList = ({ resource }) => {
     isInventoryItemList && (Boolean(inventoryLocationId) || inventoryManagedFilter || inventoryLowStock);
   const hasGiftCardFilters =
     isGiftCardList && (Boolean(giftCardRegionId) || giftCardDisabledFilter !== '');
+  const hasTeamRoleFilter = (isUserList || isInviteList) && Boolean(teamRoleFilter);
   const displayRows = isUploadList ? uploadRows : listRows;
   const selectedGiftCardRegion = useMemo(() => {
     if (!isGiftCardList) return null;
@@ -5768,6 +5812,42 @@ const ResourceList = ({ resource }) => {
               type="button"
               onClick={clearGiftCardFilters}
               disabled={!hasGiftCardFilters}
+            >
+              Clear filters
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {isUserList || isInviteList ? (
+        <div className="mb-6 ldc-card p-4">
+          <div className="flex flex-wrap items-start gap-4">
+            <div className="min-w-[220px]">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Role
+              </div>
+              <select
+                className="ldc-input mt-2"
+                value={teamRoleFilter}
+                onChange={handleSelectChange('role')}
+              >
+                <option value="">All roles</option>
+                {TEAM_ROLE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-ldc-ink/70">
+            <div>Filters apply to the current list view.</div>
+            <button
+              className="ldc-button-secondary"
+              type="button"
+              onClick={clearTeamFilters}
+              disabled={!hasTeamRoleFilter}
             >
               Clear filters
             </button>
