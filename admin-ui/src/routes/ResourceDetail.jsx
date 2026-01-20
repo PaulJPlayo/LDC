@@ -5971,10 +5971,22 @@ const ResourceDetail = ({ resource }) => {
 
     const currentStocked = toNumber(level.stocked_quantity) ?? 0;
     const currentIncoming = toNumber(level.incoming_quantity) ?? 0;
+    const currentReserved = toNumber(level.reserved_quantity) ?? 0;
     const nextStocked =
       stockedDelta.value != null ? currentStocked + stockedDelta.value : null;
     const nextIncoming =
       incomingDelta.value != null ? currentIncoming + incomingDelta.value : null;
+
+    if (nextStocked != null && nextStocked < currentReserved) {
+      setInventoryLevelState({
+        savingId: null,
+        deletingId: null,
+        creating: false,
+        error: `Stocked quantity cannot be lower than reserved quantity (${currentReserved}).`,
+        success: ''
+      });
+      return;
+    }
 
     if (
       (nextStocked != null && nextStocked < 0) ||

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PageHeader from '../components/PageHeader.jsx';
 import DataTable from '../components/DataTable.jsx';
@@ -52,8 +52,23 @@ const EMPTY_PRODUCT_IMPORT_STATE = {
   success: '',
   summary: null,
   transactionId: '',
-  fileName: ''
+  fileName: '',
+  requestedAt: ''
 };
+const EMPTY_PRODUCT_IMPORT_CHECK_STATE = {
+  checking: false,
+  error: '',
+  message: '',
+  status: '',
+  fileUrl: '',
+  fileName: '',
+  createdAt: ''
+};
+
+const SUPPORTED_IMPORT_MIME_TYPES = ['text/csv', 'application/vnd.ms-excel'];
+const SUPPORTED_IMPORT_EXTENSIONS = ['.csv'];
+const PRODUCT_IMPORT_TEMPLATE = `data:text/csv;charset=utf-8,Product Id,Product Handle,Product Title,Product Subtitle,Product Description,Product Status,Product Thumbnail,Product Weight,Product Length,Product Width,Product Height,Product HS Code,Product Origin Country,Product MID Code,Product Material,Shipping Profile Id,Product Sales Channel 1,Product Collection Id,Product Type Id,Product Tag 1,Product Discountable,Product External Id,Variant Id,Variant Title,Variant SKU,Variant Barcode,Variant Allow Backorder,Variant Manage Inventory,Variant Weight,Variant Length,Variant Width,Variant Height,Variant HS Code,Variant Origin Country,Variant MID Code,Variant Material,Variant Price EUR,Variant Price USD,Variant Option 1 Name,Variant Option 1 Value,Product Image 1 Url,Product Image 2 Url
+,ldc-tumbler,LDC Tumbler,,Double wall tumbler.,published,https://example.com/ldc-tumbler.png,400,,,,,,,,,,,,,TRUE,,,One Size,,,FALSE,TRUE,,,,,,,,,10,12,Size,One Size,https://example.com/ldc-tumbler.png,`;
 
 const ORDER_STATUS_OPTIONS = [
   { value: 'pending', label: 'Pending' },
@@ -246,6 +261,23 @@ const parseNullableNumberInput = (value) => {
   return { value: numeric, error: '' };
 };
 
+const normalizeNumber = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const getInventoryLevelForLocation = (item, locationId) => {
+  if (!item || !locationId) return null;
+  const levels = Array.isArray(item.location_levels) ? item.location_levels : [];
+  return (
+    levels.find((level) => {
+      const levelLocationId =
+        level?.location_id || level?.location?.id || level?.stock_location_id;
+      return levelLocationId === locationId;
+    }) || null
+  );
+};
+
 const parseDateTimeInput = (value) => {
   const trimmed = String(value ?? '').trim();
   if (!trimmed) return null;
@@ -357,6 +389,15 @@ const getUploadType = (file) => file?.mime_type || file?.type || '';
 const getFileExtension = (value) => {
   const match = String(value || '').match(/\.([a-z0-9]+)(?:\?|#|$)/i);
   return match ? match[1].toLowerCase() : '';
+};
+
+const getProductImportTemplateUrl = () => encodeURI(PRODUCT_IMPORT_TEMPLATE);
+
+const isSupportedImportFile = (file) => {
+  if (!file) return false;
+  if (SUPPORTED_IMPORT_MIME_TYPES.includes(file.type)) return true;
+  const ext = getFileExtension(file.name || '');
+  return SUPPORTED_IMPORT_EXTENSIONS.includes(`.${ext}`);
 };
 
 const isImageFile = (file) => {
@@ -508,6 +549,10 @@ const ResourceList = ({ resource }) => {
   const [productExportState, setProductExportState] = useState(EMPTY_PRODUCT_EXPORT_STATE);
   const [productImportState, setProductImportState] = useState(EMPTY_PRODUCT_IMPORT_STATE);
   const [productImportFile, setProductImportFile] = useState(null);
+  const [productImportCheckState, setProductImportCheckState] = useState(
+    EMPTY_PRODUCT_IMPORT_CHECK_STATE
+  );
+  const productImportInputRef = useRef(null);
   const [listMeta, setListMeta] = useState({
     paymentProviders: [],
     fulfillmentProviders: [],
@@ -772,6 +817,14 @@ const ResourceList = ({ resource }) => {
   const [inventoryItemMeta, setInventoryItemMeta] = useState({ locations: [] });
   const [inventoryItemMetaLoading, setInventoryItemMetaLoading] = useState(false);
   const [inventoryItemMetaError, setInventoryItemMetaError] = useState('');
+  const [inventoryBulkState, setInventoryBulkState] = useState({
+    open: false,
+    saving: false,
+    error: '',
+    success: ''
+  });
+  const [inventoryBulkLocationId, setInventoryBulkLocationId] = useState('');
+  const [inventoryBulkEdits, setInventoryBulkEdits] = useState({});
   const [stockLocationCreateDraft, setStockLocationCreateDraft] = useState({
     name: '',
     address_1: '',
@@ -938,6 +991,7 @@ const ResourceList = ({ resource }) => {
   const isOrderLikeList = isOrderList || isDraftOrderList;
   const isDateFilterList = isOrderLikeList || isCustomerList || isCustomerGroupList;
   const isBulkList = isOrderLikeList || isCustomerList || isCustomerGroupList || isProductList;
+  const isSelectableList = isBulkList || isInventoryItemList;
 
   const page = Math.max(1, Number(searchParams.get('page') || 1));
   const query = searchParams.get('q') || '';
@@ -1107,9 +1161,15 @@ const ResourceList = ({ resource }) => {
       : isProductList
         ? productRows
         : rows;
+  const selectedInventoryItems = useMemo(() => {
+    if (!isInventoryItemList || !selectedIds.length) return [];
+    const selectedSet = new Set(selectedIds);
+    return listRows.filter((row) => selectedSet.has(row?.id));
+  }, [isInventoryItemList, listRows, selectedIds]);
+  const productImportTemplateUrl = useMemo(() => getProductImportTemplateUrl(), []);
 
   useEffect(() => {
-    if (!isBulkList) {
+    if (!isSelectableList) {
       setSelectedIds((prev) => (prev.length ? [] : prev));
       setBulkAction((prev) => (prev ? '' : prev));
       setBulkGroupId((prev) => (prev ? '' : prev));
@@ -1126,7 +1186,7 @@ const ResourceList = ({ resource }) => {
       const next = prev.filter((id) => visibleIds.has(id));
       return next.length === prev.length ? prev : next;
     });
-  }, [isBulkList, listRows]);
+  }, [isSelectableList, listRows]);
 
   useEffect(() => {
     if (!isCustomerList) {
@@ -1153,7 +1213,51 @@ const ResourceList = ({ resource }) => {
     setProductExportState({ ...EMPTY_PRODUCT_EXPORT_STATE });
     setProductImportState({ ...EMPTY_PRODUCT_IMPORT_STATE });
     setProductImportFile(null);
+    setProductImportCheckState({ ...EMPTY_PRODUCT_IMPORT_CHECK_STATE });
+    setInventoryBulkState({ open: false, saving: false, error: '', success: '' });
+    setInventoryBulkLocationId('');
+    setInventoryBulkEdits({});
+    if (productImportInputRef.current) {
+      productImportInputRef.current.value = '';
+    }
   }, [resource?.id]);
+
+  useEffect(() => {
+    if (!isInventoryItemList) {
+      setInventoryBulkEdits((prev) => (Object.keys(prev).length ? {} : prev));
+      return;
+    }
+    if (!selectedIds.length) return;
+    setInventoryBulkEdits((prev) => {
+      const next = {};
+      selectedIds.forEach((id) => {
+        if (prev[id]) next[id] = prev[id];
+      });
+      return next;
+    });
+  }, [isInventoryItemList, selectedIds]);
+
+  useEffect(() => {
+    if (!isInventoryItemList) return;
+    if (selectedIds.length) return;
+    setInventoryBulkState((prev) =>
+      prev.open || prev.error || prev.success
+        ? { ...prev, open: false, error: '', success: '' }
+        : prev
+    );
+  }, [isInventoryItemList, selectedIds.length]);
+
+  useEffect(() => {
+    if (!isInventoryItemList) return;
+    if (!inventoryBulkState.open || inventoryBulkLocationId) return;
+    if (!inventoryItemMeta.locations.length) return;
+    setInventoryBulkLocationId(inventoryItemMeta.locations[0].id);
+  }, [
+    isInventoryItemList,
+    inventoryBulkState.open,
+    inventoryBulkLocationId,
+    inventoryItemMeta.locations
+  ]);
   const listParams = useMemo(() => {
     if (!resource?.listParams) return {};
     if (typeof resource.listParams === 'function') {
@@ -1196,7 +1300,11 @@ const ResourceList = ({ resource }) => {
         ? { fields: '+collection,+categories,+sales_channels' }
         : isCustomerList
           ? { fields: '+groups' }
-          : null;
+          : isInventoryItemList
+            ? { fields: '+location_levels' }
+            : isStockLocationList
+              ? { fields: '+sales_channels,+fulfillment_sets' }
+              : null;
       const productStatusParams =
         isProductList && statusFilters.length ? { 'status[]': statusFilters } : {};
       const payload = await getList(resource.endpoint, {
@@ -2272,6 +2380,30 @@ const ResourceList = ({ resource }) => {
     });
   };
 
+  const findProductImportNotification = (notifications, since) => {
+    const sinceTime = since ? new Date(since).getTime() : null;
+    return notifications.find((notice) => {
+      const data = notice?.data && typeof notice.data === 'object' ? notice.data : {};
+      const haystack = [
+        data?.title,
+        data?.description,
+        data?.message,
+        data?.text,
+        notice?.template,
+        notice?.event_name
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      if (!haystack.includes('import') || !haystack.includes('product')) return false;
+      if (sinceTime) {
+        const createdTime = notice?.created_at ? new Date(notice.created_at).getTime() : NaN;
+        if (!Number.isFinite(createdTime) || createdTime < sinceTime) return false;
+      }
+      return true;
+    });
+  };
+
   const handleCheckProductExport = async (requestedAtOverride) => {
     setProductExportState((prev) => ({
       ...prev,
@@ -2318,6 +2450,54 @@ const ResourceList = ({ resource }) => {
     }
   };
 
+  const handleCheckProductImport = async (requestedAtOverride) => {
+    setProductImportCheckState((prev) => ({
+      ...prev,
+      checking: true,
+      error: ''
+    }));
+    try {
+      const payload = await getList('/admin/notifications', {
+        channel: 'feed',
+        limit: 50,
+        order: '-created_at'
+      });
+      const notifications = getArrayFromPayload(payload, 'notifications');
+      const notice = findProductImportNotification(
+        notifications,
+        requestedAtOverride || productImportState.requestedAt
+      );
+      if (notice) {
+        const data = notice?.data && typeof notice.data === 'object' ? notice.data : {};
+        const file = data?.file || {};
+        const fileUrl = resolveFileUrl(file?.url || data?.file_url || '');
+        setProductImportCheckState({
+          checking: false,
+          error: '',
+          message: data?.description || data?.message || data?.text || 'Import update available.',
+          status: notice?.status || data?.status || '',
+          fileUrl,
+          fileName: file?.filename || file?.name || '',
+          createdAt: notice?.created_at || ''
+        });
+        return;
+      }
+      setProductImportCheckState((prev) => ({
+        ...prev,
+        checking: false,
+        error: '',
+        message: 'Import is still processing. Check again in a moment.',
+        status: 'processing'
+      }));
+    } catch (err) {
+      setProductImportCheckState((prev) => ({
+        ...prev,
+        checking: false,
+        error: formatApiError(err, 'Unable to check import status.')
+      }));
+    }
+  };
+
   const handleProductExport = async () => {
     setProductExportState({
       ...EMPTY_PRODUCT_EXPORT_STATE,
@@ -2346,11 +2526,36 @@ const ResourceList = ({ resource }) => {
 
   const handleProductImportFileChange = (event) => {
     const file = event.target.files?.[0] || null;
+    if (!file) {
+      setProductImportFile(null);
+      setProductImportState({ ...EMPTY_PRODUCT_IMPORT_STATE });
+      return;
+    }
+    if (!isSupportedImportFile(file)) {
+      setProductImportFile(null);
+      setProductImportState({
+        ...EMPTY_PRODUCT_IMPORT_STATE,
+        error: `Unsupported file type. Please upload ${SUPPORTED_IMPORT_EXTENSIONS.join(', ')}.`
+      });
+      if (productImportInputRef.current) {
+        productImportInputRef.current.value = '';
+      }
+      return;
+    }
     setProductImportFile(file);
     setProductImportState({
       ...EMPTY_PRODUCT_IMPORT_STATE,
       fileName: file?.name || ''
     });
+    setProductImportCheckState({ ...EMPTY_PRODUCT_IMPORT_CHECK_STATE });
+  };
+
+  const handleClearProductImportFile = () => {
+    setProductImportFile(null);
+    setProductImportState({ ...EMPTY_PRODUCT_IMPORT_STATE });
+    if (productImportInputRef.current) {
+      productImportInputRef.current.value = '';
+    }
   };
 
   const handleStartProductImport = async () => {
@@ -2368,6 +2573,7 @@ const ResourceList = ({ resource }) => {
       error: '',
       success: ''
     }));
+    setProductImportCheckState({ ...EMPTY_PRODUCT_IMPORT_CHECK_STATE });
     try {
       const uploadPayload = await uploadFiles(productImportFile);
       const uploadFile =
@@ -2420,12 +2626,15 @@ const ResourceList = ({ resource }) => {
       await request(`/admin/products/imports/${productImportState.transactionId}/confirm`, {
         method: 'POST'
       });
+      const requestedAt = new Date().toISOString();
       setProductImportState((prev) => ({
         ...prev,
         confirming: false,
         error: '',
-        success: 'Import confirmed. Products will update in the background.'
+        success: 'Import confirmed. Products will update in the background.',
+        requestedAt
       }));
+      await handleCheckProductImport(requestedAt);
       fetchList();
     } catch (err) {
       setProductImportState((prev) => ({
@@ -3923,6 +4132,166 @@ const ResourceList = ({ resource }) => {
     }
   };
 
+  const handleToggleInventoryBulk = () => {
+    if (!selectedInventoryItems.length) return;
+    setInventoryBulkState((prev) => ({
+      ...prev,
+      open: !prev.open,
+      error: '',
+      success: ''
+    }));
+  };
+
+  const handleInventoryBulkLocationChange = (event) => {
+    const value = event.target.value;
+    setInventoryBulkLocationId(value);
+    setInventoryBulkEdits({});
+    setInventoryBulkState((prev) => ({
+      ...prev,
+      error: '',
+      success: ''
+    }));
+  };
+
+  const handleInventoryBulkEditChange = (itemId, field) => (event) => {
+    const value = event.target.value;
+    setInventoryBulkEdits((prev) => ({
+      ...prev,
+      [itemId]: { ...(prev[itemId] || {}), [field]: value }
+    }));
+  };
+
+  const handleClearInventoryBulkEdits = () => {
+    setInventoryBulkEdits({});
+    setInventoryBulkState((prev) => ({
+      ...prev,
+      error: '',
+      success: ''
+    }));
+  };
+
+  const handleApplyInventoryBulk = async () => {
+    if (!inventoryBulkLocationId) {
+      setInventoryBulkState((prev) => ({
+        ...prev,
+        error: 'Select a stock location first.',
+        success: ''
+      }));
+      return;
+    }
+    if (!selectedInventoryItems.length) {
+      setInventoryBulkState((prev) => ({
+        ...prev,
+        error: 'Select at least one inventory item.',
+        success: ''
+      }));
+      return;
+    }
+
+    const create = [];
+    const update = [];
+
+    for (const item of selectedInventoryItems) {
+      const draft = inventoryBulkEdits[item.id] || {};
+      const stockedResult = parseNullableNumberInput(draft.stocked_quantity);
+      const incomingResult = parseNullableNumberInput(draft.incoming_quantity);
+
+      if (stockedResult.error || incomingResult.error) {
+        setInventoryBulkState((prev) => ({
+          ...prev,
+          error: 'Stocked and incoming quantities must be valid numbers.',
+          success: ''
+        }));
+        return;
+      }
+
+      if (
+        (stockedResult.value != null && stockedResult.value < 0) ||
+        (incomingResult.value != null && incomingResult.value < 0)
+      ) {
+        setInventoryBulkState((prev) => ({
+          ...prev,
+          error: 'Quantities cannot be negative.',
+          success: ''
+        }));
+        return;
+      }
+
+      if (stockedResult.value == null && incomingResult.value == null) {
+        continue;
+      }
+
+      const level = getInventoryLevelForLocation(item, inventoryBulkLocationId);
+      const reserved = normalizeNumber(level?.reserved_quantity) ?? 0;
+      if (stockedResult.value != null && stockedResult.value < reserved) {
+        setInventoryBulkState((prev) => ({
+          ...prev,
+          error: `Stocked quantity cannot be lower than reserved quantity (${reserved}).`,
+          success: ''
+        }));
+        return;
+      }
+
+      if (level?.id) {
+        update.push({
+          id: level.id,
+          inventory_item_id: item.id,
+          location_id: inventoryBulkLocationId,
+          ...(stockedResult.value != null ? { stocked_quantity: stockedResult.value } : {}),
+          ...(incomingResult.value != null ? { incoming_quantity: incomingResult.value } : {})
+        });
+      } else {
+        create.push({
+          inventory_item_id: item.id,
+          location_id: inventoryBulkLocationId,
+          ...(stockedResult.value != null ? { stocked_quantity: stockedResult.value } : {}),
+          ...(incomingResult.value != null ? { incoming_quantity: incomingResult.value } : {})
+        });
+      }
+    }
+
+    if (!create.length && !update.length) {
+      setInventoryBulkState((prev) => ({
+        ...prev,
+        error: 'Enter stock values for at least one selected item.',
+        success: ''
+      }));
+      return;
+    }
+
+    setInventoryBulkState((prev) => ({
+      ...prev,
+      saving: true,
+      error: '',
+      success: ''
+    }));
+    try {
+      await request('/admin/inventory-items/location-levels/batch', {
+        method: 'POST',
+        body: {
+          create,
+          update,
+          delete: []
+        }
+      });
+      setInventoryBulkState((prev) => ({
+        ...prev,
+        saving: false,
+        error: '',
+        success: 'Stock levels updated.'
+      }));
+      setInventoryBulkEdits({});
+      fetchList();
+    } catch (err) {
+      setInventoryBulkState((prev) => ({
+        ...prev,
+        saving: false,
+        error: err?.message || 'Unable to update stock levels.',
+        success: ''
+      }));
+    }
+  };
+
   const handleStockLocationCreateDraftChange = (field) => (event) => {
     const value = event.target.value;
     setStockLocationCreateDraft((prev) => ({ ...prev, [field]: value }));
@@ -4783,6 +5152,7 @@ const ResourceList = ({ resource }) => {
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <input
+                  ref={productImportInputRef}
                   className="ldc-input h-11"
                   type="file"
                   accept=".csv,text/csv"
@@ -4796,6 +5166,16 @@ const ResourceList = ({ resource }) => {
                 >
                   {productImportState.uploading ? 'Uploading...' : 'Start import'}
                 </button>
+                {productImportState.fileName ? (
+                  <button
+                    className="ldc-button-secondary"
+                    type="button"
+                    onClick={handleClearProductImportFile}
+                    disabled={productImportState.uploading || productImportState.confirming}
+                  >
+                    Remove file
+                  </button>
+                ) : null}
               </div>
               {productImportState.fileName ? (
                 <div className="mt-2 text-xs text-ldc-ink/60">
@@ -4803,9 +5183,23 @@ const ResourceList = ({ resource }) => {
                 </div>
               ) : null}
               {productImportState.summary ? (
-                <div className="mt-2 text-sm text-ldc-ink/70">
-                  Ready to import {productImportState.summary.toCreate || 0} new and{' '}
-                  {productImportState.summary.toUpdate || 0} updates.
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl bg-white/70 px-4 py-3 text-sm text-ldc-ink">
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                      Products to create
+                    </div>
+                    <div className="mt-2 text-lg font-semibold">
+                      {productImportState.summary.toCreate || 0}
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-white/70 px-4 py-3 text-sm text-ldc-ink">
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                      Products to update
+                    </div>
+                    <div className="mt-2 text-lg font-semibold">
+                      {productImportState.summary.toUpdate || 0}
+                    </div>
+                  </div>
                 </div>
               ) : null}
               {productImportState.transactionId ? (
@@ -4818,12 +5212,64 @@ const ResourceList = ({ resource }) => {
                   {productImportState.confirming ? 'Confirming...' : 'Confirm import'}
                 </button>
               ) : null}
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  className="ldc-button-secondary"
+                  type="button"
+                  onClick={() => handleCheckProductImport()}
+                  disabled={productImportCheckState.checking}
+                >
+                  {productImportCheckState.checking ? 'Checking...' : 'Check import status'}
+                </button>
+                {productImportCheckState.fileUrl ? (
+                  <a
+                    className="ldc-button-primary"
+                    href={productImportCheckState.fileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Download report
+                  </a>
+                ) : null}
+              </div>
+              {productImportCheckState.message ? (
+                <div className="mt-2 text-sm text-ldc-ink/70">
+                  {productImportCheckState.message}
+                </div>
+              ) : null}
+              {productImportCheckState.status ? (
+                <div className="mt-2 text-xs text-ldc-ink/60">
+                  Status: {productImportCheckState.status}
+                  {productImportCheckState.createdAt
+                    ? ` · ${formatDateTime(productImportCheckState.createdAt)}`
+                    : ''}
+                </div>
+              ) : null}
               {productImportState.success ? (
                 <div className="mt-2 text-sm text-emerald-700">{productImportState.success}</div>
               ) : null}
               {productImportState.error ? (
                 <div className="mt-2 text-sm text-rose-600">{productImportState.error}</div>
               ) : null}
+              {productImportCheckState.error ? (
+                <div className="mt-2 text-sm text-rose-600">{productImportCheckState.error}</div>
+              ) : null}
+
+              <div className="mt-4 rounded-2xl bg-white/70 p-4 text-sm text-ldc-ink/70">
+                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                  Template
+                </div>
+                <p className="mt-2">
+                  Download the CSV template to follow the correct column format.
+                </p>
+                <a
+                  className="mt-3 inline-flex text-sm font-semibold text-ldc-plum underline decoration-ldc-plum/40 underline-offset-4"
+                  href={productImportTemplateUrl}
+                  download="ldc-product-import-template.csv"
+                >
+                  Download template
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -5068,6 +5514,173 @@ const ResourceList = ({ resource }) => {
               Clear filters
             </button>
           </div>
+        </div>
+      ) : null}
+
+      {isInventoryItemList ? (
+        <div className="mb-6 ldc-card p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                Bulk stock levels
+              </div>
+              <div className="mt-1 text-sm text-ldc-ink/70">
+                {selectedInventoryItems.length
+                  ? `${selectedInventoryItems.length} selected`
+                  : 'Select inventory items to edit stock levels.'}
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                className="ldc-button-secondary"
+                type="button"
+                onClick={handleToggleInventoryBulk}
+                disabled={!selectedInventoryItems.length}
+              >
+                {inventoryBulkState.open ? 'Close editor' : 'Edit stock levels'}
+              </button>
+            </div>
+          </div>
+
+          {inventoryBulkState.open ? (
+            <div className="mt-4 space-y-4">
+              <div className="grid gap-3 md:grid-cols-3">
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Stock location
+                  {inventoryItemMeta.locations.length ? (
+                    <select
+                      className="ldc-input mt-2"
+                      value={inventoryBulkLocationId}
+                      onChange={handleInventoryBulkLocationChange}
+                    >
+                      <option value="">Select location</option>
+                      {inventoryItemMeta.locations.map((location) => (
+                        <option key={location.id} value={location.id}>
+                          {location.name || location.id}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      className="ldc-input mt-2"
+                      value={inventoryBulkLocationId}
+                      onChange={handleInventoryBulkLocationChange}
+                      placeholder="loc_..."
+                    />
+                  )}
+                </label>
+                <div className="md:col-span-2 text-xs text-ldc-ink/60">
+                  Leave stocked or incoming blank to keep the current quantity for that item.
+                </div>
+              </div>
+
+              {inventoryItemMetaLoading ? (
+                <div className="text-sm text-ldc-ink/60">Loading stock locations...</div>
+              ) : null}
+              {inventoryItemMetaError ? (
+                <div className="text-sm text-rose-600">{inventoryItemMetaError}</div>
+              ) : null}
+              {inventoryBulkState.error ? (
+                <div className="text-sm text-rose-600">{inventoryBulkState.error}</div>
+              ) : null}
+              {inventoryBulkState.success ? (
+                <div className="text-sm text-emerald-700">{inventoryBulkState.success}</div>
+              ) : null}
+
+              {inventoryBulkLocationId ? (
+                <div className="space-y-3">
+                  {selectedInventoryItems.map((item) => {
+                    const level = getInventoryLevelForLocation(item, inventoryBulkLocationId);
+                    const stocked = normalizeNumber(level?.stocked_quantity);
+                    const reserved = normalizeNumber(level?.reserved_quantity);
+                    const incoming = normalizeNumber(level?.incoming_quantity);
+                    const available = normalizeNumber(level?.available_quantity);
+                    const draft = inventoryBulkEdits[item.id] || {};
+                    return (
+                      <div key={item.id} className="rounded-2xl bg-white/70 p-4">
+                        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,260px)]">
+                          <div>
+                            <div className="text-sm font-semibold text-ldc-ink">
+                              {item.title || item.sku || item.id}
+                            </div>
+                            <div className="mt-1 text-xs text-ldc-ink/60">
+                              SKU {item.sku || '—'} · {item.id}
+                            </div>
+                            <div className="mt-2 text-xs text-ldc-ink/60">
+                              {level
+                                ? `Stocked ${stocked ?? 0} · Reserved ${reserved ?? 0} · Incoming ${
+                                    incoming ?? 0
+                                  } · Available ${available ?? 0}`
+                                : 'No level for this location yet.'}
+                            </div>
+                          </div>
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                              Stocked
+                              <input
+                                className="ldc-input mt-2"
+                                type="number"
+                                step="1"
+                                min="0"
+                                value={draft.stocked_quantity ?? ''}
+                                onChange={handleInventoryBulkEditChange(
+                                  item.id,
+                                  'stocked_quantity'
+                                )}
+                                placeholder={stocked != null ? String(stocked) : ''}
+                              />
+                            </label>
+                            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                              Incoming
+                              <input
+                                className="ldc-input mt-2"
+                                type="number"
+                                step="1"
+                                min="0"
+                                value={draft.incoming_quantity ?? ''}
+                                onChange={handleInventoryBulkEditChange(
+                                  item.id,
+                                  'incoming_quantity'
+                                )}
+                                placeholder={incoming != null ? String(incoming) : ''}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-white/70 p-4 text-sm text-ldc-ink/70">
+                  Select a stock location to edit levels.
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  className="ldc-button-primary"
+                  type="button"
+                  onClick={handleApplyInventoryBulk}
+                  disabled={
+                    inventoryBulkState.saving ||
+                    !inventoryBulkLocationId ||
+                    !selectedInventoryItems.length
+                  }
+                >
+                  {inventoryBulkState.saving ? 'Saving...' : 'Apply changes'}
+                </button>
+                <button
+                  className="ldc-button-secondary"
+                  type="button"
+                  onClick={handleClearInventoryBulkEdits}
+                  disabled={inventoryBulkState.saving}
+                >
+                  Clear inputs
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -7928,7 +8541,7 @@ const ResourceList = ({ resource }) => {
           onRowClick={handleRowClick}
           isLoading={loading}
           emptyText={`No ${resource.label.toLowerCase()} found.`}
-          selectable={isBulkList}
+          selectable={isSelectableList}
           selectedIds={selectedIds}
           onToggleRow={handleToggleRow}
           onToggleAll={handleToggleAll}

@@ -29,6 +29,48 @@ const formatTaxRegionLabel = (region) => {
   return code ? String(code).toUpperCase() : region.name || region.id || '-';
 };
 
+const normalizeNumber = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const sumLocationLevels = (levels, key) =>
+  levels.reduce((total, level) => total + (normalizeNumber(level?.[key]) || 0), 0);
+
+const getInventoryTotals = (row) => {
+  const levels = Array.isArray(row?.location_levels) ? row.location_levels : [];
+  const hasLevels = levels.length > 0;
+  const inventoryFallback = normalizeNumber(row?.inventory_quantity);
+  const stocked =
+    normalizeNumber(row?.stocked_quantity) ??
+    (hasLevels ? sumLocationLevels(levels, 'stocked_quantity') : inventoryFallback);
+  const reserved =
+    normalizeNumber(row?.reserved_quantity) ??
+    (hasLevels ? sumLocationLevels(levels, 'reserved_quantity') : null);
+  const incoming =
+    normalizeNumber(row?.incoming_quantity) ??
+    (hasLevels ? sumLocationLevels(levels, 'incoming_quantity') : null);
+  let available =
+    normalizeNumber(row?.available_quantity) ??
+    (hasLevels ? sumLocationLevels(levels, 'available_quantity') : null);
+  if (available == null && stocked != null && reserved != null) {
+    available = stocked - reserved;
+  }
+  const locations =
+    normalizeNumber(row?.location_levels_count) ??
+    normalizeNumber(row?.locations_count) ??
+    (hasLevels ? levels.length : null);
+  return { stocked, reserved, incoming, available, locations };
+};
+
+const formatInventoryTotal = (metric) => (_value, row) => {
+  const totals = getInventoryTotals(row);
+  const value = totals[metric];
+  return value == null ? '-' : value;
+};
+
+const formatCount = (value) => (Array.isArray(value) ? value.length : '-');
+
 export const resources = [
   {
     id: 'orders',
@@ -288,7 +330,10 @@ export const resources = [
     columns: [
       { key: 'sku', label: 'SKU' },
       { key: 'title', label: 'Title' },
-      { key: 'inventory_quantity', label: 'In Stock' },
+      { key: 'stocked_quantity', label: 'Stocked', format: formatInventoryTotal('stocked') },
+      { key: 'reserved_quantity', label: 'Reserved', format: formatInventoryTotal('reserved') },
+      { key: 'available_quantity', label: 'Available', format: formatInventoryTotal('available') },
+      { key: 'location_levels', label: 'Locations', format: formatInventoryTotal('locations') },
       { key: 'updated_at', label: 'Updated', format: formatDate }
     ]
   },
@@ -302,6 +347,8 @@ export const resources = [
     columns: [
       { key: 'name', label: 'Location' },
       { key: 'address', label: 'Address', format: (value) => value?.city || '-' },
+      { key: 'sales_channels', label: 'Channels', format: formatCount },
+      { key: 'fulfillment_sets', label: 'Fulfillment Sets', format: formatCount },
       { key: 'created_at', label: 'Created', format: formatDate }
     ]
   },
