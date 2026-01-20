@@ -82,6 +82,16 @@ const formatInventoryTotal = (metric) => (_value, row) => {
 
 const formatCount = (value) => (Array.isArray(value) ? value.length : '-');
 
+const formatRoleLabel = (value, row) => {
+  const role =
+    value ||
+    row?.role ||
+    row?.metadata?.role ||
+    (Array.isArray(row?.roles) ? row.roles[0] : undefined) ||
+    (Array.isArray(row?.metadata?.roles) ? row.metadata.roles[0] : undefined);
+  return role ? formatStatus(role) : '-';
+};
+
 export const resources = [
   {
     id: 'orders',
@@ -539,6 +549,7 @@ export const resources = [
     detailKey: 'user',
     columns: [
       { key: 'email', label: 'Email' },
+      { key: 'role', label: 'Role', format: formatRoleLabel },
       { key: 'first_name', label: 'First name' },
       { key: 'last_name', label: 'Last name' },
       { key: 'created_at', label: 'Created', format: formatDate }
@@ -553,6 +564,7 @@ export const resources = [
     detailKey: 'invite',
     columns: [
       { key: 'email', label: 'Email' },
+      { key: 'role', label: 'Role', format: formatRoleLabel },
       { key: 'accepted', label: 'Accepted', format: (value) => (value ? 'Yes' : 'No') },
       { key: 'expires_at', label: 'Expires', format: formatDateTime },
       { key: 'created_at', label: 'Created', format: formatDate }

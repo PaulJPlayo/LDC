@@ -50,6 +50,20 @@ const GEO_ZONE_TYPE_OPTIONS = [
   { value: 'zip', label: 'Postal code' }
 ];
 
+const TEAM_ROLE_OPTIONS = [
+  { value: 'member', label: 'Member' },
+  { value: 'admin', label: 'Admin' }
+];
+
+const resolveRoleValue = (record) => {
+  const role =
+    record?.role ||
+    record?.metadata?.role ||
+    (Array.isArray(record?.roles) ? record.roles[0] : undefined) ||
+    (Array.isArray(record?.metadata?.roles) ? record.metadata.roles[0] : undefined);
+  return role ? String(role) : '';
+};
+
 const buildGeoZoneDraft = (zone = {}) => ({
   id: zone?.id,
   type: zone?.type || 'country',
@@ -1693,6 +1707,7 @@ const ResourceDetail = ({ resource }) => {
   });
   const [userDraft, setUserDraft] = useState({
     email: '',
+    role: '',
     first_name: '',
     last_name: '',
     avatar_url: '',
@@ -2849,6 +2864,7 @@ const ResourceDetail = ({ resource }) => {
     if (isUser) {
       setUserDraft({
         email: record?.email || '',
+        role: resolveRoleValue(record),
         first_name: record?.first_name || '',
         last_name: record?.last_name || '',
         avatar_url: record?.avatar_url || '',
@@ -6934,6 +6950,7 @@ const ResourceDetail = ({ resource }) => {
     const firstName = userDraft.first_name.trim();
     const lastName = userDraft.last_name.trim();
     const avatarUrl = userDraft.avatar_url.trim();
+    const role = userDraft.role.trim();
     const { data: metadata, error: metadataError } = parseJsonInput(userDraft.metadata);
 
     if (metadataError) {
@@ -6948,13 +6965,23 @@ const ResourceDetail = ({ resource }) => {
 
     setUserState({ saving: true, deleting: false, error: '', success: '' });
     try {
+      const hasRoleField = Object.prototype.hasOwnProperty.call(record, 'role');
+      const nextMetadata = metadata && typeof metadata === 'object' ? { ...metadata } : {};
+      if (!hasRoleField) {
+        if (role) {
+          nextMetadata.role = role;
+        } else if ('role' in nextMetadata) {
+          delete nextMetadata.role;
+        }
+      }
       const payload = await request(`${resource.endpoint}/${record.id}`, {
         method: 'POST',
         body: {
           first_name: firstName || null,
           last_name: lastName || null,
           avatar_url: avatarUrl || null,
-          ...(metadata && typeof metadata === 'object' ? { metadata } : {})
+          ...(hasRoleField && role ? { role } : {}),
+          ...(Object.keys(nextMetadata).length ? { metadata: nextMetadata } : {})
         }
       });
       const updated = getObjectFromPayload(payload, resource.detailKey);
@@ -20174,6 +20201,21 @@ const ResourceDetail = ({ resource }) => {
                   <input className="ldc-input mt-2" value={userDraft.email} disabled />
                 </label>
                 <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Role
+                  <select
+                    className="ldc-input mt-2"
+                    value={userDraft.role}
+                    onChange={handleUserDraftChange('role')}
+                  >
+                    <option value="">Unassigned</option>
+                    {TEAM_ROLE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
                   Avatar URL
                   <input
                     className="ldc-input mt-2"
@@ -20247,6 +20289,14 @@ const ResourceDetail = ({ resource }) => {
                   </div>
                   <div className="mt-2 text-sm text-ldc-ink">
                     {record.accepted ? 'Accepted' : 'Pending'}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-white/70 px-4 py-3">
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                    Role
+                  </div>
+                  <div className="mt-2 text-sm text-ldc-ink">
+                    {resolveRoleValue(record) || '-'}
                   </div>
                 </div>
                 <div className="rounded-2xl bg-white/70 px-4 py-3">

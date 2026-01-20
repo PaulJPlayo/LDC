@@ -163,6 +163,11 @@ const CUSTOMER_ACCOUNT_OPTIONS = [
   { value: 'false', label: 'No account' }
 ];
 
+const TEAM_ROLE_OPTIONS = [
+  { value: 'member', label: 'Member' },
+  { value: 'admin', label: 'Admin' }
+];
+
 const CUSTOMER_EXPORT_COLUMNS = [
   { label: 'Customer ID', value: (row) => row?.id || '' },
   { label: 'First Name', value: (row) => row?.first_name || '' },
@@ -977,6 +982,7 @@ const ResourceList = ({ resource }) => {
   });
   const [inviteCreateDraft, setInviteCreateDraft] = useState({
     email: '',
+    role: 'member',
     metadata: ''
   });
   const [inviteCreateState, setInviteCreateState] = useState({
@@ -1340,6 +1346,7 @@ const ResourceList = ({ resource }) => {
       is_disabled: false,
       metadata: ''
     });
+    setInviteCreateDraft({ email: '', role: 'member', metadata: '' });
     setInventoryBulkState({ open: false, saving: false, error: '', success: '' });
     setInventoryBulkLocationId('');
     setInventoryBulkEdits({});
@@ -5071,6 +5078,7 @@ const ResourceList = ({ resource }) => {
   const handleCreateInvite = async (event) => {
     event.preventDefault();
     const email = inviteCreateDraft.email.trim();
+    const role = inviteCreateDraft.role.trim();
     const { data: metadata, error: metadataError } = parseJsonInput(inviteCreateDraft.metadata);
 
     if (!email) {
@@ -5093,14 +5101,18 @@ const ResourceList = ({ resource }) => {
 
     setInviteCreateState({ saving: true, error: '', success: '' });
     try {
+      const nextMetadata = metadata && typeof metadata === 'object' ? { ...metadata } : {};
+      if (role) {
+        nextMetadata.role = role;
+      }
       await request('/admin/invites', {
         method: 'POST',
         body: {
           email,
-          ...(metadata && typeof metadata === 'object' ? { metadata } : {})
+          ...(Object.keys(nextMetadata).length ? { metadata: nextMetadata } : {})
         }
       });
-      setInviteCreateDraft({ email: '', metadata: '' });
+      setInviteCreateDraft({ email: '', role: 'member', metadata: '' });
       setInviteCreateState({
         saving: false,
         error: '',
@@ -8902,6 +8914,20 @@ const ResourceList = ({ resource }) => {
                 onChange={handleInviteCreateDraftChange('email')}
                 placeholder="name@example.com"
               />
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Role
+              <select
+                className="ldc-input mt-2"
+                value={inviteCreateDraft.role}
+                onChange={handleInviteCreateDraftChange('role')}
+              >
+                {TEAM_ROLE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
               Metadata (optional)
