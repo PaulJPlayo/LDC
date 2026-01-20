@@ -22,6 +22,17 @@ const formatProfileLabel = (value, row) =>
 const formatServiceZoneLabel = (value, row) =>
   row?.service_zone?.name || row?.service_zone_id || value || '-';
 
+const formatGiftCardStatus = (_value, row) => {
+  if (!row) return '-';
+  if (row?.is_disabled || row?.disabled_at) return 'Disabled';
+  const endsAt = row?.ends_at || row?.expires_at;
+  if (endsAt) {
+    const time = new Date(endsAt).getTime();
+    if (Number.isFinite(time) && time < Date.now()) return 'Expired';
+  }
+  return 'Active';
+};
+
 const formatTaxRegionLabel = (region) => {
   if (!region) return '-';
   if (typeof region === 'string') return region;
@@ -127,6 +138,49 @@ export const resources = [
     columns: [
       { key: 'display_id', label: 'Exchange', format: (value) => (value ? `#${value}` : '-') },
       { key: 'status', label: 'Status', badge: true },
+      { key: 'created_at', label: 'Created', format: formatDateTime }
+    ]
+  },
+  {
+    id: 'gift-cards',
+    label: 'Gift Cards',
+    path: '/gift-cards',
+    endpoint: '/admin/gift-cards',
+    listKey: 'gift_cards',
+    detailKey: 'gift_card',
+    listParams: {
+      fields: '+region'
+    },
+    columns: [
+      { key: 'code', label: 'Code' },
+      {
+        key: 'value',
+        label: 'Value',
+        format: (value, row) =>
+          formatMoney(
+            value,
+            row?.region?.currency_code || row?.region?.currency?.code || row?.currency_code
+          )
+      },
+      {
+        key: 'balance',
+        label: 'Balance',
+        format: (value, row) =>
+          formatMoney(
+            value,
+            row?.region?.currency_code || row?.region?.currency?.code || row?.currency_code
+          )
+      },
+      {
+        key: 'region',
+        label: 'Region',
+        format: (_value, row) =>
+          row?.region?.name ||
+          row?.region?.currency_code?.toUpperCase() ||
+          row?.region_id ||
+          '-'
+      },
+      { key: 'is_disabled', label: 'Status', format: formatGiftCardStatus },
       { key: 'created_at', label: 'Created', format: formatDateTime }
     ]
   },
@@ -595,7 +649,7 @@ export const resourceMap = resources.reduce((acc, resource) => {
 export const resourceGroups = [
   {
     label: 'Commerce',
-    items: ['orders', 'draft-orders', 'returns', 'exchanges']
+    items: ['orders', 'draft-orders', 'returns', 'exchanges', 'gift-cards']
   },
   {
     label: 'Catalog',

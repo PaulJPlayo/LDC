@@ -1035,6 +1035,7 @@ const ResourceDetail = ({ resource }) => {
   const isCategory = resource?.id === 'product-categories';
   const isProductType = resource?.id === 'product-types';
   const isProductTag = resource?.id === 'product-tags';
+  const isGiftCard = resource?.id === 'gift-cards';
   const isOrder = resource?.id === 'orders';
   const isDraftOrder = resource?.id === 'draft-orders';
   const isOrderLike = isOrder || isDraftOrder;
@@ -1621,6 +1622,30 @@ const ResourceDetail = ({ resource }) => {
     error: '',
     success: ''
   });
+  const [productTypeProducts, setProductTypeProducts] = useState([]);
+  const [productTypeProductCount, setProductTypeProductCount] = useState(0);
+  const [productTypeProductLoading, setProductTypeProductLoading] = useState(false);
+  const [productTypeProductError, setProductTypeProductError] = useState('');
+  const [productTypeProductSearch, setProductTypeProductSearch] = useState({
+    query: '',
+    results: [],
+    loading: false,
+    error: ''
+  });
+  const [productTypeProductState, setProductTypeProductState] = useState({
+    savingId: null,
+    error: '',
+    success: ''
+  });
+  const [productTypeSelection, setProductTypeSelection] = useState({
+    search: [],
+    assigned: []
+  });
+  const [productTypeBulkState, setProductTypeBulkState] = useState({
+    saving: false,
+    error: '',
+    success: ''
+  });
   const [productTagDraft, setProductTagDraft] = useState({
     value: '',
     metadata: ''
@@ -1628,6 +1653,41 @@ const ResourceDetail = ({ resource }) => {
   const [productTagState, setProductTagState] = useState({
     saving: false,
     deleting: false,
+    error: '',
+    success: ''
+  });
+  const [giftCardDraft, setGiftCardDraft] = useState({
+    ends_at: '',
+    is_disabled: false,
+    metadata: ''
+  });
+  const [giftCardState, setGiftCardState] = useState({
+    saving: false,
+    deleting: false,
+    error: '',
+    success: ''
+  });
+  const [productTagProducts, setProductTagProducts] = useState([]);
+  const [productTagProductCount, setProductTagProductCount] = useState(0);
+  const [productTagProductLoading, setProductTagProductLoading] = useState(false);
+  const [productTagProductError, setProductTagProductError] = useState('');
+  const [productTagProductSearch, setProductTagProductSearch] = useState({
+    query: '',
+    results: [],
+    loading: false,
+    error: ''
+  });
+  const [productTagProductState, setProductTagProductState] = useState({
+    savingId: null,
+    error: '',
+    success: ''
+  });
+  const [productTagSelection, setProductTagSelection] = useState({
+    search: [],
+    assigned: []
+  });
+  const [productTagBulkState, setProductTagBulkState] = useState({
+    saving: false,
     error: '',
     success: ''
   });
@@ -1968,6 +2028,23 @@ const ResourceDetail = ({ resource }) => {
     record?.region?.currency_code ||
     record?.region?.currency?.code ||
     'usd';
+  const giftCardCurrency =
+    record?.region?.currency_code ||
+    record?.region?.currency?.code ||
+    record?.currency_code ||
+    'usd';
+  const giftCardStatus = isGiftCard
+    ? (() => {
+        if (!record) return '';
+        if (record?.is_disabled || record?.disabled_at) return 'Disabled';
+        const endsAt = record?.ends_at || record?.expires_at;
+        if (endsAt) {
+          const time = new Date(endsAt).getTime();
+          if (Number.isFinite(time) && time < Date.now()) return 'Expired';
+        }
+        return 'Active';
+      })()
+    : '';
 
   const orderPayments = useMemo(() => {
     if (!isOrder || !record) return [];
@@ -2446,12 +2523,14 @@ const ResourceDetail = ({ resource }) => {
             ? { fields: '+categories,+images,+shipping_profile_id,+shipping_profile' }
             : isOrder
               ? orderDetailParams
-              : isPriceList
-                ? { fields: '+prices,+prices.variant,+prices.variant.product' }
-                : isCustomer
-                    ? { fields: '+groups' }
-                    : isCustomerGroup
+            : isPriceList
+              ? { fields: '+prices,+prices.variant,+prices.variant.product' }
+              : isCustomer
+                  ? { fields: '+groups' }
+                  : isCustomerGroup
                       ? { fields: '+customers' }
+                      : isGiftCard
+                        ? { fields: '+region' }
                       : isInventoryItem
                         ? { fields: '+location_levels' }
                         : isStockLocation
@@ -2480,6 +2559,7 @@ const ResourceDetail = ({ resource }) => {
     isPriceList,
     isCustomer,
     isCustomerGroup,
+    isGiftCard,
     isCollection,
     isCategory,
     isInventoryItem,
@@ -2745,12 +2825,26 @@ const ResourceDetail = ({ resource }) => {
         value: record?.value || '',
         metadata: formatJsonValue(record?.metadata)
       });
+      setProductTypeSelection({ search: [], assigned: [] });
+      setProductTypeBulkState({ saving: false, error: '', success: '' });
+      setProductTypeProductState({ savingId: null, error: '', success: '' });
     }
     if (isProductTag) {
       setProductTagDraft({
         value: record?.value || '',
         metadata: formatJsonValue(record?.metadata)
       });
+      setProductTagSelection({ search: [], assigned: [] });
+      setProductTagBulkState({ saving: false, error: '', success: '' });
+      setProductTagProductState({ savingId: null, error: '', success: '' });
+    }
+    if (isGiftCard) {
+      setGiftCardDraft({
+        ends_at: formatDateTimeInput(record?.ends_at || record?.expires_at),
+        is_disabled: Boolean(record?.is_disabled || record?.disabled_at),
+        metadata: formatJsonValue(record?.metadata)
+      });
+      setGiftCardState({ saving: false, deleting: false, error: '', success: '' });
     }
     if (isUser) {
       setUserDraft({
@@ -2828,6 +2922,7 @@ const ResourceDetail = ({ resource }) => {
     isCategory,
     isProductType,
     isProductTag,
+    isGiftCard,
     isUser,
     isInvite,
     isApiKey,
@@ -3957,6 +4052,116 @@ const ResourceDetail = ({ resource }) => {
       isActive = false;
     };
   }, [isCategory, categoryProductSearch.query]);
+
+  useEffect(() => {
+    if (!isProductType || !record?.id) {
+      setProductTypeProducts([]);
+      setProductTypeProductCount(0);
+      setProductTypeProductLoading(false);
+      setProductTypeProductError('');
+      return;
+    }
+    refreshProductTypeProducts();
+  }, [isProductType, record?.id]);
+
+  useEffect(() => {
+    if (!isProductTag || !record?.id) {
+      setProductTagProducts([]);
+      setProductTagProductCount(0);
+      setProductTagProductLoading(false);
+      setProductTagProductError('');
+      return;
+    }
+    refreshProductTagProducts();
+  }, [isProductTag, record?.id]);
+
+  useEffect(() => {
+    if (!isProductType) {
+      setProductTypeProductSearch({ query: '', results: [], loading: false, error: '' });
+      return;
+    }
+    const query = productTypeProductSearch.query.trim();
+    if (!query) {
+      setProductTypeProductSearch((prev) => ({
+        ...prev,
+        results: [],
+        loading: false,
+        error: ''
+      }));
+      return;
+    }
+    let isActive = true;
+    const loadProducts = async () => {
+      setProductTypeProductSearch((prev) => ({ ...prev, loading: true, error: '' }));
+      try {
+        const payload = await getList('/admin/products', { q: query, limit: 20 });
+        if (!isActive) return;
+        setProductTypeProductSearch((prev) => ({
+          ...prev,
+          results: getArrayFromPayload(payload, 'products'),
+          loading: false
+        }));
+      } catch (err) {
+        if (!isActive) return;
+        setProductTypeProductSearch((prev) => ({
+          ...prev,
+          results: [],
+          loading: false,
+          error: err?.message || 'Unable to search products.'
+        }));
+      }
+    };
+
+    loadProducts();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isProductType, productTypeProductSearch.query]);
+
+  useEffect(() => {
+    if (!isProductTag) {
+      setProductTagProductSearch({ query: '', results: [], loading: false, error: '' });
+      return;
+    }
+    const query = productTagProductSearch.query.trim();
+    if (!query) {
+      setProductTagProductSearch((prev) => ({
+        ...prev,
+        results: [],
+        loading: false,
+        error: ''
+      }));
+      return;
+    }
+    let isActive = true;
+    const loadProducts = async () => {
+      setProductTagProductSearch((prev) => ({ ...prev, loading: true, error: '' }));
+      try {
+        const payload = await getList('/admin/products', { q: query, limit: 20 });
+        if (!isActive) return;
+        setProductTagProductSearch((prev) => ({
+          ...prev,
+          results: getArrayFromPayload(payload, 'products'),
+          loading: false
+        }));
+      } catch (err) {
+        if (!isActive) return;
+        setProductTagProductSearch((prev) => ({
+          ...prev,
+          results: [],
+          loading: false,
+          error: err?.message || 'Unable to search products.'
+        }));
+      }
+    };
+
+    loadProducts();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isProductTag, productTagProductSearch.query]);
 
   useEffect(() => {
     if (!isSalesChannel || !record?.id) {
@@ -8111,6 +8316,373 @@ const ResourceDetail = ({ resource }) => {
     }
   };
 
+  const refreshProductTypeProducts = async () => {
+    if (!record?.id) return;
+    setProductTypeProductLoading(true);
+    setProductTypeProductError('');
+    try {
+      const payload = await getList('/admin/products', { type_id: record.id, limit: 200 });
+      const items = getArrayFromPayload(payload, 'products');
+      setProductTypeProducts(items);
+      setProductTypeProductCount(
+        typeof payload?.count === 'number' ? payload.count : items.length
+      );
+      setProductTypeSelection((prev) => ({
+        ...prev,
+        assigned: prev.assigned.filter((idValue) => items.some((item) => item.id === idValue))
+      }));
+    } catch (err) {
+      setProductTypeProducts([]);
+      setProductTypeProductCount(0);
+      setProductTypeProductError(err?.message || 'Unable to load type products.');
+    } finally {
+      setProductTypeProductLoading(false);
+    }
+  };
+
+  const handleProductTypeProductSearchChange = (event) => {
+    const value = event.target.value;
+    setProductTypeProductSearch((prev) => ({ ...prev, query: value }));
+  };
+
+  const handleToggleProductTypeSelection = (field, productId) => {
+    if (!productId) return;
+    setProductTypeSelection((prev) => {
+      const current = new Set(prev[field] || []);
+      if (current.has(productId)) {
+        current.delete(productId);
+      } else {
+        current.add(productId);
+      }
+      return { ...prev, [field]: Array.from(current) };
+    });
+  };
+
+  const handleSelectAllProductTypeSearch = (productIds) => {
+    setProductTypeSelection((prev) => ({
+      ...prev,
+      search: productIds
+    }));
+  };
+
+  const handleSelectAllProductTypeAssigned = (productIds) => {
+    setProductTypeSelection((prev) => ({
+      ...prev,
+      assigned: productIds
+    }));
+  };
+
+  const handleClearProductTypeSearchSelection = () => {
+    setProductTypeSelection((prev) => ({ ...prev, search: [] }));
+  };
+
+  const handleClearProductTypeAssignedSelection = () => {
+    setProductTypeSelection((prev) => ({ ...prev, assigned: [] }));
+  };
+
+  const handleAssignProductTypeProduct = async (product) => {
+    if (!record?.id || !product?.id) return;
+    setProductTypeProductState({ savingId: product.id, error: '', success: '' });
+    try {
+      await request(`/admin/products/${product.id}`, {
+        method: 'POST',
+        body: {
+          type_id: record.id
+        }
+      });
+      setProductTypeProductState({
+        savingId: null,
+        error: '',
+        success: 'Product assigned to type.'
+      });
+      setProductTypeProductSearch({ query: '', results: [], loading: false, error: '' });
+      refreshProductTypeProducts();
+    } catch (err) {
+      setProductTypeProductState({
+        savingId: null,
+        error: err?.message || 'Unable to update type products.',
+        success: ''
+      });
+    }
+  };
+
+  const handleRemoveProductTypeProduct = async (productId) => {
+    if (!record?.id || !productId) return;
+    setProductTypeProductState({ savingId: productId, error: '', success: '' });
+    try {
+      await request(`/admin/products/${productId}`, {
+        method: 'POST',
+        body: {
+          type_id: null
+        }
+      });
+      setProductTypeProductState({
+        savingId: null,
+        error: '',
+        success: 'Product removed from type.'
+      });
+      refreshProductTypeProducts();
+    } catch (err) {
+      setProductTypeProductState({
+        savingId: null,
+        error: err?.message || 'Unable to update type products.',
+        success: ''
+      });
+    }
+  };
+
+  const handleBulkAssignProductType = async () => {
+    if (!record?.id) return;
+    const assignedIds = new Set(productTypeProducts.map((item) => item.id));
+    const targets = (productTypeSelection.search || []).filter((idValue) => !assignedIds.has(idValue));
+    if (!targets.length) {
+      setProductTypeBulkState({
+        saving: false,
+        error: 'Select at least one unassigned product.',
+        success: ''
+      });
+      return;
+    }
+    setProductTypeBulkState({ saving: true, error: '', success: '' });
+    const results = await Promise.allSettled(
+      targets.map((productId) =>
+        request(`/admin/products/${productId}`, {
+          method: 'POST',
+          body: { type_id: record.id }
+        })
+      )
+    );
+    const failures = results.filter((result) => result.status === 'rejected');
+    setProductTypeBulkState({
+      saving: false,
+      error: failures.length
+        ? `Failed to add ${failures.length} of ${targets.length} products.`
+        : '',
+      success: failures.length ? '' : 'Products assigned to type.'
+    });
+    setProductTypeSelection((prev) => ({ ...prev, search: [] }));
+    refreshProductTypeProducts();
+  };
+
+  const handleBulkRemoveProductType = async () => {
+    if (!record?.id) return;
+    const targets = productTypeSelection.assigned || [];
+    if (!targets.length) {
+      setProductTypeBulkState({
+        saving: false,
+        error: 'Select at least one assigned product.',
+        success: ''
+      });
+      return;
+    }
+    setProductTypeBulkState({ saving: true, error: '', success: '' });
+    const results = await Promise.allSettled(
+      targets.map((productId) =>
+        request(`/admin/products/${productId}`, {
+          method: 'POST',
+          body: { type_id: null }
+        })
+      )
+    );
+    const failures = results.filter((result) => result.status === 'rejected');
+    setProductTypeBulkState({
+      saving: false,
+      error: failures.length
+        ? `Failed to remove ${failures.length} of ${targets.length} products.`
+        : '',
+      success: failures.length ? '' : 'Products removed from type.'
+    });
+    setProductTypeSelection((prev) => ({ ...prev, assigned: [] }));
+    refreshProductTypeProducts();
+  };
+
+  const refreshProductTagProducts = async () => {
+    if (!record?.id) return;
+    setProductTagProductLoading(true);
+    setProductTagProductError('');
+    try {
+      const payload = await getList('/admin/products', { tag_id: record.id, limit: 200 });
+      const items = getArrayFromPayload(payload, 'products');
+      setProductTagProducts(items);
+      setProductTagProductCount(typeof payload?.count === 'number' ? payload.count : items.length);
+      setProductTagSelection((prev) => ({
+        ...prev,
+        assigned: prev.assigned.filter((idValue) => items.some((item) => item.id === idValue))
+      }));
+    } catch (err) {
+      setProductTagProducts([]);
+      setProductTagProductCount(0);
+      setProductTagProductError(err?.message || 'Unable to load tag products.');
+    } finally {
+      setProductTagProductLoading(false);
+    }
+  };
+
+  const handleProductTagProductSearchChange = (event) => {
+    const value = event.target.value;
+    setProductTagProductSearch((prev) => ({ ...prev, query: value }));
+  };
+
+  const handleToggleProductTagSelection = (field, productId) => {
+    if (!productId) return;
+    setProductTagSelection((prev) => {
+      const current = new Set(prev[field] || []);
+      if (current.has(productId)) {
+        current.delete(productId);
+      } else {
+        current.add(productId);
+      }
+      return { ...prev, [field]: Array.from(current) };
+    });
+  };
+
+  const handleSelectAllProductTagSearch = (productIds) => {
+    setProductTagSelection((prev) => ({
+      ...prev,
+      search: productIds
+    }));
+  };
+
+  const handleSelectAllProductTagAssigned = (productIds) => {
+    setProductTagSelection((prev) => ({
+      ...prev,
+      assigned: productIds
+    }));
+  };
+
+  const handleClearProductTagSearchSelection = () => {
+    setProductTagSelection((prev) => ({ ...prev, search: [] }));
+  };
+
+  const handleClearProductTagAssignedSelection = () => {
+    setProductTagSelection((prev) => ({ ...prev, assigned: [] }));
+  };
+
+  const fetchProductTagIds = async (productId) => {
+    const payload = await getDetail('/admin/products', productId, { fields: '+tags' });
+    const product = getObjectFromPayload(payload, 'product');
+    return Array.isArray(product?.tags)
+      ? product.tags.map((tag) => tag?.id).filter(Boolean)
+      : [];
+  };
+
+  const updateProductTags = async (productId, updater) => {
+    const current = await fetchProductTagIds(productId);
+    const nextIds = updater(current);
+    await request(`/admin/products/${productId}`, {
+      method: 'POST',
+      body: {
+        tags: nextIds.map((idValue) => ({ id: idValue }))
+      }
+    });
+  };
+
+  const handleAssignProductTagProduct = async (product) => {
+    if (!record?.id || !product?.id) return;
+    setProductTagProductState({ savingId: product.id, error: '', success: '' });
+    try {
+      await updateProductTags(product.id, (current) => {
+        if (current.includes(record.id)) return current;
+        return [...current, record.id];
+      });
+      setProductTagProductState({
+        savingId: null,
+        error: '',
+        success: 'Product tagged.'
+      });
+      setProductTagProductSearch({ query: '', results: [], loading: false, error: '' });
+      refreshProductTagProducts();
+    } catch (err) {
+      setProductTagProductState({
+        savingId: null,
+        error: err?.message || 'Unable to update tag products.',
+        success: ''
+      });
+    }
+  };
+
+  const handleRemoveProductTagProduct = async (productId) => {
+    if (!record?.id || !productId) return;
+    setProductTagProductState({ savingId: productId, error: '', success: '' });
+    try {
+      await updateProductTags(productId, (current) => current.filter((idValue) => idValue !== record.id));
+      setProductTagProductState({
+        savingId: null,
+        error: '',
+        success: 'Tag removed from product.'
+      });
+      refreshProductTagProducts();
+    } catch (err) {
+      setProductTagProductState({
+        savingId: null,
+        error: err?.message || 'Unable to update tag products.',
+        success: ''
+      });
+    }
+  };
+
+  const handleBulkAssignProductTag = async () => {
+    if (!record?.id) return;
+    const assignedIds = new Set(productTagProducts.map((item) => item.id));
+    const targets = (productTagSelection.search || []).filter((idValue) => !assignedIds.has(idValue));
+    if (!targets.length) {
+      setProductTagBulkState({
+        saving: false,
+        error: 'Select at least one unassigned product.',
+        success: ''
+      });
+      return;
+    }
+    setProductTagBulkState({ saving: true, error: '', success: '' });
+    const results = await Promise.allSettled(
+      targets.map((productId) =>
+        updateProductTags(productId, (current) => {
+          if (current.includes(record.id)) return current;
+          return [...current, record.id];
+        })
+      )
+    );
+    const failures = results.filter((result) => result.status === 'rejected');
+    setProductTagBulkState({
+      saving: false,
+      error: failures.length
+        ? `Failed to add ${failures.length} of ${targets.length} products.`
+        : '',
+      success: failures.length ? '' : 'Products tagged.'
+    });
+    setProductTagSelection((prev) => ({ ...prev, search: [] }));
+    refreshProductTagProducts();
+  };
+
+  const handleBulkRemoveProductTag = async () => {
+    if (!record?.id) return;
+    const targets = productTagSelection.assigned || [];
+    if (!targets.length) {
+      setProductTagBulkState({
+        saving: false,
+        error: 'Select at least one assigned product.',
+        success: ''
+      });
+      return;
+    }
+    setProductTagBulkState({ saving: true, error: '', success: '' });
+    const results = await Promise.allSettled(
+      targets.map((productId) =>
+        updateProductTags(productId, (current) => current.filter((idValue) => idValue !== record.id))
+      )
+    );
+    const failures = results.filter((result) => result.status === 'rejected');
+    setProductTagBulkState({
+      saving: false,
+      error: failures.length
+        ? `Failed to remove ${failures.length} of ${targets.length} products.`
+        : '',
+      success: failures.length ? '' : 'Tags removed from products.'
+    });
+    setProductTagSelection((prev) => ({ ...prev, assigned: [] }));
+    refreshProductTagProducts();
+  };
+
   const handleProductTypeDraftChange = (field) => (event) => {
     const value = event.target.value;
     setProductTypeDraft((prev) => ({ ...prev, [field]: value }));
@@ -8256,6 +8828,83 @@ const ResourceDetail = ({ resource }) => {
         saving: false,
         deleting: false,
         error: err?.message || 'Unable to delete product tag.',
+        success: ''
+      });
+    }
+  };
+
+  const handleGiftCardDraftChange = (field) => (event) => {
+    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
+    setGiftCardDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveGiftCard = async (event) => {
+    event.preventDefault();
+    if (!record?.id) return;
+    const endsInput = giftCardDraft.ends_at.trim();
+    const endsAt = endsInput ? parseDateTimeInput(endsInput) : null;
+    const { data: metadata, error: metadataError } = parseJsonInput(giftCardDraft.metadata);
+
+    if (endsInput && !endsAt) {
+      setGiftCardState({
+        saving: false,
+        deleting: false,
+        error: 'Expiration date is invalid.',
+        success: ''
+      });
+      return;
+    }
+
+    if (metadataError) {
+      setGiftCardState({
+        saving: false,
+        deleting: false,
+        error: `Metadata JSON error: ${metadataError}`,
+        success: ''
+      });
+      return;
+    }
+
+    setGiftCardState({ saving: true, deleting: false, error: '', success: '' });
+    try {
+      const payload = await request(`${resource.endpoint}/${record.id}`, {
+        method: 'POST',
+        body: {
+          is_disabled: Boolean(giftCardDraft.is_disabled),
+          ends_at: endsInput ? endsAt : null,
+          ...(metadata && typeof metadata === 'object' ? { metadata } : {})
+        }
+      });
+      const updated = getObjectFromPayload(payload, resource.detailKey);
+      if (updated) setRecord(updated);
+      setGiftCardState({
+        saving: false,
+        deleting: false,
+        error: '',
+        success: 'Gift card updated.'
+      });
+    } catch (err) {
+      setGiftCardState({
+        saving: false,
+        deleting: false,
+        error: err?.message || 'Unable to update gift card.',
+        success: ''
+      });
+    }
+  };
+
+  const handleDeleteGiftCard = async () => {
+    if (!record?.id) return;
+    if (!window.confirm('Delete this gift card?')) return;
+    setGiftCardState({ saving: false, deleting: true, error: '', success: '' });
+    try {
+      await request(`${resource.endpoint}/${record.id}`, { method: 'DELETE' });
+      navigate(resource.path);
+    } catch (err) {
+      setGiftCardState({
+        saving: false,
+        deleting: false,
+        error: err?.message || 'Unable to delete gift card.',
         success: ''
       });
     }
@@ -18954,6 +19603,206 @@ const ResourceDetail = ({ resource }) => {
             </div>
           ) : null}
 
+          {isProductType ? (
+            <div className="ldc-card p-6">
+              <h3 className="font-heading text-xl text-ldc-ink">Type Products</h3>
+              <p className="mt-2 text-sm text-ldc-ink/70">
+                Assign products to this type. Assigning a product replaces its current type.
+              </p>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Search products
+                  <input
+                    className="ldc-input mt-2"
+                    value={productTypeProductSearch.query}
+                    onChange={handleProductTypeProductSearchChange}
+                    placeholder="Search by title or handle"
+                  />
+                </label>
+                <div className="rounded-2xl bg-white/80 p-3 text-xs text-ldc-ink/60">
+                  {productTypeProductCount
+                    ? `${productTypeProductCount} product(s) with this type.`
+                    : 'No products assigned yet.'}
+                </div>
+              </div>
+
+              {productTypeProductSearch.loading ? (
+                <div className="mt-2 text-sm text-ldc-ink/60">Searching products...</div>
+              ) : null}
+              {productTypeProductSearch.error ? (
+                <div className="mt-2 text-sm text-rose-600">
+                  {productTypeProductSearch.error}
+                </div>
+              ) : null}
+              {productTypeProductSearch.results.length ? (
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  {productTypeProductSearch.results.map((product) => {
+                    const assigned = productTypeProducts.some((item) => item.id === product.id);
+                    const selected = productTypeSelection.search.includes(product.id);
+                    return (
+                      <div
+                        key={product.id}
+                        className="flex items-start gap-3 rounded-2xl border border-white/70 bg-white/70 px-3 py-2 text-xs text-ldc-ink"
+                      >
+                        <input
+                          type="checkbox"
+                          className="mt-1 h-4 w-4 accent-ldc-plum"
+                          checked={selected}
+                          disabled={assigned}
+                          onChange={() => handleToggleProductTypeSelection('search', product.id)}
+                        />
+                        <div className="flex-1">
+                          <div className="font-semibold">
+                            {product.title || product.handle || product.id}
+                          </div>
+                          <div className="text-ldc-ink/60">Handle {product.handle || '-'}</div>
+                        </div>
+                        <button
+                          className="ldc-button-secondary"
+                          type="button"
+                          disabled={
+                            assigned ||
+                            productTypeProductState.savingId === product.id ||
+                            productTypeBulkState.saving
+                          }
+                          onClick={() => handleAssignProductTypeProduct(product)}
+                        >
+                          {assigned ? 'Assigned' : 'Add'}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
+
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                <button
+                  className="ldc-button-secondary"
+                  type="button"
+                  onClick={() =>
+                    handleSelectAllProductTypeSearch(
+                      productTypeProductSearch.results
+                        .filter((product) => !productTypeProducts.some((item) => item.id === product.id))
+                        .map((product) => product.id)
+                    )
+                  }
+                  disabled={!productTypeProductSearch.results.length}
+                >
+                  Select all results
+                </button>
+                <button
+                  className="ldc-button-secondary"
+                  type="button"
+                  onClick={handleClearProductTypeSearchSelection}
+                  disabled={!productTypeSelection.search.length}
+                >
+                  Clear selection
+                </button>
+                <button
+                  className="ldc-button-primary"
+                  type="button"
+                  onClick={handleBulkAssignProductType}
+                  disabled={productTypeBulkState.saving || !productTypeSelection.search.length}
+                >
+                  {productTypeBulkState.saving ? 'Updating...' : 'Add selected'}
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <button
+                    className="ldc-button-secondary"
+                    type="button"
+                    onClick={() =>
+                      handleSelectAllProductTypeAssigned(
+                        productTypeProducts.map((product) => product.id)
+                      )
+                    }
+                    disabled={!productTypeProducts.length}
+                  >
+                    Select all assigned
+                  </button>
+                  <button
+                    className="ldc-button-secondary"
+                    type="button"
+                    onClick={handleClearProductTypeAssignedSelection}
+                    disabled={!productTypeSelection.assigned.length}
+                  >
+                    Clear selection
+                  </button>
+                  <button
+                    className="ldc-button-secondary"
+                    type="button"
+                    onClick={handleBulkRemoveProductType}
+                    disabled={productTypeBulkState.saving || !productTypeSelection.assigned.length}
+                  >
+                    {productTypeBulkState.saving ? 'Updating...' : 'Remove selected'}
+                  </button>
+                </div>
+                {productTypeProductLoading ? (
+                  <div className="text-sm text-ldc-ink/60">Loading type products...</div>
+                ) : null}
+                {productTypeProducts.length ? (
+                  productTypeProducts.map((product) => (
+                    <div
+                      key={product.id}
+                      className="flex items-start gap-3 rounded-2xl bg-white/70 px-3 py-2 text-xs text-ldc-ink"
+                    >
+                      <input
+                        type="checkbox"
+                        className="mt-1 h-4 w-4 accent-ldc-plum"
+                        checked={productTypeSelection.assigned.includes(product.id)}
+                        onChange={() => handleToggleProductTypeSelection('assigned', product.id)}
+                      />
+                      <div className="flex-1">
+                        <div className="font-semibold">
+                          {product.title || product.handle || product.id}
+                        </div>
+                        <div className="text-ldc-ink/60">Handle {product.handle || '-'}</div>
+                      </div>
+                      <button
+                        className="text-rose-600"
+                        type="button"
+                        disabled={
+                          productTypeProductState.savingId === product.id ||
+                          productTypeBulkState.saving
+                        }
+                        onClick={() => handleRemoveProductTypeProduct(product.id)}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-2xl bg-white/70 p-4 text-sm text-ldc-ink/70">
+                    No products assigned to this type.
+                  </div>
+                )}
+              </div>
+              {productTypeProductError ? (
+                <div className="mt-3 text-sm text-rose-600">{productTypeProductError}</div>
+              ) : null}
+              {productTypeProductState.error ? (
+                <div className="mt-2 text-sm text-rose-600">
+                  {productTypeProductState.error}
+                </div>
+              ) : null}
+              {productTypeProductState.success ? (
+                <div className="mt-2 text-sm text-emerald-700">
+                  {productTypeProductState.success}
+                </div>
+              ) : null}
+              {productTypeBulkState.error ? (
+                <div className="mt-2 text-sm text-rose-600">{productTypeBulkState.error}</div>
+              ) : null}
+              {productTypeBulkState.success ? (
+                <div className="mt-2 text-sm text-emerald-700">
+                  {productTypeBulkState.success}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
           {isProductTag ? (
             <div className="ldc-card p-6">
               <h3 className="font-heading text-xl text-ldc-ink">Product Tag</h3>
@@ -19003,6 +19852,310 @@ const ResourceDetail = ({ resource }) => {
                     disabled={productTagState.deleting}
                   >
                     {productTagState.deleting ? 'Deleting...' : 'Delete product tag'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          ) : null}
+
+          {isProductTag ? (
+            <div className="ldc-card p-6">
+              <h3 className="font-heading text-xl text-ldc-ink">Tag Products</h3>
+              <p className="mt-2 text-sm text-ldc-ink/70">
+                Apply this tag to products or remove it when it is no longer needed.
+              </p>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Search products
+                  <input
+                    className="ldc-input mt-2"
+                    value={productTagProductSearch.query}
+                    onChange={handleProductTagProductSearchChange}
+                    placeholder="Search by title or handle"
+                  />
+                </label>
+                <div className="rounded-2xl bg-white/80 p-3 text-xs text-ldc-ink/60">
+                  {productTagProductCount
+                    ? `${productTagProductCount} product(s) with this tag.`
+                    : 'No products tagged yet.'}
+                </div>
+              </div>
+
+              {productTagProductSearch.loading ? (
+                <div className="mt-2 text-sm text-ldc-ink/60">Searching products...</div>
+              ) : null}
+              {productTagProductSearch.error ? (
+                <div className="mt-2 text-sm text-rose-600">
+                  {productTagProductSearch.error}
+                </div>
+              ) : null}
+              {productTagProductSearch.results.length ? (
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  {productTagProductSearch.results.map((product) => {
+                    const assigned = productTagProducts.some((item) => item.id === product.id);
+                    const selected = productTagSelection.search.includes(product.id);
+                    return (
+                      <div
+                        key={product.id}
+                        className="flex items-start gap-3 rounded-2xl border border-white/70 bg-white/70 px-3 py-2 text-xs text-ldc-ink"
+                      >
+                        <input
+                          type="checkbox"
+                          className="mt-1 h-4 w-4 accent-ldc-plum"
+                          checked={selected}
+                          disabled={assigned}
+                          onChange={() => handleToggleProductTagSelection('search', product.id)}
+                        />
+                        <div className="flex-1">
+                          <div className="font-semibold">
+                            {product.title || product.handle || product.id}
+                          </div>
+                          <div className="text-ldc-ink/60">Handle {product.handle || '-'}</div>
+                        </div>
+                        <button
+                          className="ldc-button-secondary"
+                          type="button"
+                          disabled={
+                            assigned ||
+                            productTagProductState.savingId === product.id ||
+                            productTagBulkState.saving
+                          }
+                          onClick={() => handleAssignProductTagProduct(product)}
+                        >
+                          {assigned ? 'Tagged' : 'Add'}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
+
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                <button
+                  className="ldc-button-secondary"
+                  type="button"
+                  onClick={() =>
+                    handleSelectAllProductTagSearch(
+                      productTagProductSearch.results
+                        .filter((product) => !productTagProducts.some((item) => item.id === product.id))
+                        .map((product) => product.id)
+                    )
+                  }
+                  disabled={!productTagProductSearch.results.length}
+                >
+                  Select all results
+                </button>
+                <button
+                  className="ldc-button-secondary"
+                  type="button"
+                  onClick={handleClearProductTagSearchSelection}
+                  disabled={!productTagSelection.search.length}
+                >
+                  Clear selection
+                </button>
+                <button
+                  className="ldc-button-primary"
+                  type="button"
+                  onClick={handleBulkAssignProductTag}
+                  disabled={productTagBulkState.saving || !productTagSelection.search.length}
+                >
+                  {productTagBulkState.saving ? 'Updating...' : 'Add selected'}
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <button
+                    className="ldc-button-secondary"
+                    type="button"
+                    onClick={() =>
+                      handleSelectAllProductTagAssigned(
+                        productTagProducts.map((product) => product.id)
+                      )
+                    }
+                    disabled={!productTagProducts.length}
+                  >
+                    Select all tagged
+                  </button>
+                  <button
+                    className="ldc-button-secondary"
+                    type="button"
+                    onClick={handleClearProductTagAssignedSelection}
+                    disabled={!productTagSelection.assigned.length}
+                  >
+                    Clear selection
+                  </button>
+                  <button
+                    className="ldc-button-secondary"
+                    type="button"
+                    onClick={handleBulkRemoveProductTag}
+                    disabled={productTagBulkState.saving || !productTagSelection.assigned.length}
+                  >
+                    {productTagBulkState.saving ? 'Updating...' : 'Remove selected'}
+                  </button>
+                </div>
+                {productTagProductLoading ? (
+                  <div className="text-sm text-ldc-ink/60">Loading tag products...</div>
+                ) : null}
+                {productTagProducts.length ? (
+                  productTagProducts.map((product) => (
+                    <div
+                      key={product.id}
+                      className="flex items-start gap-3 rounded-2xl bg-white/70 px-3 py-2 text-xs text-ldc-ink"
+                    >
+                      <input
+                        type="checkbox"
+                        className="mt-1 h-4 w-4 accent-ldc-plum"
+                        checked={productTagSelection.assigned.includes(product.id)}
+                        onChange={() => handleToggleProductTagSelection('assigned', product.id)}
+                      />
+                      <div className="flex-1">
+                        <div className="font-semibold">
+                          {product.title || product.handle || product.id}
+                        </div>
+                        <div className="text-ldc-ink/60">Handle {product.handle || '-'}</div>
+                      </div>
+                      <button
+                        className="text-rose-600"
+                        type="button"
+                        disabled={
+                          productTagProductState.savingId === product.id ||
+                          productTagBulkState.saving
+                        }
+                        onClick={() => handleRemoveProductTagProduct(product.id)}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-2xl bg-white/70 p-4 text-sm text-ldc-ink/70">
+                    No products tagged with this label.
+                  </div>
+                )}
+              </div>
+              {productTagProductError ? (
+                <div className="mt-3 text-sm text-rose-600">{productTagProductError}</div>
+              ) : null}
+              {productTagProductState.error ? (
+                <div className="mt-2 text-sm text-rose-600">
+                  {productTagProductState.error}
+                </div>
+              ) : null}
+              {productTagProductState.success ? (
+                <div className="mt-2 text-sm text-emerald-700">
+                  {productTagProductState.success}
+                </div>
+              ) : null}
+              {productTagBulkState.error ? (
+                <div className="mt-2 text-sm text-rose-600">{productTagBulkState.error}</div>
+              ) : null}
+              {productTagBulkState.success ? (
+                <div className="mt-2 text-sm text-emerald-700">
+                  {productTagBulkState.success}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {isGiftCard ? (
+            <div className="ldc-card p-6">
+              <h3 className="font-heading text-xl text-ldc-ink">Gift Card</h3>
+              <p className="mt-2 text-sm text-ldc-ink/70">
+                Review balance details and manage expiry or disabled status.
+              </p>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <div className="rounded-2xl bg-white/70 px-4 py-3 text-xs text-ldc-ink/70">
+                  <div className="font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                    Status
+                  </div>
+                  <div className="mt-2 text-sm text-ldc-ink">{giftCardStatus || '-'}</div>
+                </div>
+                <div className="rounded-2xl bg-white/70 px-4 py-3 text-xs text-ldc-ink/70">
+                  <div className="font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                    Region
+                  </div>
+                  <div className="mt-2 text-sm text-ldc-ink">
+                    {record?.region?.name ||
+                      record?.region?.currency_code?.toUpperCase() ||
+                      record?.region_id ||
+                      '-'}
+                  </div>
+                </div>
+              </div>
+              <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleSaveGiftCard}>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Code
+                  <input className="ldc-input mt-2" value={record?.code || ''} disabled />
+                </label>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Issued value
+                  <input
+                    className="ldc-input mt-2"
+                    value={formatMoneyOrDash(record?.value, giftCardCurrency)}
+                    disabled
+                  />
+                </label>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Balance
+                  <input
+                    className="ldc-input mt-2"
+                    value={formatMoneyOrDash(record?.balance, giftCardCurrency)}
+                    disabled
+                  />
+                </label>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Expires at (optional)
+                  <input
+                    className="ldc-input mt-2"
+                    type="datetime-local"
+                    value={giftCardDraft.ends_at}
+                    onChange={handleGiftCardDraftChange('ends_at')}
+                  />
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-ldc-plum"
+                    checked={giftCardDraft.is_disabled}
+                    onChange={handleGiftCardDraftChange('is_disabled')}
+                  />
+                  Disable gift card
+                </label>
+                <label className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Metadata (optional)
+                  <textarea
+                    className="ldc-input mt-2 min-h-[90px] font-mono text-xs"
+                    value={giftCardDraft.metadata}
+                    onChange={handleGiftCardDraftChange('metadata')}
+                    placeholder='{"note":"Issued for giveaway"}'
+                  />
+                </label>
+                {giftCardState.error ? (
+                  <div className="md:col-span-2 text-sm text-rose-600">
+                    {giftCardState.error}
+                  </div>
+                ) : null}
+                {giftCardState.success ? (
+                  <div className="md:col-span-2 text-sm text-emerald-700">
+                    {giftCardState.success}
+                  </div>
+                ) : null}
+                <div className="md:col-span-2 flex flex-wrap items-center gap-3">
+                  <button
+                    className="ldc-button-primary"
+                    type="submit"
+                    disabled={giftCardState.saving}
+                  >
+                    {giftCardState.saving ? 'Saving...' : 'Save gift card'}
+                  </button>
+                  <button
+                    className="ldc-button-secondary"
+                    type="button"
+                    onClick={handleDeleteGiftCard}
+                    disabled={giftCardState.deleting}
+                  >
+                    {giftCardState.deleting ? 'Deleting...' : 'Delete gift card'}
                   </button>
                 </div>
               </form>

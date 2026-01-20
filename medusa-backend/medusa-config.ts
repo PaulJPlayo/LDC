@@ -60,6 +60,9 @@ module.exports = defineConfig({
         ],
       },
     },
+    gift_cards: {
+      resolve: "./src/modules/gift-cards"
+    }
   },
   admin: {
     disable: false

@@ -839,6 +839,22 @@ const ResourceList = ({ resource }) => {
     error: '',
     success: ''
   });
+  const [giftCardCreateDraft, setGiftCardCreateDraft] = useState({
+    code: '',
+    value: '',
+    region_id: '',
+    ends_at: '',
+    is_disabled: false,
+    metadata: ''
+  });
+  const [giftCardCreateState, setGiftCardCreateState] = useState({
+    saving: false,
+    error: '',
+    success: ''
+  });
+  const [giftCardCreateMeta, setGiftCardCreateMeta] = useState({ regions: [] });
+  const [giftCardCreateMetaLoading, setGiftCardCreateMetaLoading] = useState(false);
+  const [giftCardCreateMetaError, setGiftCardCreateMetaError] = useState('');
   const [inventoryItemCreateDraft, setInventoryItemCreateDraft] = useState({
     title: '',
     sku: '',
@@ -1014,6 +1030,7 @@ const ResourceList = ({ resource }) => {
   const isProductList = resource?.id === 'products';
   const isOrderList = resource?.id === 'orders';
   const isDraftOrderList = resource?.id === 'draft-orders';
+  const isGiftCardList = resource?.id === 'gift-cards';
   const isCollectionList = resource?.id === 'collections';
   const isCategoryList = resource?.id === 'product-categories';
   const isProductTypeList = resource?.id === 'product-types';
@@ -1312,6 +1329,15 @@ const ResourceList = ({ resource }) => {
     setProductImportState({ ...EMPTY_PRODUCT_IMPORT_STATE });
     setProductImportFile(null);
     setProductImportCheckState({ ...EMPTY_PRODUCT_IMPORT_CHECK_STATE });
+    setGiftCardCreateState({ saving: false, error: '', success: '' });
+    setGiftCardCreateDraft({
+      code: '',
+      value: '',
+      region_id: '',
+      ends_at: '',
+      is_disabled: false,
+      metadata: ''
+    });
     setInventoryBulkState({ open: false, saving: false, error: '', success: '' });
     setInventoryBulkLocationId('');
     setInventoryBulkEdits({});
@@ -1834,6 +1860,52 @@ const ResourceList = ({ resource }) => {
       isActive = false;
     };
   }, [isCustomerList]);
+
+  useEffect(() => {
+    if (!isGiftCardList) {
+      setGiftCardCreateMeta({ regions: [] });
+      setGiftCardCreateMetaLoading(false);
+      setGiftCardCreateMetaError('');
+      return;
+    }
+    let isActive = true;
+
+    const loadGiftCardRegions = async () => {
+      setGiftCardCreateMetaLoading(true);
+      setGiftCardCreateMetaError('');
+      try {
+        const payload = await getList('/admin/regions', { limit: 200 });
+        if (!isActive) return;
+        setGiftCardCreateMeta({
+          regions: sortByLabel(
+            getArrayFromPayload(payload, 'regions'),
+            (region) => region?.name || region?.currency_code || region?.id
+          )
+        });
+      } catch (err) {
+        if (!isActive) return;
+        setGiftCardCreateMeta({ regions: [] });
+        setGiftCardCreateMetaError(err?.message || 'Unable to load regions.');
+      } finally {
+        if (isActive) setGiftCardCreateMetaLoading(false);
+      }
+    };
+
+    loadGiftCardRegions();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isGiftCardList]);
+
+  useEffect(() => {
+    if (!isGiftCardList) return;
+    if (giftCardCreateDraft.region_id || !giftCardCreateMeta.regions.length) return;
+    setGiftCardCreateDraft((prev) => ({
+      ...prev,
+      region_id: giftCardCreateMeta.regions[0].id
+    }));
+  }, [isGiftCardList, giftCardCreateDraft.region_id, giftCardCreateMeta.regions]);
 
   useEffect(() => {
     if (!isInventoryItemList) {
@@ -4133,6 +4205,92 @@ const ResourceList = ({ resource }) => {
     }
   };
 
+  const handleGiftCardCreateDraftChange = (field) => (event) => {
+    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
+    setGiftCardCreateDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleCreateGiftCard = async (event) => {
+    event.preventDefault();
+    const code = giftCardCreateDraft.code.trim();
+    const regionId = giftCardCreateDraft.region_id.trim();
+    const endsInput = giftCardCreateDraft.ends_at.trim();
+    const endsAt = endsInput ? parseDateTimeInput(endsInput) : null;
+    const amount = parsePriceInput(giftCardCreateDraft.value);
+    const { data: metadata, error: metadataError } = parseJsonInput(giftCardCreateDraft.metadata);
+
+    if (!regionId) {
+      setGiftCardCreateState({
+        saving: false,
+        error: 'Region is required.',
+        success: ''
+      });
+      return;
+    }
+
+    if (!Number.isFinite(amount)) {
+      setGiftCardCreateState({
+        saving: false,
+        error: 'Gift card value is required.',
+        success: ''
+      });
+      return;
+    }
+
+    if (endsInput && !endsAt) {
+      setGiftCardCreateState({
+        saving: false,
+        error: 'Expiration date is invalid.',
+        success: ''
+      });
+      return;
+    }
+
+    if (metadataError) {
+      setGiftCardCreateState({
+        saving: false,
+        error: `Metadata JSON error: ${metadataError}`,
+        success: ''
+      });
+      return;
+    }
+
+    setGiftCardCreateState({ saving: true, error: '', success: '' });
+    try {
+      await request('/admin/gift-cards', {
+        method: 'POST',
+        body: {
+          value: amount,
+          region_id: regionId,
+          ...(code ? { code } : {}),
+          ...(endsAt ? { ends_at: endsAt } : {}),
+          is_disabled: Boolean(giftCardCreateDraft.is_disabled),
+          ...(metadata && typeof metadata === 'object' ? { metadata } : {})
+        }
+      });
+      setGiftCardCreateDraft({
+        code: '',
+        value: '',
+        region_id: giftCardCreateDraft.region_id || '',
+        ends_at: '',
+        is_disabled: false,
+        metadata: ''
+      });
+      setGiftCardCreateState({
+        saving: false,
+        error: '',
+        success: 'Gift card issued.'
+      });
+      fetchList();
+    } catch (err) {
+      setGiftCardCreateState({
+        saving: false,
+        error: err?.message || 'Unable to issue gift card.',
+        success: ''
+      });
+    }
+  };
+
   const handleInventoryItemCreateDraftChange = (field) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
     setInventoryItemCreateDraft((prev) => ({ ...prev, [field]: value }));
@@ -5011,6 +5169,16 @@ const ResourceList = ({ resource }) => {
   const hasInventoryFilters =
     isInventoryItemList && (Boolean(inventoryLocationId) || inventoryManagedFilter || inventoryLowStock);
   const displayRows = isUploadList ? uploadRows : listRows;
+  const selectedGiftCardRegion = useMemo(() => {
+    if (!isGiftCardList) return null;
+    return (
+      giftCardCreateMeta.regions.find((region) => region.id === giftCardCreateDraft.region_id) || null
+    );
+  }, [isGiftCardList, giftCardCreateMeta.regions, giftCardCreateDraft.region_id]);
+  const giftCardCurrency =
+    selectedGiftCardRegion?.currency_code ||
+    selectedGiftCardRegion?.currency?.code ||
+    '';
 
   return (
     <div>
@@ -7989,6 +8157,108 @@ const ResourceList = ({ resource }) => {
               disabled={productTagCreateState.saving}
             >
               {productTagCreateState.saving ? 'Creating...' : 'Create product tag'}
+            </button>
+          </form>
+        </div>
+      ) : null}
+
+      {isGiftCardList ? (
+        <div className="mb-6 ldc-card p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="font-heading text-lg text-ldc-ink">Issue gift card</h3>
+            {giftCardCreateMetaLoading ? (
+              <span className="text-xs text-ldc-ink/60">Loading regions...</span>
+            ) : null}
+          </div>
+          <form className="mt-4 space-y-4" onSubmit={handleCreateGiftCard}>
+            <div className="grid gap-4 md:grid-cols-3">
+              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                Region
+                {giftCardCreateMeta.regions.length ? (
+                  <select
+                    className="ldc-input mt-2"
+                    value={giftCardCreateDraft.region_id}
+                    onChange={handleGiftCardCreateDraftChange('region_id')}
+                  >
+                    {giftCardCreateMeta.regions.map((region) => (
+                      <option key={region.id} value={region.id}>
+                        {region.name || region.currency_code?.toUpperCase() || region.id}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    className="ldc-input mt-2"
+                    value={giftCardCreateDraft.region_id}
+                    onChange={handleGiftCardCreateDraftChange('region_id')}
+                    placeholder="region id"
+                  />
+                )}
+              </label>
+              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                Value {giftCardCurrency ? `(${giftCardCurrency.toUpperCase()})` : ''}
+                <input
+                  className="ldc-input mt-2"
+                  value={giftCardCreateDraft.value}
+                  onChange={handleGiftCardCreateDraftChange('value')}
+                  placeholder="50.00"
+                />
+              </label>
+              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                Code (optional)
+                <input
+                  className="ldc-input mt-2"
+                  value={giftCardCreateDraft.code}
+                  onChange={handleGiftCardCreateDraftChange('code')}
+                  placeholder="AUTO-GENERATE"
+                />
+              </label>
+              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                Expires at (optional)
+                <input
+                  className="ldc-input mt-2"
+                  type="datetime-local"
+                  value={giftCardCreateDraft.ends_at}
+                  onChange={handleGiftCardCreateDraftChange('ends_at')}
+                />
+              </label>
+              <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-ldc-plum"
+                  checked={giftCardCreateDraft.is_disabled}
+                  onChange={handleGiftCardCreateDraftChange('is_disabled')}
+                />
+                Disable after issuing
+              </label>
+            </div>
+
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+              Metadata (optional)
+              <textarea
+                className="ldc-input mt-2 min-h-[90px] font-mono text-xs"
+                value={giftCardCreateDraft.metadata}
+                onChange={handleGiftCardCreateDraftChange('metadata')}
+                placeholder='{"note":"Holiday issue"}'
+              />
+            </label>
+
+            {giftCardCreateMetaError ? (
+              <div className="text-sm text-rose-600">{giftCardCreateMetaError}</div>
+            ) : null}
+            {giftCardCreateState.error ? (
+              <div className="text-sm text-rose-600">{giftCardCreateState.error}</div>
+            ) : null}
+            {giftCardCreateState.success ? (
+              <div className="text-sm text-emerald-700">{giftCardCreateState.success}</div>
+            ) : null}
+
+            <button
+              className="ldc-button-primary"
+              type="submit"
+              disabled={giftCardCreateState.saving}
+            >
+              {giftCardCreateState.saving ? 'Issuing...' : 'Issue gift card'}
             </button>
           </form>
         </div>
