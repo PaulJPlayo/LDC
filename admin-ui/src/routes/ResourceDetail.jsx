@@ -57,6 +57,10 @@ const TEAM_ROLE_OPTIONS = [
   { value: 'admin', label: 'Admin' }
 ];
 
+const STOCK_LOCATION_DETAIL_FIELDS =
+  'name,*sales_channels,*address,fulfillment_sets.type,fulfillment_sets.name,*fulfillment_sets.service_zones.geo_zones,*fulfillment_sets.service_zones,*fulfillment_sets.service_zones.shipping_options,*fulfillment_sets.service_zones.shipping_options.rules,*fulfillment_sets.service_zones.shipping_options.shipping_profile,*fulfillment_providers';
+const STOCK_LOCATION_SERVICE_ZONE_FIELDS =
+  'name,fulfillment_sets.name,*fulfillment_sets.service_zones';
 
 const buildGeoZoneDraft = (zone = {}) => ({
   id: zone?.id,
@@ -2640,14 +2644,11 @@ const ResourceDetail = ({ resource }) => {
                       ? { fields: '+customers' }
                       : isGiftCard
                         ? { fields: '+region' }
-                      : isInventoryItem
-                        ? { fields: '+location_levels' }
-                        : isStockLocation
-                        ? {
-                            fields:
-                              '+address,+sales_channels,+fulfillment_providers,+fulfillment_sets,+fulfillment_sets.service_zones,+fulfillment_sets.service_zones.geo_zones'
-                          }
-                        : undefined;
+                        : isInventoryItem
+                          ? { fields: '+location_levels' }
+                          : isStockLocation
+                          ? { fields: STOCK_LOCATION_DETAIL_FIELDS }
+                          : undefined;
           const payload = await getDetail(resource.endpoint, id, detailParams);
           setRecord(getObjectFromPayload(payload, resource.detailKey));
         }
@@ -3257,7 +3258,7 @@ const ResourceDetail = ({ resource }) => {
           key: 'serviceZones',
           promise: getList('/admin/stock-locations', {
             limit: 200,
-            fields: '+fulfillment_sets,+fulfillment_sets.service_zones'
+            fields: STOCK_LOCATION_SERVICE_ZONE_FIELDS
           })
         });
       }
@@ -5140,8 +5141,7 @@ const ResourceDetail = ({ resource }) => {
     if (!isStockLocation || !record?.id) return;
     try {
       const payload = await getDetail(resource.endpoint, record.id, {
-        fields:
-          '+address,+sales_channels,+fulfillment_providers,+fulfillment_sets,+fulfillment_sets.service_zones,+fulfillment_sets.service_zones.geo_zones'
+        fields: STOCK_LOCATION_DETAIL_FIELDS
       });
       const updated = getObjectFromPayload(payload, resource?.detailKey);
       if (updated) setRecord(updated);
@@ -18984,6 +18984,9 @@ const ResourceDetail = ({ resource }) => {
                                 const editDraft = serviceZoneEdits[zone.id];
                                 const isEditing = Boolean(editDraft);
                                 const geoZones = Array.isArray(zone?.geo_zones) ? zone.geo_zones : [];
+                                const shippingOptions = Array.isArray(zone?.shipping_options)
+                                  ? zone.shipping_options
+                                  : [];
                                 return (
                                   <div
                                     key={zone.id}
@@ -19164,16 +19167,45 @@ const ResourceDetail = ({ resource }) => {
                                         </div>
                                       </div>
                                     ) : (
-                                      <div className="mt-3 space-y-1 text-xs text-ldc-ink/60">
-                                        {geoZones.length ? (
-                                          geoZones.map((geo, index) => (
-                                            <div key={geo.id || `${zone.id}-geo-${index}`}>
-                                              {formatGeoZoneSummary(geo)}
-                                            </div>
-                                          ))
-                                        ) : (
-                                          <div>No geo zones set.</div>
-                                        )}
+                                      <div className="mt-3 space-y-3 text-xs text-ldc-ink/60">
+                                        <div className="space-y-1">
+                                          {geoZones.length ? (
+                                            geoZones.map((geo, index) => (
+                                              <div key={geo.id || `${zone.id}-geo-${index}`}>
+                                                {formatGeoZoneSummary(geo)}
+                                              </div>
+                                            ))
+                                          ) : (
+                                            <div>No geo zones set.</div>
+                                          )}
+                                        </div>
+                                        <div>
+                                          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                                            Shipping options
+                                          </div>
+                                          <div className="mt-1 space-y-1">
+                                            {shippingOptions.length ? (
+                                              shippingOptions.map((option) => (
+                                                <div key={option.id} className="text-ldc-ink/70">
+                                                  <Link
+                                                    className="font-semibold text-ldc-plum underline decoration-ldc-plum/40 underline-offset-4"
+                                                    to={`/shipping-options/${option.id}`}
+                                                  >
+                                                    {option.name || option.id}
+                                                  </Link>
+                                                  {option.shipping_profile?.name ? (
+                                                    <span className="text-ldc-ink/50">
+                                                      {' '}
+                                                      · {option.shipping_profile.name}
+                                                    </span>
+                                                  ) : null}
+                                                </div>
+                                              ))
+                                            ) : (
+                                              <div>No shipping options assigned.</div>
+                                            )}
+                                          </div>
+                                        </div>
                                       </div>
                                     )}
                                   </div>
