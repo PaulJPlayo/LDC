@@ -34,7 +34,9 @@ const toneMap = {
   not_paid: 'bg-slate-100 text-slate-600',
   not_fulfilled: 'bg-slate-100 text-slate-600',
   draft: 'bg-slate-100 text-slate-600',
-  archived: 'bg-slate-100 text-slate-600'
+  archived: 'bg-slate-100 text-slate-600',
+  read: 'bg-slate-100 text-slate-600',
+  unread: 'bg-ldc-plum/20 text-ldc-plum'
 };
 
 const StatusBadge = ({ value }) => {

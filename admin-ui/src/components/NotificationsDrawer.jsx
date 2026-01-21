@@ -3,8 +3,17 @@ import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { formatDateTime } from '../lib/formatters.js';
 import { formatApiError, getList } from '../lib/api.js';
-
-const LAST_READ_KEY = 'notificationsLastReadAt';
+import {
+  NOTIFICATIONS_LAST_READ_KEY,
+  filterHiddenNotifications,
+  getHiddenIdSet,
+  getReadIdSet,
+  isNotificationUnread,
+  notifyNotificationChange,
+  setHiddenIdSet,
+  setReadIdSet,
+  subscribeNotificationChanges
+} from '../lib/notifications.js';
 const MEDIA_BASE = (import.meta.env.VITE_MEDUSA_BACKEND_URL || 'https://api.lovettsldc.com')
   .replace(/\/$/, '');
 
@@ -76,24 +85,34 @@ const getNotificationFile = (notice) => {
 
 const NotificationsDrawer = () => {
   const [open, setOpen] = useState(false);
-  const [lastReadAt, setLastReadAt] = useState(() => localStorage.getItem(LAST_READ_KEY));
+  const [lastReadAt, setLastReadAt] = useState(() =>
+    typeof window === 'undefined'
+      ? null
+      : window.localStorage.getItem(NOTIFICATIONS_LAST_READ_KEY)
+  );
+  const [readIds, setReadIds] = useState(() => getReadIdSet());
+  const [hiddenIds, setHiddenIds] = useState(() => getHiddenIdSet());
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const lastReadTimestamp = lastReadAt ? Date.parse(lastReadAt) : 0;
 
+  const visibleNotifications = useMemo(
+    () => filterHiddenNotifications(notifications, hiddenIds),
+    [notifications, hiddenIds]
+  );
+
   const hasUnread = useMemo(() => {
-    if (!notifications.length) return false;
-    const latest = notifications[0]?.created_at;
-    if (!latest) return false;
-    const latestTime = Date.parse(latest);
-    return Number.isFinite(latestTime) && latestTime > lastReadTimestamp;
-  }, [notifications, lastReadTimestamp]);
+    if (!visibleNotifications.length) return false;
+    return visibleNotifications.some((notice) =>
+      isNotificationUnread(notice, lastReadTimestamp, readIds)
+    );
+  }, [visibleNotifications, lastReadTimestamp, readIds]);
 
   const notificationRows = useMemo(
     () =>
-      notifications
+      visibleNotifications
         .map((notice) => ({
           id: notice?.id || `${notice?.created_at || 'notice'}`,
           title: getNotificationTitle(notice),
@@ -104,7 +123,7 @@ const NotificationsDrawer = () => {
           file: getNotificationFile(notice)
         }))
         .filter((notice) => notice.title),
-    [notifications]
+    [visibleNotifications]
   );
 
   const fetchNotifications = async () => {
@@ -124,20 +143,76 @@ const NotificationsDrawer = () => {
     }
   };
 
+  const handleMarkRead = (id) => {
+    if (!id) return;
+    const next = new Set(readIds);
+    next.add(id);
+    setReadIds(next);
+    setReadIdSet(next);
+  };
+
+  const handleMarkAllRead = () => {
+    const latestTimestamp = notificationRows.reduce((latest, notice) => {
+      const ts = Date.parse(notice?.created_at || '');
+      if (!Number.isFinite(ts)) return latest;
+      return ts > latest ? ts : latest;
+    }, 0);
+    const timestamp = latestTimestamp
+      ? new Date(latestTimestamp).toISOString()
+      : new Date().toISOString();
+    window.localStorage.setItem(NOTIFICATIONS_LAST_READ_KEY, timestamp);
+    setLastReadAt(timestamp);
+    const cleared = new Set();
+    setReadIds(cleared);
+    setReadIdSet(cleared);
+    notifyNotificationChange();
+  };
+
+  const handleClearNotifications = (ids) => {
+    if (!Array.isArray(ids) || !ids.length) return;
+    const next = new Set(hiddenIds);
+    ids.forEach((id) => {
+      if (id) next.add(id);
+    });
+    setHiddenIds(next);
+    setHiddenIdSet(next);
+  };
+
+  const handleClearRead = () => {
+    const idsToClear = notificationRows
+      .filter((notice) => !isNotificationUnread(notice, lastReadTimestamp, readIds))
+      .map((notice) => notice.id)
+      .filter(Boolean);
+    handleClearNotifications(idsToClear);
+  };
+
+  const handleClearAll = () => {
+    const idsToClear = notificationRows.map((notice) => notice.id).filter(Boolean);
+    handleClearNotifications(idsToClear);
+  };
+
   const handleOpenChange = (nextOpen) => {
     if (nextOpen) {
-      localStorage.setItem(LAST_READ_KEY, new Date().toISOString());
       setOpen(true);
-    } else {
-      setOpen(false);
-      setLastReadAt(localStorage.getItem(LAST_READ_KEY));
+      return;
     }
+    setOpen(false);
   };
 
   useEffect(() => {
     fetchNotifications();
     const interval = window.setInterval(fetchNotifications, 60000);
     return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const sync = () => {
+      setReadIds(getReadIdSet());
+      setHiddenIds(getHiddenIdSet());
+      setLastReadAt(window.localStorage.getItem(NOTIFICATIONS_LAST_READ_KEY));
+    };
+    return subscribeNotificationChanges(sync);
   }, []);
 
   useEffect(() => {
@@ -192,16 +267,42 @@ const NotificationsDrawer = () => {
           </button>
         </div>
 
-        <div className="mt-4 flex items-center justify-between text-xs text-ldc-ink/60">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-ldc-ink/60">
           <span>{hasUnread ? 'New activity available.' : 'All caught up.'}</span>
-          <button
-            type="button"
-            className="font-semibold text-ldc-plum"
-            onClick={fetchNotifications}
-            disabled={loading}
-          >
-            {loading ? 'Refreshing...' : 'Refresh'}
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              className="font-semibold text-ldc-plum disabled:text-ldc-ink/40"
+              onClick={handleMarkAllRead}
+              disabled={!notificationRows.length}
+            >
+              Mark all read
+            </button>
+            <button
+              type="button"
+              className="font-semibold text-ldc-plum disabled:text-ldc-ink/40"
+              onClick={handleClearRead}
+              disabled={!notificationRows.length}
+            >
+              Clear read
+            </button>
+            <button
+              type="button"
+              className="font-semibold text-ldc-plum disabled:text-ldc-ink/40"
+              onClick={handleClearAll}
+              disabled={!notificationRows.length}
+            >
+              Clear all
+            </button>
+            <button
+              type="button"
+              className="font-semibold text-ldc-plum disabled:text-ldc-ink/40"
+              onClick={fetchNotifications}
+              disabled={loading}
+            >
+              {loading ? 'Refreshing...' : 'Refresh'}
+            </button>
+          </div>
         </div>
 
         {error ? <div className="mt-3 text-sm text-rose-600">{error}</div> : null}
@@ -216,8 +317,7 @@ const NotificationsDrawer = () => {
             </div>
           ) : null}
           {notificationRows.map((notice, index) => {
-            const createdTime = notice.created_at ? Date.parse(notice.created_at) : 0;
-            const unread = Number.isFinite(createdTime) && createdTime > lastReadTimestamp;
+            const unread = isNotificationUnread(notice, lastReadTimestamp, readIds);
             return (
               <div key={notice.id || `${notice.title}-${index}`} className="rounded-2xl bg-white/80 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -256,6 +356,26 @@ const NotificationsDrawer = () => {
                     </a>
                   </div>
                 ) : null}
+                <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
+                  {unread ? (
+                    <button
+                      type="button"
+                      className="font-semibold text-ldc-plum"
+                      onClick={() => handleMarkRead(notice.id)}
+                    >
+                      Mark read
+                    </button>
+                  ) : (
+                    <span className="text-ldc-ink/50">Read</span>
+                  )}
+                  <button
+                    type="button"
+                    className="font-semibold text-ldc-plum"
+                    onClick={() => handleClearNotifications([notice.id])}
+                  >
+                    Clear
+                  </button>
+                </div>
               </div>
             );
           })}

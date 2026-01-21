@@ -4,6 +4,17 @@ import PageHeader from '../components/PageHeader.jsx';
 import DataTable from '../components/DataTable.jsx';
 import { formatDateTime, formatMoney } from '../lib/formatters.js';
 import { formatApiError, getDetail, getList, request, uploadFiles } from '../lib/api.js';
+import {
+  NOTIFICATIONS_LAST_READ_KEY,
+  filterHiddenNotifications,
+  getHiddenIdSet,
+  getReadIdSet,
+  isNotificationUnread,
+  notifyNotificationChange,
+  setHiddenIdSet,
+  setReadIdSet,
+  subscribeNotificationChanges
+} from '../lib/notifications.js';
 import { resolveRole, isAdminUser, isResourceAdminOnly } from '../lib/roles.js';
 import { useAuth } from '../state/auth.jsx';
 
@@ -598,6 +609,13 @@ const ResourceList = ({ resource }) => {
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [notificationReadIds, setNotificationReadIds] = useState(() => getReadIdSet());
+  const [notificationHiddenIds, setNotificationHiddenIds] = useState(() => getHiddenIdSet());
+  const [notificationLastReadAt, setNotificationLastReadAt] = useState(() =>
+    typeof window === 'undefined'
+      ? null
+      : window.localStorage.getItem(NOTIFICATIONS_LAST_READ_KEY)
+  );
   const [filtersLoading, setFiltersLoading] = useState(false);
   const [filtersError, setFiltersError] = useState('');
   const [productFilters, setProductFilters] = useState({
@@ -1139,6 +1157,7 @@ const ResourceList = ({ resource }) => {
           format: (_, row) =>
             row?.data?.description || row?.data?.message || row?.data?.text || '-'
         },
+        { key: 'read_status', label: 'Read', badge: true },
         { key: 'channel', label: 'Channel' },
         { key: 'status', label: 'Status', badge: true },
         {
@@ -1162,7 +1181,39 @@ const ResourceList = ({ resource }) => {
             );
           }
         },
-        { key: 'created_at', label: 'Created', format: formatDateTime }
+        { key: 'created_at', label: 'Created', format: formatDateTime },
+        {
+          key: 'actions',
+          label: 'Actions',
+          format: (_, row) => (
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              {row?.__unread ? (
+                <button
+                  type="button"
+                  className="font-semibold text-ldc-plum"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleMarkNotificationRead(row.id);
+                  }}
+                >
+                  Mark read
+                </button>
+              ) : (
+                <span className="text-ldc-ink/50">Read</span>
+              )}
+              <button
+                type="button"
+                className="font-semibold text-ldc-plum"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleClearNotifications([row.id]);
+                }}
+              >
+                Clear
+              </button>
+            </div>
+          )
+        }
       ];
     }
     return resource.columns || [];
@@ -1285,6 +1336,25 @@ const ResourceList = ({ resource }) => {
     inventoryLowStock,
     inventoryLowStockThreshold
   ]);
+  const notificationLastReadTimestamp = notificationLastReadAt ? Date.parse(notificationLastReadAt) : 0;
+  const notificationRows = useMemo(() => {
+    if (!isNotificationList) return rows;
+    const visible = filterHiddenNotifications(rows, notificationHiddenIds);
+    return visible.map((row) => {
+      const unread = isNotificationUnread(row, notificationLastReadTimestamp, notificationReadIds);
+      return {
+        ...row,
+        read_status: unread ? 'Unread' : 'Read',
+        __unread: unread
+      };
+    });
+  }, [
+    isNotificationList,
+    rows,
+    notificationHiddenIds,
+    notificationReadIds,
+    notificationLastReadTimestamp
+  ]);
   const listRows = isOrderLikeList
     ? orderFilteredRows
     : isCustomerList
@@ -1293,7 +1363,9 @@ const ResourceList = ({ resource }) => {
         ? productRows
         : isInventoryItemList
           ? inventoryFilteredRows
-          : rows;
+          : isNotificationList
+            ? notificationRows
+            : rows;
   const selectedInventoryItems = useMemo(() => {
     if (!isInventoryItemList || !selectedIds.length) return [];
     const selectedSet = new Set(selectedIds);
@@ -2144,6 +2216,21 @@ const ResourceList = ({ resource }) => {
   ]);
 
   useEffect(() => {
+    if (!isNotificationList) return undefined;
+    const sync = () => {
+      setNotificationReadIds(getReadIdSet());
+      setNotificationHiddenIds(getHiddenIdSet());
+      setNotificationLastReadAt(
+        typeof window === 'undefined'
+          ? null
+          : window.localStorage.getItem(NOTIFICATIONS_LAST_READ_KEY)
+      );
+    };
+    sync();
+    return subscribeNotificationChanges(sync);
+  }, [isNotificationList]);
+
+  useEffect(() => {
     if (!isPriceListList) {
       setPriceListProductSearch({ query: '', results: [], loading: false, error: '' });
       return;
@@ -2234,6 +2321,57 @@ const ResourceList = ({ resource }) => {
   const handleRowClick = (row) => {
     if (isUploadList || isNotificationList) return;
     navigate(`${resource.path}/${row.id}`);
+  };
+
+  const handleMarkNotificationRead = (id) => {
+    if (!id) return;
+    const next = new Set(notificationReadIds);
+    next.add(id);
+    setNotificationReadIds(next);
+    setReadIdSet(next);
+  };
+
+  const handleClearNotifications = (ids) => {
+    if (!Array.isArray(ids) || !ids.length) return;
+    const next = new Set(notificationHiddenIds);
+    ids.forEach((id) => {
+      if (id) next.add(id);
+    });
+    setNotificationHiddenIds(next);
+    setHiddenIdSet(next);
+  };
+
+  const handleMarkAllNotificationsRead = () => {
+    if (!notificationRows.length) return;
+    const latestTimestamp = notificationRows.reduce((latest, notice) => {
+      const ts = Date.parse(notice?.created_at || '');
+      if (!Number.isFinite(ts)) return latest;
+      return ts > latest ? ts : latest;
+    }, 0);
+    const timestamp = latestTimestamp
+      ? new Date(latestTimestamp).toISOString()
+      : new Date().toISOString();
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(NOTIFICATIONS_LAST_READ_KEY, timestamp);
+    }
+    setNotificationLastReadAt(timestamp);
+    const cleared = new Set();
+    setNotificationReadIds(cleared);
+    setReadIdSet(cleared);
+    notifyNotificationChange();
+  };
+
+  const handleClearReadNotifications = () => {
+    const idsToClear = notificationRows
+      .filter((notice) => !notice.__unread)
+      .map((notice) => notice.id)
+      .filter(Boolean);
+    handleClearNotifications(idsToClear);
+  };
+
+  const handleClearAllNotifications = () => {
+    const idsToClear = notificationRows.map((notice) => notice.id).filter(Boolean);
+    handleClearNotifications(idsToClear);
   };
 
   const handleToggleRow = (rowId) => {
@@ -5266,6 +5404,34 @@ const ResourceList = ({ resource }) => {
               >
                 Create Draft Order
               </button>
+            ) : null}
+            {isNotificationList ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  className="ldc-button-secondary"
+                  type="button"
+                  onClick={handleMarkAllNotificationsRead}
+                  disabled={!notificationRows.length}
+                >
+                  Mark all read
+                </button>
+                <button
+                  className="ldc-button-secondary"
+                  type="button"
+                  onClick={handleClearReadNotifications}
+                  disabled={!notificationRows.length}
+                >
+                  Clear read
+                </button>
+                <button
+                  className="ldc-button-secondary"
+                  type="button"
+                  onClick={handleClearAllNotifications}
+                  disabled={!notificationRows.length}
+                >
+                  Clear all
+                </button>
+              </div>
             ) : null}
             {!isUploadList ? (
               <form className="flex items-center gap-2" onSubmit={handleSearch}>
