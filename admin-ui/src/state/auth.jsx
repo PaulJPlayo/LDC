@@ -28,9 +28,10 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     setError('');
-    const nextUser = await loginRequest(email, password);
+    await loginRequest(email, password);
+    const nextUser = await getCurrentUser();
     setUser(nextUser);
-    setStatus('authenticated');
+    setStatus(nextUser ? 'authenticated' : 'anonymous');
     return nextUser;
   };
 

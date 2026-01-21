@@ -115,7 +115,7 @@ export const logout = async () => {
 
 export const getCurrentUser = async () => {
   try {
-    const payload = await request('/admin/users/me');
+    const payload = await request('/admin/users/me?fields=+metadata');
     return payload?.user || null;
   } catch (error) {
     if (error instanceof ApiError && [401, 403].includes(error.status)) {
