@@ -189,6 +189,7 @@
       let descriptionEl =
         container.querySelector('[data-product-description]') ||
         container.querySelector('.product-description') ||
+        container.querySelector('.product-details') ||
         container.querySelector('.tile-description') ||
         null;
       if (!descriptionEl) {

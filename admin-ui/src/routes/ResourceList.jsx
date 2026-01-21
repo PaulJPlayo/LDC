@@ -522,19 +522,19 @@ const resolveFileUrl = (url) => {
 };
 
 const buildPriceListRules = (draft) => {
-  const rules = [];
-  const pushRule = (attribute, values) => {
+  const rules = {};
+  const setRule = (attribute, values) => {
     if (!Array.isArray(values) || !values.length) return;
     const cleaned = Array.from(new Set(values.map((entry) => String(entry).trim()).filter(Boolean)));
     if (!cleaned.length) return;
-    rules.push({ attribute, operator: 'in', value: cleaned });
+    rules[attribute] = cleaned;
   };
-  pushRule('customer_group_id', draft.customer_group_ids);
-  pushRule('product_id', draft.product_ids);
-  pushRule('product_collection_id', draft.collection_ids);
-  pushRule('product_category_id', draft.category_ids);
-  pushRule('product_tag_id', draft.tag_ids);
-  pushRule('product_type_id', draft.type_ids);
+  setRule('customer_group_id', draft.customer_group_ids);
+  setRule('product_id', draft.product_ids);
+  setRule('product_collection_id', draft.collection_ids);
+  setRule('product_category_id', draft.category_ids);
+  setRule('product_tag_id', draft.tag_ids);
+  setRule('product_type_id', draft.type_ids);
   return rules;
 };
 
@@ -4181,18 +4181,20 @@ const ResourceList = ({ resource }) => {
 
     setPriceListCreateState({ saving: true, error: '', success: '' });
     try {
+      const body = {
+        title,
+        description: description || undefined,
+        status: status || undefined,
+        type,
+        starts_at: startsAt || undefined,
+        ends_at: endsAt || undefined,
+        ...(Object.keys(rules).length ? { rules } : {}),
+        ...(extra && typeof extra === 'object' ? extra : {})
+      };
+
       await request('/admin/price-lists', {
         method: 'POST',
-        body: {
-          title,
-          description: description || undefined,
-          status: status || undefined,
-          type,
-          starts_at: startsAt || undefined,
-          ends_at: endsAt || undefined,
-          rules,
-          ...(extra && typeof extra === 'object' ? extra : {})
-        }
+        body
       });
       setPriceListDraft({
         title: '',
@@ -8191,7 +8193,7 @@ const ResourceList = ({ resource }) => {
                 className="ldc-input mt-2 min-h-[80px] font-mono text-xs"
                 value={priceListDraft.extra}
                 onChange={handlePriceListDraftChange('extra')}
-                placeholder='{"rules":[{"attribute":"customer_group_id","operator":"in","value":["cg_..."]}]}'
+                placeholder='{"rules":{"customer_group_id":["cg_..."]}}'
               />
             </label>
 

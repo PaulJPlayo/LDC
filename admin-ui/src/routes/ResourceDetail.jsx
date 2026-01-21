@@ -931,19 +931,19 @@ const extractRuleValues = (rules, attribute) => {
 };
 
 const buildPriceListRules = (draft) => {
-  const rules = [];
-  const pushRule = (attribute, values) => {
+  const rules = {};
+  const setRule = (attribute, values) => {
     if (!Array.isArray(values) || !values.length) return;
     const cleaned = Array.from(new Set(values.map((entry) => String(entry).trim()).filter(Boolean)));
     if (!cleaned.length) return;
-    rules.push({ attribute, operator: 'in', value: cleaned });
+    rules[attribute] = cleaned;
   };
-  pushRule('customer_group_id', draft.customer_group_ids);
-  pushRule('product_id', draft.product_ids);
-  pushRule('product_collection_id', draft.collection_ids);
-  pushRule('product_category_id', draft.category_ids);
-  pushRule('product_tag_id', draft.tag_ids);
-  pushRule('product_type_id', draft.type_ids);
+  setRule('customer_group_id', draft.customer_group_ids);
+  setRule('product_id', draft.product_ids);
+  setRule('product_collection_id', draft.collection_ids);
+  setRule('product_category_id', draft.category_ids);
+  setRule('product_tag_id', draft.tag_ids);
+  setRule('product_type_id', draft.type_ids);
   return rules;
 };
 
@@ -974,28 +974,57 @@ const buildTaxRateRules = (draft) => {
   return rules;
 };
 
+const extractRuleValue = (rules, attribute) => {
+  if (!rules) return '';
+  if (Array.isArray(rules)) {
+    const match = rules.find((rule) => rule?.attribute === attribute);
+    if (!match) return '';
+    const value = match.value;
+    return value == null ? '' : String(value);
+  }
+  if (typeof rules === 'object') {
+    const value = rules[attribute];
+    if (Array.isArray(value)) return value[0] ? String(value[0]) : '';
+    return value == null ? '' : String(value);
+  }
+  return '';
+};
+
 const buildPriceListPriceDrafts = (prices) => {
   const drafts = {};
   (prices || []).forEach((price) => {
     if (!price?.id) return;
+    const variantId =
+      price?.variant_id ||
+      price?.price_set?.variant?.id ||
+      price?.price_set?.variant_id ||
+      price?.variant?.id ||
+      '';
+    const regionRule =
+      extractRuleValue(price?.price_rules, 'region_id') ||
+      extractRuleValue(price?.rules, 'region_id');
     drafts[price.id] = {
       amount: formatPriceInput(price?.amount),
       currency_code: price?.currency_code || '',
-      region_id: price?.region_id || price?.region?.id || '',
+      region_id: regionRule || price?.region_id || price?.region?.id || '',
       min_quantity: price?.min_quantity != null ? String(price.min_quantity) : '',
       max_quantity: price?.max_quantity != null ? String(price.max_quantity) : '',
-      variant_id: price?.variant_id || price?.variant?.id || ''
+      variant_id: variantId
     };
   });
   return drafts;
 };
 
 const getPriceListVariantLabel = (price) => {
-  const variant = price?.variant || price?.variant_detail || null;
+  const variant =
+    price?.variant ||
+    price?.variant_detail ||
+    price?.price_set?.variant ||
+    null;
   const variantTitle = variant?.title || variant?.name;
   const productTitle = variant?.product?.title || price?.product?.title;
   if (variantTitle && productTitle) return `${productTitle} - ${variantTitle}`;
-  return variantTitle || productTitle || price?.variant_id || 'Variant';
+  return variantTitle || productTitle || price?.variant_id || price?.price_set?.variant?.id || 'Variant';
 };
 
 const formatVariantOptions = (variant) => {
@@ -2048,6 +2077,7 @@ const ResourceDetail = ({ resource }) => {
     error: ''
   });
   const [selectedPriceListVariant, setSelectedPriceListVariant] = useState(null);
+  const [showPriceListVariantPicker, setShowPriceListVariantPicker] = useState(false);
   const [priceListRuleDraft, setPriceListRuleDraft] = useState({
     customer_group_ids: [],
     product_ids: [],
@@ -2633,11 +2663,17 @@ const ResourceDetail = ({ resource }) => {
           setRecord(variants?.[0] || null);
         } else {
           const detailParams = isProduct
-            ? { fields: '+categories,+images,+shipping_profile_id,+shipping_profile' }
+            ? {
+                fields:
+                  '+categories,+images,+description,+subtitle,+shipping_profile_id,+shipping_profile'
+              }
             : isOrder
               ? orderDetailParams
             : isPriceList
-              ? { fields: '+prices,+prices.variant,+prices.variant.product' }
+              ? {
+                  fields:
+                    '*prices,prices.price_set.variant.id,prices.price_rules.attribute,prices.price_rules.value'
+                }
               : isCustomer
                   ? { fields: '+groups' }
                   : isCustomerGroup
@@ -9689,18 +9725,20 @@ const ResourceDetail = ({ resource }) => {
 
     setPriceListState({ saving: true, deleting: false, error: '', success: '' });
     try {
+      const body = {
+        title,
+        description: description || undefined,
+        status: status || undefined,
+        type,
+        starts_at: startsInput ? startsAt : null,
+        ends_at: endsInput ? endsAt : null,
+        ...(Object.keys(rules).length ? { rules } : {}),
+        ...(extra && typeof extra === 'object' ? extra : {})
+      };
+
       const payload = await request(`${resource.endpoint}/${record.id}`, {
         method: 'POST',
-        body: {
-          title,
-          description: description || undefined,
-          status: status || undefined,
-          type,
-          starts_at: startsInput ? startsAt : null,
-          ends_at: endsInput ? endsAt : null,
-          rules,
-          ...(extra && typeof extra === 'object' ? extra : {})
-        }
+        body
       });
       const updated = getObjectFromPayload(payload, resource.detailKey);
       if (updated) setRecord(updated);
@@ -9743,7 +9781,8 @@ const ResourceDetail = ({ resource }) => {
     setPriceListPricesError('');
     try {
       const payload = await getDetail('/admin/price-lists', record.id, {
-        fields: '+prices,+prices.variant,+prices.variant.product'
+        fields:
+          '*prices,prices.price_set.variant.id,prices.price_rules.attribute,prices.price_rules.value'
       });
       const updated = getObjectFromPayload(payload, resource.detailKey);
       if (updated) {
@@ -9790,6 +9829,7 @@ const ResourceDetail = ({ resource }) => {
     if (!variant?.id) return;
     setSelectedPriceListVariant(variant);
     setNewPriceListPrice((prev) => ({ ...prev, variant_id: variant.id }));
+    setShowPriceListVariantPicker(false);
     setPriceListVariantSearch((prev) => ({
       ...prev,
       query: '',
@@ -9831,11 +9871,11 @@ const ResourceDetail = ({ resource }) => {
       return;
     }
 
-    if (!currencyCode && !regionId) {
+    if (!currencyCode) {
       setPriceListPriceState({
         savingId: null,
         action: '',
-        error: 'Currency code or region ID is required.',
+        error: 'Currency code is required.',
         success: ''
       });
       return;
@@ -9863,19 +9903,18 @@ const ResourceDetail = ({ resource }) => {
 
     setPriceListPriceState({ savingId: 'new', action: 'add', error: '', success: '' });
     try {
+      const payload = {
+        variant_id: variantId,
+        amount,
+        currency_code: currencyCode,
+        ...(Number.isFinite(minValue) ? { min_quantity: minValue } : {}),
+        ...(Number.isFinite(maxValue) ? { max_quantity: maxValue } : {}),
+        ...(regionId ? { rules: { region_id: regionId } } : {})
+      };
       await request(`/admin/price-lists/${record.id}/prices/batch`, {
         method: 'POST',
         body: {
-          prices: [
-            {
-              variant_id: variantId,
-              amount,
-              ...(currencyCode ? { currency_code: currencyCode } : {}),
-              ...(regionId ? { region_id: regionId } : {}),
-              ...(Number.isFinite(minValue) ? { min_quantity: minValue } : {}),
-              ...(Number.isFinite(maxValue) ? { max_quantity: maxValue } : {})
-            }
-          ]
+          create: [payload]
         }
       });
       setNewPriceListPrice({
@@ -9910,10 +9949,21 @@ const ResourceDetail = ({ resource }) => {
     const amount = parsePriceInput(draft.amount);
     const currencyCode = String(draft.currency_code || '').trim().toLowerCase();
     const regionId = String(draft.region_id || '').trim();
+    const variantId = String(draft.variant_id || '').trim();
     const minQuantity = String(draft.min_quantity || '').trim();
     const maxQuantity = String(draft.max_quantity || '').trim();
     const minValue = minQuantity ? Number(minQuantity) : null;
     const maxValue = maxQuantity ? Number(maxQuantity) : null;
+
+    if (!variantId) {
+      setPriceListPriceState({
+        savingId: null,
+        action: '',
+        error: 'Variant ID is required.',
+        success: ''
+      });
+      return;
+    }
 
     if (!Number.isFinite(amount)) {
       setPriceListPriceState({
@@ -9925,11 +9975,11 @@ const ResourceDetail = ({ resource }) => {
       return;
     }
 
-    if (!currencyCode && !regionId) {
+    if (!currencyCode) {
       setPriceListPriceState({
         savingId: null,
         action: '',
-        error: 'Currency code or region ID is required.',
+        error: 'Currency code is required.',
         success: ''
       });
       return;
@@ -9957,19 +10007,19 @@ const ResourceDetail = ({ resource }) => {
 
     setPriceListPriceState({ savingId: priceId, action: 'update', error: '', success: '' });
     try {
+      const payload = {
+        id: priceId,
+        variant_id: variantId,
+        amount,
+        currency_code: currencyCode,
+        ...(Number.isFinite(minValue) ? { min_quantity: minValue } : {}),
+        ...(Number.isFinite(maxValue) ? { max_quantity: maxValue } : {}),
+        ...(regionId ? { rules: { region_id: regionId } } : {})
+      };
       await request(`/admin/price-lists/${record.id}/prices/batch`, {
         method: 'POST',
         body: {
-          prices: [
-            {
-              id: priceId,
-              amount,
-              ...(currencyCode ? { currency_code: currencyCode } : {}),
-              ...(regionId ? { region_id: regionId } : {}),
-              ...(Number.isFinite(minValue) ? { min_quantity: minValue } : {}),
-              ...(Number.isFinite(maxValue) ? { max_quantity: maxValue } : {})
-            }
-          ]
+          update: [payload]
         }
       });
       setPriceListPriceState({
@@ -23127,7 +23177,7 @@ const ResourceDetail = ({ resource }) => {
                     className="ldc-input mt-2 min-h-[80px] font-mono text-xs"
                     value={promotionDraft.extra}
                     onChange={handlePromotionDraftChange('extra')}
-                    placeholder='{"rules":[{"attribute":"customer_group_id","operator":"in","value":["cg_..."]}]}'
+                    placeholder='{"rules":{"customer_group_id":["cg_..."]}}'
                   />
                 </label>
 
@@ -23539,7 +23589,7 @@ const ResourceDetail = ({ resource }) => {
                     className="ldc-input mt-2 min-h-[80px] font-mono text-xs"
                     value={priceListDraft.extra}
                     onChange={handlePriceListDraftChange('extra')}
-                    placeholder='{"rules":[{"attribute":"customer_group_id","operator":"in","value":["cg_..."]}]}'
+                    placeholder='{"rules":{"customer_group_id":["cg_..."]}}'
                   />
                 </label>
 
@@ -23605,7 +23655,16 @@ const ResourceDetail = ({ resource }) => {
                 </div>
                 <div className="mt-3 grid gap-4 md:grid-cols-3">
                   <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                    Variant ID
+                    <span className="flex items-center justify-between gap-2">
+                      <span>Variant ID</span>
+                      <button
+                        className="rounded-full border border-white/70 bg-white/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-ldc-ink/70 transition hover:bg-white"
+                        type="button"
+                        onClick={() => setShowPriceListVariantPicker((prev) => !prev)}
+                      >
+                        {showPriceListVariantPicker ? 'Hide picker' : 'Select variant'}
+                      </button>
+                    </span>
                     <input
                       className="ldc-input mt-2"
                       value={newPriceListPrice.variant_id}
@@ -23664,52 +23723,58 @@ const ResourceDetail = ({ resource }) => {
                   </label>
                 </div>
 
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
-                    Search variants (optional)
-                    <input
-                      className="ldc-input mt-2"
-                      value={priceListVariantSearch.query}
-                      onChange={handleVariantSearchChange}
-                      placeholder="Search by title or SKU"
-                    />
-                  </label>
-                  {selectedPriceListVariant ? (
-                    <div className="rounded-2xl bg-white/80 p-3 text-xs text-ldc-ink/70">
-                      Selected: {selectedPriceListVariant.title || selectedPriceListVariant.id}
-                      {selectedPriceListVariant.sku ? ` · SKU ${selectedPriceListVariant.sku}` : ''}
+                {showPriceListVariantPicker ? (
+                  <>
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        Select variant
+                        <input
+                          className="ldc-input mt-2"
+                          value={priceListVariantSearch.query}
+                          onChange={handleVariantSearchChange}
+                          placeholder="Search by title or SKU"
+                        />
+                      </label>
+                      {selectedPriceListVariant ? (
+                        <div className="rounded-2xl bg-white/80 p-3 text-xs text-ldc-ink/70">
+                          Selected: {selectedPriceListVariant.title || selectedPriceListVariant.id}
+                          {selectedPriceListVariant.sku ? ` · SKU ${selectedPriceListVariant.sku}` : ''}
+                        </div>
+                      ) : (
+                        <div className="rounded-2xl bg-white/80 p-3 text-xs text-ldc-ink/60">
+                          No variant selected.
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="rounded-2xl bg-white/80 p-3 text-xs text-ldc-ink/60">
-                      No variant selected.
-                    </div>
-                  )}
-                </div>
 
-                {priceListVariantSearch.loading ? (
-                  <div className="mt-2 text-sm text-ldc-ink/60">Searching variants...</div>
-                ) : null}
-                {priceListVariantSearch.error ? (
-                  <div className="mt-2 text-sm text-rose-600">{priceListVariantSearch.error}</div>
-                ) : null}
-                {priceListVariantSearch.results.length ? (
-                  <div className="mt-3 grid gap-2 md:grid-cols-2">
-                    {priceListVariantSearch.results.map((variant) => (
-                      <button
-                        key={variant.id}
-                        className="rounded-2xl border border-white/70 bg-white/70 px-3 py-2 text-left text-xs text-ldc-ink"
-                        type="button"
-                        onClick={() => handleSelectPriceListVariant(variant)}
-                      >
-                        <div className="font-semibold">
-                          {variant.product?.title || variant.title || variant.id}
-                        </div>
-                        <div className="text-ldc-ink/60">
-                          {variant.title ? `${variant.title} · ` : ''}SKU {variant.sku || '-'}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                    {priceListVariantSearch.loading ? (
+                      <div className="mt-2 text-sm text-ldc-ink/60">Searching variants...</div>
+                    ) : null}
+                    {priceListVariantSearch.error ? (
+                      <div className="mt-2 text-sm text-rose-600">
+                        {priceListVariantSearch.error}
+                      </div>
+                    ) : null}
+                    {priceListVariantSearch.results.length ? (
+                      <div className="mt-3 grid gap-2 md:grid-cols-2">
+                        {priceListVariantSearch.results.map((variant) => (
+                          <button
+                            key={variant.id}
+                            className="rounded-2xl border border-white/70 bg-white/70 px-3 py-2 text-left text-xs text-ldc-ink"
+                            type="button"
+                            onClick={() => handleSelectPriceListVariant(variant)}
+                          >
+                            <div className="font-semibold">
+                              {variant.product?.title || variant.title || variant.id}
+                            </div>
+                            <div className="text-ldc-ink/60">
+                              {variant.title ? `${variant.title} · ` : ''}SKU {variant.sku || '-'}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </>
                 ) : null}
 
                 <button
@@ -23732,7 +23797,11 @@ const ResourceDetail = ({ resource }) => {
                   priceListPrices.map((price) => {
                     const draft = priceListPriceDrafts[price.id] || {};
                     const variantLabel = getPriceListVariantLabel(price);
-                    const sku = price?.variant?.sku || price?.variant_sku || '-';
+                    const sku =
+                      price?.variant?.sku ||
+                      price?.price_set?.variant?.sku ||
+                      price?.variant_sku ||
+                      '-';
                     return (
                       <div key={price.id} className="rounded-2xl bg-white/70 p-4">
                         <div className="flex flex-wrap items-start justify-between gap-3">
