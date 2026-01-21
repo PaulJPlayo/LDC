@@ -718,6 +718,83 @@ const buildVariantOptionsPayload = (optionsMap, productOptions, requireAll) => {
   return { payload, missing };
 };
 
+const normalizeImageUrls = (input) => {
+  const urls = [];
+  if (!Array.isArray(input)) return urls;
+  input.forEach((entry) => {
+    const value = typeof entry === 'string' ? entry : entry?.url;
+    const url = String(value || '').trim();
+    if (url && !urls.includes(url)) {
+      urls.push(url);
+    }
+  });
+  return urls;
+};
+
+const extractProductImageUrls = (record) => {
+  if (!record) return [];
+  if (Array.isArray(record.images) && record.images.length) {
+    return normalizeImageUrls(record.images);
+  }
+  if (Array.isArray(record?.metadata?.images) && record.metadata.images.length) {
+    return normalizeImageUrls(record.metadata.images);
+  }
+  if (record?.thumbnail) {
+    return normalizeImageUrls([record.thumbnail]);
+  }
+  return [];
+};
+
+const collectRecordImageUrls = (record) => {
+  if (!record) return [];
+  const urls = [];
+  const addUrl = (value) => {
+    if (value && !urls.includes(value)) {
+      urls.push(value);
+    }
+  };
+  addUrl(record.thumbnail);
+  addUrl(record.image);
+  addUrl(record.cover_image);
+  if (Array.isArray(record.images)) {
+    record.images.forEach((image) => {
+      if (typeof image === 'string') {
+        addUrl(image);
+      } else {
+        addUrl(image?.url);
+      }
+    });
+  }
+  if (record.product) {
+    addUrl(record.product.thumbnail);
+    addUrl(record.product.image);
+    addUrl(record.product.cover_image);
+    if (Array.isArray(record.product.images)) {
+      record.product.images.forEach((image) => {
+        if (typeof image === 'string') {
+          addUrl(image);
+        } else {
+          addUrl(image?.url);
+        }
+      });
+    }
+  }
+  if (record.metadata) {
+    addUrl(record.metadata.thumbnail);
+    addUrl(record.metadata.image);
+    if (Array.isArray(record.metadata.images)) {
+      record.metadata.images.forEach((image) => {
+        if (typeof image === 'string') {
+          addUrl(image);
+        } else {
+          addUrl(image?.url);
+        }
+      });
+    }
+  }
+  return urls;
+};
+
 const mapRecordToDraft = (record) => ({
   title: record?.title || '',
   subtitle: record?.subtitle ?? '',
@@ -725,6 +802,7 @@ const mapRecordToDraft = (record) => ({
   status: record?.status || 'draft',
   description: record?.description ?? '',
   thumbnail: record?.thumbnail || '',
+  images: extractProductImageUrls(record),
   external_id: record?.external_id ?? '',
   is_giftcard: Boolean(record?.is_giftcard),
   discountable: record?.discountable !== false,
@@ -1086,6 +1164,12 @@ const ResourceDetail = ({ resource }) => {
     error: '',
     success: ''
   });
+  const [productGalleryState, setProductGalleryState] = useState({
+    uploading: false,
+    error: '',
+    success: ''
+  });
+  const [productGalleryUrl, setProductGalleryUrl] = useState('');
   const [productMeta, setProductMeta] = useState({
     collections: [],
     categories: [],
@@ -2956,6 +3040,8 @@ const ResourceDetail = ({ resource }) => {
       setVariantDrafts([]);
       setNewVariant(null);
       setProductUploadState({ uploading: false, error: '', success: '' });
+      setProductGalleryState({ uploading: false, error: '', success: '' });
+      setProductGalleryUrl('');
       return;
     }
     setProductDraft(mapRecordToDraft(record));
@@ -2963,6 +3049,8 @@ const ResourceDetail = ({ resource }) => {
     setVariantDrafts(buildVariantDrafts(record));
     setNewVariant(buildNewVariantDraft(record, getDefaultCurrency(record)));
     setProductUploadState({ uploading: false, error: '', success: '' });
+    setProductGalleryState({ uploading: false, error: '', success: '' });
+    setProductGalleryUrl('');
   }, [isProduct, record]);
 
   useEffect(() => {
@@ -4863,9 +4951,13 @@ const ResourceDetail = ({ resource }) => {
       payload?.parent ||
       getObjectFromPayload(payload, resource?.detailKey);
     if (!updated) return;
-    setRecord(updated);
-    setProductDraft(mapRecordToDraft(updated));
-    setOptionDrafts(buildOptionDrafts(updated));
+    const merged = { ...updated };
+    if ((!Array.isArray(merged.images) || !merged.images.length) && productDraft?.images?.length) {
+      merged.images = productDraft.images.map((url) => ({ url }));
+    }
+    setRecord(merged);
+    setProductDraft(mapRecordToDraft(merged));
+    setOptionDrafts(buildOptionDrafts(merged));
   };
 
   const applyOrderPayload = (payload) => {
@@ -5133,6 +5225,8 @@ const ResourceDetail = ({ resource }) => {
     setProductDraft(mapRecordToDraft(record));
     setSaveState({ saving: false, error: '', success: '' });
     setProductUploadState({ uploading: false, error: '', success: '' });
+    setProductGalleryState({ uploading: false, error: '', success: '' });
+    setProductGalleryUrl('');
   };
 
   const handleProductThumbnailUpload = async (event) => {
@@ -5160,11 +5254,89 @@ const ResourceDetail = ({ resource }) => {
     }
   };
 
+  const setProductImages = (updater) => {
+    setProductDraft((prev) => {
+      if (!prev) return prev;
+      const current = Array.isArray(prev.images) ? prev.images : [];
+      const next = typeof updater === 'function' ? updater(current) : updater;
+      const normalized = normalizeImageUrls(Array.isArray(next) ? next : []);
+      let nextThumbnail = prev.thumbnail || '';
+      if (nextThumbnail && !normalized.includes(nextThumbnail)) {
+        nextThumbnail = normalized[0] || '';
+      }
+      return { ...prev, images: normalized, thumbnail: nextThumbnail };
+    });
+  };
+
+  const handleProductGalleryUpload = async (event) => {
+    const files = event.target.files;
+    if (!files || !files.length) return;
+    setProductGalleryState({ uploading: true, error: '', success: '' });
+    try {
+      const payload = await uploadFiles(files);
+      const uploadedFiles = getArrayFromPayload(payload, 'files');
+      const fallbackFile = getObjectFromPayload(payload, 'file');
+      const candidates = uploadedFiles.length ? uploadedFiles : fallbackFile ? [fallbackFile] : [];
+      const urls = normalizeImageUrls(
+        candidates.map((file) => file?.url || file?.id).filter(Boolean)
+      );
+      if (!urls.length) {
+        throw new Error('Upload response missing file URL.');
+      }
+      setProductImages((list) => [...list, ...urls]);
+      setProductGalleryState({
+        uploading: false,
+        error: '',
+        success: `Added ${urls.length} image${urls.length === 1 ? '' : 's'}.`
+      });
+    } catch (err) {
+      setProductGalleryState({
+        uploading: false,
+        error: err?.message || 'Unable to upload gallery images.',
+        success: ''
+      });
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const handleAddProductGalleryUrl = () => {
+    const url = String(productGalleryUrl || '').trim();
+    if (!url) return;
+    setProductImages((list) => [...list, url]);
+    setProductGalleryUrl('');
+    setProductGalleryState({ uploading: false, error: '', success: 'Image URL added.' });
+  };
+
+  const handleMoveProductImage = (index, direction) => {
+    setProductImages((list) => {
+      const next = [...list];
+      const target = index + direction;
+      if (target < 0 || target >= next.length) return next;
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
+
+  const handlePinProductImage = (index) => {
+    setProductImages((list) => {
+      const next = [...list];
+      const [item] = next.splice(index, 1);
+      if (item) next.unshift(item);
+      return next;
+    });
+  };
+
+  const handleRemoveProductImage = (index) => {
+    setProductImages((list) => list.filter((_, idx) => idx !== index));
+  };
+
   const handleSaveProduct = async () => {
     if (!record || !productDraft) return;
     setSaveState({ saving: true, error: '', success: '' });
     try {
       const thumbnail = productDraft.thumbnail.trim();
+      const images = normalizeImageUrls(productDraft.images);
       const weightResult = parseNullableNumberInput(productDraft.weight);
       const lengthResult = parseNullableNumberInput(productDraft.length);
       const heightResult = parseNullableNumberInput(productDraft.height);
@@ -5201,6 +5373,7 @@ const ResourceDetail = ({ resource }) => {
           status: productDraft.status || undefined,
           description: productDraft.description || null,
           thumbnail: thumbnail || null,
+          images: images.map((url) => ({ url })),
           external_id: productDraft.external_id.trim() || null,
           is_giftcard: productDraft.is_giftcard,
           discountable: productDraft.discountable,
@@ -13013,54 +13186,11 @@ const ResourceDetail = ({ resource }) => {
   }, [inventoryRows]);
 
   const imageUrls = useMemo(() => {
-    if (!record) return [];
-    const urls = [];
-    const addUrl = (value) => {
-      if (value && !urls.includes(value)) {
-        urls.push(value);
-      }
-    };
-    addUrl(record.thumbnail);
-    addUrl(record.image);
-    addUrl(record.cover_image);
-    if (Array.isArray(record.images)) {
-      record.images.forEach((image) => {
-        if (typeof image === 'string') {
-          addUrl(image);
-        } else {
-          addUrl(image?.url);
-        }
-      });
+    if (isProduct && productDraft) {
+      return Array.isArray(productDraft.images) ? productDraft.images : [];
     }
-    if (record.product) {
-      addUrl(record.product.thumbnail);
-      addUrl(record.product.image);
-      addUrl(record.product.cover_image);
-      if (Array.isArray(record.product.images)) {
-        record.product.images.forEach((image) => {
-          if (typeof image === 'string') {
-            addUrl(image);
-          } else {
-            addUrl(image?.url);
-          }
-        });
-      }
-    }
-    if (record.metadata) {
-      addUrl(record.metadata.thumbnail);
-      addUrl(record.metadata.image);
-      if (Array.isArray(record.metadata.images)) {
-        record.metadata.images.forEach((image) => {
-          if (typeof image === 'string') {
-            addUrl(image);
-          } else {
-            addUrl(image?.url);
-          }
-        });
-      }
-    }
-    return urls;
-  }, [record]);
+    return collectRecordImageUrls(record);
+  }, [isProduct, productDraft, record]);
 
   const variantColumns = useMemo(
     () => [
@@ -16983,43 +17113,139 @@ const ResourceDetail = ({ resource }) => {
             </div>
           ) : null}
 
-          {imageUrls.length ? (
+          {isProduct || imageUrls.length ? (
             <div className="ldc-card p-6">
               <h3 className="font-heading text-xl text-ldc-ink">Product Imagery</h3>
               <p className="mt-2 text-sm text-ldc-ink/70">
-                LDC product thumbnails and gallery images.
+                Manage gallery order, pinned placement, and thumbnail selection.
               </p>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {imageUrls.map((url, index) => {
-                  const isCurrentThumbnail = productDraft?.thumbnail === url;
-                  return (
-                  <div
-                    key={`${url}-${index}`}
-                    className="rounded-3xl bg-white/70 p-3 shadow-glow"
-                  >
-                    <img
-                      src={url}
-                      alt={record?.title || record?.name || `Image ${index + 1}`}
-                      className="h-40 w-full rounded-2xl object-cover"
-                      loading="lazy"
-                    />
-                    <div className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
-                      Image {index + 1}
+
+              {isProduct ? (
+                <div className="mt-4 flex flex-wrap items-end gap-4">
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Add image URL
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <input
+                        className="ldc-input h-10 w-72"
+                        value={productGalleryUrl}
+                        onChange={(event) => setProductGalleryUrl(event.target.value)}
+                        placeholder="https://..."
+                      />
+                      <button
+                        className="ldc-button-secondary"
+                        type="button"
+                        onClick={handleAddProductGalleryUrl}
+                        disabled={!productGalleryUrl.trim()}
+                      >
+                        Add to gallery
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      className="mt-2 inline-flex items-center rounded-full border border-white/70 bg-white/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-ldc-ink/70 transition hover:text-ldc-plum disabled:cursor-default disabled:text-ldc-ink/40"
-                      onClick={() =>
-                        setProductDraft((prev) => (prev ? { ...prev, thumbnail: url } : prev))
-                      }
-                      disabled={isCurrentThumbnail}
-                    >
-                      {isCurrentThumbnail ? 'Current thumbnail' : 'Set as thumbnail'}
-                    </button>
+                  </label>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Upload gallery images
+                    <input
+                      className="mt-2 block w-full text-sm text-ldc-ink/70"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleProductGalleryUpload}
+                      disabled={productGalleryState.uploading}
+                    />
+                  </label>
+                </div>
+              ) : null}
+
+              {productGalleryState.error ? (
+                <div className="mt-3 text-sm text-rose-600">{productGalleryState.error}</div>
+              ) : null}
+              {productGalleryState.success ? (
+                <div className="mt-3 text-sm text-emerald-700">{productGalleryState.success}</div>
+              ) : null}
+
+              {imageUrls.length ? (
+                <>
+                  <div className="mt-4 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                    Gallery order
                   </div>
-                  );
-                })}
-              </div>
+                  <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {imageUrls.map((url, index) => {
+                      const isCurrentThumbnail = productDraft?.thumbnail === url;
+                      return (
+                        <div
+                          key={`${url}-${index}`}
+                          className="rounded-3xl bg-white/70 p-3 shadow-glow"
+                        >
+                          <img
+                            src={url}
+                            alt={record?.title || record?.name || `Image ${index + 1}`}
+                            className="h-40 w-full rounded-2xl object-cover"
+                            loading="lazy"
+                          />
+                          <div className="mt-2 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                            <span>Image {index + 1}</span>
+                            {index === 0 ? (
+                              <span className="rounded-full bg-ldc-plum/20 px-2 py-1 text-[10px] text-ldc-plum">
+                                Pinned
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              className="inline-flex items-center rounded-full border border-white/70 bg-white/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-ldc-ink/70 transition hover:text-ldc-plum disabled:cursor-default disabled:text-ldc-ink/40"
+                              onClick={() =>
+                                setProductDraft((prev) =>
+                                  prev ? { ...prev, thumbnail: url } : prev
+                                )
+                              }
+                              disabled={isCurrentThumbnail}
+                            >
+                              {isCurrentThumbnail ? 'Current thumbnail' : 'Set as thumbnail'}
+                            </button>
+                            {isProduct ? (
+                              <>
+                                <button
+                                  type="button"
+                                  className="inline-flex items-center rounded-full border border-white/70 bg-white/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-ldc-ink/70 transition hover:text-ldc-plum disabled:cursor-default disabled:text-ldc-ink/40"
+                                  onClick={() => handleMoveProductImage(index, -1)}
+                                  disabled={index === 0}
+                                >
+                                  Move up
+                                </button>
+                                <button
+                                  type="button"
+                                  className="inline-flex items-center rounded-full border border-white/70 bg-white/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-ldc-ink/70 transition hover:text-ldc-plum disabled:cursor-default disabled:text-ldc-ink/40"
+                                  onClick={() => handleMoveProductImage(index, 1)}
+                                  disabled={index === imageUrls.length - 1}
+                                >
+                                  Move down
+                                </button>
+                                <button
+                                  type="button"
+                                  className="inline-flex items-center rounded-full border border-white/70 bg-white/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-ldc-ink/70 transition hover:text-ldc-plum disabled:cursor-default disabled:text-ldc-ink/40"
+                                  onClick={() => handlePinProductImage(index)}
+                                  disabled={index === 0}
+                                >
+                                  Pin first
+                                </button>
+                                <button
+                                  type="button"
+                                  className="inline-flex items-center rounded-full border border-white/70 bg-white/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-rose-500 transition hover:text-rose-600"
+                                  onClick={() => handleRemoveProductImage(index)}
+                                >
+                                  Remove
+                                </button>
+                              </>
+                            ) : null}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <p className="mt-4 text-sm text-ldc-ink/60">No gallery images yet.</p>
+              )}
             </div>
           ) : null}
 
