@@ -4,6 +4,8 @@ import PageHeader from '../components/PageHeader.jsx';
 import DataTable from '../components/DataTable.jsx';
 import { formatDateTime, formatMoney } from '../lib/formatters.js';
 import { formatApiError, getDetail, getList, request, uploadFiles } from '../lib/api.js';
+import { resolveRole, isAdminUser, isResourceAdminOnly } from '../lib/roles.js';
+import { useAuth } from '../state/auth.jsx';
 
 const getArrayFromPayload = (payload, key) => {
   if (!payload) return [];
@@ -168,14 +170,6 @@ const TEAM_ROLE_OPTIONS = [
   { value: 'admin', label: 'Admin' }
 ];
 
-const resolveRoleValue = (record) => {
-  const role =
-    record?.role ||
-    record?.metadata?.role ||
-    (Array.isArray(record?.roles) ? record.roles[0] : undefined) ||
-    (Array.isArray(record?.metadata?.roles) ? record.metadata.roles[0] : undefined);
-  return role ? String(role) : '';
-};
 
 const CUSTOMER_EXPORT_COLUMNS = [
   { label: 'Customer ID', value: (row) => row?.id || '' },
@@ -595,6 +589,10 @@ const extractServiceZones = (payload) => {
 
 const ResourceList = ({ resource }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = isAdminUser(user);
+  const isReadOnly = isResourceAdminOnly(resource?.id) && !isAdmin;
+  const readOnlyClass = isReadOnly ? 'pointer-events-none opacity-70' : '';
   const [searchParams, setSearchParams] = useSearchParams();
   const [rows, setRows] = useState([]);
   const [count, setCount] = useState(0);
@@ -1497,7 +1495,7 @@ const ResourceList = ({ resource }) => {
       const withRoles =
         isUserList || isInviteList
           ? items.map((row) => {
-              const resolved = resolveRoleValue(row);
+              const resolved = resolveRole(row);
               if (!resolved || row?.role === resolved) return row;
               return { ...row, role: resolved };
             })
@@ -1506,7 +1504,7 @@ const ResourceList = ({ resource }) => {
       const filtered =
         (isUserList || isInviteList) && normalizedRole
           ? withRoles.filter((row) =>
-              String(row?.role || resolveRoleValue(row))
+              String(row?.role || resolveRole(row))
                 .toLowerCase()
                 .includes(normalizedRole)
             )
@@ -5314,6 +5312,12 @@ const ResourceList = ({ resource }) => {
         }
       />
 
+      {isReadOnly ? (
+        <div className="mb-6 ldc-card p-4 text-sm text-ldc-ink/70">
+          This section is limited to admin users. You have view-only access.
+        </div>
+      ) : null}
+
       {isProductList ? (
         <div className="mb-6 ldc-card p-4">
           <div className="flex flex-wrap items-start gap-4">
@@ -6402,7 +6406,10 @@ const ResourceList = ({ resource }) => {
               <span className="text-xs text-ldc-ink/60">Loading providers...</span>
             ) : null}
           </div>
-          <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleCreateRegion}>
+          <form
+            className={`mt-4 grid gap-4 md:grid-cols-2 ${readOnlyClass}`}
+            onSubmit={handleCreateRegion}
+          >
             <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
               Name
               <input
@@ -6502,7 +6509,7 @@ const ResourceList = ({ resource }) => {
             <button
               className="ldc-button-primary md:col-span-2"
               type="submit"
-              disabled={regionCreateState.saving}
+              disabled={isReadOnly || regionCreateState.saving}
             >
               {regionCreateState.saving ? 'Creating...' : 'Create region'}
             </button>
@@ -6513,7 +6520,10 @@ const ResourceList = ({ resource }) => {
       {isShippingProfileList ? (
         <div className="mb-6 ldc-card p-4">
           <h3 className="font-heading text-lg text-ldc-ink">Create shipping profile</h3>
-          <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleCreateShippingProfile}>
+          <form
+            className={`mt-4 grid gap-4 md:grid-cols-2 ${readOnlyClass}`}
+            onSubmit={handleCreateShippingProfile}
+          >
             <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
               Name
               <input
@@ -6553,7 +6563,7 @@ const ResourceList = ({ resource }) => {
             <button
               className="ldc-button-primary md:col-span-2"
               type="submit"
-              disabled={shippingProfileCreateState.saving}
+              disabled={isReadOnly || shippingProfileCreateState.saving}
             >
               {shippingProfileCreateState.saving ? 'Creating...' : 'Create profile'}
             </button>
@@ -6569,7 +6579,10 @@ const ResourceList = ({ resource }) => {
               <span className="text-xs text-ldc-ink/60">Loading settings...</span>
             ) : null}
           </div>
-          <form className="mt-4 space-y-4" onSubmit={handleCreateShippingOption}>
+          <form
+            className={`mt-4 space-y-4 ${readOnlyClass}`}
+            onSubmit={handleCreateShippingOption}
+          >
             <div className="grid gap-4 md:grid-cols-3">
               <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
                 Name
@@ -6820,7 +6833,7 @@ const ResourceList = ({ resource }) => {
             <button
               className="ldc-button-primary"
               type="submit"
-              disabled={shippingOptionCreateState.saving}
+              disabled={isReadOnly || shippingOptionCreateState.saving}
             >
               {shippingOptionCreateState.saving ? 'Creating...' : 'Create shipping option'}
             </button>
@@ -6836,7 +6849,10 @@ const ResourceList = ({ resource }) => {
               <span className="text-xs text-ldc-ink/60">Loading providers...</span>
             ) : null}
           </div>
-          <form className="mt-4 grid gap-4 md:grid-cols-3" onSubmit={handleCreateTaxRegion}>
+          <form
+            className={`mt-4 grid gap-4 md:grid-cols-3 ${readOnlyClass}`}
+            onSubmit={handleCreateTaxRegion}
+          >
             <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
               Country code
               <input
@@ -6982,7 +6998,7 @@ const ResourceList = ({ resource }) => {
             <button
               className="ldc-button-primary md:col-span-3"
               type="submit"
-              disabled={taxRegionCreateState.saving}
+              disabled={isReadOnly || taxRegionCreateState.saving}
             >
               {taxRegionCreateState.saving ? 'Creating...' : 'Create tax region'}
             </button>
@@ -6998,7 +7014,10 @@ const ResourceList = ({ resource }) => {
               <span className="text-xs text-ldc-ink/60">Loading tax regions...</span>
             ) : null}
           </div>
-          <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleCreateTaxRate}>
+          <form
+            className={`mt-4 grid gap-4 md:grid-cols-2 ${readOnlyClass}`}
+            onSubmit={handleCreateTaxRate}
+          >
             <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
               Name
               <input
@@ -7301,7 +7320,7 @@ const ResourceList = ({ resource }) => {
             <button
               className="ldc-button-primary md:col-span-2"
               type="submit"
-              disabled={taxRateCreateState.saving}
+              disabled={isReadOnly || taxRateCreateState.saving}
             >
               {taxRateCreateState.saving ? 'Creating...' : 'Create tax rate'}
             </button>
@@ -7317,7 +7336,10 @@ const ResourceList = ({ resource }) => {
               <span className="text-xs text-ldc-ink/60">Loading existing reasons...</span>
             ) : null}
           </div>
-          <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleCreateReturnReason}>
+          <form
+            className={`mt-4 grid gap-4 md:grid-cols-2 ${readOnlyClass}`}
+            onSubmit={handleCreateReturnReason}
+          >
             <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
               Label
               <input
@@ -7394,7 +7416,7 @@ const ResourceList = ({ resource }) => {
             <button
               className="ldc-button-primary md:col-span-2"
               type="submit"
-              disabled={returnReasonCreateState.saving}
+              disabled={isReadOnly || returnReasonCreateState.saving}
             >
               {returnReasonCreateState.saving ? 'Creating...' : 'Create return reason'}
             </button>
@@ -7405,7 +7427,10 @@ const ResourceList = ({ resource }) => {
       {isRefundReasonList ? (
         <div className="mb-6 ldc-card p-4">
           <h3 className="font-heading text-lg text-ldc-ink">Create refund reason</h3>
-          <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleCreateRefundReason}>
+          <form
+            className={`mt-4 grid gap-4 md:grid-cols-2 ${readOnlyClass}`}
+            onSubmit={handleCreateRefundReason}
+          >
             <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
               Label
               <input
@@ -7446,7 +7471,7 @@ const ResourceList = ({ resource }) => {
             <button
               className="ldc-button-primary md:col-span-2"
               type="submit"
-              disabled={refundReasonCreateState.saving}
+              disabled={isReadOnly || refundReasonCreateState.saving}
             >
               {refundReasonCreateState.saving ? 'Creating...' : 'Create refund reason'}
             </button>
@@ -8440,7 +8465,10 @@ const ResourceList = ({ resource }) => {
       {isSalesChannelList ? (
         <div className="mb-6 ldc-card p-4">
           <h3 className="font-heading text-lg text-ldc-ink">Create sales channel</h3>
-          <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleCreateSalesChannel}>
+          <form
+            className={`mt-4 grid gap-4 md:grid-cols-2 ${readOnlyClass}`}
+            onSubmit={handleCreateSalesChannel}
+          >
             <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
               Name
               <input
@@ -8488,7 +8516,7 @@ const ResourceList = ({ resource }) => {
             <button
               className="ldc-button-primary md:col-span-2"
               type="submit"
-              disabled={salesChannelCreateState.saving}
+              disabled={isReadOnly || salesChannelCreateState.saving}
             >
               {salesChannelCreateState.saving ? 'Creating...' : 'Create sales channel'}
             </button>
@@ -8984,7 +9012,10 @@ const ResourceList = ({ resource }) => {
       {isInviteList ? (
         <div className="mb-6 ldc-card p-4">
           <h3 className="font-heading text-lg text-ldc-ink">Invite team member</h3>
-          <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleCreateInvite}>
+          <form
+            className={`mt-4 grid gap-4 md:grid-cols-2 ${readOnlyClass}`}
+            onSubmit={handleCreateInvite}
+          >
             <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
               Email
               <input
@@ -9029,7 +9060,7 @@ const ResourceList = ({ resource }) => {
             <button
               className="ldc-button-primary md:col-span-2"
               type="submit"
-              disabled={inviteCreateState.saving}
+              disabled={isReadOnly || inviteCreateState.saving}
             >
               {inviteCreateState.saving ? 'Sending...' : 'Send invite'}
             </button>
@@ -9040,7 +9071,10 @@ const ResourceList = ({ resource }) => {
       {isApiKeyList ? (
         <div className="mb-6 ldc-card p-4">
           <h3 className="font-heading text-lg text-ldc-ink">Create API key</h3>
-          <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleCreateApiKey}>
+          <form
+            className={`mt-4 grid gap-4 md:grid-cols-2 ${readOnlyClass}`}
+            onSubmit={handleCreateApiKey}
+          >
             <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
               Title
               <input
@@ -9079,7 +9113,7 @@ const ResourceList = ({ resource }) => {
             <button
               className="ldc-button-primary md:col-span-2"
               type="submit"
-              disabled={apiKeyCreateState.saving}
+              disabled={isReadOnly || apiKeyCreateState.saving}
             >
               {apiKeyCreateState.saving ? 'Creating...' : 'Create API key'}
             </button>

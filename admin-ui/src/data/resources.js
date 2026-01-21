@@ -1,4 +1,5 @@
 import { formatDate, formatDateTime, formatMoney, formatStatus } from '../lib/formatters.js';
+import { resolveRole } from '../lib/roles.js';
 
 const formatCountryCodes = (countries) => {
   if (!Array.isArray(countries) || !countries.length) return '-';
@@ -83,12 +84,7 @@ const formatInventoryTotal = (metric) => (_value, row) => {
 const formatCount = (value) => (Array.isArray(value) ? value.length : '-');
 
 const formatRoleLabel = (value, row) => {
-  const role =
-    value ||
-    row?.role ||
-    row?.metadata?.role ||
-    (Array.isArray(row?.roles) ? row.roles[0] : undefined) ||
-    (Array.isArray(row?.metadata?.roles) ? row.metadata.roles[0] : undefined);
+  const role = resolveRole(row) || value;
   return role ? formatStatus(role) : '-';
 };
 

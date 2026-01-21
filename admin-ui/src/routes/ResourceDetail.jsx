@@ -5,6 +5,8 @@ import PageHeader from '../components/PageHeader.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { ApiError, formatApiError, getDetail, getList, request, uploadFiles } from '../lib/api.js';
 import { formatDateTime, formatMoney } from '../lib/formatters.js';
+import { resolveRole, isAdminUser, isResourceAdminOnly } from '../lib/roles.js';
+import { useAuth } from '../state/auth.jsx';
 
 const getObjectFromPayload = (payload, key) => {
   if (!payload) return null;
@@ -55,14 +57,6 @@ const TEAM_ROLE_OPTIONS = [
   { value: 'admin', label: 'Admin' }
 ];
 
-const resolveRoleValue = (record) => {
-  const role =
-    record?.role ||
-    record?.metadata?.role ||
-    (Array.isArray(record?.roles) ? record.roles[0] : undefined) ||
-    (Array.isArray(record?.metadata?.roles) ? record.metadata.roles[0] : undefined);
-  return role ? String(role) : '';
-};
 
 const buildGeoZoneDraft = (zone = {}) => ({
   id: zone?.id,
@@ -1039,6 +1033,10 @@ const buildReturnItemRows = (items, fallbackId) => {
 const ResourceDetail = ({ resource }) => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { user } = useAuth();
+  const isAdmin = isAdminUser(user);
+  const isReadOnly = isResourceAdminOnly(resource?.id) && !isAdmin;
+  const readOnlyClass = isReadOnly ? 'pointer-events-none opacity-70' : '';
   const [record, setRecord] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -2865,7 +2863,7 @@ const ResourceDetail = ({ resource }) => {
     if (isUser) {
       setUserDraft({
         email: record?.email || '',
-        role: resolveRoleValue(record),
+        role: resolveRole(record),
         first_name: record?.first_name || '',
         last_name: record?.last_name || '',
         avatar_url: record?.avatar_url || '',
@@ -13793,6 +13791,12 @@ const ResourceDetail = ({ resource }) => {
         }
       />
 
+      {isReadOnly ? (
+        <div className="mb-4 ldc-card p-4 text-sm text-ldc-ink/70">
+          This section is limited to admin users. You have view-only access.
+        </div>
+      ) : null}
+
       {error ? <div className="mb-4 text-sm text-rose-600">{error}</div> : null}
       {loading ? (
         <div className="ldc-card p-6 text-sm text-ldc-ink/70">Loading details...</div>
@@ -20218,7 +20222,10 @@ const ResourceDetail = ({ resource }) => {
               <p className="mt-2 text-sm text-ldc-ink/70">
                 Update team member details and profile metadata.
               </p>
-              <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleSaveUser}>
+              <form
+                className={`mt-4 grid gap-4 md:grid-cols-2 ${readOnlyClass}`}
+                onSubmit={handleSaveUser}
+              >
                 <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
                   Email
                   <input className="ldc-input mt-2" value={userDraft.email} disabled />
@@ -20277,14 +20284,18 @@ const ResourceDetail = ({ resource }) => {
                   <div className="md:col-span-2 text-sm text-emerald-700">{userState.success}</div>
                 ) : null}
                 <div className="md:col-span-2 flex flex-wrap items-center gap-3">
-                  <button className="ldc-button-primary" type="submit" disabled={userState.saving}>
+                  <button
+                    className="ldc-button-primary"
+                    type="submit"
+                    disabled={isReadOnly || userState.saving}
+                  >
                     {userState.saving ? 'Saving...' : 'Save user'}
                   </button>
                   <button
                     className="ldc-button-secondary"
                     type="button"
                     onClick={handleDeleteUser}
-                    disabled={userState.deleting}
+                    disabled={isReadOnly || userState.deleting}
                   >
                     {userState.deleting ? 'Deleting...' : 'Delete user'}
                   </button>
@@ -20319,7 +20330,7 @@ const ResourceDetail = ({ resource }) => {
                     Role
                   </div>
                   <div className="mt-2 text-sm text-ldc-ink">
-                    {resolveRoleValue(record) || '-'}
+                    {resolveRole(record) || '-'}
                   </div>
                 </div>
                 <div className="rounded-2xl bg-white/70 px-4 py-3">
@@ -20346,20 +20357,24 @@ const ResourceDetail = ({ resource }) => {
                 <div className="mt-3 text-sm text-emerald-700">{inviteState.success}</div>
               ) : null}
               <div className="mt-4 flex flex-wrap items-center gap-3">
-                <button
-                  className="ldc-button-secondary"
-                  type="button"
-                  onClick={handleResendInvite}
-                  disabled={inviteState.resending || inviteState.deleting || record.accepted}
-                >
-                  {inviteState.resending ? 'Resending...' : 'Resend invite'}
-                </button>
-                <button
-                  className="ldc-button-secondary"
-                  type="button"
-                  onClick={handleDeleteInvite}
-                  disabled={inviteState.deleting || inviteState.resending || record.accepted}
-                >
+                  <button
+                    className="ldc-button-secondary"
+                    type="button"
+                    onClick={handleResendInvite}
+                    disabled={
+                      isReadOnly || inviteState.resending || inviteState.deleting || record.accepted
+                    }
+                  >
+                    {inviteState.resending ? 'Resending...' : 'Resend invite'}
+                  </button>
+                  <button
+                    className="ldc-button-secondary"
+                    type="button"
+                    onClick={handleDeleteInvite}
+                    disabled={
+                      isReadOnly || inviteState.deleting || inviteState.resending || record.accepted
+                    }
+                  >
                   {inviteState.deleting ? 'Canceling...' : 'Cancel invite'}
                 </button>
                 {record.accepted ? (
@@ -20375,7 +20390,10 @@ const ResourceDetail = ({ resource }) => {
               <p className="mt-2 text-sm text-ldc-ink/70">
                 Update the key title, revoke access, or delete the key.
               </p>
-              <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleSaveApiKey}>
+              <form
+                className={`mt-4 grid gap-4 md:grid-cols-2 ${readOnlyClass}`}
+                onSubmit={handleSaveApiKey}
+              >
                 <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
                   Title
                   <input
@@ -20422,7 +20440,7 @@ const ResourceDetail = ({ resource }) => {
                     className="ldc-button-secondary"
                     type="button"
                     onClick={handleRevokeApiKey}
-                    disabled={apiKeyState.revoking || Boolean(record.revoked_at)}
+                    disabled={isReadOnly || apiKeyState.revoking || Boolean(record.revoked_at)}
                   >
                     {apiKeyState.revoking ? 'Revoking...' : 'Revoke key'}
                   </button>
@@ -20437,7 +20455,7 @@ const ResourceDetail = ({ resource }) => {
                   <button
                     className="ldc-button-primary"
                     type="submit"
-                    disabled={apiKeyState.saving}
+                    disabled={isReadOnly || apiKeyState.saving}
                   >
                     {apiKeyState.saving ? 'Saving...' : 'Save key'}
                   </button>
@@ -20445,7 +20463,7 @@ const ResourceDetail = ({ resource }) => {
                     className="ldc-button-secondary"
                     type="button"
                     onClick={handleDeleteApiKey}
-                    disabled={apiKeyState.deleting}
+                    disabled={isReadOnly || apiKeyState.deleting}
                   >
                     {apiKeyState.deleting ? 'Deleting...' : 'Delete key'}
                   </button>
@@ -20465,7 +20483,10 @@ const ResourceDetail = ({ resource }) => {
               <p className="mt-2 text-sm text-ldc-ink/70">
                 Configure currencies, locales, and default settings for the storefront.
               </p>
-              <form className="mt-4 space-y-4" onSubmit={handleSaveStore}>
+              <form
+                className={`mt-4 space-y-4 ${readOnlyClass}`}
+                onSubmit={handleSaveStore}
+              >
                 <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
                   Store name
                   <input
@@ -20662,7 +20683,11 @@ const ResourceDetail = ({ resource }) => {
                   <div className="text-sm text-emerald-700">{storeState.success}</div>
                 ) : null}
 
-                <button className="ldc-button-primary" type="submit" disabled={storeState.saving}>
+                <button
+                  className="ldc-button-primary"
+                  type="submit"
+                  disabled={isReadOnly || storeState.saving}
+                >
                   {storeState.saving ? 'Saving...' : 'Save store settings'}
                 </button>
               </form>
@@ -20670,12 +20695,15 @@ const ResourceDetail = ({ resource }) => {
           ) : null}
 
           {isSalesChannel ? (
-            <div className="ldc-card p-6">
+            <div className={`ldc-card p-6 ${readOnlyClass}`}>
               <h3 className="font-heading text-xl text-ldc-ink">Sales Channel</h3>
               <p className="mt-2 text-sm text-ldc-ink/70">
                 Update channel settings and control where products are published.
               </p>
-              <form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={handleSaveSalesChannel}>
+              <form
+                className="mt-4 grid gap-4 md:grid-cols-2"
+                onSubmit={handleSaveSalesChannel}
+              >
                 <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
                   Name
                   <input
@@ -20724,7 +20752,7 @@ const ResourceDetail = ({ resource }) => {
                   <button
                     className="ldc-button-primary"
                     type="submit"
-                    disabled={salesChannelState.saving}
+                    disabled={isReadOnly || salesChannelState.saving}
                   >
                     {salesChannelState.saving ? 'Saving...' : 'Save sales channel'}
                   </button>
@@ -20732,7 +20760,7 @@ const ResourceDetail = ({ resource }) => {
                     className="ldc-button-secondary"
                     type="button"
                     onClick={handleDeleteSalesChannel}
-                    disabled={salesChannelState.deleting}
+                    disabled={isReadOnly || salesChannelState.deleting}
                   >
                     {salesChannelState.deleting ? 'Deleting...' : 'Delete sales channel'}
                   </button>
@@ -20742,7 +20770,7 @@ const ResourceDetail = ({ resource }) => {
           ) : null}
 
           {isSalesChannel ? (
-            <div className="ldc-card p-6">
+            <div className={`ldc-card p-6 ${readOnlyClass}`}>
               <h3 className="font-heading text-xl text-ldc-ink">Published Products</h3>
               <p className="mt-2 text-sm text-ldc-ink/70">
                 Add or remove products to control where they appear.
@@ -20933,7 +20961,7 @@ const ResourceDetail = ({ resource }) => {
           ) : null}
 
           {isRegion ? (
-            <div className="ldc-card p-6">
+            <div className={`ldc-card p-6 ${readOnlyClass}`}>
               <h3 className="font-heading text-xl text-ldc-ink">Region Settings</h3>
               <p className="mt-2 text-sm text-ldc-ink/70">
                 Update currency, countries, and payment providers tied to this region.
@@ -21044,7 +21072,7 @@ const ResourceDetail = ({ resource }) => {
                   <button
                     className="ldc-button-primary"
                     type="submit"
-                    disabled={regionState.saving}
+                    disabled={isReadOnly || regionState.saving}
                   >
                     {regionState.saving ? 'Saving...' : 'Save region'}
                   </button>
@@ -21052,7 +21080,7 @@ const ResourceDetail = ({ resource }) => {
                     className="ldc-button-secondary"
                     type="button"
                     onClick={handleDeleteRegion}
-                    disabled={regionState.deleting}
+                    disabled={isReadOnly || regionState.deleting}
                   >
                     {regionState.deleting ? 'Deleting...' : 'Delete region'}
                   </button>
@@ -21062,7 +21090,7 @@ const ResourceDetail = ({ resource }) => {
           ) : null}
 
           {isShippingProfile ? (
-            <div className="ldc-card p-6">
+            <div className={`ldc-card p-6 ${readOnlyClass}`}>
               <h3 className="font-heading text-xl text-ldc-ink">Shipping Profile</h3>
               <p className="mt-2 text-sm text-ldc-ink/70">
                 Update the name or type for this shipping profile.
@@ -21107,7 +21135,7 @@ const ResourceDetail = ({ resource }) => {
                   <button
                     className="ldc-button-primary"
                     type="submit"
-                    disabled={shippingProfileState.saving}
+                    disabled={isReadOnly || shippingProfileState.saving}
                   >
                     {shippingProfileState.saving ? 'Saving...' : 'Save profile'}
                   </button>
@@ -21115,7 +21143,7 @@ const ResourceDetail = ({ resource }) => {
                     className="ldc-button-secondary"
                     type="button"
                     onClick={handleDeleteShippingProfile}
-                    disabled={shippingProfileState.deleting}
+                    disabled={isReadOnly || shippingProfileState.deleting}
                   >
                     {shippingProfileState.deleting ? 'Deleting...' : 'Delete profile'}
                   </button>
@@ -21125,7 +21153,7 @@ const ResourceDetail = ({ resource }) => {
           ) : null}
 
           {isShippingOption ? (
-            <div className="ldc-card p-6">
+            <div className={`ldc-card p-6 ${readOnlyClass}`}>
               <h3 className="font-heading text-xl text-ldc-ink">Shipping Option</h3>
               <p className="mt-2 text-sm text-ldc-ink/70">
                 Manage pricing, provider, and service zone for this option.
@@ -21382,7 +21410,7 @@ const ResourceDetail = ({ resource }) => {
                   <button
                     className="ldc-button-primary"
                     type="submit"
-                    disabled={shippingOptionState.saving}
+                    disabled={isReadOnly || shippingOptionState.saving}
                   >
                     {shippingOptionState.saving ? 'Saving...' : 'Save shipping option'}
                   </button>
@@ -21390,7 +21418,7 @@ const ResourceDetail = ({ resource }) => {
                     className="ldc-button-secondary"
                     type="button"
                     onClick={handleDeleteShippingOption}
-                    disabled={shippingOptionState.deleting}
+                    disabled={isReadOnly || shippingOptionState.deleting}
                   >
                     {shippingOptionState.deleting ? 'Deleting...' : 'Delete shipping option'}
                   </button>
@@ -21400,7 +21428,7 @@ const ResourceDetail = ({ resource }) => {
           ) : null}
 
           {isTaxRegion ? (
-            <div className="ldc-card p-6">
+            <div className={`ldc-card p-6 ${readOnlyClass}`}>
               <h3 className="font-heading text-xl text-ldc-ink">Tax Region</h3>
               <p className="mt-2 text-sm text-ldc-ink/70">
                 Manage the location and provider used for taxes.
@@ -21502,7 +21530,7 @@ const ResourceDetail = ({ resource }) => {
                   <button
                     className="ldc-button-primary"
                     type="submit"
-                    disabled={taxRegionState.saving}
+                    disabled={isReadOnly || taxRegionState.saving}
                   >
                     {taxRegionState.saving ? 'Saving...' : 'Save tax region'}
                   </button>
@@ -21510,7 +21538,7 @@ const ResourceDetail = ({ resource }) => {
                     className="ldc-button-secondary"
                     type="button"
                     onClick={handleDeleteTaxRegion}
-                    disabled={taxRegionState.deleting}
+                    disabled={isReadOnly || taxRegionState.deleting}
                   >
                     {taxRegionState.deleting ? 'Deleting...' : 'Delete tax region'}
                   </button>
@@ -21520,7 +21548,7 @@ const ResourceDetail = ({ resource }) => {
           ) : null}
 
           {isTaxRate ? (
-            <div className="ldc-card p-6">
+            <div className={`ldc-card p-6 ${readOnlyClass}`}>
               <h3 className="font-heading text-xl text-ldc-ink">Tax Rate</h3>
               <p className="mt-2 text-sm text-ldc-ink/70">
                 Manage percentage and tax region assignment.
@@ -21841,7 +21869,7 @@ const ResourceDetail = ({ resource }) => {
                   <button
                     className="ldc-button-primary"
                     type="submit"
-                    disabled={taxRateState.saving}
+                    disabled={isReadOnly || taxRateState.saving}
                   >
                     {taxRateState.saving ? 'Saving...' : 'Save tax rate'}
                   </button>
@@ -21849,7 +21877,7 @@ const ResourceDetail = ({ resource }) => {
                     className="ldc-button-secondary"
                     type="button"
                     onClick={handleDeleteTaxRate}
-                    disabled={taxRateState.deleting}
+                    disabled={isReadOnly || taxRateState.deleting}
                   >
                     {taxRateState.deleting ? 'Deleting...' : 'Delete tax rate'}
                   </button>
@@ -21859,7 +21887,7 @@ const ResourceDetail = ({ resource }) => {
           ) : null}
 
           {isReturnReason ? (
-            <div className="ldc-card p-6">
+            <div className={`ldc-card p-6 ${readOnlyClass}`}>
               <h3 className="font-heading text-xl text-ldc-ink">Return Reason</h3>
               <p className="mt-2 text-sm text-ldc-ink/70">
                 Manage reasons shown in return and exchange workflows.
@@ -21944,7 +21972,7 @@ const ResourceDetail = ({ resource }) => {
                   <button
                     className="ldc-button-primary"
                     type="submit"
-                    disabled={returnReasonState.saving}
+                    disabled={isReadOnly || returnReasonState.saving}
                   >
                     {returnReasonState.saving ? 'Saving...' : 'Save return reason'}
                   </button>
@@ -21952,7 +21980,7 @@ const ResourceDetail = ({ resource }) => {
                     className="ldc-button-secondary"
                     type="button"
                     onClick={handleDeleteReturnReason}
-                    disabled={returnReasonState.deleting}
+                    disabled={isReadOnly || returnReasonState.deleting}
                   >
                     {returnReasonState.deleting ? 'Deleting...' : 'Delete return reason'}
                   </button>
@@ -21962,7 +21990,7 @@ const ResourceDetail = ({ resource }) => {
           ) : null}
 
           {isRefundReason ? (
-            <div className="ldc-card p-6">
+            <div className={`ldc-card p-6 ${readOnlyClass}`}>
               <h3 className="font-heading text-xl text-ldc-ink">Refund Reason</h3>
               <p className="mt-2 text-sm text-ldc-ink/70">
                 Manage reasons displayed when issuing refunds.
@@ -22006,7 +22034,7 @@ const ResourceDetail = ({ resource }) => {
                   <button
                     className="ldc-button-primary"
                     type="submit"
-                    disabled={refundReasonState.saving}
+                    disabled={isReadOnly || refundReasonState.saving}
                   >
                     {refundReasonState.saving ? 'Saving...' : 'Save refund reason'}
                   </button>
@@ -22014,7 +22042,7 @@ const ResourceDetail = ({ resource }) => {
                     className="ldc-button-secondary"
                     type="button"
                     onClick={handleDeleteRefundReason}
-                    disabled={refundReasonState.deleting}
+                    disabled={isReadOnly || refundReasonState.deleting}
                   >
                     {refundReasonState.deleting ? 'Deleting...' : 'Delete refund reason'}
                   </button>
