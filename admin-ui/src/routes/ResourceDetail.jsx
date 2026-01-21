@@ -1559,6 +1559,17 @@ const ResourceDetail = ({ resource }) => {
     error: '',
     success: ''
   });
+  const [inventoryTransferDraft, setInventoryTransferDraft] = useState({
+    from_location_id: '',
+    to_location_id: '',
+    quantity: '',
+    quantity_type: 'stocked'
+  });
+  const [inventoryTransferState, setInventoryTransferState] = useState({
+    saving: false,
+    error: '',
+    success: ''
+  });
   const [stockLocationDraft, setStockLocationDraft] = useState({
     name: '',
     address_1: '',
@@ -2988,6 +2999,13 @@ const ResourceDetail = ({ resource }) => {
     if (isInventoryItem) {
       setInventoryItemDraft(mapInventoryItemToDraft(record));
       setInventoryLevelDraft({ location_id: '', stocked_quantity: '', incoming_quantity: '' });
+      setInventoryTransferDraft({
+        from_location_id: '',
+        to_location_id: '',
+        quantity: '',
+        quantity_type: 'stocked'
+      });
+      setInventoryTransferState({ saving: false, error: '', success: '' });
     }
     if (isStockLocation) {
       const address = record?.address || {};
@@ -6530,6 +6548,129 @@ const ResourceDetail = ({ resource }) => {
         deletingId: null,
         creating: false,
         error: err?.message || 'Unable to remove location level.',
+        success: ''
+      });
+    }
+  };
+
+  const handleInventoryTransferDraftChange = (field) => (event) => {
+    const value = event.target.value;
+    setInventoryTransferDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleInventoryTransfer = async (event) => {
+    event.preventDefault();
+    if (!record?.id) return;
+    const fromLocationId = inventoryTransferDraft.from_location_id.trim();
+    const toLocationId = inventoryTransferDraft.to_location_id.trim();
+    const quantityValue = parseQuantityInput(inventoryTransferDraft.quantity);
+    const field =
+      inventoryTransferDraft.quantity_type === 'incoming' ? 'incoming_quantity' : 'stocked_quantity';
+
+    if (!fromLocationId || !toLocationId) {
+      setInventoryTransferState({
+        saving: false,
+        error: 'Select both source and destination locations.',
+        success: ''
+      });
+      return;
+    }
+    if (fromLocationId === toLocationId) {
+      setInventoryTransferState({
+        saving: false,
+        error: 'Source and destination locations must be different.',
+        success: ''
+      });
+      return;
+    }
+    if (!quantityValue || quantityValue <= 0) {
+      setInventoryTransferState({
+        saving: false,
+        error: 'Transfer quantity must be at least 1.',
+        success: ''
+      });
+      return;
+    }
+
+    const fromLevel = inventoryLevelLookup.get(fromLocationId);
+    if (!fromLevel) {
+      setInventoryTransferState({
+        saving: false,
+        error: 'Source location does not have a stock level yet.',
+        success: ''
+      });
+      return;
+    }
+
+    const fromCurrent = toNumber(fromLevel[field]) ?? 0;
+    const toLevel = inventoryLevelLookup.get(toLocationId);
+    const toCurrent = toNumber(toLevel?.[field]) ?? 0;
+    const fromNext = fromCurrent - quantityValue;
+    const toNext = toCurrent + quantityValue;
+
+    if (fromNext < 0) {
+      setInventoryTransferState({
+        saving: false,
+        error: 'Transfer exceeds the available quantity at the source location.',
+        success: ''
+      });
+      return;
+    }
+
+    setInventoryTransferState({ saving: true, error: '', success: '' });
+    let sourceUpdated = false;
+    try {
+      await request(
+        `/admin/inventory-items/${record.id}/location-levels/${fromLocationId}`,
+        {
+          method: 'POST',
+          body: { [field]: fromNext }
+        }
+      );
+      sourceUpdated = true;
+
+      if (toLevel) {
+        await request(
+          `/admin/inventory-items/${record.id}/location-levels/${toLocationId}`,
+          {
+            method: 'POST',
+            body: { [field]: toNext }
+          }
+        );
+      } else {
+        await request(`/admin/inventory-items/${record.id}/location-levels`, {
+          method: 'POST',
+          body: { location_id: toLocationId, [field]: quantityValue }
+        });
+      }
+
+      setInventoryTransferDraft((prev) => ({
+        ...prev,
+        quantity: ''
+      }));
+      setInventoryTransferState({
+        saving: false,
+        error: '',
+        success: 'Inventory transferred.'
+      });
+      await refreshInventoryItem();
+    } catch (err) {
+      if (sourceUpdated) {
+        try {
+          await request(
+            `/admin/inventory-items/${record.id}/location-levels/${fromLocationId}`,
+            {
+              method: 'POST',
+              body: { [field]: fromCurrent }
+            }
+          );
+        } catch (rollbackError) {
+          // Best effort rollback to keep totals consistent.
+        }
+      }
+      setInventoryTransferState({
+        saving: false,
+        error: err?.message || 'Unable to transfer inventory.',
         success: ''
       });
     }
@@ -13275,6 +13416,60 @@ const ResourceDetail = ({ resource }) => {
     );
   }, [inventoryLocationMap, isInventoryItem, record]);
 
+  const inventoryLevelLookup = useMemo(() => {
+    const map = new Map();
+    inventoryLevelRows.forEach((level) => {
+      if (level.location_id) map.set(level.location_id, level);
+    });
+    return map;
+  }, [inventoryLevelRows]);
+
+  const inventoryTransferFromOptions = useMemo(
+    () => inventoryLevelRows.filter((level) => level.location_id),
+    [inventoryLevelRows]
+  );
+  const inventoryTransferToOptions = useMemo(
+    () => (inventoryMeta.locations || []).filter((location) => location?.id),
+    [inventoryMeta.locations]
+  );
+
+  const inventoryTransferSummary = useMemo(() => {
+    if (!inventoryTransferDraft.from_location_id || !inventoryTransferDraft.to_location_id) {
+      return null;
+    }
+    const quantityValue = parseQuantityInput(inventoryTransferDraft.quantity);
+    if (!quantityValue) return null;
+    const fromLevel = inventoryLevelLookup.get(inventoryTransferDraft.from_location_id);
+    const toLevel = inventoryLevelLookup.get(inventoryTransferDraft.to_location_id);
+    const field =
+      inventoryTransferDraft.quantity_type === 'incoming' ? 'incoming_quantity' : 'stocked_quantity';
+    const fromCurrent = toNumber(fromLevel?.[field]) ?? 0;
+    const toCurrent = toNumber(toLevel?.[field]) ?? 0;
+    return {
+      fieldLabel: field === 'incoming_quantity' ? 'Incoming' : 'Stocked',
+      fromCurrent,
+      toCurrent,
+      fromNext: fromCurrent - quantityValue,
+      toNext: toCurrent + quantityValue
+    };
+  }, [inventoryTransferDraft, inventoryLevelLookup]);
+
+  useEffect(() => {
+    if (!isInventoryItem) return;
+    setInventoryTransferDraft((prev) => {
+      const fromDefault = prev.from_location_id || inventoryTransferFromOptions[0]?.location_id || '';
+      let toDefault = prev.to_location_id || '';
+      if (!toDefault || toDefault === fromDefault) {
+        toDefault =
+          inventoryTransferToOptions.find((location) => location.id !== fromDefault)?.id || '';
+      }
+      if (fromDefault === prev.from_location_id && toDefault === prev.to_location_id) {
+        return prev;
+      }
+      return { ...prev, from_location_id: fromDefault, to_location_id: toDefault };
+    });
+  }, [isInventoryItem, inventoryTransferFromOptions, inventoryTransferToOptions]);
+
   const inventoryActivity = useMemo(() => {
     if (!isInventoryItem) return [];
     const events = [];
@@ -18245,6 +18440,159 @@ const ResourceDetail = ({ resource }) => {
                   </div>
                 </form>
               </div>
+            </div>
+          ) : null}
+
+          {isInventoryItem ? (
+            <div className="ldc-card p-6">
+              <h3 className="font-heading text-xl text-ldc-ink">Inventory Transfer</h3>
+              <p className="mt-2 text-sm text-ldc-ink/70">
+                Move stock between locations for this inventory item.
+              </p>
+              <form className="mt-4 grid gap-3 md:grid-cols-4" onSubmit={handleInventoryTransfer}>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Transfer type
+                  <select
+                    className="ldc-input mt-2"
+                    value={inventoryTransferDraft.quantity_type}
+                    onChange={handleInventoryTransferDraftChange('quantity_type')}
+                  >
+                    <option value="stocked">Stocked quantity</option>
+                    <option value="incoming">Incoming quantity</option>
+                  </select>
+                </label>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  From location
+                  {inventoryTransferFromOptions.length ? (
+                    <select
+                      className="ldc-input mt-2"
+                      value={inventoryTransferDraft.from_location_id}
+                      onChange={handleInventoryTransferDraftChange('from_location_id')}
+                    >
+                      <option value="">Select source</option>
+                      {inventoryTransferFromOptions.map((level) => {
+                        const field =
+                          inventoryTransferDraft.quantity_type === 'incoming'
+                            ? 'incoming_quantity'
+                            : 'stocked_quantity';
+                        const current = toNumber(level[field]) ?? 0;
+                        return (
+                          <option key={level.location_id} value={level.location_id}>
+                            {level.location_name} ({current})
+                          </option>
+                        );
+                      })}
+                    </select>
+                  ) : (
+                    <input
+                      className="ldc-input mt-2"
+                      value={inventoryTransferDraft.from_location_id}
+                      onChange={handleInventoryTransferDraftChange('from_location_id')}
+                      placeholder="loc_..."
+                    />
+                  )}
+                </label>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  To location
+                  {inventoryTransferToOptions.length ? (
+                    <select
+                      className="ldc-input mt-2"
+                      value={inventoryTransferDraft.to_location_id}
+                      onChange={handleInventoryTransferDraftChange('to_location_id')}
+                    >
+                      <option value="">Select destination</option>
+                      {inventoryTransferToOptions.map((location) => {
+                        const field =
+                          inventoryTransferDraft.quantity_type === 'incoming'
+                            ? 'incoming_quantity'
+                            : 'stocked_quantity';
+                        const level = inventoryLevelLookup.get(location.id);
+                        const current = toNumber(level?.[field]) ?? 0;
+                        return (
+                          <option
+                            key={location.id}
+                            value={location.id}
+                            disabled={location.id === inventoryTransferDraft.from_location_id}
+                          >
+                            {location.name || location.id} ({current})
+                          </option>
+                        );
+                      })}
+                    </select>
+                  ) : (
+                    <input
+                      className="ldc-input mt-2"
+                      value={inventoryTransferDraft.to_location_id}
+                      onChange={handleInventoryTransferDraftChange('to_location_id')}
+                      placeholder="loc_..."
+                    />
+                  )}
+                </label>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Quantity
+                  <input
+                    className="ldc-input mt-2"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={inventoryTransferDraft.quantity}
+                    onChange={handleInventoryTransferDraftChange('quantity')}
+                  />
+                </label>
+                <div className="md:col-span-4 flex flex-wrap items-center gap-3">
+                  <button
+                    className="ldc-button-primary"
+                    type="submit"
+                    disabled={inventoryTransferState.saving}
+                  >
+                    {inventoryTransferState.saving ? 'Transferring...' : 'Transfer inventory'}
+                  </button>
+                  {inventoryTransferState.error ? (
+                    <span className="text-sm text-rose-600">{inventoryTransferState.error}</span>
+                  ) : null}
+                  {inventoryTransferState.success ? (
+                    <span className="text-sm text-emerald-700">{inventoryTransferState.success}</span>
+                  ) : null}
+                </div>
+              </form>
+              {inventoryTransferSummary ? (
+                <div className="mt-4 rounded-2xl bg-white/70 p-4 text-sm text-ldc-ink">
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                    Transfer preview
+                  </div>
+                  <div className="mt-2 grid gap-3 md:grid-cols-2">
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                        Source
+                      </div>
+                      <div className="mt-1">
+                        {inventoryLocationMap.get(inventoryTransferDraft.from_location_id)?.name ||
+                          inventoryTransferDraft.from_location_id ||
+                          'Source'}{' '}
+                        · {inventoryTransferSummary.fieldLabel}{' '}
+                        {inventoryTransferSummary.fromCurrent} → {inventoryTransferSummary.fromNext}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                        Destination
+                      </div>
+                      <div className="mt-1">
+                        {inventoryLocationMap.get(inventoryTransferDraft.to_location_id)?.name ||
+                          inventoryTransferDraft.to_location_id ||
+                          'Destination'}{' '}
+                        · {inventoryTransferSummary.fieldLabel}{' '}
+                        {inventoryTransferSummary.toCurrent} → {inventoryTransferSummary.toNext}
+                      </div>
+                    </div>
+                  </div>
+                  {inventoryTransferSummary.fromNext < 0 ? (
+                    <div className="mt-2 text-sm text-rose-600">
+                      Transfer exceeds available quantity.
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
 
