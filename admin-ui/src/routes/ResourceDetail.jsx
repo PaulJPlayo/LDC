@@ -639,6 +639,10 @@ const buildVariantDrafts = (record) => {
   const productOptions = record?.options || [];
   const fallbackCurrency = getDefaultCurrency(record);
   return record.variants.map((variant) => ({
+    ...(() => {
+      const optionMap = buildVariantOptionMap(variant, productOptions);
+      return { options: optionMap, originalOptions: { ...optionMap } };
+    })(),
     id: variant.id,
     title: variant.title || '',
     sku: variant.sku || '',
@@ -657,7 +661,6 @@ const buildVariantDrafts = (record) => {
     thumbnail: variant.thumbnail || '',
     manage_inventory: variant.manage_inventory !== false,
     allow_backorder: Boolean(variant.allow_backorder),
-    options: buildVariantOptionMap(variant, productOptions),
     prices: (variant.prices && variant.prices.length
       ? variant.prices
       : [{ currency_code: fallbackCurrency, amount: null }]
@@ -722,14 +725,57 @@ const buildVariantOptionsPayload = (optionsMap, productOptions, requireAll) => {
   return { payload, missing };
 };
 
+const normalizeOptionValue = (value) => String(value ?? '').trim();
+
+const areOptionMapsEqual = (left, right) => {
+  const leftMap = left && typeof left === 'object' ? left : {};
+  const rightMap = right && typeof right === 'object' ? right : {};
+  const keys = new Set([...Object.keys(leftMap), ...Object.keys(rightMap)]);
+  for (const key of keys) {
+    if (normalizeOptionValue(leftMap[key]) !== normalizeOptionValue(rightMap[key])) {
+      return false;
+    }
+  }
+  return true;
+};
+
+const MEDIA_BASE = (import.meta.env.VITE_MEDUSA_BACKEND_URL || 'https://api.lovettsldc.com')
+  .replace(/\/$/, '');
+
+const isLocalHost = (host) =>
+  ['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(String(host || '').toLowerCase());
+
+const normalizeBackendUrl = (url) => {
+  if (!/^https?:\/\//i.test(url)) return url;
+  try {
+    const parsed = new URL(url);
+    if (isLocalHost(parsed.hostname)) {
+      return `${MEDIA_BASE}${parsed.pathname}${parsed.search}${parsed.hash}`;
+    }
+    return url;
+  } catch {
+    return url;
+  }
+};
+
+const resolveMediaUrl = (value) => {
+  const url = String(value || '').trim();
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) return normalizeBackendUrl(url);
+  if (url.startsWith('//')) return `https:${url}`;
+  if (url.startsWith('/')) return `${MEDIA_BASE}${url}`;
+  if (!url.includes('://') && url.includes('/')) return `${MEDIA_BASE}/${url}`;
+  return url;
+};
+
 const normalizeImageUrls = (input) => {
   const urls = [];
   if (!Array.isArray(input)) return urls;
   input.forEach((entry) => {
     const value = typeof entry === 'string' ? entry : entry?.url;
-    const url = String(value || '').trim();
-    if (url && !urls.includes(url)) {
-      urls.push(url);
+    const resolved = resolveMediaUrl(value);
+    if (resolved && !urls.includes(resolved)) {
+      urls.push(resolved);
     }
   });
   return urls;
@@ -10332,12 +10378,15 @@ const ResourceDetail = ({ resource }) => {
       return;
     }
     const thumbnail = String(variant.thumbnail || '').trim();
-    const { payload: optionsPayload, missing } = buildVariantOptionsPayload(
-      variant.options,
-      variantOptionList,
-      Array.isArray(variantOptionList) && variantOptionList.length > 0
-    );
-    if (missing.length) {
+    const optionsChanged = !areOptionMapsEqual(variant.originalOptions, variant.options);
+    const { payload: optionsPayload, missing } = optionsChanged
+      ? buildVariantOptionsPayload(
+          variant.options,
+          variantOptionList,
+          Array.isArray(variantOptionList) && variantOptionList.length > 0
+        )
+      : { payload: {}, missing: [] };
+    if (optionsChanged && missing.length) {
       setVariantError(`Add values for: ${missing.join(', ')}`);
       setVariantMessage('');
       return;
@@ -10393,7 +10442,8 @@ const ResourceDetail = ({ resource }) => {
           thumbnail: thumbnail || null,
           manage_inventory: variant.manage_inventory,
           allow_backorder: variant.allow_backorder,
-          options: Object.keys(optionsPayload).length ? optionsPayload : undefined,
+          options:
+            optionsChanged && Object.keys(optionsPayload).length ? optionsPayload : undefined,
           prices: pricesPayload
         }
       });
