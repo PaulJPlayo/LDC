@@ -193,6 +193,12 @@
         container.querySelector('.tile-description') ||
         null;
       if (!descriptionEl) {
+        const meta = container.querySelector('.product-meta');
+        if (meta) {
+          descriptionEl = meta.querySelector('span') || meta;
+        }
+      }
+      if (!descriptionEl) {
         const candidates = Array.from(
           container.querySelectorAll('div.text-xs.text-slate-600')
         );
