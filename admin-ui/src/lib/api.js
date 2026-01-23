@@ -1,5 +1,6 @@
 const API_BASE = (import.meta.env.VITE_MEDUSA_BACKEND_URL || 'https://api.lovettsldc.com')
   .replace(/\/$/, '');
+const PUBLISHABLE_KEY = import.meta.env.VITE_MEDUSA_PUBLISHABLE_KEY || '';
 
 export class ApiError extends Error {
   constructor(message, status) {
@@ -25,6 +26,30 @@ export const request = async (path, options = {}) => {
     method: options.method || 'GET',
     headers: {
       'Content-Type': 'application/json',
+      ...(options.headers || {})
+    },
+    credentials: 'include',
+    body: options.body ? JSON.stringify(options.body) : undefined
+  });
+
+  const payload = await parseResponse(response);
+  if (!response.ok) {
+    const message =
+      typeof payload === 'string'
+        ? payload
+        : payload?.message || `Request failed (${response.status})`;
+    throw new ApiError(message, response.status);
+  }
+  return payload;
+};
+
+export const storeRequest = async (path, options = {}) => {
+  const url = `${API_BASE}${path}`;
+  const response = await fetch(url, {
+    method: options.method || 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(PUBLISHABLE_KEY ? { 'x-publishable-api-key': PUBLISHABLE_KEY } : {}),
       ...(options.headers || {})
     },
     credentials: 'include',

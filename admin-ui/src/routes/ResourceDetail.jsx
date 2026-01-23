@@ -3,7 +3,15 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import DataTable from '../components/DataTable.jsx';
 import PageHeader from '../components/PageHeader.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
-import { ApiError, formatApiError, getDetail, getList, request, uploadFiles } from '../lib/api.js';
+import {
+  ApiError,
+  formatApiError,
+  getDetail,
+  getList,
+  request,
+  storeRequest,
+  uploadFiles
+} from '../lib/api.js';
 import { formatDateTime, formatMoney } from '../lib/formatters.js';
 import { resolveRole, isAdminUser, isResourceAdminOnly } from '../lib/roles.js';
 import { useAuth } from '../state/auth.jsx';
@@ -601,6 +609,23 @@ const getDefaultCurrency = (record) => {
     ? record.product.variants.find((variant) => Array.isArray(variant.prices) && variant.prices.length)?.prices?.[0]
     : null;
   return productVariantPrice?.currency_code || 'usd';
+};
+
+const resolveStorefrontVariantPrice = (variant, fallbackCurrency = 'usd') => {
+  if (!variant) return null;
+  const priceData = variant.calculated_price || variant?.calculated_price_set || null;
+  const amount =
+    priceData?.calculated_amount ??
+    priceData?.original_amount ??
+    variant?.prices?.[0]?.amount ??
+    null;
+  if (amount == null) return null;
+  const currency =
+    priceData?.currency_code ||
+    variant?.prices?.[0]?.currency_code ||
+    fallbackCurrency ||
+    'usd';
+  return { amount, currency };
 };
 
 const buildVariantOptionMap = (variant, productOptions = []) => {
@@ -1281,6 +1306,11 @@ const ResourceDetail = ({ resource }) => {
   const [newVariant, setNewVariant] = useState(null);
   const [variantProduct, setVariantProduct] = useState(null);
   const [variantProductError, setVariantProductError] = useState('');
+  const [storefrontPriceMap, setStorefrontPriceMap] = useState({});
+  const [storefrontPriceState, setStorefrontPriceState] = useState({
+    loading: false,
+    error: ''
+  });
   const [orderActionState, setOrderActionState] = useState({ saving: false, error: '', success: '' });
   const [orderArchiveState, setOrderArchiveState] = useState({
     saving: false,
@@ -3207,6 +3237,64 @@ const ResourceDetail = ({ resource }) => {
       isActive = false;
     };
   }, [isVariant, record?.product_id, record?.product?.id]);
+
+  useEffect(() => {
+    if (!record || (!isProduct && !isVariant)) {
+      setStorefrontPriceMap({});
+      setStorefrontPriceState({ loading: false, error: '' });
+      return;
+    }
+    const productId = isProduct ? record.id : record?.product_id || record?.product?.id;
+    if (!productId) {
+      setStorefrontPriceMap({});
+      setStorefrontPriceState({ loading: false, error: 'Storefront product unavailable.' });
+      return;
+    }
+
+    let isActive = true;
+    const loadStorefrontPrices = async () => {
+      setStorefrontPriceState({ loading: true, error: '' });
+      try {
+        const params = new URLSearchParams({
+          fields: '+variants,+variants.calculated_price,+variants.prices'
+        });
+        const payload = await storeRequest(`/store/products/${productId}?${params.toString()}`);
+        if (!isActive) return;
+        const product =
+          payload?.product ||
+          payload?.data?.product ||
+          payload?.data ||
+          payload?.products?.[0] ||
+          null;
+        if (!product) {
+          throw new Error('Storefront product unavailable.');
+        }
+        const fallbackCurrency = product?.currency_code || getDefaultCurrency(record);
+        const next = {};
+        (Array.isArray(product.variants) ? product.variants : []).forEach((variant) => {
+          const price = resolveStorefrontVariantPrice(variant, fallbackCurrency);
+          if (price) {
+            next[variant.id] = price;
+          }
+        });
+        setStorefrontPriceMap(next);
+        setStorefrontPriceState({ loading: false, error: '' });
+      } catch (err) {
+        if (!isActive) return;
+        setStorefrontPriceMap({});
+        setStorefrontPriceState({
+          loading: false,
+          error: err?.message || 'Unable to load storefront prices.'
+        });
+      }
+    };
+
+    loadStorefrontPrices();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isProduct, isVariant, record?.id, record?.product_id, record?.product?.id]);
 
   useEffect(() => {
     if (!isProduct) return;
@@ -17582,6 +17670,12 @@ const ResourceDetail = ({ resource }) => {
               {variantUploadState.success ? (
                 <div className="mt-3 text-sm text-emerald-700">{variantUploadState.success}</div>
               ) : null}
+              {storefrontPriceState.loading ? (
+                <div className="mt-3 text-sm text-ldc-ink/60">Loading storefront prices...</div>
+              ) : null}
+              {storefrontPriceState.error ? (
+                <div className="mt-3 text-sm text-rose-600">{storefrontPriceState.error}</div>
+              ) : null}
               {isVariant && variantProductError ? (
                 <div className="mt-3 text-sm text-rose-600">{variantProductError}</div>
               ) : null}
@@ -17820,7 +17914,18 @@ const ResourceDetail = ({ resource }) => {
                       ) : null}
 
                       <div className="mt-4">
-                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                        {storefrontPriceMap[variant.id] ? (
+                          <div className="text-xs text-ldc-ink/60">
+                            Storefront price:{' '}
+                            {formatMoney(
+                              storefrontPriceMap[variant.id].amount,
+                              storefrontPriceMap[variant.id].currency
+                            )}
+                          </div>
+                        ) : !storefrontPriceState.loading && !storefrontPriceState.error ? (
+                          <div className="text-xs text-ldc-ink/50">Storefront price unavailable.</div>
+                        ) : null}
+                        <div className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
                           Prices (major units)
                         </div>
                         <div className="mt-2 space-y-2">
