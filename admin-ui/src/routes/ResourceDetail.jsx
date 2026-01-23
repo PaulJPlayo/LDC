@@ -2703,7 +2703,7 @@ const ResourceDetail = ({ resource }) => {
           const payload = await getList(resource.endpoint, {
             id,
             limit: 1,
-            fields: '+inventory_quantity'
+            fields: '+inventory_quantity,+prices'
           });
           const variants = getArrayFromPayload(payload, resource.listKey);
           setRecord(variants?.[0] || null);
@@ -2711,7 +2711,7 @@ const ResourceDetail = ({ resource }) => {
           const detailParams = isProduct
             ? {
                 fields:
-                  '+categories,+images,+description,+subtitle,+shipping_profile_id,+shipping_profile'
+                  '+categories,+images,+description,+subtitle,+shipping_profile_id,+shipping_profile,+variants,+variants.prices'
               }
             : isOrder
               ? orderDetailParams
