@@ -96,9 +96,13 @@
     return src;
   };
 
-  const getProductPrice = product => {
+  const getProductPrice = (product, preferredVariantId) => {
     const variants = Array.isArray(product?.variants) ? product.variants : [];
-    const firstVariant = variants[0];
+    const preferredVariant =
+      preferredVariantId && variants.length
+        ? variants.find(variant => variant?.id === preferredVariantId)
+        : null;
+    const firstVariant = preferredVariant || variants[0];
     const priceData = firstVariant?.calculated_price;
     const amount =
       priceData?.calculated_amount ??
@@ -167,7 +171,7 @@
     return containers;
   };
 
-  const updateProductCard = (container, product) => {
+  const updateProductCard = (container, product, preferredVariantId) => {
     if (!container || !product) return;
     const title = product.title || '';
     if (title) {
@@ -180,7 +184,7 @@
       });
     }
 
-    const priceInfo = getProductPrice(product);
+    const priceInfo = getProductPrice(product, preferredVariantId);
     if (priceInfo) {
       const formatted = formatCurrency(priceInfo.amount, priceInfo.currency);
       const priceCandidates = [
@@ -250,6 +254,7 @@
   const hydrateProductCards = async () => {
     const containers = getProductContainers();
     if (!containers.size) return;
+    const map = await loadProductMap();
     const products = await fetchStoreProducts();
     if (!products.length) return;
     const productByHandle = new Map(
@@ -257,16 +262,12 @@
     );
 
     containers.forEach((key, container) => {
-      const product = productByHandle.get(key);
-      if (product) {
-        updateProductCard(container, product);
-        return;
-      }
       const fallbackKey = slugify(key);
-      const fallback = productByHandle.get(fallbackKey);
-      if (fallback) {
-        updateProductCard(container, fallback);
-      }
+      const product = productByHandle.get(key) || productByHandle.get(fallbackKey);
+      if (!product) return;
+      const entry = map?.products?.[key] || map?.products?.[fallbackKey] || null;
+      const preferredVariantId = entry?.variantId || entry?.variant_id || null;
+      updateProductCard(container, product, preferredVariantId);
     });
   };
 
