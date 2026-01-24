@@ -1306,6 +1306,11 @@ const ResourceDetail = ({ resource }) => {
   const [newVariant, setNewVariant] = useState(null);
   const [variantProduct, setVariantProduct] = useState(null);
   const [variantProductError, setVariantProductError] = useState('');
+  const [pricingRegionId, setPricingRegionId] = useState('');
+  const [pricingRegionState, setPricingRegionState] = useState({
+    loading: false,
+    error: ''
+  });
   const [storefrontPriceMap, setStorefrontPriceMap] = useState({});
   const [storefrontPriceState, setStorefrontPriceState] = useState({
     loading: false,
@@ -3239,6 +3244,41 @@ const ResourceDetail = ({ resource }) => {
   }, [isVariant, record?.product_id, record?.product?.id]);
 
   useEffect(() => {
+    if (!isProduct && !isVariant) {
+      setPricingRegionId('');
+      setPricingRegionState({ loading: false, error: '' });
+      return;
+    }
+    let isActive = true;
+    const loadPricingRegion = async () => {
+      setPricingRegionState({ loading: true, error: '' });
+      try {
+        const payload = await getList('/admin/regions', { limit: 1 });
+        if (!isActive) return;
+        const regions = getArrayFromPayload(payload, 'regions');
+        const region = regions?.[0];
+        if (!region?.id) {
+          throw new Error('No regions available for storefront pricing.');
+        }
+        setPricingRegionId(region.id);
+        setPricingRegionState({ loading: false, error: '' });
+      } catch (err) {
+        if (!isActive) return;
+        setPricingRegionId('');
+        setPricingRegionState({
+          loading: false,
+          error: err?.message || 'Unable to load pricing region.'
+        });
+      }
+    };
+    loadPricingRegion();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isProduct, isVariant]);
+
+  useEffect(() => {
     if (!record || (!isProduct && !isVariant)) {
       setStorefrontPriceMap({});
       setStorefrontPriceState({ loading: false, error: '' });
@@ -3250,13 +3290,22 @@ const ResourceDetail = ({ resource }) => {
       setStorefrontPriceState({ loading: false, error: 'Storefront product unavailable.' });
       return;
     }
+    if (!pricingRegionId) {
+      setStorefrontPriceMap({});
+      setStorefrontPriceState({
+        loading: false,
+        error: pricingRegionState.error || 'Pricing region required to calculate storefront prices.'
+      });
+      return;
+    }
 
     let isActive = true;
     const loadStorefrontPrices = async () => {
       setStorefrontPriceState({ loading: true, error: '' });
       try {
         const params = new URLSearchParams({
-          fields: '+variants,+variants.calculated_price,+variants.prices'
+          fields: '+variants,+variants.calculated_price,+variants.prices',
+          region_id: pricingRegionId
         });
         const payload = await storeRequest(`/store/products/${productId}?${params.toString()}`);
         if (!isActive) return;
@@ -3294,7 +3343,15 @@ const ResourceDetail = ({ resource }) => {
     return () => {
       isActive = false;
     };
-  }, [isProduct, isVariant, record?.id, record?.product_id, record?.product?.id]);
+  }, [
+    isProduct,
+    isVariant,
+    pricingRegionId,
+    pricingRegionState.error,
+    record?.id,
+    record?.product_id,
+    record?.product?.id
+  ]);
 
   useEffect(() => {
     if (!isProduct) return;
