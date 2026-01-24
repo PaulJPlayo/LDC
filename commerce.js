@@ -19,6 +19,7 @@
   const badgeEls = Array.from(document.querySelectorAll('[data-cart-count]'));
   const productMapUrl = body.dataset.productMap || window.LDC_PRODUCT_MAP || 'product-map.json';
   let productMapPromise = null;
+  let regionIdPromise = null;
 
   const request = async (path, options = {}) => {
     const url = `${backendUrl}${path}`;
@@ -57,6 +58,18 @@
     return productMapPromise;
   };
   loadProductMap();
+
+  const loadRegionId = async () => {
+    if (!regionIdPromise) {
+      regionIdPromise = request('/store/regions')
+        .then(payload => payload?.regions?.[0]?.id || '')
+        .catch(error => {
+          console.warn('[commerce] Unable to load regions:', error);
+          return '';
+        });
+    }
+    return regionIdPromise;
+  };
 
   const slugify = value =>
     String(value || '')
@@ -105,13 +118,17 @@
     let offset = 0;
     let results = [];
     let hasMore = true;
+    const regionId = await loadRegionId();
 
     while (hasMore) {
       const params = new URLSearchParams({
         limit: String(limit),
         offset: String(offset),
-        fields: '+variants,+thumbnail,+images,+description,+subtitle'
+        fields: '+variants,+variants.calculated_price,+variants.prices,+thumbnail,+images,+description,+subtitle'
       });
+      if (regionId) {
+        params.set('region_id', regionId);
+      }
       let payload = null;
       try {
         payload = await request(`/store/products?${params.toString()}`);
