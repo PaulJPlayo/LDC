@@ -82,10 +82,22 @@ const findCardStart = (lines: string[], index: number) => {
 
 const extractSwatches = (blockLines: string[]) => {
   const swatches: SwatchMeta[] = [];
-  const swatchRegex = /<span[^>]*class="[^"]*\bswatch\b[^"]*"/i;
-  blockLines.forEach((line) => {
-    if (!swatchRegex.test(line)) return;
-    const attrs = parseAttributes(line);
+  const block = blockLines.join("\n");
+  const sliderPositions: number[] = [];
+  const sliderRegex = /data-swatch-slider/gi;
+  let sliderMatch = sliderRegex.exec(block);
+  while (sliderMatch) {
+    sliderPositions.push(sliderMatch.index);
+    sliderMatch = sliderRegex.exec(block);
+  }
+  sliderPositions.sort((a, b) => a - b);
+
+  const swatchRegex =
+    /<span\b[^>]*class="[^"]*\bswatch\b[^"]*"[^>]*>([\s\S]*?)<\/span>/gi;
+  let match = swatchRegex.exec(block);
+  while (match) {
+    const tag = match[0];
+    const attrs = parseAttributes(tag);
     const className = attrs["class"] || "";
     if (
       /\bswatch-arrow\b/i.test(className) ||
@@ -93,25 +105,41 @@ const extractSwatches = (blockLines: string[]) => {
       /\bswatch-slider-track\b/i.test(className) ||
       /\bswatch-slider-window\b/i.test(className)
     ) {
-      return;
+      match = swatchRegex.exec(block);
+      continue;
     }
     const rawLabel =
       attrs["data-color-label"] ||
       attrs["data-accessory-label"] ||
       attrs["aria-label"] ||
       attrs["data-image-alt"] ||
+      attrs["title"] ||
       "";
     const label = cleanLabel(rawLabel);
-    if (!label) return;
+    if (!label) {
+      match = swatchRegex.exec(block);
+      continue;
+    }
     const labelKey = slugify(label);
+    let sliderIndex = 0;
+    if (sliderPositions.length) {
+      const swatchPos = match.index || 0;
+      for (let i = 0; i < sliderPositions.length; i += 1) {
+        if (sliderPositions[i] <= swatchPos) {
+          sliderIndex = i;
+        } else {
+          break;
+        }
+      }
+    }
     const style = attrs["style"];
     const type =
       attrs["data-swatch-type"] ||
-      (attrs["data-accessory-label"] ? "accessory" : "");
+      (attrs["data-accessory-label"] ? "accessory" : "") ||
+      (sliderIndex > 0 ? "accessory" : "");
     let glyph = "";
-    const textMatch = line.match(/>([^<]+)<\/span>/);
-    if (textMatch) {
-      const raw = decodeHtml(textMatch[1]).trim();
+    const raw = decodeHtml(match[1]).trim();
+    if (raw) {
       glyph = raw;
     }
     swatches.push({
@@ -121,7 +149,8 @@ const extractSwatches = (blockLines: string[]) => {
       glyph: glyph || undefined,
       type: type || undefined,
     });
-  });
+    match = swatchRegex.exec(block);
+  }
   return swatches;
 };
 

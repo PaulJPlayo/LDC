@@ -477,19 +477,35 @@
     const swatchSliders = Array.from(card.querySelectorAll('[data-swatch-slider]'));
     const swatchWindows = Array.from(card.querySelectorAll('[data-swatch-window]'));
 
-    swatchTracks.forEach((track, trackIndex) => {
+    swatchTracks.forEach(track => {
       track.innerHTML = '';
-      if (trackIndex > 0) {
-        track.closest('[data-swatch-slider]')?.classList.add('hidden');
+    });
+
+    const accessoryVariants = [];
+    const primaryVariants = [];
+    variants.forEach(variant => {
+      const meta = getVariantSwatchMeta(variant);
+      if (meta.type === 'accessory') {
+        accessoryVariants.push(variant);
+      } else {
+        primaryVariants.push(variant);
       }
     });
 
-    const primaryTrack = swatchTracks[0] || null;
-    if (primaryTrack) {
-      variants.forEach((variant, index) => {
+    const hasMultipleTracks = swatchTracks.length > 1;
+    const resolvedPrimary =
+      primaryVariants.length > 0 ? primaryVariants : accessoryVariants;
+    const resolvedAccessory = hasMultipleTracks ? accessoryVariants : [];
+    const combinedVariants = hasMultipleTracks
+      ? []
+      : [...resolvedPrimary, ...resolvedAccessory];
+
+    const fillTrack = (track, trackVariants) => {
+      if (!track) return;
+      trackVariants.forEach((variant, index) => {
         const label = getVariantLabel(variant);
         const meta = getVariantSwatchMeta(variant);
-        if (!meta.style && variants.length > 1) {
+        if (!meta.style && !meta.glyph && trackVariants.length > 1) {
           const handle = product?.handle || product?.id || 'unknown';
           missingSwatchMeta.add(handle);
         }
@@ -500,25 +516,36 @@
             swatch.dataset.variantImage = variantImage;
           }
         }
-        primaryTrack.appendChild(swatch);
+        track.appendChild(swatch);
       });
+    };
+
+    if (hasMultipleTracks) {
+      fillTrack(swatchTracks[0], resolvedPrimary);
+      fillTrack(swatchTracks[1], resolvedAccessory);
+      swatchTracks.slice(2).forEach(track => track.closest('[data-swatch-slider]')?.classList.add('hidden'));
+    } else {
+      fillTrack(swatchTracks[0], combinedVariants);
     }
 
     if (swatchSliders.length) {
-      const showSlider = variants.length > 1;
       swatchSliders.forEach((slider, sliderIndex) => {
-        if (sliderIndex > 0) {
+        const track = swatchTracks[sliderIndex] || null;
+        const hasSwatches = Boolean(track && track.children.length);
+        if (!hasSwatches) {
           slider.classList.add('hidden');
+          if (swatchWindows[sliderIndex]) {
+            swatchWindows[sliderIndex].style.display = 'none';
+          }
           return;
         }
-        slider.style.opacity = showSlider ? '1' : '0';
-        slider.style.pointerEvents = showSlider ? 'auto' : 'none';
+        slider.classList.remove('hidden');
+        slider.style.opacity = '1';
+        slider.style.pointerEvents = 'auto';
+        if (swatchWindows[sliderIndex]) {
+          swatchWindows[sliderIndex].style.display = '';
+        }
       });
-      if (!showSlider) {
-        swatchWindows.forEach(windowEl => {
-          windowEl.style.display = 'none';
-        });
-      }
     }
 
     const defaultVariant = variants[0] || null;
@@ -680,6 +707,7 @@
       swatch.textContent = swatchLabel;
     }
     if (meta.glyph) {
+      swatch.classList.add('is-glyph');
       swatch.textContent = meta.glyph;
     }
     if (meta.image) {

@@ -652,8 +652,15 @@
     },
     "tumbler-sip-cup": {
       "title": "Sip Cup",
-      "variantId": "variant_01KE74Y5AY3HSPY23B274PV3Y4",
-      "image": "http://127.0.0.1:5501/assets/Sip Cup - 40.png"
+      "variantId": "variant_01KE064577F92JN62MB2RZQMVZ",
+      "image": "http://127.0.0.1:5501/assets/Sip Cup - 40.png",
+      "variants": {
+        "coffee-color": {
+          "label": "Coffee color",
+          "variantId": "variant_01KE064577F92JN62MB2RZQMVZ",
+          "image": "http://127.0.0.1:5501/assets/Sip Cup - 40.png"
+        }
+      }
     },
     "tumbler-sublimation": {
       "title": "Sublimation",

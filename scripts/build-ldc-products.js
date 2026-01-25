@@ -142,10 +142,12 @@ const findCardImage = blockLines => {
 
 const extractSwatches = blockLines => {
   const swatches = [];
-  const swatchRegex = /<span[^>]*class="[^"]*\bswatch\b[^"]*"/i;
-  blockLines.forEach(line => {
-    if (!swatchRegex.test(line)) return;
-    const attrs = parseAttributes(line);
+  const block = blockLines.join('\n');
+  const swatchRegex = /<span\b[^>]*class="[^"]*\bswatch\b[^"]*"[^>]*>([\s\S]*?)<\/span>/gi;
+  let match = swatchRegex.exec(block);
+  while (match) {
+    const tag = match[0];
+    const attrs = parseAttributes(tag);
     const className = attrs['class'] || '';
     if (
       /swatch-arrow/i.test(className) ||
@@ -153,7 +155,8 @@ const extractSwatches = blockLines => {
       /swatch-slider-track/i.test(className) ||
       /swatch-slider-window/i.test(className)
     ) {
-      return;
+      match = swatchRegex.exec(block);
+      continue;
     }
     const rawLabel =
       attrs['data-color-label'] ||
@@ -163,7 +166,10 @@ const extractSwatches = blockLines => {
       attrs['title'] ||
       '';
     const label = cleanLabel(rawLabel);
-    if (!label) return;
+    if (!label) {
+      match = swatchRegex.exec(block);
+      continue;
+    }
     const price = attrs['data-price'] ? parseFloat(attrs['data-price']) : null;
     const image = attrs['data-image-src'] || null;
     swatches.push({
@@ -172,7 +178,8 @@ const extractSwatches = blockLines => {
       image,
       price
     });
-  });
+    match = swatchRegex.exec(block);
+  }
   return swatches;
 };
 

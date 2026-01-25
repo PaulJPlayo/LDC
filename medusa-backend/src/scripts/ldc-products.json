@@ -838,7 +838,14 @@
       "handle": "tumbler-sip-cup",
       "price": 40,
       "image": "assets/Sip Cup - 40.png",
-      "variants": [],
+      "variants": [
+        {
+          "label": "Coffee color",
+          "title": "Sip Cup - Coffee color",
+          "price": 40,
+          "image": "assets/Sip Cup - 40.png"
+        }
+      ],
       "description": null
     },
     {
