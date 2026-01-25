@@ -504,6 +504,16 @@ const PRODUCT_STATUS_OPTIONS = [
   { value: 'rejected', label: 'Rejected' }
 ];
 
+const STOREFRONT_SECTIONS = [
+  { key: 'tumblers', label: 'Tumblers (collection)' },
+  { key: 'cups', label: 'Cups (collection)' },
+  { key: 'accessories', label: 'Accessories (collection)' },
+  { key: 'sale', label: 'Sale (tag)' },
+  { key: 'new-arrivals', label: 'New Arrivals (tag)' },
+  { key: 'best-sellers', label: 'Best Sellers (tag)' },
+  { key: 'under-25', label: 'Under $25 (tag)' }
+];
+
 const sortByLabel = (items, getLabel) => {
   if (!Array.isArray(items)) return [];
   return [...items].sort((a, b) =>
@@ -576,6 +586,51 @@ const parseNullableNumberInput = (value) => {
     return { value: null, error: 'Value must be a number.' };
   }
   return { value: numeric, error: '' };
+};
+
+const parseStorefrontOrderDraft = (raw) => {
+  if (!raw) {
+    return STOREFRONT_SECTIONS.reduce((acc, section) => {
+      acc[section.key] = '';
+      return acc;
+    }, {});
+  }
+  let source = raw;
+  if (typeof raw === 'string') {
+    try {
+      source = JSON.parse(raw);
+    } catch (err) {
+      source = raw;
+    }
+  }
+  const fallback =
+    typeof source === 'number' ? source : Number.isFinite(Number(source)) ? Number(source) : null;
+  return STOREFRONT_SECTIONS.reduce((acc, section) => {
+    const direct = typeof source === 'object' && source
+      ? Number(source[section.key])
+      : Number.NaN;
+    if (Number.isFinite(direct)) {
+      acc[section.key] = String(direct);
+    } else if (fallback != null) {
+      acc[section.key] = String(fallback);
+    } else {
+      acc[section.key] = '';
+    }
+    return acc;
+  }, {});
+};
+
+const buildStorefrontOrderPayload = (draft) => {
+  if (!draft || typeof draft !== 'object') return null;
+  const payload = {};
+  STOREFRONT_SECTIONS.forEach((section) => {
+    const value = draft[section.key];
+    const numeric = Number(String(value ?? '').trim());
+    if (Number.isFinite(numeric)) {
+      payload[section.key] = numeric;
+    }
+  });
+  return Object.keys(payload).length ? payload : null;
 };
 
 const parseJsonInput = (value) => {
@@ -893,6 +948,7 @@ const mapRecordToDraft = (record) => ({
   origin_country: record?.origin_country ?? '',
   material: record?.material ?? '',
   metadata: formatJsonValue(record?.metadata),
+  storefront_order: parseStorefrontOrderDraft(record?.metadata?.storefront_order),
   sales_channel_ids: (record?.sales_channels || []).map((channel) => channel.id),
   tag_ids: (record?.tags || []).map((tag) => tag.id),
   category_ids: (record?.categories || []).map((category) => category.id)
@@ -5447,6 +5503,20 @@ const ResourceDetail = ({ resource }) => {
     setProductDraft((prev) => (prev ? { ...prev, [field]: value } : prev));
   };
 
+  const handleStorefrontOrderChange = (sectionKey) => (event) => {
+    const value = event.target.value;
+    setProductDraft((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        storefront_order: {
+          ...(prev.storefront_order || {}),
+          [sectionKey]: value
+        }
+      };
+    });
+  };
+
   const handleDraftToggle = (field) => (event) => {
     const value = event.target.checked;
     setProductDraft((prev) => (prev ? { ...prev, [field]: value } : prev));
@@ -5609,6 +5679,14 @@ const ResourceDetail = ({ resource }) => {
         });
         return;
       }
+      const storefrontOrder = buildStorefrontOrderPayload(productDraft.storefront_order);
+      const metadataPayload =
+        metadata && typeof metadata === 'object' ? { ...metadata } : {};
+      if (storefrontOrder) {
+        metadataPayload.storefront_order = storefrontOrder;
+      } else if (metadataPayload.storefront_order) {
+        delete metadataPayload.storefront_order;
+      }
       const payload = await request(`${resource.endpoint}/${record.id}`, {
         method: 'POST',
         body: {
@@ -5633,7 +5711,7 @@ const ResourceDetail = ({ resource }) => {
           mid_code: productDraft.mid_code.trim() || null,
           origin_country: productDraft.origin_country.trim() || null,
           material: productDraft.material.trim() || null,
-          metadata,
+          metadata: Object.keys(metadataPayload).length ? metadataPayload : null,
           sales_channels: (productDraft.sales_channel_ids || []).map((idValue) => ({ id: idValue })),
           tags: (productDraft.tag_ids || []).map((idValue) => ({ id: idValue })),
           categories: (productDraft.category_ids || []).map((idValue) => ({ id: idValue }))
@@ -17316,6 +17394,34 @@ const ResourceDetail = ({ resource }) => {
                   ) : (
                     <p className="text-sm text-ldc-ink/60">No categories available yet.</p>
                   )}
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                  Storefront ordering
+                </div>
+                <p className="mt-2 text-sm text-ldc-ink/60">
+                  Lower numbers appear first in each storefront section.
+                </p>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  {STOREFRONT_SECTIONS.map((section) => (
+                    <label
+                      key={section.key}
+                      className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60"
+                    >
+                      {section.label}
+                      <input
+                        className="ldc-input mt-2"
+                        type="number"
+                        step="1"
+                        min="0"
+                        value={productDraft.storefront_order?.[section.key] ?? ''}
+                        onChange={handleStorefrontOrderChange(section.key)}
+                        placeholder="e.g. 1"
+                      />
+                    </label>
+                  ))}
                 </div>
               </div>
 

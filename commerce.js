@@ -23,6 +23,7 @@
   let storeProductsPromise = null;
   let productIndexPromise = null;
   let regionIdPromise = null;
+  const missingSwatchMeta = new Set();
 
   const request = async (path, options = {}) => {
     const url = `${backendUrl}${path}`;
@@ -86,6 +87,103 @@
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
 
+  const parseNumeric = value => {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string' && value.trim()) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+    return null;
+  };
+
+  const normalizeMetadata = metadata => {
+    if (!metadata) return {};
+    if (typeof metadata === 'object') return metadata;
+    if (typeof metadata === 'string') {
+      try {
+        const parsed = JSON.parse(metadata);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      } catch (error) {
+        return {};
+      }
+    }
+    return {};
+  };
+
+  const getStorefrontOrderValue = (product, sectionKey) => {
+    const metadata = normalizeMetadata(product?.metadata);
+    let raw = metadata?.storefront_order;
+    if (!raw) return null;
+    if (typeof raw === 'string') {
+      try {
+        raw = JSON.parse(raw);
+      } catch (error) {
+        return parseNumeric(raw);
+      }
+    }
+    if (typeof raw === 'number') return raw;
+    if (typeof raw === 'object' && raw) {
+      const direct = parseNumeric(raw?.[sectionKey]);
+      if (direct != null) return direct;
+      return parseNumeric(raw?.default);
+    }
+    return null;
+  };
+
+  const getProductCollectionHandle = product => {
+    const handle = product?.collection?.handle || product?.collection?.title || '';
+    return slugify(handle);
+  };
+
+  const getProductTags = product => {
+    const tags = Array.isArray(product?.tags) ? product.tags : [];
+    return tags
+      .map(tag => {
+        if (typeof tag === 'string') return tag;
+        return tag?.value || tag?.handle || tag?.title || '';
+      })
+      .filter(Boolean)
+      .map(tag => slugify(tag));
+  };
+
+  const getVariantLabel = variant => {
+    if (!variant) return '';
+    const options = Array.isArray(variant.options) ? variant.options : [];
+    const optionMatch = options.find(optionValue => {
+      const title =
+        optionValue?.option?.title ||
+        optionValue?.option_title ||
+        optionValue?.optionTitle ||
+        '';
+      return /style|color|accent/i.test(title);
+    });
+    const label = cleanVariantLabel(optionMatch?.value || variant.title || '');
+    return label || 'Default';
+  };
+
+  const getVariantSwatchMeta = variant => {
+    const metadata = normalizeMetadata(variant?.metadata);
+    const style =
+      metadata?.swatchStyle ||
+      metadata?.swatch_style ||
+      metadata?.swatch ||
+      '';
+    const glyph =
+      metadata?.swatchGlyph ||
+      metadata?.swatch_glyph ||
+      '';
+    const type =
+      metadata?.swatchType ||
+      metadata?.swatch_type ||
+      '';
+    const image =
+      metadata?.preview_image ||
+      metadata?.previewImage ||
+      metadata?.image ||
+      '';
+    return { style, glyph, type, image };
+  };
+
   const formatCurrency = (amount, currencyCode = 'USD') => {
     const value = Number(amount);
     if (!Number.isFinite(value)) return '';
@@ -102,6 +200,48 @@
     if (src.startsWith('//')) return `https:${src}`;
     if (src.startsWith('/')) return `${backendUrl}${src}`;
     return src;
+  };
+
+  const updateProductImage = (container, imageUrl, title, label) => {
+    if (!container || !imageUrl) return;
+    const resolved = resolveAssetUrl(imageUrl);
+    const imageEl =
+      container.querySelector('[data-product-image]') ||
+      container.querySelector('.tile-mauve img') ||
+      container.querySelector('.product-media img') ||
+      container.querySelector('img');
+    if (imageEl && resolved) {
+      imageEl.setAttribute('src', resolved);
+      if (title) {
+        const altLabel = label ? `${title} - ${label}` : `${title} thumbnail`;
+        imageEl.setAttribute('alt', altLabel);
+      }
+    }
+  };
+
+  const updateAddToCartVariant = (container, variantId) => {
+    if (!container || !variantId) return;
+    container.dataset.selectedVariantId = variantId;
+    const button =
+      container.querySelector('[data-add-to-cart]') ||
+      container.querySelector('[data-add-to-cart][data-product-key]');
+    if (button) {
+      button.dataset.variantId = variantId;
+      button.dataset.medusaVariantId = variantId;
+    }
+  };
+
+  const getVariantImage = (variant, product) => {
+    if (!variant && !product) return '';
+    const meta = getVariantSwatchMeta(variant);
+    return (
+      meta.image ||
+      variant?.thumbnail ||
+      product?.thumbnail ||
+      product?.images?.[0]?.url ||
+      product?.images?.[0] ||
+      ''
+    );
   };
 
   const getProductPrice = (product, preferredVariantId) => {
@@ -159,7 +299,8 @@
       const params = new URLSearchParams({
         limit: String(limit),
         offset: String(offset),
-        fields: '+variants,+variants.calculated_price,+variants.prices,+thumbnail,+images,+description,+subtitle'
+        fields:
+          '+variants,+variants.calculated_price,+variants.prices,+variants.metadata,+variants.thumbnail,+variants.options,+thumbnail,+images,+description,+subtitle,+collection,+tags,+metadata,+created_at'
       });
       if (regionId) {
         params.set('region_id', regionId);
@@ -312,6 +453,196 @@
     });
   };
 
+  const buildDynamicCard = (template, product, sectionKey) => {
+    const card = template.cloneNode(true);
+    if (card?.removeAttribute) {
+      card.removeAttribute('id');
+    }
+    card.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+    card.dataset.productHandle = product?.handle || product?.id || '';
+    card.dataset.productId = product?.id || '';
+    if (sectionKey) {
+      card.dataset.sectionKey = sectionKey;
+    }
+
+    const addButton = card.querySelector('[data-add-to-cart]');
+    if (addButton) {
+      addButton.dataset.productKey = product?.handle || product?.id || '';
+      addButton.dataset.productHandle = product?.handle || '';
+      addButton.dataset.productId = product?.id || '';
+    }
+
+    const variants = Array.isArray(product?.variants) ? product.variants : [];
+    const swatchTracks = Array.from(card.querySelectorAll('[data-swatch-track]'));
+    const swatchSliders = Array.from(card.querySelectorAll('[data-swatch-slider]'));
+    const swatchWindows = Array.from(card.querySelectorAll('[data-swatch-window]'));
+
+    swatchTracks.forEach((track, trackIndex) => {
+      track.innerHTML = '';
+      if (trackIndex > 0) {
+        track.closest('[data-swatch-slider]')?.classList.add('hidden');
+      }
+    });
+
+    const primaryTrack = swatchTracks[0] || null;
+    if (primaryTrack) {
+      variants.forEach((variant, index) => {
+        const label = getVariantLabel(variant);
+        const meta = getVariantSwatchMeta(variant);
+        if (!meta.style && variants.length > 1) {
+          const handle = product?.handle || product?.id || 'unknown';
+          missingSwatchMeta.add(handle);
+        }
+        const swatch = buildSwatchElement(variant, label, index);
+        if (!swatch.dataset.variantImage) {
+          const variantImage = getVariantImage(variant, product);
+          if (variantImage) {
+            swatch.dataset.variantImage = variantImage;
+          }
+        }
+        primaryTrack.appendChild(swatch);
+      });
+    }
+
+    if (swatchSliders.length) {
+      const showSlider = variants.length > 1;
+      swatchSliders.forEach((slider, sliderIndex) => {
+        if (sliderIndex > 0) {
+          slider.classList.add('hidden');
+          return;
+        }
+        slider.style.opacity = showSlider ? '1' : '0';
+        slider.style.pointerEvents = showSlider ? 'auto' : 'none';
+      });
+      if (!showSlider) {
+        swatchWindows.forEach(windowEl => {
+          windowEl.style.display = 'none';
+        });
+      }
+    }
+
+    const defaultVariant = variants[0] || null;
+    const defaultLabel = defaultVariant ? getVariantLabel(defaultVariant) : '';
+    const defaultImage = getVariantImage(defaultVariant, product);
+    updateProductCard(card, product, defaultVariant?.id || null);
+    updateProductImage(card, defaultImage, product?.title || '', defaultLabel);
+    updateAddToCartVariant(card, defaultVariant?.id || null);
+    card.dataset.selectedColor = defaultLabel;
+    card.dataset.selectedColorLabel = defaultLabel;
+
+    const newBadge = card.querySelector('.badge-new');
+    if (newBadge) {
+      const isNew = getProductTags(product).includes('new-arrivals');
+      newBadge.style.display = isNew ? 'inline-flex' : 'none';
+    }
+    const limitedBadge = card.querySelector('.badge-limited');
+    if (limitedBadge) {
+      const isLimited = getProductTags(product).includes('limited');
+      limitedBadge.style.display = isLimited ? 'inline-flex' : 'none';
+    }
+
+    return card;
+  };
+
+  const getSectionFilters = container => {
+    const collectionRaw =
+      container.dataset.medusaCollection || container.dataset.collectionHandle || '';
+    const tagRaw = container.dataset.medusaTag || container.dataset.tagHandle || '';
+    const sectionKey =
+      container.dataset.sectionKey ||
+      collectionRaw ||
+      tagRaw ||
+      '';
+    const limitValue = parseNumeric(container.dataset.gridLimit || container.dataset.limit);
+    return {
+      collectionHandles: collectionRaw
+        .split(',')
+        .map(handle => slugify(handle))
+        .filter(Boolean),
+      tagHandles: tagRaw
+        .split(',')
+        .map(handle => slugify(handle))
+        .filter(Boolean),
+      sectionKey: slugify(sectionKey),
+      limit: limitValue && limitValue > 0 ? Math.floor(limitValue) : null
+    };
+  };
+
+  const filterProductsForSection = (products, filters) => {
+    if (!products?.length) return [];
+    const { collectionHandles, tagHandles } = filters;
+    return products.filter(product => {
+      if (collectionHandles.length) {
+        const handle = getProductCollectionHandle(product);
+        if (!collectionHandles.includes(handle)) {
+          return false;
+        }
+      }
+      if (tagHandles.length) {
+        const tags = getProductTags(product);
+        const matches = tagHandles.some(tag => tags.includes(tag));
+        if (!matches) return false;
+      }
+      return true;
+    });
+  };
+
+  const sortProductsForSection = (products, sectionKey) => {
+    return [...products].sort((a, b) => {
+      const aOrder = getStorefrontOrderValue(a, sectionKey);
+      const bOrder = getStorefrontOrderValue(b, sectionKey);
+      if (aOrder != null || bOrder != null) {
+        if (aOrder == null) return 1;
+        if (bOrder == null) return -1;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+      }
+      const aDate = new Date(a?.created_at || 0).getTime();
+      const bDate = new Date(b?.created_at || 0).getTime();
+      return bDate - aDate;
+    });
+  };
+
+  const renderDynamicGrids = async () => {
+    const containers = Array.from(
+      document.querySelectorAll('[data-medusa-collection], [data-medusa-tag]')
+    );
+    if (!containers.length) return;
+    const products = await loadStoreProducts();
+    if (!products.length) return;
+
+    containers.forEach(container => {
+      const template = container.querySelector('.product-card');
+      if (!template) return;
+      const filters = getSectionFilters(container);
+      let sectionProducts = filterProductsForSection(products, filters);
+      sectionProducts = sortProductsForSection(sectionProducts, filters.sectionKey);
+      if (filters.limit) {
+        sectionProducts = sectionProducts.slice(0, filters.limit);
+      }
+      if (!sectionProducts.length) {
+        return;
+      }
+
+      container.querySelectorAll('.product-card').forEach(card => card.remove());
+      const fragment = document.createDocumentFragment();
+      sectionProducts.forEach(product => {
+        const card = buildDynamicCard(template, product, filters.sectionKey);
+        fragment.appendChild(card);
+      });
+      container.appendChild(fragment);
+      initSwatchSliders(container);
+    });
+
+    if (missingSwatchMeta.size) {
+      console.warn(
+        '[commerce] Missing swatch metadata for products:',
+        Array.from(missingSwatchMeta)
+      );
+    }
+
+    window.dispatchEvent(new Event('resize'));
+  };
+
   const cleanVariantLabel = value =>
     String(value || '')
       .replace(/^\s*View\s+/i, '')
@@ -330,6 +661,37 @@
       swatch.textContent ||
       '';
     return cleanVariantLabel(raw);
+  };
+
+  const buildSwatchElement = (variant, label, index) => {
+    const swatch = document.createElement('span');
+    const meta = getVariantSwatchMeta(variant);
+    const swatchLabel = label || getVariantLabel(variant) || 'Variant';
+    swatch.className = 'swatch cursor-pointer';
+    swatch.dataset.variantId = variant?.id || '';
+    swatch.dataset.variantLabel = swatchLabel;
+    if (meta.type) {
+      swatch.dataset.swatchType = meta.type;
+    }
+    if (meta.style) {
+      swatch.setAttribute('style', meta.style);
+    } else {
+      swatch.classList.add('is-text');
+      swatch.textContent = swatchLabel;
+    }
+    if (meta.glyph) {
+      swatch.textContent = meta.glyph;
+    }
+    if (meta.image) {
+      swatch.dataset.variantImage = meta.image;
+    }
+    swatch.setAttribute('aria-label', swatchLabel);
+    swatch.setAttribute('role', 'button');
+    swatch.setAttribute('tabindex', '0');
+    if (index === 0) {
+      swatch.classList.add('is-active');
+    }
+    return swatch;
   };
 
   const findVariantSwatch = (container, label) => {
@@ -464,9 +826,32 @@
     return null;
   };
 
+  const resolveVariantFromProduct = (product, label) => {
+    if (!product) return null;
+    const variants = Array.isArray(product.variants) ? product.variants : [];
+    if (!variants.length) return null;
+    if (!label) return variants[0]?.id || null;
+    const labelKey = slugify(label);
+    const match = variants.find(variant => {
+      const variantLabel = getVariantLabel(variant);
+      return slugify(variantLabel) === labelKey;
+    });
+    return match?.id || variants[0]?.id || null;
+  };
+
   const updateCardPriceForSwatch = async swatch => {
     const container = getVariantContainer(swatch);
     if (!container) return;
+    const swatchGroup =
+      swatch.closest('[data-swatch-track]') ||
+      swatch.closest('.swatch-slider') ||
+      container;
+    if (swatchGroup) {
+      swatchGroup.querySelectorAll('.swatch.is-active').forEach(active => {
+        if (active !== swatch) active.classList.remove('is-active');
+      });
+      swatch.classList.add('is-active');
+    }
     const key = getProductKeyFromContainer(container);
     if (!key) return;
     const [map, index] = await Promise.all([loadProductMap(), loadProductIndex()]);
@@ -486,11 +871,21 @@
         container.dataset.selectedColorLabel = label;
       }
     }
-    let variantId = label && entry ? resolveVariantFromEntry(entry, label) : null;
+    let variantId = swatch.dataset.variantId || null;
+    if (!variantId && label && entry) {
+      variantId = resolveVariantFromEntry(entry, label);
+    }
     if (!variantId && entry) {
       variantId = entry?.variantId || entry?.variant_id || null;
     }
+    const variant =
+      variantId && Array.isArray(product?.variants)
+        ? product.variants.find(item => item?.id === variantId)
+        : null;
+    const imageUrl = getVariantImage(variant, product);
     updateProductPrice(container, product, variantId);
+    updateProductImage(container, imageUrl, product?.title || '', label);
+    updateAddToCartVariant(container, variantId);
   };
 
   const scheduleSwatchPriceUpdate = swatch => {
@@ -502,17 +897,89 @@
     });
   };
 
+  const initSwatchSliders = (scope) => {
+    const root = scope || document;
+    const sliders = Array.from(root.querySelectorAll('[data-swatch-slider]'));
+    sliders.forEach((slider) => {
+      if (slider.dataset.swatchInit === 'true') return;
+      slider.dataset.swatchInit = 'true';
+      const track = slider.querySelector('[data-swatch-track]');
+      const prev = slider.querySelector('[data-swatch-prev]');
+      const next = slider.querySelector('[data-swatch-next]');
+      if (!track || !prev || !next) return;
+      let index = 0;
+
+      const getGap = () => {
+        const styles = window.getComputedStyle(track);
+        const gapValue = styles.columnGap || styles.gap || '0px';
+        return parseFloat(gapValue) || 0;
+      };
+
+      const update = () => {
+        const swatches = Array.from(track.children);
+        const total = swatches.length;
+        if (!total) return;
+        const visible = Number(slider.dataset.visible || 4) || 4;
+        const first = swatches[0];
+        const swatchWidth = first.getBoundingClientRect().width || 0;
+        const gap = getGap();
+        const maxIndex = Math.max(0, total - visible);
+        index = Math.max(0, Math.min(index, maxIndex));
+        const offset = (swatchWidth + gap) * index;
+        track.style.transform = `translateX(-${offset}px)`;
+        prev.style.opacity = index === 0 ? '0.4' : '1';
+        next.style.opacity = index >= maxIndex ? '0.4' : '1';
+      };
+
+      const step = (direction) => {
+        index += direction;
+        update();
+      };
+
+      prev.addEventListener('click', (event) => {
+        event.preventDefault();
+        step(-1);
+      });
+      next.addEventListener('click', (event) => {
+        event.preventDefault();
+        step(1);
+      });
+      window.addEventListener('resize', update);
+      update();
+    });
+  };
+
   const resolveVariantId = async button => {
     const direct = button.dataset.variantId || button.dataset.medusaVariantId;
     if (direct) return direct;
 
+    const container = getVariantContainer(button);
+    const selectedVariantId = container?.dataset?.selectedVariantId;
+    if (selectedVariantId) return selectedVariantId;
+
     const explicitKey = button.dataset.productKey || button.closest('[data-product-key]')?.dataset.productKey;
     const key = explicitKey || deriveProductKey(button);
+    const productHandle =
+      button.dataset.productHandle || container?.dataset?.productHandle || null;
+    const productId =
+      button.dataset.productId || container?.dataset?.productId || null;
+    if (!key && !productHandle && !productId) return null;
+
+    const selectedLabel = getSelectedVariantLabel(button);
+    if (productHandle || productId) {
+      const index = await loadProductIndex();
+      const product =
+        (productId && index?.byId?.get(productId)) ||
+        (productHandle && (index?.byHandle?.get(productHandle) || index?.byHandle?.get(slugify(productHandle)))) ||
+        null;
+      const resolved = resolveVariantFromProduct(product, selectedLabel);
+      if (resolved) return resolved;
+    }
+
     if (!key) return null;
 
     const map = await loadProductMap();
     const entry = map?.products?.[key];
-    const selectedLabel = getSelectedVariantLabel(button);
     const mappedVariant =
       selectedLabel ? resolveVariantFromEntry(entry, selectedLabel) : null;
     const variantId =
@@ -996,9 +1463,11 @@
     updateLineItemQuantity,
     changeLineItemQuantity,
     resetCart,
-    hydrateProductCards
+    hydrateProductCards,
+    renderDynamicGrids
   };
 
   syncBadges();
   hydrateProductCards();
+  renderDynamicGrids();
 })();
