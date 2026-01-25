@@ -694,7 +694,7 @@
     const swatch = document.createElement('span');
     const meta = getVariantSwatchMeta(variant);
     const swatchLabel = label || getVariantLabel(variant) || 'Variant';
-    swatch.className = 'swatch cursor-pointer';
+    swatch.className = 'swatch swatch-auto cursor-pointer';
     swatch.dataset.variantId = variant?.id || '';
     swatch.dataset.variantLabel = swatchLabel;
     if (meta.type) {

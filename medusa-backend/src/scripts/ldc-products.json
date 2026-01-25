@@ -840,8 +840,8 @@
       "image": "assets/Sip Cup - 40.png",
       "variants": [
         {
-          "label": "Coffee color",
-          "title": "Sip Cup - Coffee color",
+          "label": "Coffee",
+          "title": "Sip Cup - Coffee",
           "price": 40,
           "image": "assets/Sip Cup - 40.png"
         }
