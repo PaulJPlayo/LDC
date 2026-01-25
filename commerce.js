@@ -19,6 +19,9 @@
   const badgeEls = Array.from(document.querySelectorAll('[data-cart-count]'));
   const productMapUrl = body.dataset.productMap || window.LDC_PRODUCT_MAP || 'product-map.json';
   let productMapPromise = null;
+  let productMapCache = null;
+  let storeProductsPromise = null;
+  let productIndexPromise = null;
   let regionIdPromise = null;
 
   const request = async (path, options = {}) => {
@@ -50,8 +53,13 @@
           if (!response.ok) throw new Error('Unable to load product map.');
           return response.json();
         })
+        .then(map => {
+          productMapCache = map;
+          return map;
+        })
         .catch(error => {
           console.warn('[commerce] Product map unavailable:', error);
+          productMapCache = null;
           return null;
         });
     }
@@ -117,6 +125,29 @@
     return amount != null ? { amount, currency } : null;
   };
 
+  const updateProductPrice = (container, product, preferredVariantId) => {
+    if (!container || !product) return;
+    const priceInfo = getProductPrice(product, preferredVariantId);
+    if (!priceInfo) return;
+    const formatted = formatCurrency(priceInfo.amount, priceInfo.currency);
+    const priceCandidates = [
+      container.querySelector('[data-product-price]'),
+      container.querySelector('.price-line'),
+      container.querySelector('.product-price'),
+      container.querySelector('.tile-price'),
+      container.querySelector('[data-price-value]')
+    ].filter(Boolean);
+    let priceEl = priceCandidates[0];
+    if (!priceEl) {
+      priceEl = Array.from(container.querySelectorAll('span, div')).find(node =>
+        /\$\s*\d/.test(node.textContent || '')
+      );
+    }
+    if (priceEl && formatted) {
+      priceEl.textContent = formatted;
+    }
+  };
+
   const fetchStoreProducts = async () => {
     const limit = 200;
     let offset = 0;
@@ -157,6 +188,29 @@
     return results;
   };
 
+  const loadStoreProducts = async () => {
+    if (!storeProductsPromise) {
+      storeProductsPromise = fetchStoreProducts();
+    }
+    return storeProductsPromise;
+  };
+
+  const loadProductIndex = async () => {
+    if (!productIndexPromise) {
+      productIndexPromise = loadStoreProducts().then(products => {
+        const byHandle = new Map();
+        const byId = new Map();
+        (products || []).forEach(product => {
+          const handle = product?.handle || product?.id;
+          if (handle) byHandle.set(handle, product);
+          if (product?.id) byId.set(product.id, product);
+        });
+        return { products: products || [], byHandle, byId };
+      });
+    }
+    return productIndexPromise;
+  };
+
   const getProductContainers = () => {
     const containers = new Map();
     const triggers = Array.from(document.querySelectorAll('[data-product-key]'));
@@ -169,6 +223,15 @@
       }
     });
     return containers;
+  };
+
+  const getProductKeyFromContainer = container => {
+    if (!container) return '';
+    return (
+      container.dataset.productKey ||
+      container.querySelector('[data-product-key]')?.dataset.productKey ||
+      ''
+    );
   };
 
   const updateProductCard = (container, product, preferredVariantId) => {
@@ -184,26 +247,7 @@
       });
     }
 
-    const priceInfo = getProductPrice(product, preferredVariantId);
-    if (priceInfo) {
-      const formatted = formatCurrency(priceInfo.amount, priceInfo.currency);
-      const priceCandidates = [
-        container.querySelector('[data-product-price]'),
-        container.querySelector('.price-line'),
-        container.querySelector('.product-price'),
-        container.querySelector('.tile-price'),
-        container.querySelector('[data-price-value]')
-      ].filter(Boolean);
-      let priceEl = priceCandidates[0];
-      if (!priceEl) {
-        priceEl = Array.from(container.querySelectorAll('span, div')).find(node =>
-          /\$\s*\d/.test(node.textContent || '')
-        );
-      }
-      if (priceEl && formatted) {
-        priceEl.textContent = formatted;
-      }
-    }
+    updateProductPrice(container, product, preferredVariantId);
 
     const description = product.description || product.subtitle || '';
     if (description) {
@@ -254,12 +298,9 @@
   const hydrateProductCards = async () => {
     const containers = getProductContainers();
     if (!containers.size) return;
-    const map = await loadProductMap();
-    const products = await fetchStoreProducts();
-    if (!products.length) return;
-    const productByHandle = new Map(
-      products.map(product => [product?.handle || product?.id, product])
-    );
+    const [map, index] = await Promise.all([loadProductMap(), loadProductIndex()]);
+    const productByHandle = index?.byHandle;
+    if (!productByHandle || !productByHandle.size) return;
 
     containers.forEach((key, container) => {
       const fallbackKey = slugify(key);
@@ -277,6 +318,19 @@
       .replace(/\s*(swatch|accent|option)\s*$/i, '')
       .replace(/\s+/g, ' ')
       .trim();
+
+  const getSwatchLabel = swatch => {
+    if (!swatch) return '';
+    const raw =
+      swatch.dataset.colorLabel ||
+      swatch.dataset.accessoryLabel ||
+      swatch.getAttribute('aria-label') ||
+      swatch.getAttribute('data-image-alt') ||
+      swatch.getAttribute('title') ||
+      swatch.textContent ||
+      '';
+    return cleanVariantLabel(raw);
+  };
 
   const findVariantSwatch = (container, label) => {
     if (!container || !label) return null;
@@ -408,6 +462,44 @@
       return match?.variantId || match?.variant_id || null;
     }
     return null;
+  };
+
+  const updateCardPriceForSwatch = async swatch => {
+    const container = getVariantContainer(swatch);
+    if (!container) return;
+    const key = getProductKeyFromContainer(container);
+    if (!key) return;
+    const [map, index] = await Promise.all([loadProductMap(), loadProductIndex()]);
+    const product =
+      index?.byHandle?.get(key) || index?.byHandle?.get(slugify(key)) || null;
+    if (!product) return;
+    const entry = map?.products?.[key] || map?.products?.[slugify(key)] || null;
+    const label = getSwatchLabel(swatch) || getSelectedVariantLabel(swatch);
+    if (label) {
+      const isAccessory =
+        swatch.dataset.swatchType === 'accessory' || swatch.dataset.accessoryLabel;
+      if (isAccessory) {
+        container.dataset.selectedAccessory = label;
+        container.dataset.selectedAccessoryLabel = label;
+      } else {
+        container.dataset.selectedColor = label;
+        container.dataset.selectedColorLabel = label;
+      }
+    }
+    let variantId = label && entry ? resolveVariantFromEntry(entry, label) : null;
+    if (!variantId && entry) {
+      variantId = entry?.variantId || entry?.variant_id || null;
+    }
+    updateProductPrice(container, product, variantId);
+  };
+
+  const scheduleSwatchPriceUpdate = swatch => {
+    if (!swatch) return;
+    requestAnimationFrame(() => {
+      updateCardPriceForSwatch(swatch).catch(error => {
+        console.warn('[commerce] Unable to update swatch price:', error);
+      });
+    });
   };
 
   const resolveVariantId = async button => {
@@ -870,6 +962,19 @@
     event.stopImmediatePropagation();
     handleAddToCart(button);
   }, true);
+
+  document.addEventListener('click', event => {
+    const swatch = event.target.closest('.swatch');
+    if (!swatch) return;
+    scheduleSwatchPriceUpdate(swatch);
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const swatch = event.target.closest('.swatch');
+    if (!swatch) return;
+    scheduleSwatchPriceUpdate(swatch);
+  });
 
   const signInForm = document.querySelector('[data-signin-form]');
   if (signInForm) signInForm.addEventListener('submit', handleSignIn);
