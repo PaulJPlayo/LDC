@@ -701,7 +701,9 @@
       swatch.dataset.swatchType = meta.type;
     }
     if (meta.style) {
-      swatch.setAttribute('style', meta.style);
+      const baseStyle = String(meta.style || '').trim().replace(/;$/, '');
+      const sizeStyle = 'width:1.25rem;height:1.25rem;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;';
+      swatch.setAttribute('style', `${baseStyle};${sizeStyle}`);
     } else {
       swatch.classList.add('is-text');
       swatch.textContent = swatchLabel;
