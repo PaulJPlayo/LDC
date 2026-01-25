@@ -638,7 +638,10 @@
     if (!products.length) return;
 
     containers.forEach(container => {
-      const template = container.querySelector('.product-card');
+      const templateElement = container.querySelector('template[data-card-template]');
+      const template =
+        templateElement?.content?.firstElementChild ||
+        container.querySelector('.product-card');
       if (!template) return;
       const filters = getSectionFilters(container);
       let sectionProducts = filterProductsForSection(products, filters);
@@ -650,7 +653,9 @@
         return;
       }
 
-      container.querySelectorAll('.product-card').forEach(card => card.remove());
+      container
+        .querySelectorAll('.product-card')
+        .forEach(card => card.remove());
       const fragment = document.createDocumentFragment();
       sectionProducts.forEach(product => {
         const card = buildDynamicCard(template, product, filters.sectionKey);
