@@ -7,7 +7,14 @@
       "handle": "accessory-christmas-diamond",
       "price": 20,
       "image": "assets/Christmas Diamond - 20.png",
-      "variants": [],
+      "variants": [
+        {
+          "label": "Diamond package",
+          "title": "Christmas Diamond - Diamond package",
+          "price": 20,
+          "image": "assets/Christmas Diamond - 20.png"
+        }
+      ],
       "description": "Diamond | 40oz & 30oz"
     },
     {
@@ -22,6 +29,12 @@
           "title": "Cowboy Glass Straws - Glass",
           "price": 3,
           "image": "assets/Cowboy Glass Straws - 3.jpg"
+        },
+        {
+          "label": "Cowboy hat",
+          "title": "Cowboy Glass Straws - Cowboy hat",
+          "price": 3,
+          "image": "assets/Cowboy Glass Straws - 3.jpg"
         }
       ],
       "description": null
@@ -32,7 +45,14 @@
       "handle": "accessory-flower-deluxe",
       "price": 10,
       "image": "assets/Flower Deluxe - 10.png",
-      "variants": [],
+      "variants": [
+        {
+          "label": "Deluxe package",
+          "title": "Flower Deluxe - Deluxe package",
+          "price": 10,
+          "image": "assets/Flower Deluxe - 10.png"
+        }
+      ],
       "description": "Deluxe | 40oz & 30oz"
     },
     {
@@ -41,7 +61,14 @@
       "handle": "accessory-flower-premium",
       "price": 15,
       "image": "assets/Flower Premium - 15.png",
-      "variants": [],
+      "variants": [
+        {
+          "label": "Premium package",
+          "title": "Flower Premium - Premium package",
+          "price": 15,
+          "image": "assets/Flower Premium - 15.png"
+        }
+      ],
       "description": "Premium | 40oz & 30oz"
     },
     {
@@ -50,7 +77,32 @@
       "handle": "accessory-glass-bow-straws",
       "price": 3,
       "image": "assets/Glass-Bow-Straws.png",
-      "variants": [],
+      "variants": [
+        {
+          "label": "Glass",
+          "title": "Glass Bow Straws - Glass",
+          "price": 3,
+          "image": "assets/Glass-Bow-Straws.png"
+        },
+        {
+          "label": "Glass accessory",
+          "title": "Glass Bow Straws - Glass accessory",
+          "price": 3,
+          "image": "assets/Glass-Bow-Straws.png"
+        },
+        {
+          "label": "Bow",
+          "title": "Glass Bow Straws - Bow",
+          "price": 3,
+          "image": "assets/Glass-Bow-Straws.png"
+        },
+        {
+          "label": "Ribbon",
+          "title": "Glass Bow Straws - Ribbon",
+          "price": 3,
+          "image": "assets/Glass-Bow-Straws.png"
+        }
+      ],
       "description": "Limited | Straws"
     },
     {
@@ -59,7 +111,56 @@
       "handle": "accessory-glass-twist-straws",
       "price": 3,
       "image": "assets/Glass Twist Straws - 3.png",
-      "variants": [],
+      "variants": [
+        {
+          "label": "Green",
+          "title": "Glass Twist Straws - Green",
+          "price": 3,
+          "image": "assets/Glass Twist Straws - 3.png"
+        },
+        {
+          "label": "Forest green",
+          "title": "Glass Twist Straws - Forest green",
+          "price": 3,
+          "image": "assets/Glass Twist Straws - 3.png"
+        },
+        {
+          "label": "Clear",
+          "title": "Glass Twist Straws - Clear",
+          "price": 3,
+          "image": "assets/Glass Twist Straws - 3.png"
+        },
+        {
+          "label": "Light pink",
+          "title": "Glass Twist Straws - Light pink",
+          "price": 3,
+          "image": "assets/Glass Twist Straws - 3.png"
+        },
+        {
+          "label": "Royal blue",
+          "title": "Glass Twist Straws - Royal blue",
+          "price": 3,
+          "image": "assets/Glass Twist Straws - 3.png"
+        },
+        {
+          "label": "Black",
+          "title": "Glass Twist Straws - Black",
+          "price": 3,
+          "image": "assets/Glass Twist Straws - 3.png"
+        },
+        {
+          "label": "Yellow",
+          "title": "Glass Twist Straws - Yellow",
+          "price": 3,
+          "image": "assets/Glass Twist Straws - 3.png"
+        },
+        {
+          "label": "Swirl",
+          "title": "Glass Twist Straws - Swirl",
+          "price": 3,
+          "image": "assets/Glass Twist Straws - 3.png"
+        }
+      ],
       "description": "16oz | Glass"
     },
     {
@@ -104,6 +205,18 @@
           "title": "Jelly Lids - Light pink",
           "price": 3,
           "image": "assets/Jelly-Lids.png"
+        },
+        {
+          "label": "Jelly accessory",
+          "title": "Jelly Lids - Jelly accessory",
+          "price": 3,
+          "image": "assets/Jelly Lids - 33.png"
+        },
+        {
+          "label": "Jelly",
+          "title": "Jelly Lids - Jelly",
+          "price": 3,
+          "image": "assets/Jelly Lids - 33.png"
         }
       ],
       "description": "16oz | Acrylic Hard Plastic"
@@ -114,7 +227,56 @@
       "handle": "accessory-rhinestone-lids",
       "price": 5,
       "image": "assets/rhinestone-lids-5.png",
-      "variants": [],
+      "variants": [
+        {
+          "label": "Pink",
+          "title": "Rinestone Lids - Pink",
+          "price": 5,
+          "image": "assets/rhinestone-lids-5.png"
+        },
+        {
+          "label": "Hot Pink",
+          "title": "Rinestone Lids - Hot Pink",
+          "price": 5,
+          "image": "assets/rhinestone-lids-5.png"
+        },
+        {
+          "label": "Red",
+          "title": "Rinestone Lids - Red",
+          "price": 5,
+          "image": "assets/rhinestone-lids-5.png"
+        },
+        {
+          "label": "Black",
+          "title": "Rinestone Lids - Black",
+          "price": 5,
+          "image": "assets/rhinestone-lids-5.png"
+        },
+        {
+          "label": "Light Blue",
+          "title": "Rinestone Lids - Light Blue",
+          "price": 5,
+          "image": "assets/rhinestone-lids-5.png"
+        },
+        {
+          "label": "Purple",
+          "title": "Rinestone Lids - Purple",
+          "price": 5,
+          "image": "assets/rhinestone-lids-5.png"
+        },
+        {
+          "label": "Orange",
+          "title": "Rinestone Lids - Orange",
+          "price": 5,
+          "image": "assets/rhinestone-lids-5.png"
+        },
+        {
+          "label": "Rhinestone",
+          "title": "Rinestone Lids - Rhinestone",
+          "price": 5,
+          "image": "assets/rhinestone-lids-5.png"
+        }
+      ],
       "description": "Limited | Lids"
     },
     {
@@ -212,7 +374,14 @@
       "handle": "cup-bamboo-lid-mug",
       "price": 20,
       "image": "assets/porcelain-sublimination.png",
-      "variants": [],
+      "variants": [
+        {
+          "label": "White",
+          "title": "Bamboo Lid Mug - White",
+          "price": 20,
+          "image": "assets/porcelain-sublimination.png"
+        }
+      ],
       "description": "15oz | Porcelain"
     },
     {
@@ -221,7 +390,14 @@
       "handle": "cup-frosted-sublimation",
       "price": 25,
       "image": "assets/frosted-sublimination.png",
-      "variants": [],
+      "variants": [
+        {
+          "label": "Purple",
+          "title": "Frosted Sublimation - Purple",
+          "price": 25,
+          "image": "assets/frosted-sublimination.png"
+        }
+      ],
       "description": "16oz | Glass"
     },
     {
@@ -374,8 +550,8 @@
       "image": "assets/slim-snow-globe.png",
       "variants": [
         {
-          "label": "Navy",
-          "title": "Slim Snow Globe - Navy",
+          "label": "Navy blue",
+          "title": "Slim Snow Globe - Navy blue",
           "price": 20,
           "image": "assets/slim-snow-globe.png"
         },
@@ -402,6 +578,12 @@
           "title": "Slim Snow Globe - Yellow",
           "price": 20,
           "image": "assets/slim-snow-globe.png"
+        },
+        {
+          "label": "Navy",
+          "title": "Slim Snow Globe - Navy",
+          "price": 20,
+          "image": "assets/slim-snow-globe.png"
         }
       ],
       "description": "20oz | Acrylic"
@@ -412,7 +594,14 @@
       "handle": "cup-snow-globe",
       "price": 25,
       "image": "assets/snow-globe.png",
-      "variants": [],
+      "variants": [
+        {
+          "label": "Teal",
+          "title": "Snow Globe - Teal",
+          "price": 25,
+          "image": "assets/snow-globe.png"
+        }
+      ],
       "description": "16oz | Glass"
     },
     {

@@ -142,20 +142,30 @@ const findCardImage = blockLines => {
 
 const extractSwatches = blockLines => {
   const swatches = [];
+  const swatchRegex = /<span[^>]*class="[^"]*\bswatch\b[^"]*"/i;
   blockLines.forEach(line => {
-    if (!line.includes('data-image-src=')) return;
+    if (!swatchRegex.test(line)) return;
     const attrs = parseAttributes(line);
-    const image = attrs['data-image-src'];
-    if (!image) return;
+    const className = attrs['class'] || '';
+    if (
+      /swatch-arrow/i.test(className) ||
+      /swatch-slider/i.test(className) ||
+      /swatch-slider-track/i.test(className) ||
+      /swatch-slider-window/i.test(className)
+    ) {
+      return;
+    }
     const rawLabel =
       attrs['data-color-label'] ||
       attrs['data-accessory-label'] ||
       attrs['aria-label'] ||
       attrs['data-image-alt'] ||
+      attrs['title'] ||
       '';
     const label = cleanLabel(rawLabel);
     if (!label) return;
     const price = attrs['data-price'] ? parseFloat(attrs['data-price']) : null;
+    const image = attrs['data-image-src'] || null;
     swatches.push({
       label,
       labelKey: slugify(label),
