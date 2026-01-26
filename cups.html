@@ -2248,7 +2248,7 @@
               const windowStyles = getComputedStyle(windowEl);
               const paddingLeft = parseFloat(windowStyles.paddingLeft || '0');
               const paddingRight = parseFloat(windowStyles.paddingRight || '0');
-              const totalWidth = swatchWidth * visible + gap * (visible - 1) + paddingLeft + paddingRight;
+              const totalWidth = swatchWidth * visible + gap * (visible - 1) + paddingLeft + paddingRight + 6;
               windowEl.style.width = `${totalWidth}px`;
             };
 
