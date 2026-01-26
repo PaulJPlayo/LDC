@@ -970,8 +970,19 @@
         if (!total) return;
         const visible = Number(slider.dataset.visible || 4) || 4;
         const first = swatches[0];
-        const swatchWidth = first.getBoundingClientRect().width || 0;
+        const swatchWidth =
+          first.getBoundingClientRect().width ||
+          parseFloat(window.getComputedStyle(first).width) ||
+          0;
         const gap = getGap();
+        const windowEl = slider.querySelector('[data-swatch-window]');
+        if (windowEl && slider.closest('.product-card')) {
+          const windowWidth = (swatchWidth + gap) * visible - gap;
+          if (windowWidth > 0) {
+            windowEl.style.width = `${windowWidth}px`;
+            windowEl.style.overflow = 'hidden';
+          }
+        }
         const maxIndex = Math.max(0, total - visible);
         index = Math.max(0, Math.min(index, maxIndex));
         const offset = (swatchWidth + gap) * index;
