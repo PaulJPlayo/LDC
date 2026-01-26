@@ -718,7 +718,7 @@ const buildVariantDrafts = (record) => {
   if (!record?.variants) return [];
   const productOptions = record?.options || [];
   const fallbackCurrency = getDefaultCurrency(record);
-  return record.variants.map((variant) => ({
+  const drafts = record.variants.map((variant, index) => ({
     ...(() => {
       const optionMap = buildVariantOptionMap(variant, productOptions);
       return { options: optionMap, originalOptions: { ...optionMap } };
@@ -740,6 +740,7 @@ const buildVariantDrafts = (record) => {
     metadata: formatJsonValue(variant.metadata),
     thumbnail: variant.thumbnail || getVariantMetadataImage(variant) || '',
     ...getVariantSwatchDraft(variant),
+    variant_rank: toNumber(variant.variant_rank) ?? index,
     manage_inventory: variant.manage_inventory !== false,
     allow_backorder: Boolean(variant.allow_backorder),
     prices: (variant.prices && variant.prices.length
@@ -751,6 +752,11 @@ const buildVariantDrafts = (record) => {
       amount: price.amount == null ? '' : formatPriceInput(price.amount)
     }))
   }));
+  const hasRank = drafts.some((variant) => variant.variant_rank != null);
+  if (hasRank) {
+    drafts.sort((a, b) => (a.variant_rank ?? 0) - (b.variant_rank ?? 0));
+  }
+  return drafts;
 };
 
 const buildNewVariantDraft = (record, defaultCurrency) => {
@@ -779,6 +785,7 @@ const buildNewVariantDraft = (record, defaultCurrency) => {
     swatchGlyph: '',
     swatchColor: '',
     swatchImage: '',
+    variant_rank: null,
     manage_inventory: true,
     allow_backorder: false,
     options,
@@ -828,6 +835,27 @@ const matchOptionValue = (values, desired) => {
   const lower = normalized.toLowerCase();
   const match = values.find((value) => String(value).toLowerCase() === lower);
   return match || normalized;
+};
+
+const normalizeVariantRanks = (variants) =>
+  variants.map((variant, index) => ({
+    ...variant,
+    variant_rank: index
+  }));
+
+const reorderVariantDrafts = (variants, fromIndex, toIndex) => {
+  const list = [...variants];
+  const [moved] = list.splice(fromIndex, 1);
+  list.splice(toIndex, 0, moved);
+  return normalizeVariantRanks(list);
+};
+
+const getNextVariantRank = (variants) => {
+  const maxRank = (variants || []).reduce((max, variant) => {
+    const value = toNumber(variant?.variant_rank);
+    return value == null ? max : Math.max(max, value);
+  }, -1);
+  return maxRank + 1;
 };
 
 const normalizeOptionValue = (value) => String(value ?? '').trim();
@@ -1557,6 +1585,7 @@ const ResourceDetail = ({ resource }) => {
   });
   const [variantSavingId, setVariantSavingId] = useState(null);
   const [variantDeletingId, setVariantDeletingId] = useState(null);
+  const [variantReorderState, setVariantReorderState] = useState({ saving: false });
   const [variantError, setVariantError] = useState('');
   const [variantMessage, setVariantMessage] = useState('');
   const [newVariant, setNewVariant] = useState(null);
@@ -3002,7 +3031,7 @@ const ResourceDetail = ({ resource }) => {
           const detailParams = isProduct
             ? {
                 fields:
-                  '+categories,+images,+description,+subtitle,+shipping_profile_id,+shipping_profile,+variants,+variants.prices,+options,+options.values'
+                  '+categories,+images,+description,+subtitle,+shipping_profile_id,+shipping_profile,+variants,+variants.prices,+variants.variant_rank,+options,+options.values'
               }
             : isOrder
               ? orderDetailParams
@@ -10739,6 +10768,64 @@ const ResourceDetail = ({ resource }) => {
     }
   };
 
+  const persistVariantOrder = async (productId, nextDrafts, previousDrafts) => {
+    setVariantReorderState({ saving: true });
+    setVariantError('');
+    setVariantMessage('');
+    try {
+      await Promise.all(
+        nextDrafts.map((variant) =>
+          request(`/admin/products/${productId}/variants/${variant.id}`, {
+            method: 'POST',
+            body: {
+              variant_rank: variant.variant_rank
+            }
+          })
+        )
+      );
+      setVariantMessage('Variant order updated.');
+    } catch (err) {
+      setVariantError(err?.message || 'Unable to update variant order.');
+      if (previousDrafts) {
+        setVariantDrafts(previousDrafts);
+      }
+    } finally {
+      setVariantReorderState({ saving: false });
+    }
+  };
+
+  const handleMoveVariant = async (variantId, direction) => {
+    if (!variantId || !isProduct) return;
+    const productId = record?.id;
+    if (!productId) {
+      setVariantError('Product ID missing for this variant.');
+      return;
+    }
+    const current = variantDrafts;
+    const fromIndex = current.findIndex((variant) => variant.id === variantId);
+    if (fromIndex === -1) return;
+    const toIndex = fromIndex + direction;
+    if (toIndex < 0 || toIndex >= current.length) return;
+    const nextDrafts = reorderVariantDrafts(current, fromIndex, toIndex);
+    setVariantDrafts(nextDrafts);
+    await persistVariantOrder(productId, nextDrafts, current);
+  };
+
+  const handleSetDefaultVariant = async (variantId) => {
+    if (!variantId || !isProduct) return;
+    const productId = record?.id;
+    if (!productId) {
+      setVariantError('Product ID missing for this variant.');
+      return;
+    }
+    const current = variantDrafts;
+    const fromIndex = current.findIndex((variant) => variant.id === variantId);
+    if (fromIndex <= 0) return;
+    const nextDrafts = reorderVariantDrafts(current, fromIndex, 0);
+    setVariantDrafts(nextDrafts);
+    await persistVariantOrder(productId, nextDrafts, current);
+  };
+
   const handleVariantToggle = (variantId, field) => (event) => {
     const value = event.target.checked;
     setVariantDrafts((prev) =>
@@ -10948,6 +11035,7 @@ const ResourceDetail = ({ resource }) => {
       thumbnail,
       productThumbnail
     );
+    const variantRank = toNumber(variant.variant_rank);
     setVariantSavingId(variant.id);
     setVariantError('');
     setVariantMessage('');
@@ -10973,6 +11061,7 @@ const ResourceDetail = ({ resource }) => {
           height: heightResult.value,
           width: widthResult.value,
           metadata: metadataPayload,
+          ...(variantRank != null ? { variant_rank: variantRank } : {}),
           manage_inventory: variant.manage_inventory,
           allow_backorder: variant.allow_backorder,
           options:
@@ -11147,6 +11236,7 @@ const ResourceDetail = ({ resource }) => {
       thumbnail,
       productThumbnail
     );
+    const nextRank = getNextVariantRank(variantDrafts);
     setVariantSavingId('new');
     setVariantError('');
     setVariantMessage('');
@@ -11169,6 +11259,7 @@ const ResourceDetail = ({ resource }) => {
           height: heightResult.value,
           width: widthResult.value,
           metadata: metadataPayload,
+          variant_rank: nextRank,
           manage_inventory: newVariant.manage_inventory,
           allow_backorder: newVariant.allow_backorder,
           options: Object.keys(optionsPayloadFinal).length ? optionsPayloadFinal : undefined,
@@ -18171,9 +18262,15 @@ const ResourceDetail = ({ resource }) => {
 
               <div className="mt-4 space-y-4">
                 {variantDrafts.length ? (
-                  variantDrafts.map((variant) => {
+                  variantDrafts.map((variant, index) => {
                     const isAccessorySwatch = variant.swatchType === 'accessory';
                     const swatchColorValue = variant.swatchColor || '#000000';
+                    const canMoveUp = index > 0;
+                    const canMoveDown = index < variantDrafts.length - 1;
+                    const reorderBusy =
+                      variantReorderState.saving ||
+                      variantSavingId === variant.id ||
+                      variantDeletingId === variant.id;
                     return (
                     <div key={variant.id} className="rounded-2xl bg-white/70 p-4">
                       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -18186,6 +18283,34 @@ const ResourceDetail = ({ resource }) => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          {isProduct && variantDrafts.length > 1 ? (
+                            <>
+                              <button
+                                className="ldc-button-secondary"
+                                type="button"
+                                onClick={() => handleMoveVariant(variant.id, -1)}
+                                disabled={!canMoveUp || reorderBusy}
+                              >
+                                Move up
+                              </button>
+                              <button
+                                className="ldc-button-secondary"
+                                type="button"
+                                onClick={() => handleMoveVariant(variant.id, 1)}
+                                disabled={!canMoveDown || reorderBusy}
+                              >
+                                Move down
+                              </button>
+                              <button
+                                className="ldc-button-secondary"
+                                type="button"
+                                onClick={() => handleSetDefaultVariant(variant.id)}
+                                disabled={!canMoveUp || reorderBusy}
+                              >
+                                Set default
+                              </button>
+                            </>
+                          ) : null}
                           <button
                             className="ldc-button-secondary"
                             type="button"

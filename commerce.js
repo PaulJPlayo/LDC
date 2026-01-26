@@ -96,6 +96,30 @@
     return null;
   };
 
+  const sortVariantsByRank = variants => {
+    if (!Array.isArray(variants)) return [];
+    const withIndex = variants.map((variant, index) => {
+      const rankValue = Number(variant?.variant_rank);
+      return {
+        variant,
+        index,
+        rank: Number.isFinite(rankValue) ? rankValue : null
+      };
+    });
+    const hasRank = withIndex.some(item => item.rank != null);
+    if (!hasRank) return variants;
+    return withIndex
+      .sort((a, b) => {
+        const aRank = a.rank ?? a.index;
+        const bRank = b.rank ?? b.index;
+        return aRank - bRank;
+      })
+      .map(item => item.variant);
+  };
+
+  const getSortedVariants = product =>
+    sortVariantsByRank(Array.isArray(product?.variants) ? product.variants : []);
+
   const normalizeMetadata = metadata => {
     if (!metadata) return {};
     if (typeof metadata === 'object') return metadata;
@@ -245,7 +269,7 @@
   };
 
   const getProductPrice = (product, preferredVariantId) => {
-    const variants = Array.isArray(product?.variants) ? product.variants : [];
+    const variants = getSortedVariants(product);
     const preferredVariant =
       preferredVariantId && variants.length
         ? variants.find(variant => variant?.id === preferredVariantId)
@@ -300,7 +324,7 @@
         limit: String(limit),
         offset: String(offset),
         fields:
-          '+variants,+variants.calculated_price,+variants.prices,+variants.metadata,+variants.thumbnail,+variants.options,+thumbnail,+images,+description,+subtitle,+collection,+tags,+metadata,+created_at'
+          '+variants,+variants.variant_rank,+variants.calculated_price,+variants.prices,+variants.metadata,+variants.thumbnail,+variants.options,+thumbnail,+images,+description,+subtitle,+collection,+tags,+metadata,+created_at'
       });
       if (regionId) {
         params.set('region_id', regionId);
@@ -475,7 +499,7 @@
       addButton.dataset.productId = product?.id || '';
     }
 
-    const variants = Array.isArray(product?.variants) ? product.variants : [];
+    const variants = getSortedVariants(product);
     const swatchTracks = Array.from(card.querySelectorAll('[data-swatch-track]'));
     const swatchSliders = Array.from(card.querySelectorAll('[data-swatch-slider]'));
     const swatchWindows = Array.from(card.querySelectorAll('[data-swatch-window]'));
@@ -878,7 +902,7 @@
 
   const resolveVariantFromProduct = (product, label) => {
     if (!product) return null;
-    const variants = Array.isArray(product.variants) ? product.variants : [];
+    const variants = getSortedVariants(product);
     if (!variants.length) return null;
     if (!label) return variants[0]?.id || null;
     const labelKey = slugify(label);
@@ -928,10 +952,8 @@
     if (!variantId && entry) {
       variantId = entry?.variantId || entry?.variant_id || null;
     }
-    const variant =
-      variantId && Array.isArray(product?.variants)
-        ? product.variants.find(item => item?.id === variantId)
-        : null;
+    const variants = getSortedVariants(product);
+    const variant = variantId ? variants.find(item => item?.id === variantId) : null;
     const imageUrl = getVariantImage(variant, product);
     updateProductPrice(container, product, variantId);
     updateProductImage(container, imageUrl, product?.title || '', label);
