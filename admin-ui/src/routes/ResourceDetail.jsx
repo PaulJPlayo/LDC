@@ -791,10 +791,15 @@ const buildVariantOptionsPayload = (optionsMap, productOptions, requireAll) => {
   const missing = [];
   if (Array.isArray(productOptions) && productOptions.length) {
     productOptions.forEach((option) => {
-      const key = option.id;
-      const value = String(optionsMap?.[key] || '').trim();
+      const mapValue =
+        optionsMap?.[option.id] ??
+        optionsMap?.[option.title] ??
+        optionsMap?.[option?.title?.toLowerCase?.()] ??
+        '';
+      const value = String(mapValue || '').trim();
+      const payloadKey = option.title || option.id;
       if (value) {
-        payload[key] = value;
+        payload[payloadKey] = value;
       } else if (requireAll) {
         missing.push(option.title || option.id);
       }
@@ -10821,21 +10826,25 @@ const ResourceDetail = ({ resource }) => {
       }
     }
     const nextPayload = { ...optionsPayload };
-    for (const [optionId, rawValue] of Object.entries(optionsPayload)) {
-      const option = optionsSource.find((entry) => entry?.id === optionId);
+    for (const [optionKey, rawValue] of Object.entries(optionsPayload)) {
+      const option = optionsSource.find(
+        (entry) =>
+          entry?.id === optionKey ||
+          String(entry?.title || '').toLowerCase() === String(optionKey || '').toLowerCase()
+      );
       if (!option) continue;
       const values = getOptionValueList(option);
       const matched = matchOptionValue(values, rawValue);
-      nextPayload[optionId] = matched;
+      nextPayload[optionKey] = matched;
       const hasValue = values.some(
         (value) => String(value).toLowerCase() === String(matched).toLowerCase()
       );
       if (!hasValue) {
         const updatedValues = [...values, matched].filter(Boolean);
-        await request(`/admin/products/${productId}/options/${optionId}`, {
+        await request(`/admin/products/${productId}/options/${option.id}`, {
           method: 'POST',
           body: {
-            title: option?.title || optionId,
+            title: option?.title || option.id,
             values: updatedValues
           }
         });
