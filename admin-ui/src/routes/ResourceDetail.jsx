@@ -18462,19 +18462,31 @@ const ResourceDetail = ({ resource }) => {
                             Option values
                           </div>
                           <div className="mt-2 grid gap-3 md:grid-cols-2">
-                            {variantOptionList.map((option) => (
-                              <label
-                                key={option.id}
-                                className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60"
-                              >
-                                {option.title || 'Option'}
-                                <input
-                                  className="ldc-input mt-2"
-                                  value={variant.options?.[option.id] || ''}
-                                  onChange={handleVariantOptionChange(variant.id, option.id)}
-                                />
-                              </label>
-                            ))}
+                            {variantOptionList.map((option) => {
+                              const optionValues = Array.from(new Set(getOptionValueList(option)));
+                              const listId = `variant-${variant.id}-${option.id}-values`;
+                              return (
+                                <label
+                                  key={option.id}
+                                  className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60"
+                                >
+                                  {option.title || 'Option'}
+                                  <input
+                                    className="ldc-input mt-2"
+                                    value={variant.options?.[option.id] || ''}
+                                    onChange={handleVariantOptionChange(variant.id, option.id)}
+                                    list={optionValues.length ? listId : undefined}
+                                  />
+                                  {optionValues.length ? (
+                                    <datalist id={listId}>
+                                      {optionValues.map((value) => (
+                                        <option key={`${option.id}-${value}`} value={value} />
+                                      ))}
+                                    </datalist>
+                                  ) : null}
+                                </label>
+                              );
+                            })}
                           </div>
                         </div>
                       ) : null}
@@ -18848,19 +18860,31 @@ const ResourceDetail = ({ resource }) => {
                         Option values
                       </div>
                       <div className="mt-2 grid gap-3 md:grid-cols-2">
-                        {variantOptionList.map((option) => (
-                          <label
-                            key={option.id}
-                            className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60"
-                          >
-                            {option.title || 'Option'}
-                            <input
-                              className="ldc-input mt-2"
-                              value={newVariant.options?.[option.id] || ''}
-                              onChange={handleNewVariantOptionChange(option.id)}
-                            />
-                          </label>
-                        ))}
+                        {variantOptionList.map((option) => {
+                          const optionValues = Array.from(new Set(getOptionValueList(option)));
+                          const listId = `new-variant-${option.id}-values`;
+                          return (
+                            <label
+                              key={option.id}
+                              className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60"
+                            >
+                              {option.title || 'Option'}
+                              <input
+                                className="ldc-input mt-2"
+                                value={newVariant.options?.[option.id] || ''}
+                                onChange={handleNewVariantOptionChange(option.id)}
+                                list={optionValues.length ? listId : undefined}
+                              />
+                              {optionValues.length ? (
+                                <datalist id={listId}>
+                                  {optionValues.map((value) => (
+                                    <option key={`${option.id}-${value}`} value={value} />
+                                  ))}
+                                </datalist>
+                              ) : null}
+                            </label>
+                          );
+                        })}
                       </div>
                     </div>
                   ) : null}
