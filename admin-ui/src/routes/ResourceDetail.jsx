@@ -10793,16 +10793,16 @@ const ResourceDetail = ({ resource }) => {
     }
   };
 
-  const ensureVariantOptionValues = async (productId, optionsPayload) => {
+  const ensureVariantOptionValues = async (productId, optionsPayload, forceRefresh = false) => {
     if (!productId || !optionsPayload || !Object.keys(optionsPayload).length) {
       return optionsPayload;
     }
     let optionsSource = variantOptionList;
     if (!Array.isArray(optionsSource) || !optionsSource.length) {
-      return optionsPayload;
+      optionsSource = [];
     }
     const needsValues = optionsSource.some((option) => !Array.isArray(option?.values));
-    if (needsValues) {
+    if (forceRefresh || needsValues || !optionsSource.length) {
       try {
         const payload = await getDetail('/admin/products', productId, {
           fields: '+options,+options.values'
@@ -10830,8 +10830,8 @@ const ResourceDetail = ({ resource }) => {
       const hasValue = values.some(
         (value) => String(value).toLowerCase() === String(matched).toLowerCase()
       );
-      if (!hasValue && Array.isArray(option?.values)) {
-        const updatedValues = [...values, matched];
+      if (!hasValue) {
+        const updatedValues = [...values, matched].filter(Boolean);
         await request(`/admin/products/${productId}/options/${optionId}`, {
           method: 'POST',
           body: {
@@ -10915,7 +10915,7 @@ const ResourceDetail = ({ resource }) => {
     try {
       const optionsPayloadFinal =
         optionsChanged && Object.keys(optionsPayload).length
-          ? await ensureVariantOptionValues(productId, optionsPayload)
+          ? await ensureVariantOptionValues(productId, optionsPayload, true)
           : optionsPayload;
       const payload = await request(`/admin/products/${productId}/variants/${variant.id}`, {
         method: 'POST',
@@ -11112,7 +11112,7 @@ const ResourceDetail = ({ resource }) => {
     setVariantError('');
     setVariantMessage('');
     try {
-      const optionsPayloadFinal = await ensureVariantOptionValues(productId, optionsPayload);
+      const optionsPayloadFinal = await ensureVariantOptionValues(productId, optionsPayload, true);
       const payload = await request(`/admin/products/${productId}/variants`, {
         method: 'POST',
         body: {
