@@ -2,3 +2,8 @@
 .swatch.is-text{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:1.6rem!important;padding:.1rem .5rem!important;border-radius:9999px!important;border:1px solid rgba(148,163,184,.5)!important;background-color:rgba(255,255,255,.85)!important;color:#475569!important;font-size:.55rem!important;line-height:1!important;text-transform:uppercase!important;letter-spacing:.08em!important;white-space:nowrap!important}
 .swatch.is-glyph{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:1.5rem!important;min-height:1.5rem!important;line-height:1!important;font-size:.75rem!important}
 .swatch.swatch-auto{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:1.25rem!important;height:1.25rem!important;border-radius:9999px!important;border:1px solid rgba(203,213,225,.85)!important}
+.product-loading{margin:.25rem 0 1rem;font-size:.9rem;letter-spacing:.08em;text-transform:uppercase;text-align:center;opacity:.85}
+.product-grid{opacity:0;transform:translateY(6px);transition:opacity .5s ease,transform .5s ease}
+.product-grid.is-loaded{opacity:1;transform:translateY(0)}
+.product-card.card-fade{opacity:0;transform:translateY(8px);animation:productCardFade .5s ease forwards}
+@keyframes productCardFade{to{opacity:1;transform:translateY(0)}}

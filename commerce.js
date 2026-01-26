@@ -458,6 +458,9 @@
     if (card?.removeAttribute) {
       card.removeAttribute('id');
     }
+    if (card?.classList) {
+      card.classList.add('card-fade');
+    }
     card.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
     card.dataset.productHandle = product?.handle || product?.id || '';
     card.dataset.productId = product?.id || '';
@@ -643,6 +646,8 @@
         templateElement?.content?.firstElementChild ||
         container.querySelector('.product-card');
       if (!template) return;
+      container.classList.add('product-grid');
+      container.classList.remove('is-loaded');
       const filters = getSectionFilters(container);
       let sectionProducts = filterProductsForSection(products, filters);
       sectionProducts = sortProductsForSection(sectionProducts, filters.sectionKey);
@@ -663,6 +668,15 @@
       });
       container.appendChild(fragment);
       initSwatchSliders(container);
+      const loading = container
+        .closest('section')
+        ?.querySelector(
+          `[data-products-loading][data-loading-for="${filters.sectionKey}"]`
+        );
+      if (loading) {
+        loading.style.display = 'none';
+      }
+      container.classList.add('is-loaded');
     });
 
     if (missingSwatchMeta.size) {
