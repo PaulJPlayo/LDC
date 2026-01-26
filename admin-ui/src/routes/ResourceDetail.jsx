@@ -738,7 +738,7 @@ const buildVariantDrafts = (record) => {
     height: toNumber(variant.height) == null ? '' : String(toNumber(variant.height)),
     width: toNumber(variant.width) == null ? '' : String(toNumber(variant.width)),
     metadata: formatJsonValue(variant.metadata),
-    thumbnail: variant.thumbnail || '',
+    thumbnail: variant.thumbnail || getVariantMetadataImage(variant) || '',
     manage_inventory: variant.manage_inventory !== false,
     allow_backorder: Boolean(variant.allow_backorder),
     prices: (variant.prices && variant.prices.length
@@ -817,6 +817,14 @@ const areOptionMapsEqual = (left, right) => {
     }
   }
   return true;
+};
+
+const applyVariantThumbnailMetadata = (metadata, thumbnail) => {
+  const normalized = String(thumbnail || '').trim();
+  if (!normalized) return metadata ?? null;
+  const base = metadata && typeof metadata === 'object' ? { ...metadata } : {};
+  base.preview_image = normalized;
+  return base;
 };
 
 const MEDIA_BASE = (import.meta.env.VITE_MEDUSA_BACKEND_URL || 'https://api.lovettsldc.com')
@@ -1204,9 +1212,24 @@ const getVariantInventoryQuantity = (variant) => {
   return null;
 };
 
+const getVariantMetadataImage = (variant) => {
+  const metadata = variant?.metadata;
+  if (!metadata || typeof metadata !== 'object') return '';
+  return (
+    metadata.preview_image ||
+    metadata.previewImage ||
+    metadata.image ||
+    metadata.thumbnail ||
+    metadata.swatch_image ||
+    metadata.swatchImage ||
+    ''
+  );
+};
+
 const getVariantThumbnail = (variant, fallback) => {
   return (
     variant?.thumbnail ||
+    getVariantMetadataImage(variant) ||
     variant?.image ||
     variant?.images?.[0]?.url ||
     variant?.images?.[0] ||
@@ -10641,6 +10664,7 @@ const ResourceDetail = ({ resource }) => {
       setVariantMessage('');
       return;
     }
+    const metadataPayload = applyVariantThumbnailMetadata(metadata, thumbnail);
     setVariantSavingId(variant.id);
     setVariantError('');
     setVariantMessage('');
@@ -10661,8 +10685,7 @@ const ResourceDetail = ({ resource }) => {
           length: lengthResult.value,
           height: heightResult.value,
           width: widthResult.value,
-          metadata,
-          thumbnail: thumbnail || null,
+          metadata: metadataPayload,
           manage_inventory: variant.manage_inventory,
           allow_backorder: variant.allow_backorder,
           options:
@@ -10821,6 +10844,7 @@ const ResourceDetail = ({ resource }) => {
       setVariantMessage('');
       return;
     }
+    const metadataPayload = applyVariantThumbnailMetadata(metadata, thumbnail);
     setVariantSavingId('new');
     setVariantError('');
     setVariantMessage('');
@@ -10841,8 +10865,7 @@ const ResourceDetail = ({ resource }) => {
           length: lengthResult.value,
           height: heightResult.value,
           width: widthResult.value,
-          metadata,
-          thumbnail: thumbnail || null,
+          metadata: metadataPayload,
           manage_inventory: newVariant.manage_inventory,
           allow_backorder: newVariant.allow_backorder,
           options: Object.keys(optionsPayload).length ? optionsPayload : undefined,
