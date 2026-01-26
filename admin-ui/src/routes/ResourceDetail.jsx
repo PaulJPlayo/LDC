@@ -910,6 +910,36 @@ const normalizeBackendUrl = (url) => {
   }
 };
 
+const normalizeUploadUrl = (url) => {
+  const trimmed = String(url || '').trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return normalizeBackendUrl(trimmed);
+  if (trimmed.startsWith('/')) return trimmed;
+  return `/${trimmed}`;
+};
+
+const resolveUploadedFileUrl = async (uploaded) => {
+  if (!uploaded) return '';
+  let url = uploaded?.url || uploaded?.file_url || '';
+  const id =
+    uploaded?.id ||
+    uploaded?.file_id ||
+    uploaded?.fileId ||
+    uploaded?.key ||
+    '';
+  if (!url && id) {
+    try {
+      const payload = await getList('/admin/uploads', { id });
+      const files = getArrayFromPayload(payload, 'files');
+      const file = files[0] || getObjectFromPayload(payload, 'file');
+      url = file?.url || '';
+    } catch {
+      url = '';
+    }
+  }
+  return normalizeUploadUrl(url || id);
+};
+
 const resolveMediaUrl = (value) => {
   const url = String(value || '').trim();
   if (!url) return '';
@@ -10684,7 +10714,7 @@ const ResourceDetail = ({ resource }) => {
       const payload = await uploadFiles(file);
       const files = getArrayFromPayload(payload, 'files');
       const uploaded = files[0] || getObjectFromPayload(payload, 'file');
-      const url = uploaded?.url || uploaded?.id;
+      const url = await resolveUploadedFileUrl(uploaded);
       if (!url) {
         throw new Error('Upload response missing file URL.');
       }
@@ -10773,7 +10803,7 @@ const ResourceDetail = ({ resource }) => {
       const payload = await uploadFiles(file);
       const files = getArrayFromPayload(payload, 'files');
       const uploaded = files[0] || getObjectFromPayload(payload, 'file');
-      const url = uploaded?.url || uploaded?.id;
+      const url = await resolveUploadedFileUrl(uploaded);
       if (!url) {
         throw new Error('Upload response missing file URL.');
       }
