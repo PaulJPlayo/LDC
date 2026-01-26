@@ -977,7 +977,7 @@
         const gap = getGap();
         const windowEl = slider.querySelector('[data-swatch-window]');
         if (windowEl && slider.closest('.product-card')) {
-          const windowWidth = (swatchWidth + gap) * visible - gap;
+          const windowWidth = (swatchWidth + gap) * visible - gap + 6;
           if (windowWidth > 0) {
             windowEl.style.width = `${windowWidth}px`;
             windowEl.style.overflow = 'hidden';
