@@ -498,7 +498,8 @@
     const hasMultipleTracks = swatchTracks.length > 1;
     const resolvedPrimary =
       primaryVariants.length > 0 ? primaryVariants : accessoryVariants;
-    const resolvedAccessory = hasMultipleTracks ? accessoryVariants : [];
+    const resolvedAccessory =
+      hasMultipleTracks && primaryVariants.length > 0 ? accessoryVariants : [];
     const combinedVariants = hasMultipleTracks
       ? []
       : [...resolvedPrimary, ...resolvedAccessory];
