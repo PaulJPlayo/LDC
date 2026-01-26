@@ -739,6 +739,7 @@ const buildVariantDrafts = (record) => {
     width: toNumber(variant.width) == null ? '' : String(toNumber(variant.width)),
     metadata: formatJsonValue(variant.metadata),
     thumbnail: variant.thumbnail || getVariantMetadataImage(variant) || '',
+    ...getVariantSwatchDraft(variant),
     manage_inventory: variant.manage_inventory !== false,
     allow_backorder: Boolean(variant.allow_backorder),
     prices: (variant.prices && variant.prices.length
@@ -774,6 +775,10 @@ const buildNewVariantDraft = (record, defaultCurrency) => {
     width: '',
     metadata: '',
     thumbnail: '',
+    swatchType: 'color',
+    swatchGlyph: '',
+    swatchColor: '',
+    swatchImage: '',
     manage_inventory: true,
     allow_backorder: false,
     options,
@@ -819,11 +824,50 @@ const areOptionMapsEqual = (left, right) => {
   return true;
 };
 
-const applyVariantThumbnailMetadata = (metadata, thumbnail) => {
-  const normalized = String(thumbnail || '').trim();
-  if (!normalized) return metadata ?? null;
+const applyVariantSwatchMetadata = (metadata, draft) => {
   const base = metadata && typeof metadata === 'object' ? { ...metadata } : {};
-  base.preview_image = normalized;
+  const swatchType = draft?.swatchType === 'accessory' ? 'accessory' : '';
+  if (swatchType) {
+    base.swatchType = 'accessory';
+  } else {
+    delete base.swatchType;
+    delete base.swatch_type;
+  }
+  const swatchGlyph = String(draft?.swatchGlyph || '').trim();
+  if (swatchType && swatchGlyph) {
+    base.swatchGlyph = swatchGlyph;
+  } else if (!swatchType || !swatchGlyph) {
+    delete base.swatchGlyph;
+    delete base.swatch_glyph;
+  }
+  const swatchImage = String(draft?.swatchImage || '').trim();
+  if (swatchType && swatchImage) {
+    base.swatchImage = swatchImage;
+  } else if (!swatchType || !swatchImage) {
+    delete base.swatchImage;
+    delete base.swatch_image;
+  }
+  const swatchColor = String(draft?.swatchColor || '').trim();
+  const swatchStyle = buildSwatchStyleValue(swatchColor, swatchImage);
+  if (swatchStyle) {
+    base.swatchStyle = swatchStyle;
+  } else {
+    delete base.swatchStyle;
+    delete base.swatch_style;
+    delete base.swatch;
+  }
+  return base;
+};
+
+const applyVariantThumbnailMetadata = (metadata, thumbnail, fallbackImage) => {
+  const base = metadata && typeof metadata === 'object' ? { ...metadata } : {};
+  const normalized = String(thumbnail || '').trim();
+  const existing =
+    base.preview_image || base.previewImage || base.image || '';
+  const resolved = normalized || existing || String(fallbackImage || '').trim();
+  if (resolved) {
+    base.preview_image = resolved;
+  }
   return base;
 };
 
@@ -1224,6 +1268,89 @@ const getVariantMetadataImage = (variant) => {
     metadata.swatchImage ||
     ''
   );
+};
+
+const SWATCH_PRESET_COLORS = [
+  { label: 'Espresso', value: '#6f4e37' },
+  { label: 'Mocha', value: '#8b5a2b' },
+  { label: 'Sand', value: '#d2b48c' },
+  { label: 'Blush', value: '#f7b2c4' },
+  { label: 'Rose', value: '#e11d48' },
+  { label: 'Sunset', value: '#f97316' },
+  { label: 'Gold', value: '#f59e0b' },
+  { label: 'Mint', value: '#10b981' },
+  { label: 'Ocean', value: '#0ea5e9' },
+  { label: 'Plum', value: '#a855f7' },
+  { label: 'Slate', value: '#6b7280' },
+  { label: 'Midnight', value: '#111827' }
+];
+
+const SWATCH_EMOJI_OPTIONS = ['✨', '💎', '🌸', '🍓', '☕️', '🧋', '🧊', '🎀', '🌿', '⭐️'];
+
+const parseSwatchStyleColor = (style) => {
+  if (!style || typeof style !== 'string') return '';
+  const hexMatch = style.match(/#([0-9a-f]{3,8})/i);
+  if (hexMatch) {
+    let hex = hexMatch[1].toLowerCase();
+    if (hex.length === 3) {
+      hex = hex
+        .split('')
+        .map((char) => char + char)
+        .join('');
+    }
+    if (hex.length >= 6) {
+      return `#${hex.slice(0, 6)}`;
+    }
+  }
+  const rgbMatch = style.match(/rgba?\(([^)]+)\)/i);
+  if (rgbMatch) {
+    const parts = rgbMatch[1]
+      .split(',')
+      .map((entry) => Number(String(entry).trim()))
+      .filter((value) => Number.isFinite(value));
+    if (parts.length >= 3) {
+      const toHex = (value) =>
+        Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, '0');
+      return `#${toHex(parts[0])}${toHex(parts[1])}${toHex(parts[2])}`;
+    }
+  }
+  return '';
+};
+
+const parseSwatchStyleImage = (style) => {
+  if (!style || typeof style !== 'string') return '';
+  const match = style.match(/url\((['"]?)(.*?)\1\)/i);
+  return match ? match[2] : '';
+};
+
+const buildSwatchStyleValue = (color, image) => {
+  const normalizedImage = String(image || '').trim();
+  if (normalizedImage) {
+    const safeUrl = normalizedImage.replace(/'/g, '%27');
+    return `background-image:url('${safeUrl}');background-size:cover;background-position:center;`;
+  }
+  const normalizedColor = String(color || '').trim();
+  if (normalizedColor) {
+    return `background:${normalizedColor};`;
+  }
+  return '';
+};
+
+const normalizeSwatchType = (value) =>
+  String(value || '').toLowerCase() === 'accessory' ? 'accessory' : 'color';
+
+const getVariantSwatchDraft = (variant) => {
+  const metadata = variant?.metadata && typeof variant.metadata === 'object' ? variant.metadata : {};
+  const swatchType = normalizeSwatchType(metadata.swatchType || metadata.swatch_type || '');
+  const swatchGlyph = metadata.swatchGlyph || metadata.swatch_glyph || '';
+  const swatchStyle = metadata.swatchStyle || metadata.swatch_style || metadata.swatch || '';
+  const swatchImage =
+    metadata.swatchImage ||
+    metadata.swatch_image ||
+    parseSwatchStyleImage(swatchStyle) ||
+    '';
+  const swatchColor = parseSwatchStyleColor(swatchStyle) || '';
+  return { swatchType, swatchGlyph, swatchColor, swatchImage };
 };
 
 const getVariantThumbnail = (variant, fallback) => {
@@ -10520,6 +10647,48 @@ const ResourceDetail = ({ resource }) => {
     );
   };
 
+  const handleVariantSwatchFieldChange = (variantId, field) => (eventOrValue) => {
+    const value = eventOrValue?.target ? eventOrValue.target.value : eventOrValue;
+    setVariantDrafts((prev) =>
+      prev.map((variant) =>
+        variant.id === variantId ? { ...variant, [field]: value } : variant
+      )
+    );
+  };
+
+  const handleVariantSwatchUpload = (variantId) => async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setVariantUploadState({ uploadingId: variantId, error: '', success: '' });
+    try {
+      const payload = await uploadFiles(file);
+      const files = getArrayFromPayload(payload, 'files');
+      const uploaded = files[0] || getObjectFromPayload(payload, 'file');
+      const url = uploaded?.url || uploaded?.id;
+      if (!url) {
+        throw new Error('Upload response missing file URL.');
+      }
+      if (variantId === 'new') {
+        setNewVariant((prev) => (prev ? { ...prev, swatchImage: url } : prev));
+      } else {
+        setVariantDrafts((prev) =>
+          prev.map((variant) =>
+            variant.id === variantId ? { ...variant, swatchImage: url } : variant
+          )
+        );
+      }
+      setVariantUploadState({ uploadingId: null, error: '', success: 'Swatch image uploaded.' });
+    } catch (err) {
+      setVariantUploadState({
+        uploadingId: null,
+        error: err?.message || 'Unable to upload swatch image.',
+        success: ''
+      });
+    } finally {
+      event.target.value = '';
+    }
+  };
+
   const handleVariantToggle = (variantId, field) => (event) => {
     const value = event.target.checked;
     setVariantDrafts((prev) =>
@@ -10664,7 +10833,15 @@ const ResourceDetail = ({ resource }) => {
       setVariantMessage('');
       return;
     }
-    const metadataPayload = applyVariantThumbnailMetadata(metadata, thumbnail);
+    const productThumbnail = isVariant
+      ? variantProduct?.thumbnail || record?.product?.thumbnail || ''
+      : record?.thumbnail || '';
+    const swatchMetadata = applyVariantSwatchMetadata(metadata, variant);
+    const metadataPayload = applyVariantThumbnailMetadata(
+      swatchMetadata,
+      thumbnail,
+      productThumbnail
+    );
     setVariantSavingId(variant.id);
     setVariantError('');
     setVariantMessage('');
@@ -10743,6 +10920,11 @@ const ResourceDetail = ({ resource }) => {
 
   const handleNewVariantField = (field) => (event) => {
     const value = event.target.value;
+    setNewVariant((prev) => (prev ? { ...prev, [field]: value } : prev));
+  };
+
+  const handleNewVariantSwatchFieldChange = (field) => (eventOrValue) => {
+    const value = eventOrValue?.target ? eventOrValue.target.value : eventOrValue;
     setNewVariant((prev) => (prev ? { ...prev, [field]: value } : prev));
   };
 
@@ -10844,7 +11026,15 @@ const ResourceDetail = ({ resource }) => {
       setVariantMessage('');
       return;
     }
-    const metadataPayload = applyVariantThumbnailMetadata(metadata, thumbnail);
+    const productThumbnail = isVariant
+      ? variantProduct?.thumbnail || record?.product?.thumbnail || ''
+      : record?.thumbnail || '';
+    const swatchMetadata = applyVariantSwatchMetadata(metadata, newVariant);
+    const metadataPayload = applyVariantThumbnailMetadata(
+      swatchMetadata,
+      thumbnail,
+      productThumbnail
+    );
     setVariantSavingId('new');
     setVariantError('');
     setVariantMessage('');
@@ -17868,7 +18058,10 @@ const ResourceDetail = ({ resource }) => {
 
               <div className="mt-4 space-y-4">
                 {variantDrafts.length ? (
-                  variantDrafts.map((variant) => (
+                  variantDrafts.map((variant) => {
+                    const isAccessorySwatch = variant.swatchType === 'accessory';
+                    const swatchColorValue = variant.swatchColor || '#000000';
+                    return (
                     <div key={variant.id} className="rounded-2xl bg-white/70 p-4">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
@@ -17934,6 +18127,119 @@ const ResourceDetail = ({ resource }) => {
                             disabled={variantUploadState.uploadingId === variant.id}
                           />
                         </label>
+                      </div>
+
+                      <div className="mt-4 rounded-2xl bg-white/60 p-4">
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                          Swatch settings
+                        </div>
+                        <div className="mt-3 grid gap-3 md:grid-cols-2">
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Swatch type
+                            <select
+                              className="ldc-input mt-2"
+                              value={isAccessorySwatch ? 'accessory' : 'color'}
+                              onChange={handleVariantSwatchFieldChange(variant.id, 'swatchType')}
+                            >
+                              <option value="color">Color swatch</option>
+                              <option value="accessory">Accessory swatch</option>
+                            </select>
+                          </label>
+                        </div>
+
+                        {!isAccessorySwatch ? (
+                          <div className="mt-3">
+                            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                              Color swatch
+                            </div>
+                            <div className="mt-2 flex flex-wrap items-center gap-3">
+                              <input
+                                type="color"
+                                className="h-10 w-12 rounded-full border border-white/70 bg-white/70 p-1"
+                                value={swatchColorValue}
+                                onChange={handleVariantSwatchFieldChange(variant.id, 'swatchColor')}
+                              />
+                              <input
+                                className="ldc-input h-10 w-32"
+                                placeholder="#8b5a2b"
+                                value={variant.swatchColor}
+                                onChange={handleVariantSwatchFieldChange(variant.id, 'swatchColor')}
+                              />
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {SWATCH_PRESET_COLORS.map((swatch) => (
+                                <button
+                                  key={`${variant.id}-swatch-${swatch.value}`}
+                                  type="button"
+                                  className={`h-8 w-8 rounded-full border border-white/70 shadow-sm ${
+                                    variant.swatchColor === swatch.value
+                                      ? 'ring-2 ring-ldc-plum/70'
+                                      : ''
+                                  }`}
+                                  style={{ background: swatch.value }}
+                                  aria-label={swatch.label}
+                                  onClick={() =>
+                                    handleVariantSwatchFieldChange(variant.id, 'swatchColor')(swatch.value)
+                                  }
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-3 space-y-3">
+                            <div>
+                              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                Accessory icon
+                              </div>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {SWATCH_EMOJI_OPTIONS.map((emoji) => (
+                                  <button
+                                    key={`${variant.id}-emoji-${emoji}`}
+                                    type="button"
+                                    className={`flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/70 text-lg ${
+                                      variant.swatchGlyph === emoji ? 'ring-2 ring-ldc-plum/70' : ''
+                                    }`}
+                                    onClick={() =>
+                                      handleVariantSwatchFieldChange(variant.id, 'swatchGlyph')(emoji)
+                                    }
+                                  >
+                                    {emoji}
+                                  </button>
+                                ))}
+                              </div>
+                              <input
+                                className="ldc-input mt-2"
+                                placeholder="Custom emoji or icon"
+                                value={variant.swatchGlyph}
+                                onChange={handleVariantSwatchFieldChange(variant.id, 'swatchGlyph')}
+                              />
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2">
+                              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                Swatch image URL
+                                <input
+                                  className="ldc-input mt-2"
+                                  value={variant.swatchImage}
+                                  onChange={handleVariantSwatchFieldChange(variant.id, 'swatchImage')}
+                                />
+                              </label>
+                              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                                Upload swatch image
+                                <input
+                                  className="mt-2 block w-full text-sm text-ldc-ink/70"
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleVariantSwatchUpload(variant.id)}
+                                  disabled={variantUploadState.uploadingId === variant.id}
+                                />
+                              </label>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="mt-3 text-xs text-ldc-ink/60">
+                          If no swatch is set, the storefront falls back to a text swatch.
+                        </div>
                       </div>
 
                       <div className="mt-4 flex flex-wrap gap-4">
@@ -18154,7 +18460,8 @@ const ResourceDetail = ({ resource }) => {
                         </div>
                       </div>
                     </div>
-                  ))
+                  );
+                })
                 ) : (
                   <p className="text-sm text-ldc-ink/60">No variants yet.</p>
                 )}
@@ -18210,6 +18517,115 @@ const ResourceDetail = ({ resource }) => {
                         disabled={variantUploadState.uploadingId === 'new'}
                       />
                     </label>
+                  </div>
+
+                  <div className="mt-4 rounded-2xl bg-white/60 p-4">
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                      Swatch settings
+                    </div>
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                        Swatch type
+                        <select
+                          className="ldc-input mt-2"
+                          value={newVariant.swatchType === 'accessory' ? 'accessory' : 'color'}
+                          onChange={handleNewVariantSwatchFieldChange('swatchType')}
+                        >
+                          <option value="color">Color swatch</option>
+                          <option value="accessory">Accessory swatch</option>
+                        </select>
+                      </label>
+                    </div>
+
+                    {newVariant.swatchType !== 'accessory' ? (
+                      <div className="mt-3">
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                          Color swatch
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-3">
+                          <input
+                            type="color"
+                            className="h-10 w-12 rounded-full border border-white/70 bg-white/70 p-1"
+                            value={newVariant.swatchColor || '#000000'}
+                            onChange={handleNewVariantSwatchFieldChange('swatchColor')}
+                          />
+                          <input
+                            className="ldc-input h-10 w-32"
+                            placeholder="#8b5a2b"
+                            value={newVariant.swatchColor}
+                            onChange={handleNewVariantSwatchFieldChange('swatchColor')}
+                          />
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {SWATCH_PRESET_COLORS.map((swatch) => (
+                            <button
+                              key={`new-swatch-${swatch.value}`}
+                              type="button"
+                              className={`h-8 w-8 rounded-full border border-white/70 shadow-sm ${
+                                newVariant.swatchColor === swatch.value
+                                  ? 'ring-2 ring-ldc-plum/70'
+                                  : ''
+                              }`}
+                              style={{ background: swatch.value }}
+                              aria-label={swatch.label}
+                              onClick={() => handleNewVariantSwatchFieldChange('swatchColor')(swatch.value)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-3 space-y-3">
+                        <div>
+                          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Accessory icon
+                          </div>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {SWATCH_EMOJI_OPTIONS.map((emoji) => (
+                              <button
+                                key={`new-emoji-${emoji}`}
+                                type="button"
+                                className={`flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/70 text-lg ${
+                                  newVariant.swatchGlyph === emoji ? 'ring-2 ring-ldc-plum/70' : ''
+                                }`}
+                                onClick={() => handleNewVariantSwatchFieldChange('swatchGlyph')(emoji)}
+                              >
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
+                          <input
+                            className="ldc-input mt-2"
+                            placeholder="Custom emoji or icon"
+                            value={newVariant.swatchGlyph}
+                            onChange={handleNewVariantSwatchFieldChange('swatchGlyph')}
+                          />
+                        </div>
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Swatch image URL
+                            <input
+                              className="ldc-input mt-2"
+                              value={newVariant.swatchImage}
+                              onChange={handleNewVariantSwatchFieldChange('swatchImage')}
+                            />
+                          </label>
+                          <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                            Upload swatch image
+                            <input
+                              className="mt-2 block w-full text-sm text-ldc-ink/70"
+                              type="file"
+                              accept="image/*"
+                              onChange={handleVariantSwatchUpload('new')}
+                              disabled={variantUploadState.uploadingId === 'new'}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-3 text-xs text-ldc-ink/60">
+                      If no swatch is set, the storefront falls back to a text swatch.
+                    </div>
                   </div>
 
                   <div className="mt-4 flex flex-wrap gap-4">
