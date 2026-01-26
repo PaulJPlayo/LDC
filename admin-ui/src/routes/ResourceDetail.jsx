@@ -810,6 +810,21 @@ const buildVariantOptionsPayload = (optionsMap, productOptions, requireAll) => {
   return { payload, missing };
 };
 
+const getOptionValueList = (option) => {
+  const values = Array.isArray(option?.values) ? option.values : [];
+  return values
+    .map((value) => (typeof value === 'string' ? value : value?.value))
+    .filter(Boolean);
+};
+
+const matchOptionValue = (values, desired) => {
+  const normalized = String(desired || '').trim();
+  if (!normalized) return '';
+  const lower = normalized.toLowerCase();
+  const match = values.find((value) => String(value).toLowerCase() === lower);
+  return match || normalized;
+};
+
 const normalizeOptionValue = (value) => String(value ?? '').trim();
 
 const areOptionMapsEqual = (left, right) => {
@@ -2952,7 +2967,7 @@ const ResourceDetail = ({ resource }) => {
           const detailParams = isProduct
             ? {
                 fields:
-                  '+categories,+images,+description,+subtitle,+shipping_profile_id,+shipping_profile,+variants,+variants.prices'
+                  '+categories,+images,+description,+subtitle,+shipping_profile_id,+shipping_profile,+variants,+variants.prices,+options,+options.values'
               }
             : isOrder
               ? orderDetailParams
@@ -10778,6 +10793,58 @@ const ResourceDetail = ({ resource }) => {
     }
   };
 
+  const ensureVariantOptionValues = async (productId, optionsPayload) => {
+    if (!productId || !optionsPayload || !Object.keys(optionsPayload).length) {
+      return optionsPayload;
+    }
+    let optionsSource = variantOptionList;
+    if (!Array.isArray(optionsSource) || !optionsSource.length) {
+      return optionsPayload;
+    }
+    const needsValues = optionsSource.some((option) => !Array.isArray(option?.values));
+    if (needsValues) {
+      try {
+        const payload = await getDetail('/admin/products', productId, {
+          fields: '+options,+options.values'
+        });
+        const product = getObjectFromPayload(payload, 'product');
+        if (product?.options?.length) {
+          optionsSource = product.options;
+          if (isVariant) {
+            setVariantProduct(product);
+          } else if (isProduct) {
+            setRecord(product);
+          }
+        }
+      } catch (err) {
+        // Keep existing optionsSource if refresh fails.
+      }
+    }
+    const nextPayload = { ...optionsPayload };
+    for (const [optionId, rawValue] of Object.entries(optionsPayload)) {
+      const option = optionsSource.find((entry) => entry?.id === optionId);
+      if (!option) continue;
+      const values = getOptionValueList(option);
+      const matched = matchOptionValue(values, rawValue);
+      nextPayload[optionId] = matched;
+      const hasValue = values.some(
+        (value) => String(value).toLowerCase() === String(matched).toLowerCase()
+      );
+      if (!hasValue && Array.isArray(option?.values)) {
+        const updatedValues = [...values, matched];
+        await request(`/admin/products/${productId}/options/${optionId}`, {
+          method: 'POST',
+          body: {
+            title: option?.title || optionId,
+            values: updatedValues
+          }
+        });
+        option.values = updatedValues.map((value) => ({ value }));
+      }
+    }
+    return nextPayload;
+  };
+
   const handleSaveVariant = async (variant) => {
     if (!record || !variant?.id) return;
     const productId = isVariant ? record?.product_id || record?.product?.id : record?.id;
@@ -10846,6 +10913,10 @@ const ResourceDetail = ({ resource }) => {
     setVariantError('');
     setVariantMessage('');
     try {
+      const optionsPayloadFinal =
+        optionsChanged && Object.keys(optionsPayload).length
+          ? await ensureVariantOptionValues(productId, optionsPayload)
+          : optionsPayload;
       const payload = await request(`/admin/products/${productId}/variants/${variant.id}`, {
         method: 'POST',
         body: {
@@ -10866,7 +10937,9 @@ const ResourceDetail = ({ resource }) => {
           manage_inventory: variant.manage_inventory,
           allow_backorder: variant.allow_backorder,
           options:
-            optionsChanged && Object.keys(optionsPayload).length ? optionsPayload : undefined,
+            optionsChanged && Object.keys(optionsPayloadFinal).length
+              ? optionsPayloadFinal
+              : undefined,
           prices: pricesPayload
         }
       });
@@ -11039,6 +11112,7 @@ const ResourceDetail = ({ resource }) => {
     setVariantError('');
     setVariantMessage('');
     try {
+      const optionsPayloadFinal = await ensureVariantOptionValues(productId, optionsPayload);
       const payload = await request(`/admin/products/${productId}/variants`, {
         method: 'POST',
         body: {
@@ -11058,7 +11132,7 @@ const ResourceDetail = ({ resource }) => {
           metadata: metadataPayload,
           manage_inventory: newVariant.manage_inventory,
           allow_backorder: newVariant.allow_backorder,
-          options: Object.keys(optionsPayload).length ? optionsPayload : undefined,
+          options: Object.keys(optionsPayloadFinal).length ? optionsPayloadFinal : undefined,
           prices: pricesPayload
         }
       });
