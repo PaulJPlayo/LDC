@@ -3476,7 +3476,6 @@ const ResourceDetail = ({ resource }) => {
 
   useEffect(() => {
     if (!isVariant || !record) {
-      setVariantDrafts([]);
       setVariantUploadState({ uploadingId: null, error: '', success: '' });
       return;
     }
