@@ -25,6 +25,19 @@ const withPreviewOrigins = (list: string[]) => {
 const storeCors = withPreviewOrigins(parseCors(process.env.STORE_CORS)).join(',')
 const adminCors = withPreviewOrigins(parseCors(process.env.ADMIN_CORS)).join(',')
 const authCors = withPreviewOrigins(parseCors(process.env.AUTH_CORS)).join(',')
+const notificationProviders = []
+
+if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_FROM) {
+  notificationProviders.push({
+    resolve: "@medusajs/notification-sendgrid",
+    id: "sendgrid",
+    options: {
+      api_key: process.env.SENDGRID_API_KEY,
+      from: process.env.SENDGRID_FROM,
+      channels: ["email"],
+    },
+  })
+}
 const databaseDriverOptions =
   process.env.DATABASE_SSL === 'true'
     ? { connection: { ssl: { rejectUnauthorized: false } } }
@@ -62,7 +75,12 @@ module.exports = defineConfig({
     },
     gift_cards: {
       resolve: "./src/modules/gift-cards"
-    }
+    },
+    notification: {
+      options: {
+        providers: notificationProviders,
+      },
+    },
   },
   admin: {
     disable: false
