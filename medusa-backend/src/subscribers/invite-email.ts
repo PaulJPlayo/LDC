@@ -35,7 +35,7 @@ export default async function inviteEmailSubscriber({
   event: { data },
   container,
 }: SubscriberArgs<InvitePayload | InvitePayload[]>) {
-  const notificationModule = container.resolve("notification") as {
+  const notificationModule = container.resolve("notification") as unknown as {
     createNotifications: (payload: Array<Record<string, unknown>>) => Promise<unknown>
   }
   const logger = container.resolve("logger") as { error: (message: string) => void }

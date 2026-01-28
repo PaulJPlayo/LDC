@@ -25,7 +25,15 @@ const withPreviewOrigins = (list: string[]) => {
 const storeCors = withPreviewOrigins(parseCors(process.env.STORE_CORS)).join(',')
 const adminCors = withPreviewOrigins(parseCors(process.env.ADMIN_CORS)).join(',')
 const authCors = withPreviewOrigins(parseCors(process.env.AUTH_CORS)).join(',')
-const notificationProviders = []
+const notificationProviders: Array<{
+  resolve: string
+  id: string
+  options: {
+    api_key: string
+    from: string
+    channels: string[]
+  }
+}> = []
 
 if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_FROM) {
   notificationProviders.push({
