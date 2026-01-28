@@ -2,6 +2,7 @@ import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework"
 import {
   ContainerRegistrationKeys,
   InviteWorkflowEvents,
+  UserEvents,
   remoteQueryObjectFromString,
 } from "@medusajs/framework/utils"
 
@@ -102,7 +103,10 @@ export default async function inviteEmailSubscriber({
       }
     })
 
-  if (!notifications.length) return
+  if (!notifications.length) {
+    logger.error("Invite email skipped: missing email/token on invite payload.")
+    return
+  }
 
   try {
     await notificationModule.createNotifications(notifications)
@@ -112,5 +116,9 @@ export default async function inviteEmailSubscriber({
 }
 
 export const config: SubscriberConfig = {
-  event: [InviteWorkflowEvents.CREATED, InviteWorkflowEvents.RESENT],
+  event: [
+    UserEvents.INVITE_TOKEN_GENERATED,
+    InviteWorkflowEvents.CREATED,
+    InviteWorkflowEvents.RESENT,
+  ],
 }
