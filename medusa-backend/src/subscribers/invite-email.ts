@@ -1,8 +1,18 @@
 import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework"
-import { UserEvents } from "@medusajs/framework/utils"
+import {
+  ContainerRegistrationKeys,
+  InviteWorkflowEvents,
+  remoteQueryObjectFromString,
+} from "@medusajs/framework/utils"
 
 type InvitePayload = {
   id?: string
+  email?: string
+  token?: string
+}
+
+type InviteRecord = {
+  id: string
   email?: string
   token?: string
 }
@@ -45,14 +55,37 @@ export default async function inviteEmailSubscriber({
     return
   }
 
-  const invites = Array.isArray(data) ? data : [data]
+  const rawInvites = Array.isArray(data) ? data : [data]
   const baseUrl = (process.env.ADMIN_INVITE_URL || "https://api.lovettsldc.com/app").replace(
     /\/$/,
     ""
   )
   const loginUrl = process.env.ADMIN_LOGIN_URL || "https://admin.lovettsldc.com"
 
-  const notifications = invites
+  const invitesWithTokens = rawInvites.filter(
+    (invite): invite is InviteRecord => Boolean(invite?.email && invite?.token)
+  )
+  const inviteIds = rawInvites
+    .map((invite) => invite?.id)
+    .filter((id): id is string => Boolean(id))
+    .filter((id) => !invitesWithTokens.find((invite) => invite.id === id))
+
+  const resolvedInvites: InviteRecord[] = [...invitesWithTokens]
+
+  if (inviteIds.length) {
+    const remoteQuery = container.resolve(ContainerRegistrationKeys.REMOTE_QUERY)
+    const queryObject = remoteQueryObjectFromString({
+      entryPoint: "invite",
+      variables: {
+        filters: { id: inviteIds },
+      },
+      fields: ["id", "email", "token"],
+    })
+    const invites = await remoteQuery(queryObject)
+    resolvedInvites.push(...invites)
+  }
+
+  const notifications = resolvedInvites
     .filter((invite) => invite?.email && invite?.token)
     .map((invite) => {
       const inviteUrl = `${baseUrl}/invite?token=${invite.token}`
@@ -60,7 +93,7 @@ export default async function inviteEmailSubscriber({
       return {
         to: invite.email,
         channel: "email",
-        idempotency_key: invite.id || invite.email || invite.token,
+        idempotency_key: invite.token,
         content,
         data: {
           invite_url: inviteUrl,
@@ -79,5 +112,5 @@ export default async function inviteEmailSubscriber({
 }
 
 export const config: SubscriberConfig = {
-  event: UserEvents.INVITE_TOKEN_GENERATED,
+  event: [InviteWorkflowEvents.CREATED, InviteWorkflowEvents.RESENT],
 }
