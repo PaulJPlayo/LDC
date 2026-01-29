@@ -134,6 +134,73 @@ export const login = async (email, password) => {
   return sessionPayload?.user || null;
 };
 
+export const registerUser = async (email, password) => {
+  const response = await fetch(`${API_BASE}/auth/user/emailpass/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  const payload = await parseResponse(response);
+  if (!response.ok) {
+    const message =
+      typeof payload === 'string'
+        ? payload
+        : payload?.message || `Request failed (${response.status})`;
+    throw new ApiError(message, response.status);
+  }
+  const token = payload?.token;
+  if (!token) {
+    throw new ApiError('Registration token missing.', response.status);
+  }
+  return token;
+};
+
+export const acceptInvite = async ({ token, authToken, email, first_name, last_name }) => {
+  const response = await fetch(
+    `${API_BASE}/admin/invites/accept?token=${encodeURIComponent(token)}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`
+      },
+      body: JSON.stringify({ email, first_name, last_name })
+    }
+  );
+  const payload = await parseResponse(response);
+  if (!response.ok) {
+    const message =
+      typeof payload === 'string'
+        ? payload
+        : payload?.message || `Request failed (${response.status})`;
+    throw new ApiError(message, response.status);
+  }
+  return payload;
+};
+
+export const validateInvite = async (token) => {
+  const cleaned = String(token || '').trim();
+  if (!cleaned) {
+    throw new ApiError('Invite token missing.', 400);
+  }
+  const response = await fetch(
+    `${API_BASE}/store/invites/validate?token=${encodeURIComponent(cleaned)}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(PUBLISHABLE_KEY ? { 'x-publishable-api-key': PUBLISHABLE_KEY } : {})
+      }
+    }
+  );
+  const payload = await parseResponse(response);
+  return {
+    ok: response.ok,
+    status: response.status,
+    payload
+  };
+};
+
 export const logout = async () => {
   await request('/auth/session', { method: 'DELETE' });
 };

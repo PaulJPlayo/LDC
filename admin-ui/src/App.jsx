@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './state/auth.jsx';
 import AdminShell from './components/AdminShell.jsx';
 import Login from './routes/Login.jsx';
+import InviteAccept from './routes/InviteAccept.jsx';
 import Dashboard from './routes/Dashboard.jsx';
 import DraftOrderCreate from './routes/DraftOrderCreate.jsx';
 import ResourceList from './routes/ResourceList.jsx';
@@ -29,6 +30,7 @@ const App = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/invite" element={<InviteAccept />} />
       <Route
         path="/"
         element={

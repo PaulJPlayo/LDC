@@ -375,6 +375,9 @@ const parseJsonInput = (value) => {
   }
 };
 
+const resolveInviteToken = (invite) =>
+  invite?.token || invite?.invite_token || invite?.metadata?.token || '';
+
 const buildQueryString = (params) => {
   const query = new URLSearchParams();
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -1015,6 +1018,8 @@ const ResourceList = ({ resource }) => {
     error: '',
     success: ''
   });
+  const [inviteCopyId, setInviteCopyId] = useState('');
+  const [inviteCopyError, setInviteCopyError] = useState('');
   const [apiKeyCreateDraft, setApiKeyCreateDraft] = useState({
     title: '',
     type: 'secret'
@@ -1143,6 +1148,54 @@ const ResourceList = ({ resource }) => {
 
   const totalPages = Math.max(1, Math.ceil(count / limit));
 
+  const inviteLinkBase = useMemo(() => {
+    const fallback =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : '';
+    return (import.meta.env.VITE_ADMIN_INVITE_URL || fallback).replace(/\/$/, '');
+  }, []);
+
+  const handleCopyInviteLink = async (invite) => {
+    const token = resolveInviteToken(invite);
+    const inviteId = invite?.id || invite?.email || token;
+    const url =
+      token && inviteLinkBase
+        ? `${inviteLinkBase}/invite?token=${encodeURIComponent(token)}`
+        : '';
+
+    if (!url) {
+      setInviteCopyError('Invite link unavailable. Resend the invite to generate a fresh link.');
+      return;
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const success = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (!success) {
+          throw new Error('Copy failed.');
+        }
+      }
+      setInviteCopyId(inviteId);
+      setInviteCopyError('');
+      window.setTimeout(() => {
+        setInviteCopyId((current) => (current === inviteId ? '' : current));
+      }, 2000);
+    } catch (err) {
+      setInviteCopyError(err?.message || 'Unable to copy invite link.');
+    }
+  };
+
   const columns = useMemo(() => {
     if (isNotificationList) {
       return [
@@ -1216,8 +1269,51 @@ const ResourceList = ({ resource }) => {
         }
       ];
     }
+    if (isInviteList) {
+      const baseColumns = resource?.columns || [];
+      return [
+        ...baseColumns,
+        {
+          key: 'actions',
+          label: 'Actions',
+          format: (_, row) => {
+            if (row?.accepted) {
+              return <span className="text-ldc-ink/50">Accepted</span>;
+            }
+            const token = resolveInviteToken(row);
+            const inviteUrl =
+              token && inviteLinkBase
+                ? `${inviteLinkBase}/invite?token=${encodeURIComponent(token)}`
+                : '';
+            if (!inviteUrl) {
+              return <span className="text-ldc-ink/50">Link unavailable</span>;
+            }
+            const copyKey = row?.id || row?.email || token || inviteUrl;
+            const label = inviteCopyId === copyKey ? 'Copied' : 'Copy invite link';
+            return (
+              <button
+                type="button"
+                className="font-semibold text-ldc-plum"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleCopyInviteLink(row);
+                }}
+              >
+                {label}
+              </button>
+            );
+          }
+        }
+      ];
+    }
     return resource.columns || [];
-  }, [isNotificationList, resource]);
+  }, [
+    isNotificationList,
+    isInviteList,
+    resource,
+    inviteCopyId,
+    inviteLinkBase
+  ]);
   const uploadRows = useMemo(() => {
     if (!isUploadList) return rows;
     const term = uploadSearch.trim().toLowerCase();
@@ -9233,6 +9329,9 @@ const ResourceList = ({ resource }) => {
               {inviteCreateState.saving ? 'Sending...' : 'Send invite'}
             </button>
           </form>
+          {inviteCopyError ? (
+            <div className="mt-3 text-sm text-rose-600">{inviteCopyError}</div>
+          ) : null}
         </div>
       ) : null}
 

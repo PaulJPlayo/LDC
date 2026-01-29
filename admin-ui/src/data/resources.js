@@ -558,6 +558,9 @@ export const resources = [
     endpoint: '/admin/invites',
     listKey: 'invites',
     detailKey: 'invite',
+    listParams: {
+      fields: '+token'
+    },
     columns: [
       { key: 'email', label: 'Email' },
       { key: 'role', label: 'Role', badge: true },

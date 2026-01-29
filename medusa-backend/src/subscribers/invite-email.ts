@@ -16,6 +16,8 @@ type InviteRecord = {
   id: string
   email?: string
   token?: string
+  created_at?: string
+  updated_at?: string
 }
 
 const buildInviteEmail = (inviteUrl: string, loginUrl: string) => {
@@ -80,7 +82,7 @@ export default async function inviteEmailSubscriber({
       variables: {
         filters: { id: inviteIds },
       },
-      fields: ["id", "email", "token"],
+      fields: ["id", "email", "token", "created_at", "updated_at"],
     })
     const invites = await remoteQuery(queryObject)
     resolvedInvites.push(...invites)
@@ -89,12 +91,13 @@ export default async function inviteEmailSubscriber({
   const notifications = resolvedInvites
     .filter((invite) => invite?.email && invite?.token)
     .map((invite) => {
+      const stamp = invite.updated_at || invite.created_at || String(Date.now())
       const inviteUrl = `${baseUrl}/invite?token=${invite.token}`
       const content = buildInviteEmail(inviteUrl, loginUrl)
       return {
         to: invite.email,
         channel: "email",
-        idempotency_key: invite.token,
+        idempotency_key: `${invite.id}:${stamp}`,
         content,
         data: {
           invite_url: inviteUrl,
