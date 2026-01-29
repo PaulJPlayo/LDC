@@ -10,7 +10,7 @@ export default async function sendTestEmail({ container, args }: ExecArgs) {
     info: (message: string) => void;
     error: (message: string) => void;
   };
-  const notificationModule = container.resolve("notification") as NotificationModule;
+  const notificationModule = container.resolve("notification") as unknown as NotificationModule;
   const [toArg, subjectArg] = (args ?? []) as string[];
   const to = toArg || process.env.TEST_EMAIL_TO || "";
   const subject = subjectArg || "LDC Admin Studio test email";
