@@ -160,6 +160,7 @@ const StorefrontLayout = () => {
   const [sectionSaving, setSectionSaving] = useState({});
   const [actionState, setActionState] = useState({ savingId: null, error: '' });
   const [sectionSearch, setSectionSearch] = useState({});
+  const [dragState, setDragState] = useState({ sectionKey: '', productId: '' });
 
   const productById = useMemo(() => {
     const map = new Map();
@@ -261,6 +262,39 @@ const StorefrontLayout = () => {
       [list[index], list[target]] = [list[target], list[index]];
       return { ...prev, [sectionKey]: list };
     });
+  };
+
+  const moveItem = (list, fromIndex, toIndex) => {
+    if (fromIndex === toIndex) return list;
+    const next = [...list];
+    const [item] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, item);
+    return next;
+  };
+
+  const handleDragStart = (sectionKey, productId) => (event) => {
+    setDragState({ sectionKey, productId });
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', productId);
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (sectionKey, targetId) => (event) => {
+    event.preventDefault();
+    const productId = dragState.productId || event.dataTransfer.getData('text/plain');
+    if (!productId) return;
+    setSectionOrder((prev) => {
+      const list = [...(prev[sectionKey] || [])];
+      const fromIndex = list.indexOf(productId);
+      const toIndex = list.indexOf(targetId);
+      if (fromIndex === -1 || toIndex === -1) return prev;
+      return { ...prev, [sectionKey]: moveItem(list, fromIndex, toIndex) };
+    });
+    setDragState({ sectionKey: '', productId: '' });
   };
 
   const handleSaveOrder = async (sectionKey) => {
@@ -489,7 +523,13 @@ const StorefrontLayout = () => {
                       return (
                         <div
                           key={productId}
-                          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/60 bg-white/70 px-4 py-3 text-sm text-ldc-ink"
+                          className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/60 bg-white/70 px-4 py-3 text-sm text-ldc-ink ${
+                            dragState.productId === productId ? 'shadow-glow' : ''
+                          }`}
+                          draggable
+                          onDragStart={handleDragStart(section.key, productId)}
+                          onDragOver={handleDragOver}
+                          onDrop={handleDrop(section.key, productId)}
                         >
                           <div className="min-w-[220px]">
                             <div className="font-semibold">
@@ -503,20 +543,9 @@ const StorefrontLayout = () => {
                             </div>
                           </div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <button
-                              className="ldc-button-secondary"
-                              onClick={() => handleMove(section.key, index, -1)}
-                              disabled={index === 0}
-                            >
-                              Up
-                            </button>
-                            <button
-                              className="ldc-button-secondary"
-                              onClick={() => handleMove(section.key, index, 1)}
-                              disabled={index === list.length - 1}
-                            >
-                              Down
-                            </button>
+                            <span className="rounded-full border border-white/80 bg-white px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                              Drag to reorder
+                            </span>
                             {isExplicit ? (
                               <button
                                 className="ldc-button-secondary"
