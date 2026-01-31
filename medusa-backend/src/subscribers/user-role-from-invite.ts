@@ -12,7 +12,7 @@ export default async function userRoleFromInvite({
   container
 }: SubscriberArgs<UserLike | { user?: UserLike } | { id?: string; email?: string }>) {
   const logger = container.resolve("logger") as { error: (message: string) => void }
-  const userService = container.resolve(Modules.USER) as {
+  const userService = container.resolve(Modules.USER) as unknown as {
     retrieveUser: (id: string) => Promise<UserLike>
     listUsers: (filters: Record<string, unknown>) => Promise<UserLike[]>
     listInvites: (filters: Record<string, unknown>) => Promise<Array<Record<string, unknown>>>
@@ -81,5 +81,5 @@ export default async function userRoleFromInvite({
 }
 
 export const config: SubscriberConfig = {
-  event: UserEvents.CREATED
+  event: UserEvents.USER_CREATED
 }
