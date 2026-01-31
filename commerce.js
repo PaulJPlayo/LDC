@@ -827,6 +827,9 @@
     }
 
     window.dispatchEvent(new Event('resize'));
+    try {
+      window.dispatchEvent(new Event('ldc:products:rendered'));
+    } catch {}
   };
 
   const cleanVariantLabel = value =>

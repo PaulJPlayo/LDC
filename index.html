@@ -5950,6 +5950,9 @@
       window.addEventListener('load', moveBadgesToImages);
       document.addEventListener('DOMContentLoaded', moveBadgesToImages);
       window.addEventListener('resize', moveBadgesToImages);
+      window.addEventListener('ldc:products:rendered', () => {
+        wireDesignButtons();
+      });
 
       window.ldcCart = cartApi;
 
