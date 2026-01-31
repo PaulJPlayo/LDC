@@ -40,6 +40,20 @@ const Sidebar = ({ isOpen, onClose }) => {
               <span className="text-xs uppercase tracking-[0.2em] text-ldc-ink/50">Home</span>
             </NavLink>
 
+            <NavLink
+              to="/storefront-layout"
+              className={({ isActive }) =>
+                `flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold tracking-wide transition ${
+                  isActive
+                    ? 'bg-white text-ldc-ink shadow-glow'
+                    : 'text-ldc-ink/80 hover:bg-white/60'
+                }`
+              }
+            >
+              Storefront Layout
+              <span className="text-xs uppercase tracking-[0.2em] text-ldc-ink/50">Tiles</span>
+            </NavLink>
+
             {resourceGroups.map((group) => (
               <div key={group.label} className="space-y-2">
                 <div className="text-xs font-semibold uppercase tracking-[0.25em] text-ldc-ink/50">

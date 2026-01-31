@@ -134,6 +134,82 @@
     return {};
   };
 
+  const parseStorefrontList = raw => {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw.map(entry => String(entry)).filter(Boolean);
+    if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed.map(entry => String(entry)).filter(Boolean);
+        if (parsed && typeof parsed === 'object') {
+          return Object.keys(parsed).filter(key => parsed[key]).map(key => String(key));
+        }
+      } catch (error) {
+        return raw
+          .split(',')
+          .map(entry => entry.trim())
+          .filter(Boolean);
+      }
+    }
+    if (raw && typeof raw === 'object') {
+      return Object.keys(raw).filter(key => raw[key]).map(key => String(key));
+    }
+    return [];
+  };
+
+  const parseStorefrontHidden = raw => {
+    if (!raw) return {};
+    if (Array.isArray(raw)) {
+      return raw.reduce((acc, key) => {
+        if (key) acc[String(key)] = true;
+        return acc;
+      }, {});
+    }
+    if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw);
+        return parseStorefrontHidden(parsed);
+      } catch (error) {
+        return raw
+          .split(',')
+          .map(entry => entry.trim())
+          .filter(Boolean)
+          .reduce((acc, key) => {
+            acc[key] = true;
+            return acc;
+          }, {});
+      }
+    }
+    if (raw && typeof raw === 'object') {
+      return Object.entries(raw).reduce((acc, [key, value]) => {
+        if (value) acc[String(key)] = true;
+        return acc;
+      }, {});
+    }
+    return {};
+  };
+
+  const getStorefrontSections = product => {
+    const metadata = normalizeMetadata(product?.metadata);
+    return parseStorefrontList(metadata?.storefront_sections);
+  };
+
+  const isStorefrontHidden = (product, sectionKey) => {
+    const metadata = normalizeMetadata(product?.metadata);
+    const hidden = parseStorefrontHidden(metadata?.storefront_hidden);
+    return Boolean(hidden?.[sectionKey]);
+  };
+
+  const getStorefrontTileOverride = (product, sectionKey) => {
+    const metadata = normalizeMetadata(product?.metadata);
+    const base = normalizeMetadata(metadata?.storefront_tile);
+    const sectionOverrides = normalizeMetadata(metadata?.storefront_tile_sections);
+    const scoped = sectionOverrides && typeof sectionOverrides === 'object'
+      ? normalizeMetadata(sectionOverrides?.[sectionKey])
+      : {};
+    return { ...base, ...scoped };
+  };
+
   const getStorefrontOrderValue = (product, sectionKey) => {
     const metadata = normalizeMetadata(product?.metadata);
     let raw = metadata?.storefront_order;
@@ -289,11 +365,8 @@
     return amount != null ? { amount, currency } : null;
   };
 
-  const updateProductPrice = (container, product, preferredVariantId) => {
+  const updateProductPrice = (container, product, preferredVariantId, override = {}) => {
     if (!container || !product) return;
-    const priceInfo = getProductPrice(product, preferredVariantId);
-    if (!priceInfo) return;
-    const formatted = formatCurrency(priceInfo.amount, priceInfo.currency);
     const priceCandidates = [
       container.querySelector('[data-product-price]'),
       container.querySelector('.price-line'),
@@ -307,7 +380,20 @@
         /\$\s*\d/.test(node.textContent || '')
       );
     }
-    if (priceEl && formatted) {
+    if (!priceEl) return;
+    if (override?.hide_price) {
+      priceEl.style.display = 'none';
+      return;
+    }
+    priceEl.style.display = '';
+    if (override?.price) {
+      priceEl.textContent = String(override.price);
+      return;
+    }
+    const priceInfo = getProductPrice(product, preferredVariantId);
+    if (!priceInfo) return;
+    const formatted = formatCurrency(priceInfo.amount, priceInfo.currency);
+    if (formatted) {
       priceEl.textContent = formatted;
     }
   };
@@ -399,9 +485,10 @@
     );
   };
 
-  const updateProductCard = (container, product, preferredVariantId) => {
+  const updateProductCard = (container, product, preferredVariantId, sectionKey) => {
     if (!container || !product) return;
-    const title = product.title || '';
+    const overrides = getStorefrontTileOverride(product, sectionKey);
+    const title = overrides?.title || product.title || '';
     if (title) {
       const titleEls = container.querySelectorAll(
         '[data-product-title], .tile-title, .product-title, .hero-heading, h1, h2, h3'
@@ -412,9 +499,14 @@
       });
     }
 
-    updateProductPrice(container, product, preferredVariantId);
+    updateProductPrice(container, product, preferredVariantId, overrides);
 
-    const description = product.description || product.subtitle || '';
+    const description =
+      overrides?.description ||
+      overrides?.subtitle ||
+      product.description ||
+      product.subtitle ||
+      '';
     if (description) {
       let descriptionEl =
         container.querySelector('[data-product-description]') ||
@@ -440,6 +532,7 @@
     }
 
     const imageUrl =
+      overrides?.image ||
       product.thumbnail ||
       product?.images?.[0]?.url ||
       product?.images?.[0] ||
@@ -458,6 +551,18 @@
         }
       }
     }
+
+    const badgeEl =
+      container.querySelector('[data-product-badge]') ||
+      container.querySelector('.badge-custom');
+    if (badgeEl) {
+      if (overrides?.badge) {
+        badgeEl.textContent = overrides.badge;
+        badgeEl.style.display = '';
+      } else {
+        badgeEl.style.display = 'none';
+      }
+    }
   };
 
   const hydrateProductCards = async () => {
@@ -473,7 +578,8 @@
       if (!product) return;
       const entry = map?.products?.[key] || map?.products?.[fallbackKey] || null;
       const preferredVariantId = entry?.variantId || entry?.variant_id || null;
-      updateProductCard(container, product, preferredVariantId);
+      const sectionKey = container?.dataset?.sectionKey || '';
+      updateProductCard(container, product, preferredVariantId, sectionKey);
     });
   };
 
@@ -578,8 +684,9 @@
 
     const defaultVariant = variants[0] || null;
     const defaultLabel = defaultVariant ? getVariantLabel(defaultVariant) : '';
-    const defaultImage = getVariantImage(defaultVariant, product);
-    updateProductCard(card, product, defaultVariant?.id || null);
+    const overrides = getStorefrontTileOverride(product, sectionKey);
+    const defaultImage = overrides?.image || getVariantImage(defaultVariant, product);
+    updateProductCard(card, product, defaultVariant?.id || null, sectionKey);
     updateProductImage(card, defaultImage, product?.title || '', defaultLabel);
     updateAddToCartVariant(card, defaultVariant?.id || null);
     card.dataset.selectedColor = defaultLabel;
@@ -587,12 +694,12 @@
 
     const newBadge = card.querySelector('.badge-new');
     if (newBadge) {
-      const isNew = getProductTags(product).includes('new-arrivals');
+      const isNew = !overrides?.badge && getProductTags(product).includes('new-arrivals');
       newBadge.style.display = isNew ? 'inline-flex' : 'none';
     }
     const limitedBadge = card.querySelector('.badge-limited');
     if (limitedBadge) {
-      const isLimited = getProductTags(product).includes('limited');
+      const isLimited = !overrides?.badge && getProductTags(product).includes('limited');
       limitedBadge.style.display = isLimited ? 'inline-flex' : 'none';
     }
 
@@ -627,6 +734,14 @@
     if (!products?.length) return [];
     const { collectionHandles, tagHandles } = filters;
     return products.filter(product => {
+      const sectionKey = filters.sectionKey;
+      if (sectionKey && isStorefrontHidden(product, sectionKey)) {
+        return false;
+      }
+      const explicitSections = getStorefrontSections(product);
+      if (explicitSections.length) {
+        return explicitSections.includes(sectionKey);
+      }
       if (collectionHandles.length) {
         const handle = getProductCollectionHandle(product);
         if (!collectionHandles.includes(handle)) {
@@ -954,8 +1069,10 @@
     }
     const variants = getSortedVariants(product);
     const variant = variantId ? variants.find(item => item?.id === variantId) : null;
-    const imageUrl = getVariantImage(variant, product);
-    updateProductPrice(container, product, variantId);
+    const sectionKey = container?.dataset?.sectionKey || '';
+    const overrides = getStorefrontTileOverride(product, sectionKey);
+    const imageUrl = overrides?.image || getVariantImage(variant, product);
+    updateProductPrice(container, product, variantId, overrides);
     updateProductImage(container, imageUrl, product?.title || '', label);
     updateAddToCartVariant(container, variantId);
   };

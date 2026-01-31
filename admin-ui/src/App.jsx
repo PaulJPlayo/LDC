@@ -9,6 +9,7 @@ import DraftOrderCreate from './routes/DraftOrderCreate.jsx';
 import ResourceList from './routes/ResourceList.jsx';
 import ResourceDetail from './routes/ResourceDetail.jsx';
 import Settings from './routes/Settings.jsx';
+import StorefrontLayout from './routes/StorefrontLayout.jsx';
 import { resources } from './data/resources.js';
 
 const RequireAuth = ({ children }) => {
@@ -41,6 +42,7 @@ const App = () => {
       >
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path="storefront-layout" element={<StorefrontLayout />} />
         <Route path="settings" element={<Settings />} />
         <Route path="draft-orders/new" element={<DraftOrderCreate />} />
         {resources.map((resource) => (

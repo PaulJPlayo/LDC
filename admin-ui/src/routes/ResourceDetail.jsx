@@ -15,6 +15,7 @@ import {
 import { formatDateTime, formatMoney } from '../lib/formatters.js';
 import { resolveRole, isAdminUser, isResourceAdminOnly } from '../lib/roles.js';
 import { useAuth } from '../state/auth.jsx';
+import { STOREFRONT_SECTIONS } from '../data/storefrontSections.js';
 
 const getObjectFromPayload = (payload, key) => {
   if (!payload) return null;
@@ -504,16 +505,6 @@ const PRODUCT_STATUS_OPTIONS = [
   { value: 'rejected', label: 'Rejected' }
 ];
 
-const STOREFRONT_SECTIONS = [
-  { key: 'tumblers', label: 'Tumblers (collection)' },
-  { key: 'cups', label: 'Cups (collection)' },
-  { key: 'accessories', label: 'Accessories (collection)' },
-  { key: 'sale', label: 'Sale (tag)' },
-  { key: 'new-arrivals', label: 'New Arrivals (tag)' },
-  { key: 'best-sellers', label: 'Best Sellers (tag)' },
-  { key: 'under-25', label: 'Under $25 (tag)' }
-];
-
 const sortByLabel = (items, getLabel) => {
   if (!Array.isArray(items)) return [];
   return [...items].sort((a, b) =>
@@ -630,6 +621,52 @@ const buildStorefrontOrderPayload = (draft) => {
       payload[section.key] = numeric;
     }
   });
+  return Object.keys(payload).length ? payload : null;
+};
+
+const normalizeStorefrontTile = (raw) => {
+  if (!raw) return {};
+  if (typeof raw === 'object') return raw;
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (err) {
+      return {};
+    }
+  }
+  return {};
+};
+
+const parseStorefrontTileDraft = (raw) => {
+  const tile = normalizeStorefrontTile(raw);
+  return {
+    title: tile?.title || '',
+    subtitle: tile?.subtitle || '',
+    description: tile?.description || '',
+    badge: tile?.badge || '',
+    image: tile?.image || '',
+    price: tile?.price || '',
+    hide_price: Boolean(tile?.hide_price)
+  };
+};
+
+const buildStorefrontTilePayload = (draft) => {
+  if (!draft || typeof draft !== 'object') return null;
+  const payload = {};
+  const title = String(draft.title || '').trim();
+  if (title) payload.title = title;
+  const subtitle = String(draft.subtitle || '').trim();
+  if (subtitle) payload.subtitle = subtitle;
+  const description = String(draft.description || '').trim();
+  if (description) payload.description = description;
+  const badge = String(draft.badge || '').trim();
+  if (badge) payload.badge = badge;
+  const image = String(draft.image || '').trim();
+  if (image) payload.image = image;
+  const price = String(draft.price || '').trim();
+  if (price) payload.price = price;
+  if (draft.hide_price) payload.hide_price = true;
   return Object.keys(payload).length ? payload : null;
 };
 
@@ -1079,6 +1116,7 @@ const mapRecordToDraft = (record) => ({
   material: record?.material ?? '',
   metadata: formatJsonValue(record?.metadata),
   storefront_order: parseStorefrontOrderDraft(record?.metadata?.storefront_order),
+  storefront_tile: parseStorefrontTileDraft(record?.metadata?.storefront_tile),
   sales_channel_ids: (record?.sales_channels || []).map((channel) => channel.id),
   tag_ids: (record?.tags || []).map((tag) => tag.id),
   category_ids: (record?.categories || []).map((category) => category.id)
@@ -5731,6 +5769,34 @@ const ResourceDetail = ({ resource }) => {
     setProductDraft((prev) => (prev ? { ...prev, [field]: value } : prev));
   };
 
+  const handleStorefrontTileField = (field) => (event) => {
+    const value = event.target.value;
+    setProductDraft((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        storefront_tile: {
+          ...(prev.storefront_tile || {}),
+          [field]: value
+        }
+      };
+    });
+  };
+
+  const handleStorefrontTileToggle = (field) => (event) => {
+    const value = event.target.checked;
+    setProductDraft((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        storefront_tile: {
+          ...(prev.storefront_tile || {}),
+          [field]: value
+        }
+      };
+    });
+  };
+
   const handleStorefrontOrderChange = (sectionKey) => (event) => {
     const value = event.target.value;
     setProductDraft((prev) => {
@@ -5908,12 +5974,18 @@ const ResourceDetail = ({ resource }) => {
         return;
       }
       const storefrontOrder = buildStorefrontOrderPayload(productDraft.storefront_order);
+      const storefrontTile = buildStorefrontTilePayload(productDraft.storefront_tile);
       const metadataPayload =
         metadata && typeof metadata === 'object' ? { ...metadata } : {};
       if (storefrontOrder) {
         metadataPayload.storefront_order = storefrontOrder;
       } else if (metadataPayload.storefront_order) {
         delete metadataPayload.storefront_order;
+      }
+      if (storefrontTile) {
+        metadataPayload.storefront_tile = storefrontTile;
+      } else if (metadataPayload.storefront_tile) {
+        delete metadataPayload.storefront_tile;
       }
       const payload = await request(`${resource.endpoint}/${record.id}`, {
         method: 'POST',
@@ -17839,6 +17911,80 @@ const ResourceDetail = ({ resource }) => {
                     </label>
                   ))}
                 </div>
+              </div>
+
+              <div className="mt-6">
+                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                  Storefront tile overrides
+                </div>
+                <p className="mt-2 text-sm text-ldc-ink/60">
+                  Optional overrides for how this product tile appears on the storefront.
+                </p>
+                <div className="mt-3 grid gap-4 md:grid-cols-2">
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Tile title
+                    <input
+                      className="ldc-input mt-2"
+                      value={productDraft.storefront_tile?.title || ''}
+                      onChange={handleStorefrontTileField('title')}
+                      placeholder="Optional title override"
+                    />
+                  </label>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Tile subtitle
+                    <input
+                      className="ldc-input mt-2"
+                      value={productDraft.storefront_tile?.subtitle || ''}
+                      onChange={handleStorefrontTileField('subtitle')}
+                      placeholder="Optional subtitle override"
+                    />
+                  </label>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Tile badge
+                    <input
+                      className="ldc-input mt-2"
+                      value={productDraft.storefront_tile?.badge || ''}
+                      onChange={handleStorefrontTileField('badge')}
+                      placeholder="e.g. Limited Drop"
+                    />
+                  </label>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Tile image URL
+                    <input
+                      className="ldc-input mt-2"
+                      value={productDraft.storefront_tile?.image || ''}
+                      onChange={handleStorefrontTileField('image')}
+                      placeholder="https://..."
+                    />
+                  </label>
+                  <label className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    Price override (display only)
+                    <input
+                      className="ldc-input mt-2"
+                      value={productDraft.storefront_tile?.price || ''}
+                      onChange={handleStorefrontTileField('price')}
+                      placeholder="$38.00"
+                    />
+                  </label>
+                  <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-ldc-plum"
+                      checked={Boolean(productDraft.storefront_tile?.hide_price)}
+                      onChange={handleStorefrontTileToggle('hide_price')}
+                    />
+                    Hide price on tiles
+                  </label>
+                </div>
+                <label className="mt-4 text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
+                  Tile description
+                  <textarea
+                    className="ldc-input mt-2 min-h-[100px]"
+                    value={productDraft.storefront_tile?.description || ''}
+                    onChange={handleStorefrontTileField('description')}
+                    placeholder="Optional description override"
+                  />
+                </label>
               </div>
 
               <div className="mt-6">

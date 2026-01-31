@@ -145,6 +145,90 @@
         display: grid;
         gap: 1.5rem;
       }
+      .collection-grid {
+        margin-top: clamp(2.5rem, 6vw, 4rem);
+        display: grid;
+        gap: 2rem;
+      }
+      @media (min-width: 640px) {
+        .collection-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (min-width: 1024px) {
+        .collection-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+      .product-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 1.5rem;
+        border: 1px solid rgba(249, 115, 22, 0.2);
+        box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        transition: transform 200ms ease, box-shadow 200ms ease;
+      }
+      .product-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 24px 40px rgba(15, 23, 42, 0.18);
+      }
+      .product-media {
+        width: 100%;
+        aspect-ratio: 4 / 5;
+        border-radius: 1.25rem;
+        border: 1px solid rgba(249, 115, 22, 0.18);
+        background: rgba(255, 237, 213, 0.65);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .product-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .product-meta-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      .swatch-row {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+        font-size: 0.72rem;
+        color: rgba(15, 23, 42, 0.7);
+      }
+      .swatch {
+        width: 1.1rem;
+        height: 1.1rem;
+        border-radius: 999px;
+        border: 1px solid rgba(15, 23, 42, 0.2);
+        display: inline-block;
+      }
+      .product-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .product-details {
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(15, 23, 42, 0.6);
+      }
+      .price-line {
+        font-weight: 700;
+        font-size: 1rem;
+      }
       .deal-card {
         border-radius: 2rem;
         padding: clamp(1.75rem, 3vw, 2.25rem);
@@ -207,7 +291,7 @@
       }
     </style>
   </head>
-  <body>
+  <body data-medusa-enabled="true" data-medusa-backend="https://api.lovettsldc.com" data-medusa-publishable-key="pk_427f7900e23e30a0e18feaf0604aa9caaa9d0cb21571889081d2cb93fb13ffb0">
     <div class="page-shell">
       <header>
         <div class="container header-inner">
@@ -261,6 +345,28 @@
               </article>
             </div>
 
+            <div class="collection-grid mt-10" data-medusa-tag="sale" data-section-key="page-deals">
+              <article class="product-card">
+                <div class="product-media">
+                  <img src="assets/glass-glow-tumbler.jpeg" alt="Sale spotlight product" />
+                </div>
+                <div class="product-meta-row">
+                  <div class="swatch-row" data-swatch-track></div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="icon-button tile-action-favorite" aria-label="Add to favorites">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <button type="button" class="icon-button tile-action-cart" aria-label="Add to cart" data-add-to-cart data-product-key="tumbler-glass-glow">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="product-details">Sale selection</div>
+                <h3 class="product-title">Glass Glow Tumbler</h3>
+                <div class="price-line">$40.00</div>
+              </article>
+            </div>
+
             <div class="cta-wrap">
               <a href="mailto:lovettsdandc@gmail.com" class="cta-btn">
                 Reserve Sale Items
@@ -274,5 +380,6 @@
         Lovett's Designs &amp; Crafts · Savings crafted with love
       </footer>
     </div>
+    <script src="commerce.js" defer></script>
   </body>
 </html>
