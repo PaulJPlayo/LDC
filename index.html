@@ -5180,7 +5180,11 @@
               alt: parsed.alt || 'Custom design preview',
               price: typeof parsed.price === 'number' ? parsed.price : undefined,
               name: typeof parsed.name === 'string' ? parsed.name : undefined,
-              swatches: swatches.length ? swatches : undefined
+              swatches: swatches.length ? swatches : undefined,
+              productKey: parsed.productKey || '',
+              productHandle: parsed.productHandle || '',
+              productId: parsed.productId || '',
+              variantId: parsed.variantId || ''
             };
           }
         } catch (error) {
@@ -5199,6 +5203,12 @@
         if (selection.name) {
           selectedDesignName = selection.name;
         }
+        if (selection.variantId) {
+          selectedDesignVariantId = selection.variantId;
+        }
+        selectedDesignProductKey = selection.productKey || selectedDesignProductKey;
+        selectedDesignProductHandle = selection.productHandle || selectedDesignProductHandle;
+        selectedDesignProductId = selection.productId || selectedDesignProductId;
         if (typeof selection.price === 'number') {
           lastPrice = { amount: selection.price };
           accessoryPrice = 0;
@@ -5392,6 +5402,36 @@
         });
       };
 
+      let lastDesignButton = null;
+      let selectedDesignVariantId = '';
+      let selectedDesignProductKey = '';
+      let selectedDesignProductHandle = '';
+      let selectedDesignProductId = '';
+
+      const resolveDesignSourceImage = (btn) => {
+        const targetId = btn.getAttribute('data-design-source');
+        if (targetId) {
+          const direct = document.getElementById(targetId);
+          if (direct) return direct;
+        }
+        const card = btn.closest('.product-card, .group, .group.relative');
+        if (!card) return null;
+        return (
+          card.querySelector('[data-product-image]') ||
+          card.querySelector('.tile-mauve img') ||
+          card.querySelector('.product-media img') ||
+          card.querySelector('img')
+        );
+      };
+
+      const resolveDesignContext = (btn) => {
+        const card = btn.closest('.product-card, .group, .group.relative');
+        const key = btn.dataset.productKey || card?.dataset?.productKey || '';
+        const handle = btn.dataset.productHandle || card?.dataset?.productHandle || '';
+        const id = btn.dataset.productId || card?.dataset?.productId || '';
+        return { card, key, handle, id };
+      };
+
       const wireDesignButtons = () => {
         const extractPrice = card => {
           if (!card) return null;
@@ -5407,23 +5447,39 @@
         document.querySelectorAll('[data-design-source]').forEach(btn => {
           if (btn.dataset.designInit) return;
           btn.dataset.designInit = 'true';
-          btn.addEventListener('click', () => {
-            const targetId = btn.getAttribute('data-design-source');
-            if (!targetId) return;
-            const sourceImage = document.getElementById(targetId);
+          btn.addEventListener('click', async () => {
+            lastDesignButton = btn;
+            const sourceImage = resolveDesignSourceImage(btn);
             if (!sourceImage) return;
             const selection = {
               src: sourceImage.getAttribute('src'),
               alt: sourceImage.getAttribute('alt') || 'Custom design preview'
             };
             if (!selection.src) return;
-            const card = btn.closest('.product-card, .group.relative');
+            const { card, key, handle, id } = resolveDesignContext(btn);
             const price = extractPrice(card);
             const nameNode = card?.querySelector('.product-title, .tile-title');
             if (nameNode) {
               selection.name = nameNode.textContent.trim();
               selectedDesignName = selection.name;
             }
+            if (key) selection.productKey = key;
+            if (handle) selection.productHandle = handle;
+            if (id) selection.productId = id;
+            if (window.LDCCommerce?.resolveVariantId) {
+              try {
+                const variantId = await window.LDCCommerce.resolveVariantId(btn);
+                if (variantId) {
+                  selection.variantId = variantId;
+                  selectedDesignVariantId = variantId;
+                }
+              } catch (error) {
+                console.warn('Unable to resolve variant for design selection', error);
+              }
+            }
+            selectedDesignProductKey = selection.productKey || '';
+            selectedDesignProductHandle = selection.productHandle || '';
+            selectedDesignProductId = selection.productId || '';
             const swatches = extractCardSwatches(card);
             if (swatches.length) {
               selection.swatches = swatches;
@@ -5730,6 +5786,42 @@
         };
       };
 
+      const buildDesignMetadata = async (variantIdOverride) => {
+        const previewSrc = lastImageState?.src || designImage?.getAttribute('src') || '';
+        const previewAlt = lastImageState?.alt || designImage?.getAttribute('alt') || 'Custom design preview';
+        const notesEl = document.getElementById('design-notes-home');
+        const attachment = await readDesignAttachment();
+        const basePrice = typeof lastPrice?.amount === 'number' ? lastPrice.amount : 0;
+        const addonPrice = accessoryPrice + wrapPrice;
+        const totalPrice = basePrice + addonPrice;
+        const metadata = {
+          design_mode: 'custom',
+          design_preview_url: previewSrc || undefined,
+          preview_url: previewSrc || undefined,
+          design_preview_alt: previewAlt || undefined,
+          design_product_key: selectedDesignProductKey || undefined,
+          design_product_handle: selectedDesignProductHandle || undefined,
+          design_product_id: selectedDesignProductId || undefined,
+          design_variant_id: variantIdOverride || selectedDesignVariantId || undefined,
+          design_base_price: basePrice || undefined,
+          design_addon_price: addonPrice || undefined,
+          design_total_price: totalPrice || undefined,
+          design_color_label: selectedColorLabel || undefined,
+          design_color_style: selectedColorStyle || undefined,
+          design_color_glyph: selectedColorGlyph || undefined,
+          design_accessory_label: selectedAccessoryLabel || undefined,
+          design_accessory_style: selectedAccessoryStyle || undefined,
+          design_accessory_glyph: selectedAccessoryGlyph || undefined,
+          design_wrap_label: selectedWrapLabel || undefined,
+          design_notes: notesEl ? notesEl.value.trim() : undefined,
+          design_attachment_name: attachment?.name || undefined,
+          design_attachment_data: attachment?.dataUrl || undefined
+        };
+        return Object.fromEntries(
+          Object.entries(metadata).filter(([, value]) => value !== undefined && value !== '')
+        );
+      };
+
       const addDesignToCart = (product) => {
         if (!product) return;
         try {
@@ -5793,7 +5885,21 @@
         const designId = `design-${Date.now()}`;
         const product = await buildDesignProduct(designId);
         const normalized = normalizeProduct(product);
-        // Update cart via API if available
+        const commerce = window.LDCCommerce;
+        const medusaEnabled = commerce?.enabled && (document.body?.dataset?.medusaEnabled === 'true' || window.LDC_MEDUSA_ENABLED === true);
+        if (medusaEnabled) {
+          const variantId = selectedDesignVariantId || (lastDesignButton && await commerce.resolveVariantId(lastDesignButton));
+          if (!variantId) {
+            alert('Select a product to design first (use the pencil icon on a product tile).');
+            return;
+          }
+          const metadata = await buildDesignMetadata(variantId);
+          await commerce.addLineItem(variantId, 1, metadata);
+          await commerce.syncBadges();
+          window.location.href = 'checkout.html';
+          return;
+        }
+        // Update local cart via API if available
         if (cartApi && typeof cartApi.addProduct === 'function') {
           cartApi.addProduct(normalized);
         }

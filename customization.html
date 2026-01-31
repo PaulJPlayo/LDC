@@ -1139,7 +1139,7 @@
       }
     </style>
   </head>
-  <body data-cloudflare-account="https://customer-3ptq6xbmg2sfpv29.cloudflarestream.com">
+  <body data-cloudflare-account="https://customer-3ptq6xbmg2sfpv29.cloudflarestream.com" data-medusa-enabled="true" data-medusa-backend="https://api.lovettsldc.com" data-medusa-publishable-key="pk_427f7900e23e30a0e18feaf0604aa9caaa9d0cb21571889081d2cb93fb13ffb0">
     <div class="page-shell">
       <header>
         <div class="container header-inner">
@@ -1435,6 +1435,7 @@
         Lovett's Designs &amp; Crafts · Design creations made with love
       </footer>
     </div>
+    <script src="commerce.js" defer></script>
     <script>
       (() => {
         const DESIGN_SELECTION_KEY = 'ldcDesignSelection';
@@ -1530,6 +1531,10 @@
         let selectedColorGlyph = '';
         let selectedWrapLabel = '';
         let selectedDesignName = '';
+        let selectedDesignVariantId = '';
+        let selectedDesignProductKey = '';
+        let selectedDesignProductHandle = '';
+        let selectedDesignProductId = '';
         let lastPrice = { amount: 0 };
         let lastImageState = designImage && designImage.getAttribute('src')
           ? {
@@ -1897,6 +1902,12 @@
               if (parsed.name) {
                 selectedDesignName = parsed.name;
               }
+              if (parsed.variantId) {
+                selectedDesignVariantId = parsed.variantId;
+              }
+              if (parsed.productKey) selectedDesignProductKey = parsed.productKey;
+              if (parsed.productHandle) selectedDesignProductHandle = parsed.productHandle;
+              if (parsed.productId) selectedDesignProductId = parsed.productId;
             }
           }
           localStorage.removeItem(DESIGN_SELECTION_PENDING_KEY);
@@ -2293,6 +2304,42 @@
           };
         };
 
+        const buildDesignMetadata = async (variantIdOverride) => {
+          const previewSrc = lastImageState?.src || designImage?.getAttribute('src') || '';
+          const previewAlt = lastImageState?.alt || designImage?.getAttribute('alt') || 'Custom design preview';
+          const notesEl = document.getElementById('design-notes-customization');
+          const attachment = await readDesignAttachment();
+          const basePrice = typeof lastPrice?.amount === 'number' ? lastPrice.amount : 0;
+          const addonPrice = accessoryPrice + wrapPrice;
+          const totalPrice = basePrice + addonPrice;
+          const metadata = {
+            design_mode: 'custom',
+            design_preview_url: previewSrc || undefined,
+            preview_url: previewSrc || undefined,
+            design_preview_alt: previewAlt || undefined,
+            design_product_key: selectedDesignProductKey || undefined,
+            design_product_handle: selectedDesignProductHandle || undefined,
+            design_product_id: selectedDesignProductId || undefined,
+            design_variant_id: variantIdOverride || selectedDesignVariantId || undefined,
+            design_base_price: basePrice || undefined,
+            design_addon_price: addonPrice || undefined,
+            design_total_price: totalPrice || undefined,
+            design_color_label: selectedColorLabel || undefined,
+            design_color_style: selectedColorStyle || undefined,
+            design_color_glyph: selectedColorGlyph || undefined,
+            design_accessory_label: selectedAccessoryLabel || undefined,
+            design_accessory_style: selectedAccessoryStyle || undefined,
+            design_accessory_glyph: selectedAccessoryGlyph || undefined,
+            design_wrap_label: selectedWrapLabel || undefined,
+            design_notes: notesEl ? notesEl.value.trim() : undefined,
+            design_attachment_name: attachment?.name || undefined,
+            design_attachment_data: attachment?.dataUrl || undefined
+          };
+          return Object.fromEntries(
+            Object.entries(metadata).filter(([, value]) => value !== undefined && value !== '')
+          );
+        };
+
         const readCartFromStorage = () => {
           try {
             const raw = localStorage.getItem(CART_STORAGE_KEY);
@@ -2308,6 +2355,19 @@
         const submitDesign = async () => {
           const designId = `design-${Date.now()}`;
           const product = await buildDesignProduct(designId);
+          const commerce = window.LDCCommerce;
+          const medusaEnabled = commerce?.enabled && (document.body?.dataset?.medusaEnabled === 'true' || window.LDC_MEDUSA_ENABLED === true);
+          if (medusaEnabled) {
+            if (!selectedDesignVariantId) {
+              alert('Select a product to design first (use the pencil icon on a product tile).');
+              return;
+            }
+            const metadata = await buildDesignMetadata(selectedDesignVariantId);
+            await commerce.addLineItem(selectedDesignVariantId, 1, metadata);
+            await commerce.syncBadges();
+            window.location.href = 'checkout.html';
+            return;
+          }
           const existingCart = readCartFromStorage();
           const items = Array.isArray(existingCart.items) ? [...existingCart.items] : [];
           items.push(product);

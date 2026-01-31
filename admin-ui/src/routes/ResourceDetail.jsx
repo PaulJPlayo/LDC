@@ -13794,6 +13794,37 @@ const ResourceDetail = ({ resource }) => {
     [isOrderLike, record]
   );
 
+  const buildDesignSummary = (metadata = {}) => {
+    if (!metadata || typeof metadata !== 'object') return [];
+    const lines = [];
+    const colorLabel =
+      metadata.design_color_label ||
+      metadata.designColorLabel ||
+      '';
+    const accessoryLabel =
+      metadata.design_accessory_label ||
+      metadata.designAccessoryLabel ||
+      '';
+    const wrapLabel =
+      metadata.design_wrap_label ||
+      metadata.designWrapLabel ||
+      '';
+    const notes =
+      metadata.design_notes ||
+      metadata.designNotes ||
+      '';
+    const attachmentName =
+      metadata.design_attachment_name ||
+      metadata.designAttachmentName ||
+      '';
+    if (colorLabel) lines.push(`Color: ${colorLabel}`);
+    if (accessoryLabel) lines.push(`Accessory: ${accessoryLabel}`);
+    if (wrapLabel) lines.push(`Wrap: ${wrapLabel}`);
+    if (notes) lines.push(`Notes: ${notes}`);
+    if (attachmentName) lines.push(`Attachment: ${attachmentName}`);
+    return lines;
+  };
+
   const orderItemRows = useMemo(() => {
     if (!isOrderLike || !record) return [];
     const items = Array.isArray(record.items)
@@ -13805,6 +13836,7 @@ const ResourceDetail = ({ resource }) => {
       const quantity = getLineItemQuantity(item);
       const unitPrice = getLineItemUnitPrice(item);
       const total = getLineItemTotal(item);
+      const metadata = item?.metadata && typeof item.metadata === 'object' ? item.metadata : {};
       return {
         id: item?.id || item?.item_id || item?.detail?.id || `${record.id || 'item'}-${index}`,
         thumbnail: getLineItemThumbnail(item),
@@ -13813,7 +13845,8 @@ const ResourceDetail = ({ resource }) => {
         quantity,
         unit_price: unitPrice,
         total,
-        currency_code: item?.currency_code || record.currency_code || orderCurrency
+        currency_code: item?.currency_code || record.currency_code || orderCurrency,
+        design: buildDesignSummary(metadata)
       };
     });
   }, [isOrder, record, orderCurrency]);
@@ -13824,6 +13857,20 @@ const ResourceDetail = ({ resource }) => {
       { key: 'title', label: 'Item' },
       { key: 'sku', label: 'SKU' },
       { key: 'quantity', label: 'Qty' },
+      {
+        key: 'design',
+        label: 'Design',
+        format: (value) =>
+          Array.isArray(value) && value.length ? (
+            <div className="space-y-1 text-xs text-ldc-ink/70">
+              {value.map((line, index) => (
+                <div key={`${line}-${index}`}>{line}</div>
+              ))}
+            </div>
+          ) : (
+            '-'
+          )
+      },
       {
         key: 'unit_price',
         label: 'Unit',

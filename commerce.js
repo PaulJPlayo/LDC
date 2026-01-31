@@ -1337,6 +1337,8 @@
       productTitle || lineTitle || variantTitleFromItem || variantTitle || 'Item';
     const metadata = item.metadata || {};
     const previewUrl =
+      metadata.design_preview_url ||
+      metadata.designPreviewUrl ||
       metadata.preview_url ||
       metadata.previewUrl ||
       metadata.preview_image ||
@@ -1379,8 +1381,58 @@
       }
     }
     const optionLabel = metadataLabel || derivedLabel;
+    const designColorLabel =
+      metadata.design_color_label ||
+      metadata.designColorLabel ||
+      metadata.design_color ||
+      metadata.designColor ||
+      '';
+    const designColorStyle =
+      metadata.design_color_style ||
+      metadata.designColorStyle ||
+      metadata.design_color_swatch ||
+      '';
+    const designColorGlyph =
+      metadata.design_color_glyph ||
+      metadata.designColorGlyph ||
+      '';
+    const designAccessoryLabel =
+      metadata.design_accessory_label ||
+      metadata.designAccessoryLabel ||
+      metadata.design_accessory ||
+      metadata.designAccessory ||
+      '';
+    const designAccessoryStyle =
+      metadata.design_accessory_style ||
+      metadata.designAccessoryStyle ||
+      metadata.design_accessory_swatch ||
+      '';
+    const designAccessoryGlyph =
+      metadata.design_accessory_glyph ||
+      metadata.designAccessoryGlyph ||
+      '';
+    const designWrapLabel =
+      metadata.design_wrap_label ||
+      metadata.designWrapLabel ||
+      metadata.design_wrap ||
+      metadata.designWrap ||
+      '';
+    const designNotes =
+      metadata.design_notes ||
+      metadata.designNotes ||
+      '';
+    const designAttachmentName =
+      metadata.design_attachment_name ||
+      metadata.designAttachmentName ||
+      '';
+    const designAttachmentData =
+      metadata.design_attachment_data ||
+      metadata.designAttachmentData ||
+      '';
+    const hasDesign =
+      Boolean(designColorLabel || designAccessoryLabel || designWrapLabel || designNotes || designAttachmentName);
     const options = [];
-    if (optionLabel) {
+    if (optionLabel && !hasDesign) {
       options.push({
         label: metadataType === 'accessory' ? 'Accessory' : 'Color',
         value: optionLabel,
@@ -1389,6 +1441,35 @@
       });
     } else if (candidateVariant && candidateVariant !== displayTitle) {
       options.push({ label: 'Variant', value: candidateVariant });
+    }
+    if (designColorLabel) {
+      options.push({
+        label: 'Color',
+        value: designColorLabel,
+        swatchStyle: designColorStyle,
+        swatchGlyph: designColorGlyph
+      });
+    }
+    if (designAccessoryLabel) {
+      options.push({
+        label: 'Accessory',
+        value: designAccessoryLabel,
+        swatchStyle: designAccessoryStyle,
+        swatchGlyph: designAccessoryGlyph
+      });
+    }
+    if (designWrapLabel) {
+      options.push({ label: 'Wrap', value: designWrapLabel });
+    }
+    if (designNotes) {
+      options.push({ label: 'Notes', value: designNotes });
+    }
+    if (designAttachmentName) {
+      options.push({
+        label: 'Attachment',
+        value: designAttachmentName,
+        attachmentData: designAttachmentData
+      });
     }
     return {
       id: String(item.id || displayTitle),
@@ -1660,6 +1741,7 @@
     getCustomer,
     getOrders,
     getOrCreateCart,
+    addLineItem,
     syncBadges,
     syncLegacyCart,
     resolveVariantId,

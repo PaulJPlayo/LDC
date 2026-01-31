@@ -744,6 +744,66 @@
                     <span class="checkout-item-color-value">${escapeHtml(variantLabel)}</span>
                   </div>`
                 : '';
+              const designOptions = [];
+              const designColorLabel = metadata.design_color_label || metadata.designColorLabel || '';
+              const designColorStyle = metadata.design_color_style || metadata.designColorStyle || '';
+              const designColorGlyph = metadata.design_color_glyph || metadata.designColorGlyph || '';
+              const designAccessoryLabel = metadata.design_accessory_label || metadata.designAccessoryLabel || '';
+              const designAccessoryStyle = metadata.design_accessory_style || metadata.designAccessoryStyle || '';
+              const designAccessoryGlyph = metadata.design_accessory_glyph || metadata.designAccessoryGlyph || '';
+              const designWrapLabel = metadata.design_wrap_label || metadata.designWrapLabel || '';
+              const designNotes = metadata.design_notes || metadata.designNotes || '';
+              const designAttachmentName = metadata.design_attachment_name || metadata.designAttachmentName || '';
+              const designAttachmentData = metadata.design_attachment_data || metadata.designAttachmentData || '';
+              if (designColorLabel) {
+                designOptions.push({
+                  label: 'Color',
+                  value: designColorLabel,
+                  swatchStyle: designColorStyle,
+                  swatchGlyph: designColorGlyph
+                });
+              }
+              if (designAccessoryLabel) {
+                designOptions.push({
+                  label: 'Accessory',
+                  value: designAccessoryLabel,
+                  swatchStyle: designAccessoryStyle,
+                  swatchGlyph: designAccessoryGlyph
+                });
+              }
+              if (designWrapLabel) {
+                designOptions.push({ label: 'Wrap', value: designWrapLabel });
+              }
+              if (designNotes) {
+                designOptions.push({ label: 'Notes', value: designNotes });
+              }
+              if (designAttachmentName) {
+                designOptions.push({ label: 'Attachment', value: designAttachmentName, attachmentData: designAttachmentData });
+              }
+              const designMarkup = designOptions.length
+                ? `<ul class="checkout-item-options">${designOptions.map(opt => {
+                    const normalizedLabel = (opt.label || '').toLowerCase();
+                    const isColor = normalizedLabel === 'color';
+                    const isAccessory = normalizedLabel === 'accessory';
+                    const isAttachment = normalizedLabel === 'attachment';
+                    const swatchGlyph = opt.swatchGlyph || '';
+                    const isTextSwatch = /[A-Za-z]/.test(swatchGlyph);
+                    const baseSwatchStyle = opt.swatchStyle && opt.swatchStyle.trim()
+                      ? opt.swatchStyle.trim()
+                      : (isAccessory ? 'background:#d8b4fe;' : 'background:#e2e8f0;');
+                    const swatch = baseSwatchStyle && !isAttachment
+                      ? `<span class="checkout-item-swatch${isTextSwatch ? ' is-text' : ''}" style="${escapeHtml(baseSwatchStyle.replace(/\"/g, '&quot;'))};">${escapeHtml(swatchGlyph)}</span>`
+                      : '';
+                    if (isAttachment) {
+                      const badge = opt.attachmentData ? ' (attached)' : '';
+                      const viewLink = opt.attachmentData
+                        ? `<a href="${escapeHtml(String(opt.attachmentData).replace(/\"/g, '&quot;'))}" target="_blank" rel="noopener" class="checkout-attachment-link">View</a>`
+                        : '';
+                      return `<li><span class="label">${escapeHtml(opt.label)}:</span> <span class="value">${escapeHtml(opt.value || '')}${badge}</span> ${viewLink}</li>`;
+                    }
+                    return `<li><span class="label">${escapeHtml(opt.label)}:</span> ${swatch} <span class="value">${escapeHtml(opt.value || '')}</span></li>`;
+                  }).join('')}</ul>`
+                : '';
               return `
                 <article class="cart-item" data-checkout-item="${escapeHtml(item.id)}">
                   <button type="button" class="checkout-remove" data-checkout-remove="${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(title)}">×</button>
@@ -755,6 +815,7 @@
                         <span class="checkout-item-quantity">Quantity <span>${item.quantity}</span></span>
                       </div>
                       ${colorMarkup}
+                      ${designMarkup}
                     </div>
                   </div>
                   <div class="checkout-line-total">${formatMoney(lineTotal, cart.currency_code)}</div>
