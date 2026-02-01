@@ -80,14 +80,8 @@ export default async function fixSwatchOverrides({ container }: ExecArgs) {
     const currentMeta =
       target.metadata && typeof target.metadata === "object" ? target.metadata : {}
     const nextMeta = { ...currentMeta, ...override.metadata }
-    await productService.updateProductVariants({
-      product_id: product.id,
-      product_variants: [
-        {
-          id: target.id,
-          metadata: nextMeta,
-        },
-      ],
+    await productService.updateProductVariants(target.id, {
+      metadata: nextMeta,
     })
     logger.info(
       `Updated ${override.productHandle} -> ${target.title} swatch metadata`
