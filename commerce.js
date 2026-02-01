@@ -1233,7 +1233,7 @@
   const getCart = async id => {
     if (!id) return null;
     try {
-      const data = await request(`/store/carts/${id}`);
+      const data = await request(`/store/carts/${id}?fields=+items.metadata`);
       return normalizeCart(data);
     } catch (error) {
       clearCartId();

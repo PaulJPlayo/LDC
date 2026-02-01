@@ -842,7 +842,7 @@
                 if (!id || !state.cart?.id) return;
                 try {
                   await commerce.request(`/store/carts/${state.cart.id}/line-items/${id}`, { method: 'DELETE' });
-                  state.cart = await commerce.request(`/store/carts/${state.cart.id}`).then(res => res.cart || res);
+                  state.cart = await commerce.request(`/store/carts/${state.cart.id}?fields=+items.metadata`).then(res => res.cart || res);
                   await commerce.syncBadges();
                   renderCart();
                 } catch (error) {
