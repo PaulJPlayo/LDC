@@ -1436,9 +1436,15 @@
       metadata.design_attachment_name ||
       metadata.designAttachmentName ||
       '';
-    const designAttachmentData =
+    const designAttachmentUrl =
+      metadata.design_attachment_url ||
+      metadata.designAttachmentUrl ||
       metadata.design_attachment_data ||
       metadata.designAttachmentData ||
+      '';
+    const designAttachmentKey =
+      metadata.design_attachment_key ||
+      metadata.designAttachmentKey ||
       '';
     const hasDesign =
       Boolean(designColorLabel || designAccessoryLabel || designWrapLabel || designNotes || designAttachmentName);
@@ -1479,7 +1485,8 @@
       options.push({
         label: 'Attachment',
         value: designAttachmentName,
-        attachmentData: designAttachmentData
+        attachmentData: designAttachmentUrl,
+        attachmentKey: designAttachmentKey
       });
     }
     return {

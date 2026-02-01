@@ -754,7 +754,12 @@
               const designWrapLabel = metadata.design_wrap_label || metadata.designWrapLabel || '';
               const designNotes = metadata.design_notes || metadata.designNotes || '';
               const designAttachmentName = metadata.design_attachment_name || metadata.designAttachmentName || '';
-              const designAttachmentData = metadata.design_attachment_data || metadata.designAttachmentData || '';
+              const designAttachmentData =
+                metadata.design_attachment_url ||
+                metadata.designAttachmentUrl ||
+                metadata.design_attachment_data ||
+                metadata.designAttachmentData ||
+                '';
               if (designColorLabel) {
                 designOptions.push({
                   label: 'Color',

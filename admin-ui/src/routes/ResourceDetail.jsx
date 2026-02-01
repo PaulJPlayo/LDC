@@ -13817,11 +13817,26 @@ const ResourceDetail = ({ resource }) => {
       metadata.design_attachment_name ||
       metadata.designAttachmentName ||
       '';
-    if (colorLabel) lines.push(`Color: ${colorLabel}`);
-    if (accessoryLabel) lines.push(`Accessory: ${accessoryLabel}`);
-    if (wrapLabel) lines.push(`Wrap: ${wrapLabel}`);
-    if (notes) lines.push(`Notes: ${notes}`);
-    if (attachmentName) lines.push(`Attachment: ${attachmentName}`);
+    const attachmentUrl =
+      metadata.design_attachment_url ||
+      metadata.designAttachmentUrl ||
+      '';
+    const attachmentKey =
+      metadata.design_attachment_key ||
+      metadata.designAttachmentKey ||
+      '';
+    if (colorLabel) lines.push({ label: 'Color', value: colorLabel });
+    if (accessoryLabel) lines.push({ label: 'Accessory', value: accessoryLabel });
+    if (wrapLabel) lines.push({ label: 'Wrap', value: wrapLabel });
+    if (notes) lines.push({ label: 'Notes', value: notes });
+    if (attachmentName) {
+      lines.push({
+        label: 'Attachment',
+        value: attachmentName,
+        url: attachmentUrl,
+        key: attachmentKey
+      });
+    }
     return lines;
   };
 
@@ -13864,7 +13879,22 @@ const ResourceDetail = ({ resource }) => {
           Array.isArray(value) && value.length ? (
             <div className="space-y-1 text-xs text-ldc-ink/70">
               {value.map((line, index) => (
-                <div key={`${line}-${index}`}>{line}</div>
+                <div key={`${line?.label || 'design'}-${index}`} className="flex flex-wrap items-center gap-2">
+                  <span>{line?.label ? `${line.label}: ${line.value}` : line?.value || '-'}</span>
+                  {line?.url ? (
+                    <a
+                      href={line.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-ldc-mauve underline"
+                    >
+                      View
+                    </a>
+                  ) : null}
+                  {!line?.url && line?.key ? (
+                    <span className="text-ldc-ink/50">Key: {line.key}</span>
+                  ) : null}
+                </div>
               ))}
             </div>
           ) : (

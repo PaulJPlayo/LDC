@@ -1501,7 +1501,7 @@
           return new Promise(resolve => {
             const file = designAttachmentInput?.files?.[0];
             if (!file) return resolve(null);
-            const maxBytes = 1.5 * 1024 * 1024;
+            const maxBytes = 5 * 1024 * 1024;
             const info = { name: file.name, type: file.type, size: file.size };
             if (file.size > maxBytes) return resolve({ ...info, dataUrl: '' });
             const reader = new FileReader();
@@ -1509,6 +1509,30 @@
             reader.onerror = () => resolve({ ...info, dataUrl: '' });
             reader.readAsDataURL(file);
           });
+        };
+        const medusaBackend = document.body?.dataset?.medusaBackend || '';
+        const medusaPublishableKey = document.body?.dataset?.medusaPublishableKey || '';
+        const uploadDesignAttachment = async (attachment) => {
+          if (!attachment?.dataUrl || !medusaBackend) return null;
+          const response = await fetch(`${medusaBackend.replace(/\/$/, '')}/store/design-attachments`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(medusaPublishableKey ? { 'x-publishable-api-key': medusaPublishableKey } : {})
+            },
+            mode: 'cors',
+            credentials: 'omit',
+            body: JSON.stringify({
+              filename: attachment.name,
+              content_type: attachment.type,
+              data_url: attachment.dataUrl
+            })
+          });
+          if (!response.ok) {
+            const text = await response.text().catch(() => '');
+            throw new Error(text || `Attachment upload failed (${response.status})`);
+          }
+          return response.json();
         };
         const designColorPreview = document.querySelector('[data-color-preview]');
         const designColorPreviewWrap = designColorPreview?.closest('.design-preview-tile');
@@ -2257,7 +2281,7 @@
           return `background-color: #ffffff; background-image: url("${src}"); background-size: cover; background-position: center; background-repeat: no-repeat;`;
         };
 
-        const buildDesignProduct = async (idOverride) => {
+        const buildDesignProduct = async (idOverride, uploadedAttachment = null) => {
           const basePrice = typeof lastPrice?.amount === 'number' ? lastPrice.amount : 0;
           const totalPrice = basePrice + accessoryPrice + wrapPrice;
           const nameParts = [];
@@ -2270,6 +2294,7 @@
           const previewStyle = buildImagePreviewStyle(previewSrc);
           const notesEl = document.getElementById('design-notes-customization');
           const attachment = await readDesignAttachment();
+          const attachmentUrl = uploadedAttachment?.url || '';
           return {
             id: idOverride || `design-${Date.now()}`,
             name: cartName,
@@ -2290,18 +2315,22 @@
                 : null,
               selectedWrapLabel ? { label: 'Wrap', value: selectedWrapLabel } : null,
               attachment?.name
-                ? { label: 'Attachment', value: attachment.name + (attachment.dataUrl ? '' : ' (file reference)'), attachmentData: attachment.dataUrl || '' }
+                ? {
+                    label: 'Attachment',
+                    value: attachment.name,
+                    attachmentData: attachmentUrl || attachment.dataUrl || ''
+                  }
                 : null
             ].filter(Boolean),
             notes: notesEl ? notesEl.value.trim() : ''
           };
         };
 
-        const buildDesignMetadata = async (variantIdOverride) => {
+        const buildDesignMetadata = async (variantIdOverride, uploadedAttachment = null, attachment = null) => {
           const previewSrc = lastImageState?.src || designImage?.getAttribute('src') || '';
           const previewAlt = lastImageState?.alt || designImage?.getAttribute('alt') || 'Custom design preview';
           const notesEl = document.getElementById('design-notes-customization');
-          const attachment = await readDesignAttachment();
+          const resolvedAttachment = attachment || (await readDesignAttachment());
           const basePrice = typeof lastPrice?.amount === 'number' ? lastPrice.amount : 0;
           const addonPrice = accessoryPrice + wrapPrice;
           const totalPrice = basePrice + addonPrice;
@@ -2325,8 +2354,9 @@
             design_accessory_glyph: selectedAccessoryGlyph || undefined,
             design_wrap_label: selectedWrapLabel || undefined,
             design_notes: notesEl ? notesEl.value.trim() : undefined,
-            design_attachment_name: attachment?.name || undefined,
-            design_attachment_data: attachment?.dataUrl || undefined
+            design_attachment_name: resolvedAttachment?.name || undefined,
+            design_attachment_url: uploadedAttachment?.url || undefined,
+            design_attachment_key: uploadedAttachment?.key || undefined
           };
           return Object.fromEntries(
             Object.entries(metadata).filter(([, value]) => value !== undefined && value !== '')
@@ -2371,7 +2401,14 @@
               return;
             }
             selectedDesignVariantId = resolvedVariantId;
-            const metadata = await buildDesignMetadata(resolvedVariantId);
+            const attachment = await readDesignAttachment();
+            let uploadedAttachment = null;
+            if (attachment?.dataUrl) {
+              uploadedAttachment = await uploadDesignAttachment(attachment);
+            } else if (attachment?.name) {
+              alert('Attachment is too large. Please upload a file under 5MB.');
+            }
+            const metadata = await buildDesignMetadata(resolvedVariantId, uploadedAttachment, attachment);
             await commerce.addLineItem(resolvedVariantId, 1, metadata);
             await commerce.syncBadges();
             window.location.href = 'checkout.html';

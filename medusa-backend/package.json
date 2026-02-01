@@ -23,6 +23,8 @@
     "test:unit": "TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.980.0",
+    "@aws-sdk/s3-request-presigner": "^3.980.0",
     "@medusajs/admin-sdk": "2.12.3",
     "@medusajs/cli": "2.12.3",
     "@medusajs/framework": "2.12.3",
