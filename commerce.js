@@ -647,6 +647,10 @@
       trackVariants.forEach((variant, index) => {
         const label = getVariantLabel(variant);
         const meta = getVariantSwatchMeta(variant);
+        const metaRaw = normalizeMetadata(variant?.metadata);
+        if (metaRaw?.swatch_hide || metaRaw?.swatchHide) {
+          return;
+        }
         if (!meta.style && !meta.glyph && trackVariants.length > 1) {
           const handle = product?.handle || product?.id || 'unknown';
           missingSwatchMeta.add(handle);
