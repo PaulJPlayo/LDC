@@ -34,7 +34,8 @@
         ...(publishableKey ? { 'x-publishable-api-key': publishableKey } : {}),
         ...(options.headers || {})
       },
-      credentials: 'include',
+      credentials: options.credentials || 'omit',
+      mode: options.mode || 'cors',
       body: options.body ? JSON.stringify(options.body) : undefined
     });
 
