@@ -25,6 +25,13 @@ const overrides: OverrideEntry[] = [
   },
   {
     productHandle: "accessory-glass-bow-straws",
+    variantTitleIncludes: "Glass",
+    metadata: {
+      swatch_hide: "true"
+    }
+  },
+  {
+    productHandle: "accessory-glass-bow-straws",
     variantTitleIncludes: "Glass accessory",
     metadata: {
       swatch_hide: "true"
