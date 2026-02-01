@@ -61,7 +61,9 @@ export default async function verifyDesignReady({ container }: ExecArgs) {
     const resolvedVariantId = mapVariantId || variants[0]?.id || ""
     const priceOk = true
 
-    const shippingOk = Boolean(product.shipping_profile_id)
+    const shippingOk =
+      Boolean(product.shipping_profile_id) ||
+      variants.some((variant) => Boolean(variant?.shipping_profile_id))
 
     results.push({
       handle,
