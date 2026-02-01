@@ -5432,9 +5432,26 @@
 
       const resolveDesignContext = (btn) => {
         const card = btn.closest('.product-card, .group, .group.relative');
-        const key = btn.dataset.productKey || card?.dataset?.productKey || '';
-        const handle = btn.dataset.productHandle || card?.dataset?.productHandle || '';
-        const id = btn.dataset.productId || card?.dataset?.productId || '';
+        const fallbackButton =
+          card?.querySelector('[data-product-key]') ||
+          card?.querySelector('[data-add-to-cart]') ||
+          null;
+        const key =
+          btn.dataset.productKey ||
+          card?.dataset?.productKey ||
+          fallbackButton?.dataset?.productKey ||
+          '';
+        let handle =
+          btn.dataset.productHandle ||
+          card?.dataset?.productHandle ||
+          fallbackButton?.dataset?.productHandle ||
+          '';
+        const id =
+          btn.dataset.productId ||
+          card?.dataset?.productId ||
+          fallbackButton?.dataset?.productId ||
+          '';
+        if (!handle && key) handle = key;
         return { card, key, handle, id };
       };
 
@@ -6041,6 +6058,10 @@
             selectedDesignProductHandle,
             selectedDesignProductId
           };
+          let storedSelection = null;
+          try {
+            storedSelection = JSON.parse(localStorage.getItem('ldcDesignSelection') || 'null');
+          } catch {}
           let cart = null;
           let cartWithMeta = null;
           if (commerce?.getOrCreateCart) {
@@ -6055,6 +6076,7 @@
           }
           const data = {
             time: new Date().toISOString(),
+            storedSelection,
             selection,
             cart: cart?.cart || cart || null,
             cartWithMeta: cartWithMeta?.cart || cartWithMeta || null

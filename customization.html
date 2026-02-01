@@ -1873,14 +1873,7 @@
 
         try {
           const storedValue = localStorage.getItem(DESIGN_SELECTION_KEY);
-          const pendingFlag = localStorage.getItem(DESIGN_SELECTION_PENDING_KEY) === 'true';
-          const pendingAtRaw = localStorage.getItem(DESIGN_SELECTION_PENDING_AT_KEY) || '';
-          const pendingAt = Number.parseInt(pendingAtRaw, 10);
-          const navEntry = performance.getEntriesByType('navigation')[0];
-          const isReload = navEntry && typeof navEntry.type === 'string' && navEntry.type === 'reload';
-          const isFresh = Number.isFinite(pendingAt) && (Date.now() - pendingAt) < 10 * 60 * 1000;
-          const shouldApply = pendingFlag && isFresh && !isReload;
-          if (storedValue && designImage && shouldApply) {
+          if (storedValue && designImage) {
             const parsed = JSON.parse(storedValue);
             if (parsed && typeof parsed === 'object' && parsed.src) {
               const storedSwatches = Array.isArray(parsed.swatches)
@@ -2358,12 +2351,28 @@
           const commerce = window.LDCCommerce;
           const medusaEnabled = commerce?.enabled && (document.body?.dataset?.medusaEnabled === 'true' || window.LDC_MEDUSA_ENABLED === true);
           if (medusaEnabled) {
-            if (!selectedDesignVariantId) {
+            const resolveVariantFromSelection = async () => {
+              if (!commerce?.resolveVariantId) return '';
+              const key = selectedDesignProductKey || selectedDesignProductHandle || selectedDesignProductId || '';
+              if (!key) return '';
+              const dummy = document.createElement('button');
+              dummy.dataset.productKey = selectedDesignProductKey || selectedDesignProductHandle || selectedDesignProductId || '';
+              if (selectedDesignProductHandle) dummy.dataset.productHandle = selectedDesignProductHandle;
+              if (selectedDesignProductId) dummy.dataset.productId = selectedDesignProductId;
+              try {
+                return (await commerce.resolveVariantId(dummy)) || '';
+              } catch {
+                return '';
+              }
+            };
+            const resolvedVariantId = selectedDesignVariantId || await resolveVariantFromSelection();
+            if (!resolvedVariantId) {
               alert('Select a product to design first (use the pencil icon on a product tile).');
               return;
             }
-            const metadata = await buildDesignMetadata(selectedDesignVariantId);
-            await commerce.addLineItem(selectedDesignVariantId, 1, metadata);
+            selectedDesignVariantId = resolvedVariantId;
+            const metadata = await buildDesignMetadata(resolvedVariantId);
+            await commerce.addLineItem(resolvedVariantId, 1, metadata);
             await commerce.syncBadges();
             window.location.href = 'checkout.html';
             return;
@@ -2385,7 +2394,12 @@
         if (designSubmitBtn) {
           designSubmitBtn.addEventListener('click', async event => {
             event.preventDefault();
-            await submitDesign();
+            try {
+              await submitDesign();
+            } catch (error) {
+              console.warn('Design submit failed to add to cart', error);
+              alert('We ran into a problem adding this design to your cart. Please try again.');
+            }
           });
         }
 
@@ -2465,6 +2479,10 @@
             selectedDesignProductHandle,
             selectedDesignProductId
           };
+          let storedSelection = null;
+          try {
+            storedSelection = JSON.parse(localStorage.getItem('ldcDesignSelection') || 'null');
+          } catch {}
           let cart = null;
           let cartWithMeta = null;
           if (commerce?.getOrCreateCart) {
@@ -2479,6 +2497,7 @@
           }
           const data = {
             time: new Date().toISOString(),
+            storedSelection,
             selection,
             cart: cart?.cart || cart || null,
             cartWithMeta: cartWithMeta?.cart || cartWithMeta || null
