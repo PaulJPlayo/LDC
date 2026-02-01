@@ -66,11 +66,19 @@ export default async function fixSwatchOverrides({ container }: ExecArgs) {
       { relations: ["options", "options.option"] }
     )) as any[]
 
-    const target = variants.find((variant) =>
-      String(variant.title || "")
-        .toLowerCase()
-        .includes(override.variantTitleIncludes.toLowerCase())
-    )
+    const needle = override.variantTitleIncludes.toLowerCase()
+    const target =
+      variants.find((variant) =>
+        String(variant.title || "")
+          .toLowerCase()
+          .trim()
+          .endsWith(`- ${needle}`)
+      ) ||
+      variants.find((variant) =>
+        String(variant.title || "")
+          .toLowerCase()
+          .includes(needle)
+      )
     if (!target) {
       logger.warn(
         `Missing variant containing '${override.variantTitleIncludes}' for ${override.productHandle}`
