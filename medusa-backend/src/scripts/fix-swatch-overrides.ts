@@ -20,6 +20,26 @@ const overrides: OverrideEntry[] = [
     productHandle: "accessory-glass-bow-straws",
     variantTitleIncludes: "Bow",
     metadata: {
+      swatchType: "",
+      swatchGlyph: "",
+      swatchStyle:
+        "background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 60%), linear-gradient(135deg, rgba(238,242,255,0.65) 0%, rgba(148,163,184,0.35) 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4), inset 0 7px 12px rgba(255,255,255,0.45), inset 0 -8px 16px rgba(148,163,184,0.3);"
+    }
+  },
+  {
+    productHandle: "accessory-glass-bow-straws",
+    variantTitleIncludes: "Glass accessory",
+    metadata: {
+      swatchType: "",
+      swatchGlyph: "",
+      swatchStyle:
+        "background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 60%), linear-gradient(135deg, rgba(238,242,255,0.65) 0%, rgba(148,163,184,0.35) 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.4), inset 0 7px 12px rgba(255,255,255,0.45), inset 0 -8px 16px rgba(148,163,184,0.3);"
+    }
+  },
+  {
+    productHandle: "accessory-glass-bow-straws",
+    variantTitleIncludes: "Ribbon",
+    metadata: {
       swatchType: "accessory",
       swatchGlyph: "🎀",
       swatchStyle:
