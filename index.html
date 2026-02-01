@@ -5289,6 +5289,18 @@
         }
       };
 
+      const applyStoredDesignSelection = stored => {
+        if (!stored || typeof stored !== 'object') return;
+        if (stored.name) selectedDesignName = stored.name;
+        if (stored.productKey) selectedDesignProductKey = stored.productKey;
+        if (stored.productHandle) selectedDesignProductHandle = stored.productHandle;
+        if (stored.productId) selectedDesignProductId = stored.productId;
+        if (stored.variantId) selectedDesignVariantId = stored.variantId;
+        if (typeof stored.price === 'number') {
+          lastPrice = { amount: stored.price };
+        }
+      };
+
       const initSwatchSliders = () => {
         document.querySelectorAll('[data-swatch-slider]').forEach(slider => {
           if (slider.dataset.sliderInit) return;
@@ -5407,6 +5419,16 @@
           update();
         });
       };
+
+      try {
+        const storedValue = localStorage.getItem(DESIGN_SELECTION_KEY);
+        if (storedValue) {
+          const parsed = JSON.parse(storedValue);
+          applyStoredDesignSelection(parsed);
+        }
+      } catch (error) {
+        console.warn('Unable to load saved design selection', error);
+      }
 
       let lastDesignButton = null;
       let selectedDesignVariantId = '';
@@ -5826,15 +5848,19 @@
         const basePrice = typeof lastPrice?.amount === 'number' ? lastPrice.amount : 0;
         const addonPrice = accessoryPrice + wrapPrice;
         const totalPrice = basePrice + addonPrice;
+        let storedSelection = null;
+        try {
+          storedSelection = JSON.parse(localStorage.getItem(DESIGN_SELECTION_KEY) || 'null');
+        } catch {}
         const metadata = {
           design_mode: 'custom',
           design_preview_url: previewSrc || undefined,
           preview_url: previewSrc || undefined,
           design_preview_alt: previewAlt || undefined,
-          design_product_key: selectedDesignProductKey || undefined,
-          design_product_handle: selectedDesignProductHandle || undefined,
-          design_product_id: selectedDesignProductId || undefined,
-          design_variant_id: variantIdOverride || selectedDesignVariantId || undefined,
+          design_product_key: selectedDesignProductKey || storedSelection?.productKey || undefined,
+          design_product_handle: selectedDesignProductHandle || storedSelection?.productHandle || undefined,
+          design_product_id: selectedDesignProductId || storedSelection?.productId || undefined,
+          design_variant_id: variantIdOverride || selectedDesignVariantId || storedSelection?.variantId || undefined,
           design_base_price: basePrice || undefined,
           design_addon_price: addonPrice || undefined,
           design_total_price: totalPrice || undefined,
@@ -5920,13 +5946,28 @@
         const commerce = window.LDCCommerce;
         const medusaEnabled = commerce?.enabled && (document.body?.dataset?.medusaEnabled === 'true' || window.LDC_MEDUSA_ENABLED === true);
         if (medusaEnabled) {
-          const variantId = selectedDesignVariantId || (lastDesignButton && await commerce.resolveVariantId(lastDesignButton));
+          let variantId = selectedDesignVariantId || (lastDesignButton && await commerce.resolveVariantId(lastDesignButton));
+          if (!variantId) {
+            try {
+              const stored = JSON.parse(localStorage.getItem(DESIGN_SELECTION_KEY) || 'null');
+              if (stored?.variantId) {
+                variantId = stored.variantId;
+                selectedDesignVariantId = stored.variantId;
+                applyStoredDesignSelection(stored);
+              }
+            } catch {}
+          }
           if (!variantId) {
             alert('Select a product to design first (use the pencil icon on a product tile).');
             return;
           }
           const metadata = await buildDesignMetadata(variantId);
-          await commerce.addLineItem(variantId, 1, metadata);
+          try {
+            await commerce.addLineItem(variantId, 1, metadata);
+          } catch (error) {
+            console.warn('Design submit failed to add to Medusa cart', error);
+            throw error;
+          }
           await commerce.syncBadges();
           window.location.href = 'checkout.html';
           return;
@@ -5970,15 +6011,21 @@
       if (designSubmitBtn) {
         designSubmitBtn.addEventListener('click', async event => {
           event.preventDefault();
+        try {
+          await submitDesign();
+        } catch (error) {
+          console.warn('Design submit failed to add to cart', error);
           try {
-            await submitDesign();
-          } catch (error) {
-            console.warn('Design submit failed to add to cart', error);
-            const fallbackHref = designSubmitBtn.getAttribute('href') || 'checkout.html';
-            window.location.href = fallbackHref;
-          }
-        });
-      }
+            localStorage.setItem('ldc:design:last_error', JSON.stringify({
+              time: new Date().toISOString(),
+              message: error?.message || String(error)
+            }));
+          } catch {}
+          const fallbackHref = designSubmitBtn.getAttribute('href') || 'checkout.html';
+          window.location.href = fallbackHref;
+        }
+      });
+    }
       window.addEventListener('load', moveBadgesToImages);
       document.addEventListener('DOMContentLoaded', moveBadgesToImages);
       window.addEventListener('resize', moveBadgesToImages);
@@ -6074,10 +6121,15 @@
               cart = { error: error?.message || String(error) };
             }
           }
+          let lastError = null;
+          try {
+            lastError = JSON.parse(localStorage.getItem('ldc:design:last_error') || 'null');
+          } catch {}
           const data = {
             time: new Date().toISOString(),
             storedSelection,
             selection,
+            lastError,
             cart: cart?.cart || cart || null,
             cartWithMeta: cartWithMeta?.cart || cartWithMeta || null
           };
