@@ -3894,6 +3894,9 @@
                 return opt.label || opt.value;
               })
             : [];
+          const notesRow = item.notes
+            ? `<div class="cart-item-option"><span class="label">Notes:</span> <span class="value">${item.notes}</span></div>`
+            : '';
           const optionsMarkup = options.length
             ? `<div class="cart-item-options">${options.map(opt => {
                 const normalizedLabel = (opt.label || '').toLowerCase();
@@ -3920,8 +3923,10 @@
                   return `<span class="cart-item-option"><span class="label">Attachment:</span> <span class="value">${opt.value || 'Attached file'}${badge}</span> ${viewLink}</span>`;
                 }
                 return `<span class="cart-item-option"><span class="label">${opt.label}:</span> <span class="value">${opt.value}</span>${swatch}</span>`;
-              }).join('')}</div>`
-            : '';
+              }).join('')}${notesRow}</div>`
+            : notesRow
+              ? `<div class="cart-item-options">${notesRow}</div>`
+              : '';
           return `
           <div class="cart-item" data-cart-item="${item.id}">
             <div class="cart-item-main">
@@ -4050,7 +4055,8 @@
                 label: String(opt?.label ?? '').trim(),
                 value: String(opt?.value ?? '').trim(),
                 swatchStyle: typeof opt?.swatchStyle === 'string' ? opt.swatchStyle.trim() : '',
-                swatchGlyph: typeof opt?.swatchGlyph === 'string' ? opt.swatchGlyph : ''
+                swatchGlyph: typeof opt?.swatchGlyph === 'string' ? opt.swatchGlyph : '',
+                attachmentData: typeof opt?.attachmentData === 'string' ? opt.attachmentData : ''
               }))
               .filter(opt => opt.label || opt.value)
           : [];
@@ -5466,6 +5472,15 @@
             if (key) selection.productKey = key;
             if (handle) selection.productHandle = handle;
             if (id) selection.productId = id;
+            if (handle && !btn.dataset.productHandle) {
+              btn.dataset.productHandle = handle;
+            }
+            if (id && !btn.dataset.productId) {
+              btn.dataset.productId = id;
+            }
+            if (key && !btn.dataset.productKey) {
+              btn.dataset.productKey = key;
+            }
             if (window.LDCCommerce?.resolveVariantId) {
               try {
                 const variantId = await window.LDCCommerce.resolveVariantId(btn);

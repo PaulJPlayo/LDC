@@ -605,6 +605,13 @@
       addButton.dataset.productId = product?.id || '';
     }
 
+    const designButtons = Array.from(card.querySelectorAll('[data-design-source]'));
+    designButtons.forEach(button => {
+      button.dataset.productKey = product?.handle || product?.id || '';
+      button.dataset.productHandle = product?.handle || '';
+      button.dataset.productId = product?.id || '';
+    });
+
     const variants = getSortedVariants(product);
     const swatchTracks = Array.from(card.querySelectorAll('[data-swatch-track]'));
     const swatchSliders = Array.from(card.querySelectorAll('[data-swatch-slider]'));
