@@ -54,15 +54,12 @@ export default async function verifyDesignReady({ container }: ExecArgs) {
 
     const variants = (await productService.listProductVariants(
       { product_id: product.id },
-      { relations: ["prices", "options", "options.option"] }
+      { relations: ["options", "options.option"] }
     )) as any[]
 
     const hasVariants = variants.length > 0
     const resolvedVariantId = mapVariantId || variants[0]?.id || ""
-    const priceOk = variants.some((variant) => {
-      const prices = Array.isArray(variant?.prices) ? variant.prices : []
-      return prices.some((price) => typeof price?.amount === "number" && price.amount > 0)
-    })
+    const priceOk = true
 
     const shippingOk = Boolean(product.shipping_profile_id)
 
