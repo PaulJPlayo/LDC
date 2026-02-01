@@ -12,7 +12,10 @@ const withPreviewOrigins = (list: string[]) => {
   const defaults = [
     'http://127.0.0.1:5501',
     'http://localhost:5174',
-    'https://admin.lovettsldc.com'
+    'https://admin.lovettsldc.com',
+    'https://lovettsldc.com',
+    'https://www.lovettsldc.com',
+    'https://ldc-8kg.pages.dev'
   ]
   defaults.forEach(origin => {
     if (!list.includes(origin)) {
