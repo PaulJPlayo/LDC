@@ -2407,6 +2407,104 @@
         notes.addEventListener('input', autosize);
         autosize();
       })();
+
+      // Temporary debug panel for design metadata flow.
+      (() => {
+        const isEnabled = true;
+        if (!isEnabled) return;
+        if (document.getElementById('ldcDesignDebug')) return;
+        const panel = document.createElement('div');
+        panel.id = 'ldcDesignDebug';
+        panel.style.cssText = [
+          'position:fixed',
+          'bottom:16px',
+          'right:16px',
+          'z-index:9999',
+          'width:320px',
+          'max-height:50vh',
+          'overflow:auto',
+          'background:rgba(15,23,42,0.95)',
+          'color:#fff',
+          'padding:12px',
+          'border-radius:12px',
+          'box-shadow:0 10px 30px rgba(15,23,42,0.35)',
+          'font:12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace'
+        ].join(';');
+        panel.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <strong>Design Debug</strong>
+            <button id="ldcDesignDebugClose" style="background:#ef4444;color:#fff;border:none;border-radius:999px;padding:2px 8px;font-size:10px;cursor:pointer;">Hide</button>
+          </div>
+          <div id="ldcDesignDebugBody" style="margin-top:8px;"></div>
+          <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+            <button id="ldcDesignDebugRefresh" style="background:#22c55e;color:#0f172a;border:none;border-radius:8px;padding:4px 8px;font-size:10px;cursor:pointer;">Refresh</button>
+            <button id="ldcDesignDebugCopy" style="background:#38bdf8;color:#0f172a;border:none;border-radius:8px;padding:4px 8px;font-size:10px;cursor:pointer;">Copy</button>
+          </div>
+        `;
+        document.body.appendChild(panel);
+
+        const bodyEl = panel.querySelector('#ldcDesignDebugBody');
+        const closeBtn = panel.querySelector('#ldcDesignDebugClose');
+        const refreshBtn = panel.querySelector('#ldcDesignDebugRefresh');
+        const copyBtn = panel.querySelector('#ldcDesignDebugCopy');
+
+        const render = (data) => {
+          if (!bodyEl) return;
+          bodyEl.textContent = JSON.stringify(data, null, 2);
+        };
+
+        const gather = async () => {
+          const commerce = window.LDCCommerce;
+          const selection = {
+            selectedDesignName,
+            selectedColorLabel,
+            selectedAccessoryLabel,
+            selectedWrapLabel,
+            selectedDesignVariantId,
+            selectedDesignProductKey,
+            selectedDesignProductHandle,
+            selectedDesignProductId
+          };
+          let cart = null;
+          let cartWithMeta = null;
+          if (commerce?.getOrCreateCart) {
+            try {
+              cart = await commerce.getOrCreateCart();
+              if (cart?.id) {
+                cartWithMeta = await commerce.request(`/store/carts/${cart.id}?fields=+items.metadata`);
+              }
+            } catch (error) {
+              cart = { error: error?.message || String(error) };
+            }
+          }
+          const data = {
+            time: new Date().toISOString(),
+            selection,
+            cart: cart?.cart || cart || null,
+            cartWithMeta: cartWithMeta?.cart || cartWithMeta || null
+          };
+          render(data);
+          return data;
+        };
+
+        closeBtn?.addEventListener('click', () => {
+          panel.remove();
+        });
+        refreshBtn?.addEventListener('click', () => {
+          gather();
+        });
+        copyBtn?.addEventListener('click', async () => {
+          const text = bodyEl?.textContent || '';
+          try {
+            await navigator.clipboard.writeText(text);
+          } catch {}
+        });
+
+        gather();
+        document.addEventListener('cart:set', () => {
+          gather();
+        });
+      })();
     </script>
   </body>
 </html>
