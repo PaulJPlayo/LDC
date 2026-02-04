@@ -30,7 +30,7 @@
     "@medusajs/framework": "2.12.3",
     "@medusajs/medusa": "2.12.3",
     "@medusajs/notification-sendgrid": "^2.12.3",
-    "date-fns": "^3.6.0"
+    "date-fns": "3.5.0"
   },
   "devDependencies": {
     "@medusajs/test-utils": "2.12.3",
