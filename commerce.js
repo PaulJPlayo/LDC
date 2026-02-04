@@ -13,6 +13,7 @@
   }
   const publishableKey =
     body.dataset.medusaPublishableKey || window.LDC_MEDUSA_PUBLISHABLE_KEY || '';
+  const debugEnabled = body.dataset.medusaDebug === 'true' || window.LDC_MEDUSA_DEBUG === true;
 
   const CART_ID_KEY = 'ldc:medusa:cart_id';
   const LEGACY_CART_KEY = 'ldc:cart';
@@ -434,11 +435,22 @@
 
   const requestStoreProductsPage = async (params, fallbackParams) => {
     try {
-      return await request(`/store/products?${params.toString()}`);
+      const payload = await request(`/store/products?${params.toString()}`);
+      if (debugEnabled) {
+        console.debug('[commerce] Products page fetched.', params.toString());
+      }
+      return payload;
     } catch (error) {
       if (fallbackParams) {
         try {
-          return await request(`/store/products?${fallbackParams.toString()}`);
+          const payload = await request(`/store/products?${fallbackParams.toString()}`);
+          if (debugEnabled) {
+            console.debug(
+              '[commerce] Products page fetched with fallback params.',
+              fallbackParams.toString()
+            );
+          }
+          return payload;
         } catch (innerError) {
           console.warn('[commerce] Unable to fetch products:', innerError);
           return null;
@@ -489,6 +501,13 @@
       if (!payload) return results;
 
       const products = payload?.products || payload?.data || [];
+      if (debugEnabled) {
+        console.debug(
+          '[commerce] Section products payload.',
+          sectionKey,
+          `count=${Array.isArray(products) ? products.length : 0}`
+        );
+      }
       results = results.concat(products);
       if (!Array.isArray(products) || products.length < limit) {
         hasMore = false;
@@ -497,6 +516,13 @@
       }
     }
 
+    if (debugEnabled) {
+      console.debug(
+        '[commerce] Section products resolved.',
+        sectionKey,
+        `total=${results.length}`
+      );
+    }
     return results;
   };
 
@@ -513,7 +539,14 @@
       sectionProductsCache = new Map();
     }
     if (sectionProductsCache.has(sectionKey)) {
-      return sectionProductsCache.get(sectionKey);
+      const cached = sectionProductsCache.get(sectionKey);
+      if (debugEnabled) {
+        console.debug('[commerce] Section products cache hit.', sectionKey);
+      }
+      return cached;
+    }
+    if (debugEnabled) {
+      console.debug('[commerce] Section products cache miss.', sectionKey);
     }
     const promise = fetchStoreProductsForSection(sectionKey);
     sectionProductsCache.set(sectionKey, promise);
@@ -905,13 +938,34 @@
       const products = useMetadataQuery
         ? await loadStoreProductsForSection(filters.sectionKey)
         : await loadStoreProducts();
+      if (debugEnabled) {
+        console.debug(
+          '[commerce] Grid products loaded.',
+          filters.sectionKey,
+          `useMetadataQuery=${useMetadataQuery}`,
+          `count=${Array.isArray(products) ? products.length : 0}`
+        );
+      }
       if (!products.length) {
         if (useMetadataQuery) {
           container.querySelectorAll('.product-card').forEach(card => card.remove());
         }
+        if (filters.sectionKey) {
+          console.warn(
+            '[commerce] No products fetched for section.',
+            filters.sectionKey
+          );
+        }
         return;
       }
       let sectionProducts = filterProductsForSection(products, filters);
+      if (debugEnabled) {
+        console.debug(
+          '[commerce] Grid products filtered.',
+          filters.sectionKey,
+          `count=${sectionProducts.length}`
+        );
+      }
       sectionProducts = sortProductsForSection(sectionProducts, filters.sectionKey);
       if (filters.limit) {
         sectionProducts = sectionProducts.slice(0, filters.limit);
@@ -919,6 +973,12 @@
       if (!sectionProducts.length) {
         if (useMetadataQuery) {
           container.querySelectorAll('.product-card').forEach(card => card.remove());
+        }
+        if (filters.sectionKey) {
+          console.warn(
+            '[commerce] No products to render after filtering.',
+            filters.sectionKey
+          );
         }
         return;
       }
@@ -931,6 +991,13 @@
         const card = buildDynamicCard(template, product, filters.sectionKey);
         fragment.appendChild(card);
       });
+      if (debugEnabled) {
+        console.debug(
+          '[commerce] Grid products injected.',
+          filters.sectionKey,
+          `count=${sectionProducts.length}`
+        );
+      }
       container.appendChild(fragment);
       initSwatchSliders(container);
       const loading = container
