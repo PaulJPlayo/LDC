@@ -23,7 +23,6 @@
   let productMapCache = null;
   let storeProductsPromise = null;
   let productIndexPromise = null;
-  let sectionProductsCache = null;
   let regionIdPromise = null;
   const missingSwatchMeta = new Set();
 
@@ -406,7 +405,7 @@
     '+variants,+variants.variant_rank,+variants.calculated_price,+variants.prices,+variants.metadata,+variants.thumbnail,+variants.options,+thumbnail,+images,+description,+subtitle,+collection,+tags,+metadata,+created_at';
   const productExpand = 'variants,images';
 
-  const buildStoreProductsParams = ({ limit, offset, regionId, sectionKey }) => {
+  const buildStoreProductsParams = ({ limit, offset, regionId }) => {
     const params = new URLSearchParams({
       limit: String(limit),
       offset: String(offset),
@@ -415,9 +414,6 @@
     });
     if (regionId) {
       params.set('region_id', regionId);
-    }
-    if (sectionKey) {
-      params.append('metadata.storefront_sections[]', sectionKey);
     }
     return params;
   };
@@ -486,71 +482,11 @@
     return results;
   };
 
-  const fetchStoreProductsForSection = async sectionKey => {
-    if (!sectionKey) return [];
-    const limit = 200;
-    let offset = 0;
-    let results = [];
-    let hasMore = true;
-    const regionId = await loadRegionId();
-
-    while (hasMore) {
-      const params = buildStoreProductsParams({ limit, offset, regionId, sectionKey });
-      const fallbackParams = buildMinimalProductsParams({ limit, offset, regionId });
-      const payload = await requestStoreProductsPage(params, fallbackParams);
-      if (!payload) return results;
-
-      const products = payload?.products || payload?.data || [];
-      if (debugEnabled) {
-        console.debug(
-          '[commerce] Section products payload.',
-          sectionKey,
-          `count=${Array.isArray(products) ? products.length : 0}`
-        );
-      }
-      results = results.concat(products);
-      if (!Array.isArray(products) || products.length < limit) {
-        hasMore = false;
-      } else {
-        offset += limit;
-      }
-    }
-
-    if (debugEnabled) {
-      console.debug(
-        '[commerce] Section products resolved.',
-        sectionKey,
-        `total=${results.length}`
-      );
-    }
-    return results;
-  };
-
   const loadStoreProducts = async () => {
     if (!storeProductsPromise) {
       storeProductsPromise = fetchStoreProducts();
     }
     return storeProductsPromise;
-  };
-
-  const loadStoreProductsForSection = async sectionKey => {
-    if (!sectionKey) return [];
-    if (!sectionProductsCache) {
-      sectionProductsCache = new Map();
-    }
-    if (sectionProductsCache.has(sectionKey)) {
-      const cached = sectionProductsCache.get(sectionKey);
-      if (debugEnabled) {
-        console.debug('[commerce] Section products cache hit.', sectionKey);
-      }
-      return cached;
-    }
-    if (debugEnabled) {
-      console.debug('[commerce] Section products cache miss.', sectionKey);
-    }
-    const promise = fetchStoreProductsForSection(sectionKey);
-    sectionProductsCache.set(sectionKey, promise);
-    return promise;
   };
 
   const loadProductIndex = async () => {
@@ -932,24 +868,16 @@
       container.classList.add('product-grid');
       container.classList.remove('is-loaded');
       const filters = getSectionFilters(container);
-      const useMetadataQuery =
-        Boolean(filters.sectionKey) &&
-        (container.hasAttribute('data-medusa-tag') || container.hasAttribute('data-use-metadata'));
-      const products = useMetadataQuery
-        ? await loadStoreProductsForSection(filters.sectionKey)
-        : await loadStoreProducts();
+      const products = await loadStoreProducts();
       if (debugEnabled) {
         console.debug(
           '[commerce] Grid products loaded.',
           filters.sectionKey,
-          `useMetadataQuery=${useMetadataQuery}`,
           `count=${Array.isArray(products) ? products.length : 0}`
         );
       }
       if (!products.length) {
-        if (useMetadataQuery) {
-          container.querySelectorAll('.product-card').forEach(card => card.remove());
-        }
+        container.querySelectorAll('.product-card').forEach(card => card.remove());
         if (filters.sectionKey) {
           console.warn(
             '[commerce] No products fetched for section.',
@@ -971,9 +899,7 @@
         sectionProducts = sectionProducts.slice(0, filters.limit);
       }
       if (!sectionProducts.length) {
-        if (useMetadataQuery) {
-          container.querySelectorAll('.product-card').forEach(card => card.remove());
-        }
+        container.querySelectorAll('.product-card').forEach(card => card.remove());
         if (filters.sectionKey) {
           console.warn(
             '[commerce] No products to render after filtering.',
