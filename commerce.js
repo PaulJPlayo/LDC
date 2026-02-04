@@ -373,6 +373,7 @@
       container.querySelector('.price-line'),
       container.querySelector('.product-price'),
       container.querySelector('.tile-price'),
+      container.querySelector('.arrival-price'),
       container.querySelector('[data-price-value]')
     ].filter(Boolean);
     let priceEl = priceCandidates[0];
@@ -492,7 +493,7 @@
     const title = overrides?.title || product.title || '';
     if (title) {
       const titleEls = container.querySelectorAll(
-        '[data-product-title], .tile-title, .product-title, .hero-heading, h1, h2, h3'
+        '[data-product-title], .tile-title, .product-title, .arrival-title, .hero-heading, h1, h2, h3'
       );
       titleEls.forEach(el => {
         if (!el) return;
@@ -514,6 +515,7 @@
         container.querySelector('.product-description') ||
         container.querySelector('.product-details') ||
         container.querySelector('.tile-description') ||
+        container.querySelector('.arrival-meta') ||
         null;
       if (!descriptionEl) {
         const meta = container.querySelector('.product-meta');
@@ -555,8 +557,10 @@
 
     const badgeEl =
       container.querySelector('[data-product-badge]') ||
-      container.querySelector('.badge-custom');
-    if (badgeEl) {
+      container.querySelector('.badge-custom') ||
+      container.querySelector('.arrival-card .badge') ||
+      container.querySelector('.arrival-body .badge');
+    if (badgeEl && !badgeEl.classList.contains('badge-new') && !badgeEl.classList.contains('badge-limited')) {
       if (overrides?.badge) {
         badgeEl.textContent = overrides.badge;
         badgeEl.style.display = '';
