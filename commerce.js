@@ -490,6 +490,7 @@
   const updateProductCard = (container, product, preferredVariantId, sectionKey) => {
     if (!container || !product) return;
     const overrides = getStorefrontTileOverride(product, sectionKey);
+    const metadata = normalizeMetadata(product?.metadata);
     const title = overrides?.title || product.title || '';
     if (title) {
       const titleEls = container.querySelectorAll(
@@ -502,6 +503,25 @@
     }
 
     updateProductPrice(container, product, preferredVariantId, overrides);
+
+    const linkUrl =
+      overrides?.url ||
+      overrides?.link ||
+      metadata?.storefront_url ||
+      metadata?.storefront_link ||
+      '';
+    if (linkUrl) {
+      const linkEls = container.querySelectorAll(
+        '[data-product-link], a.tile-title, a.product-title, a.arrival-title'
+      );
+      linkEls.forEach(el => {
+        if (!el) return;
+        el.setAttribute('href', linkUrl);
+        if (title) {
+          el.setAttribute('aria-label', `View ${title}`);
+        }
+      });
+    }
 
     const description =
       overrides?.description ||
@@ -755,6 +775,10 @@
         return false;
       }
       const explicitSections = getStorefrontSections(product);
+      if (tagHandles.length && sectionKey) {
+        if (!explicitSections.length) return false;
+        return explicitSections.includes(sectionKey);
+      }
       if (explicitSections.length) {
         return explicitSections.includes(sectionKey);
       }
@@ -1779,7 +1803,15 @@
     renderDynamicGrids
   };
 
-  syncBadges();
-  hydrateProductCards();
-  renderDynamicGrids();
+  const initStorefront = () => {
+    syncBadges();
+    hydrateProductCards();
+    renderDynamicGrids();
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initStorefront);
+  } else {
+    initStorefront();
+  }
 })();
