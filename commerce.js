@@ -22,6 +22,7 @@
   let productMapCache = null;
   let storeProductsPromise = null;
   let productIndexPromise = null;
+  let sectionProductsCache = null;
   let regionIdPromise = null;
   const missingSwatchMeta = new Set();
 
@@ -400,6 +401,54 @@
     }
   };
 
+  const productFields =
+    '+variants,+variants.variant_rank,+variants.calculated_price,+variants.prices,+variants.metadata,+variants.thumbnail,+variants.options,+thumbnail,+images,+description,+subtitle,+collection,+tags,+metadata,+created_at';
+  const productExpand = 'variants,images';
+
+  const buildStoreProductsParams = ({ limit, offset, regionId, sectionKey }) => {
+    const params = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset),
+      fields: productFields,
+      expand: productExpand
+    });
+    if (regionId) {
+      params.set('region_id', regionId);
+    }
+    if (sectionKey) {
+      params.append('metadata.storefront_sections[]', sectionKey);
+    }
+    return params;
+  };
+
+  const buildMinimalProductsParams = ({ limit, offset, regionId }) => {
+    const params = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset)
+    });
+    if (regionId) {
+      params.set('region_id', regionId);
+    }
+    return params;
+  };
+
+  const requestStoreProductsPage = async (params, fallbackParams) => {
+    try {
+      return await request(`/store/products?${params.toString()}`);
+    } catch (error) {
+      if (fallbackParams) {
+        try {
+          return await request(`/store/products?${fallbackParams.toString()}`);
+        } catch (innerError) {
+          console.warn('[commerce] Unable to fetch products:', innerError);
+          return null;
+        }
+      }
+      console.warn('[commerce] Unable to fetch products:', error);
+      return null;
+    }
+  };
+
   const fetchStoreProducts = async () => {
     const limit = 200;
     let offset = 0;
@@ -408,26 +457,36 @@
     const regionId = await loadRegionId();
 
     while (hasMore) {
-      const params = new URLSearchParams({
-        limit: String(limit),
-        offset: String(offset),
-        fields:
-          '+variants,+variants.variant_rank,+variants.calculated_price,+variants.prices,+variants.metadata,+variants.thumbnail,+variants.options,+thumbnail,+images,+description,+subtitle,+collection,+tags,+metadata,+created_at'
-      });
-      if (regionId) {
-        params.set('region_id', regionId);
+      const params = buildStoreProductsParams({ limit, offset, regionId });
+      const fallbackParams = buildMinimalProductsParams({ limit, offset, regionId });
+      const payload = await requestStoreProductsPage(params, fallbackParams);
+      if (!payload) return results;
+
+      const products = payload?.products || payload?.data || [];
+      results = results.concat(products);
+      if (!Array.isArray(products) || products.length < limit) {
+        hasMore = false;
+      } else {
+        offset += limit;
       }
-      let payload = null;
-      try {
-        payload = await request(`/store/products?${params.toString()}`);
-      } catch (error) {
-        try {
-          payload = await request(`/store/products?limit=${limit}&offset=${offset}`);
-        } catch (innerError) {
-          console.warn('[commerce] Unable to fetch products:', innerError);
-          return results;
-        }
-      }
+    }
+
+    return results;
+  };
+
+  const fetchStoreProductsForSection = async sectionKey => {
+    if (!sectionKey) return [];
+    const limit = 200;
+    let offset = 0;
+    let results = [];
+    let hasMore = true;
+    const regionId = await loadRegionId();
+
+    while (hasMore) {
+      const params = buildStoreProductsParams({ limit, offset, regionId, sectionKey });
+      const fallbackParams = buildMinimalProductsParams({ limit, offset, regionId });
+      const payload = await requestStoreProductsPage(params, fallbackParams);
+      if (!payload) return results;
 
       const products = payload?.products || payload?.data || [];
       results = results.concat(products);
@@ -446,6 +505,19 @@
       storeProductsPromise = fetchStoreProducts();
     }
     return storeProductsPromise;
+  };
+
+  const loadStoreProductsForSection = async sectionKey => {
+    if (!sectionKey) return [];
+    if (!sectionProductsCache) {
+      sectionProductsCache = new Map();
+    }
+    if (sectionProductsCache.has(sectionKey)) {
+      return sectionProductsCache.get(sectionKey);
+    }
+    const promise = fetchStoreProductsForSection(sectionKey);
+    sectionProductsCache.set(sectionKey, promise);
+    return promise;
   };
 
   const loadProductIndex = async () => {
@@ -817,10 +889,8 @@
       document.querySelectorAll('[data-medusa-collection], [data-medusa-tag]')
     );
     if (!containers.length) return;
-    const products = await loadStoreProducts();
-    if (!products.length) return;
 
-    containers.forEach(container => {
+    await Promise.all(containers.map(async container => {
       const templateElement = container.querySelector('template[data-card-template]');
       const template =
         templateElement?.content?.firstElementChild ||
@@ -829,12 +899,27 @@
       container.classList.add('product-grid');
       container.classList.remove('is-loaded');
       const filters = getSectionFilters(container);
+      const useMetadataQuery =
+        Boolean(filters.sectionKey) &&
+        (container.hasAttribute('data-medusa-tag') || container.hasAttribute('data-use-metadata'));
+      const products = useMetadataQuery
+        ? await loadStoreProductsForSection(filters.sectionKey)
+        : await loadStoreProducts();
+      if (!products.length) {
+        if (useMetadataQuery) {
+          container.querySelectorAll('.product-card').forEach(card => card.remove());
+        }
+        return;
+      }
       let sectionProducts = filterProductsForSection(products, filters);
       sectionProducts = sortProductsForSection(sectionProducts, filters.sectionKey);
       if (filters.limit) {
         sectionProducts = sectionProducts.slice(0, filters.limit);
       }
       if (!sectionProducts.length) {
+        if (useMetadataQuery) {
+          container.querySelectorAll('.product-card').forEach(card => card.remove());
+        }
         return;
       }
 
@@ -857,7 +942,7 @@
         loading.style.display = 'none';
       }
       container.classList.add('is-loaded');
-    });
+    }));
 
     if (missingSwatchMeta.size) {
       console.warn(
