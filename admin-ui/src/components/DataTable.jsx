@@ -100,12 +100,14 @@ const DataTable = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-white/60">
-            {rows.map((row) => {
+            {rows.map((row, index) => {
               const rowId = getRowId(row);
-              const isSelected = selectable && selectedSet.has(rowId);
+              const fallbackId = rowId ?? row?.id ?? row?._id ?? row?.key;
+              const rowKey = fallbackId ?? `row-${index}`;
+              const isSelected = selectable && rowId != null && selectedSet.has(rowId);
               return (
                 <tr
-                  key={rowId}
+                  key={rowKey}
                   className={`transition ${onRowClick ? 'cursor-pointer hover:bg-white/80' : ''} ${
                     isSelected ? 'bg-white/80' : ''
                   }`}
@@ -119,7 +121,7 @@ const DataTable = ({
                         checked={isSelected}
                         onChange={() => onToggleRow?.(rowId)}
                         onClick={(event) => event.stopPropagation()}
-                        aria-label={`Select ${rowId}`}
+                        aria-label={rowId != null ? `Select ${rowId}` : 'Select row'}
                       />
                     </td>
                   ) : null}

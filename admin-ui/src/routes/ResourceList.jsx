@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PageHeader from '../components/PageHeader.jsx';
 import DataTable from '../components/DataTable.jsx';
@@ -1156,6 +1156,28 @@ const ResourceList = ({ resource }) => {
     return (import.meta.env.VITE_ADMIN_INVITE_URL || fallback).replace(/\/$/, '');
   }, []);
 
+  const handleMarkNotificationRead = useCallback((id) => {
+    if (!id) return;
+    setNotificationReadIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      setReadIdSet(next);
+      return next;
+    });
+  }, []);
+
+  const handleClearNotifications = useCallback((ids) => {
+    if (!Array.isArray(ids) || !ids.length) return;
+    setNotificationHiddenIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => {
+        if (id) next.add(id);
+      });
+      setHiddenIdSet(next);
+      return next;
+    });
+  }, []);
+
   const handleCopyInviteLink = async (invite) => {
     const token = resolveInviteToken(invite);
     const inviteId = invite?.id || invite?.email || token;
@@ -1312,7 +1334,9 @@ const ResourceList = ({ resource }) => {
     isInviteList,
     resource,
     inviteCopyId,
-    inviteLinkBase
+    inviteLinkBase,
+    handleMarkNotificationRead,
+    handleClearNotifications
   ]);
   const uploadRows = useMemo(() => {
     if (!isUploadList) return rows;
@@ -2417,24 +2441,6 @@ const ResourceList = ({ resource }) => {
   const handleRowClick = (row) => {
     if (isUploadList || isNotificationList) return;
     navigate(`${resource.path}/${row.id}`);
-  };
-
-  const handleMarkNotificationRead = (id) => {
-    if (!id) return;
-    const next = new Set(notificationReadIds);
-    next.add(id);
-    setNotificationReadIds(next);
-    setReadIdSet(next);
-  };
-
-  const handleClearNotifications = (ids) => {
-    if (!Array.isArray(ids) || !ids.length) return;
-    const next = new Set(notificationHiddenIds);
-    ids.forEach((id) => {
-      if (id) next.add(id);
-    });
-    setNotificationHiddenIds(next);
-    setHiddenIdSet(next);
   };
 
   const handleMarkAllNotificationsRead = () => {

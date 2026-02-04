@@ -1,0 +1,1081 @@
+{
+  "summary": {
+    "products": 36,
+    "variants": 119,
+    "failures": 0
+  },
+  "failures": [],
+  "ok": [
+    {
+      "handle": "accessory-glass-bow-straws",
+      "productId": "prod_01KE74Y4AM6PMBF54GY56YRPR3",
+      "variantId": "variant_01KE74Y574STE0X8GZ52NMEEKX",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-glass-bow-straws",
+      "productId": "prod_01KE74Y4AM6PMBF54GY56YRPR3",
+      "variantId": "variant_01KFVDY2QGPBGVH94S9RKV3VB8",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-glass-bow-straws",
+      "productId": "prod_01KE74Y4AM6PMBF54GY56YRPR3",
+      "variantId": "variant_01KFVDY2SK83CJW6MWBTB2A9FE",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-glass-bow-straws",
+      "productId": "prod_01KE74Y4AM6PMBF54GY56YRPR3",
+      "variantId": "variant_01KFVDY2VSMW8948KKZ9YSRZ5D",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-glass-twist-straws",
+      "productId": "prod_01KE74Y4AMACZGR7T9P90DNC24",
+      "variantId": "variant_01KFVDY393S934J1HMDW1JG8C2",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-glass-twist-straws",
+      "productId": "prod_01KE74Y4AMACZGR7T9P90DNC24",
+      "variantId": "variant_01KFVDY32Q1DHWM4VMZPMEDKBA",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-glass-twist-straws",
+      "productId": "prod_01KE74Y4AMACZGR7T9P90DNC24",
+      "variantId": "variant_01KFVDY36V6C1V1HME05NP58V8",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-glass-twist-straws",
+      "productId": "prod_01KE74Y4AMACZGR7T9P90DNC24",
+      "variantId": "variant_01KE74Y575CTGZXFTFW706BV3K",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-glass-twist-straws",
+      "productId": "prod_01KE74Y4AMACZGR7T9P90DNC24",
+      "variantId": "variant_01KFVDY34K514QBGBHE98ECX5A",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-glass-twist-straws",
+      "productId": "prod_01KE74Y4AMACZGR7T9P90DNC24",
+      "variantId": "variant_01KFVDY3B87ECJRGB3TY636TCH",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-glass-twist-straws",
+      "productId": "prod_01KE74Y4AMACZGR7T9P90DNC24",
+      "variantId": "variant_01KFVDY3D831Z1F2QY88MGE0FW",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-glass-twist-straws",
+      "productId": "prod_01KE74Y4AMACZGR7T9P90DNC24",
+      "variantId": "variant_01KFVDY3FK3278BT26J4CNTDA6",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-flower-deluxe",
+      "productId": "prod_01KE74Y4AMCXDCAN1EMVZSV01T",
+      "variantId": "variant_01KE74Y573FKK7FBTBA0F9BP0X",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-christmas-diamond",
+      "productId": "prod_01KE74Y4AMEJC47SYCQC9099EJ",
+      "variantId": "variant_01KE74Y56TWF945PMN6DKY3VJV",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-cowboy-glass-straws",
+      "productId": "prod_01KE74Y4AMX9FKJP1ZT133MMKM",
+      "variantId": "variant_01KE74Y56VY5GQBW5BC17XQ2NN",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-cowboy-glass-straws",
+      "productId": "prod_01KE74Y4AMX9FKJP1ZT133MMKM",
+      "variantId": "variant_01KFVDY25WAPY1DM9FRKYWZHAQ",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-flower-premium",
+      "productId": "prod_01KE74Y4AMXTK28BEFMW2KBW2N",
+      "variantId": "variant_01KE74Y574B5YQXN109EKYQZC4",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-bamboo-lid-mug",
+      "productId": "prod_01KE74Y4AN37AQVYAVF8HD7140",
+      "variantId": "variant_01KE74Y57YMYVJ2MRV72E4AFCM",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-rhinestone-lids",
+      "productId": "prod_01KE74Y4AN48RW80H0G33SQB6N",
+      "variantId": "variant_01KE74Y57D16MT81TPK63FYVV8",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-rhinestone-lids",
+      "productId": "prod_01KE74Y4AN48RW80H0G33SQB6N",
+      "variantId": "variant_01KFVDY47Z52FYQXHXE1APMX1V",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-rhinestone-lids",
+      "productId": "prod_01KE74Y4AN48RW80H0G33SQB6N",
+      "variantId": "variant_01KFVDY4A0HHS9XRAFM8QC5HE8",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-rhinestone-lids",
+      "productId": "prod_01KE74Y4AN48RW80H0G33SQB6N",
+      "variantId": "variant_01KFVDY4BRJN3A9N1TWTC626EH",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-rhinestone-lids",
+      "productId": "prod_01KE74Y4AN48RW80H0G33SQB6N",
+      "variantId": "variant_01KFVDY4DD5ZPREWCSR5JFAS70",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-rhinestone-lids",
+      "productId": "prod_01KE74Y4AN48RW80H0G33SQB6N",
+      "variantId": "variant_01KFVDY4F205X4J8PD8VR7QTE9",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-rhinestone-lids",
+      "productId": "prod_01KE74Y4AN48RW80H0G33SQB6N",
+      "variantId": "variant_01KFVDY4GYKCJZ87YNEQWHVY97",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-rhinestone-lids",
+      "productId": "prod_01KE74Y4AN48RW80H0G33SQB6N",
+      "variantId": "variant_01KFVDY4JTJFQ1ASPCQ9GWXS80",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-acrylic",
+      "productId": "prod_01KE74Y4AN5PPDCHT34P5MA5CF",
+      "variantId": "variant_01KE74Y57T9W1R6VYJKCAT1NNW",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-acrylic",
+      "productId": "prod_01KE74Y4AN5PPDCHT34P5MA5CF",
+      "variantId": "variant_01KE74Y57V1K0RYW2F2ABCWH4W",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-acrylic",
+      "productId": "prod_01KE74Y4AN5PPDCHT34P5MA5CF",
+      "variantId": "variant_01KE74Y57XWN2MBJVSR37RG66J",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-acrylic",
+      "productId": "prod_01KE74Y4AN5PPDCHT34P5MA5CF",
+      "variantId": "variant_01KE74Y57T2MWATZMJJQEC9CSR",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-straw-toppers",
+      "productId": "prod_01KE74Y4AN9T43DQJV1J46WJX0",
+      "variantId": "variant_01KE74Y57NHDS6SKCVD936B2T3",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-straw-toppers",
+      "productId": "prod_01KE74Y4AN9T43DQJV1J46WJX0",
+      "variantId": "variant_01KE74Y57PZXZ7KZC8X99174CR",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-straw-toppers",
+      "productId": "prod_01KE74Y4AN9T43DQJV1J46WJX0",
+      "variantId": "variant_01KE74Y57N7CVXABYT8J300VVB",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-straw-toppers",
+      "productId": "prod_01KE74Y4AN9T43DQJV1J46WJX0",
+      "variantId": "variant_01KE74Y57E9XQZZ3Z0501R81BY",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-straw-toppers",
+      "productId": "prod_01KE74Y4AN9T43DQJV1J46WJX0",
+      "variantId": "variant_01KE74Y57MC4JHBX4N24X7SSJV",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-straw-toppers",
+      "productId": "prod_01KE74Y4AN9T43DQJV1J46WJX0",
+      "variantId": "variant_01KE74Y57S7KBPFAC3NW8H0YEG",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-frosted-sublimation",
+      "productId": "prod_01KE74Y4ANHDA8NE6P2Y14WYN6",
+      "variantId": "variant_01KE74Y584MN6ENEJ3R5F226BS",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-glass-sublimation",
+      "productId": "prod_01KE74Y4ANHF24GDHBCREEXH20",
+      "variantId": "variant_01KE74Y58FM09DD2FW6KKZX6SY",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-glass-sublimation",
+      "productId": "prod_01KE74Y4ANHF24GDHBCREEXH20",
+      "variantId": "variant_01KE74Y58FA81KTC17EKN5XHM5",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-glass-sublimation",
+      "productId": "prod_01KE74Y4ANHF24GDHBCREEXH20",
+      "variantId": "variant_01KE74Y585FHT197KHJJ89WCYB",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-glass-sublimation",
+      "productId": "prod_01KE74Y4ANHF24GDHBCREEXH20",
+      "variantId": "variant_01KE74Y58EK9SNB8WKKK0SRT65",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-glass-sublimation",
+      "productId": "prod_01KE74Y4ANHF24GDHBCREEXH20",
+      "variantId": "variant_01KE74Y586H4BZPFCQTV440RP8",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-jelly-lids",
+      "productId": "prod_01KE74Y4ANKTK35MKFA9ZXBQM2",
+      "variantId": "variant_01KGBNCGSDV1PJ2TMVB8NF10TE",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-jelly-lids",
+      "productId": "prod_01KE74Y4ANKTK35MKFA9ZXBQM2",
+      "variantId": "variant_01KE74Y57CKYCTWXJ5BXGNHFG2",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-jelly-lids",
+      "productId": "prod_01KE74Y4ANKTK35MKFA9ZXBQM2",
+      "variantId": "variant_01KE74Y57DNNJNB0MC97WBF52M",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-jelly-lids",
+      "productId": "prod_01KE74Y4ANKTK35MKFA9ZXBQM2",
+      "variantId": "variant_01KE74Y577A3M6XN7DN0PXMEAS",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-jelly-lids",
+      "productId": "prod_01KE74Y4ANKTK35MKFA9ZXBQM2",
+      "variantId": "variant_01KE74Y578GF05PVVXY54NAAYM",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-jelly-lids",
+      "productId": "prod_01KE74Y4ANKTK35MKFA9ZXBQM2",
+      "variantId": "variant_01KE74Y57897DS8TAFZPZAJR1E",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-jelly-lids",
+      "productId": "prod_01KE74Y4ANKTK35MKFA9ZXBQM2",
+      "variantId": "variant_01KE74Y57944R8DX8PXZRSCBXK",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-jelly-lids",
+      "productId": "prod_01KE74Y4ANKTK35MKFA9ZXBQM2",
+      "variantId": "variant_01KFVDY42B6KHBD387MYNMNBJ0",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "accessory-jelly-lids",
+      "productId": "prod_01KE74Y4ANKTK35MKFA9ZXBQM2",
+      "variantId": "variant_01KFVDY40BFR77CSYW0K9CDJW3",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-macaron-mug",
+      "productId": "prod_01KE74Y4ANMYHFY8XSXMQAQ1HK",
+      "variantId": "variant_01KE74Y58S460RVSHDBSPY1BC9",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-macaron-mug",
+      "productId": "prod_01KE74Y4ANMYHFY8XSXMQAQ1HK",
+      "variantId": "variant_01KE74Y58RV4MM6YA5BZCZF05K",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-macaron-mug",
+      "productId": "prod_01KE74Y4ANMYHFY8XSXMQAQ1HK",
+      "variantId": "variant_01KE74Y58SD9HNFYF60ARGMTA7",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-macaron-mug",
+      "productId": "prod_01KE74Y4ANMYHFY8XSXMQAQ1HK",
+      "variantId": "variant_01KE74Y58SBKTNHTNN1E2WP634",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-macaron-mug",
+      "productId": "prod_01KE74Y4ANMYHFY8XSXMQAQ1HK",
+      "variantId": "variant_01KE74Y58G0BF02BTAYGYZ8A81",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "attire-custom",
+      "productId": "prod_01KE74Y4ANRQY5731DW7R8K6KP",
+      "variantId": "variant_01KE74Y57TFVFAAQBH8G0AAHPN",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-glass",
+      "productId": "prod_01KE74Y4ANYHR5GTYWDVHACBA9",
+      "variantId": "variant_01KE74Y5850997YXT2Y0ENZ27Z",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-glass",
+      "productId": "prod_01KE74Y4ANYHR5GTYWDVHACBA9",
+      "variantId": "variant_01KE74Y585GS48TF3M9PPVS289",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-snow-globe",
+      "productId": "prod_01KE74Y4APEJSC5XJ8Q88YRN3A",
+      "variantId": "variant_01KE74Y59WQ1CGV0M877DP4BVQ",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-slim-snow-globe",
+      "productId": "prod_01KE74Y4APJ1226YCZWS748QCN",
+      "variantId": "variant_01KE74Y598G0T7G2GYJBJWS9YR",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-slim-snow-globe",
+      "productId": "prod_01KE74Y4APJ1226YCZWS748QCN",
+      "variantId": "variant_01KE74Y59CTVB7RB1NTYPG7HNH",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-slim-snow-globe",
+      "productId": "prod_01KE74Y4APJ1226YCZWS748QCN",
+      "variantId": "variant_01KE74Y596AVCFA65ZRFC5956S",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-slim-snow-globe",
+      "productId": "prod_01KE74Y4APJ1226YCZWS748QCN",
+      "variantId": "variant_01KE74Y59709FDSX5JQMC1ZCDY",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-slim-snow-globe",
+      "productId": "prod_01KE74Y4APJ1226YCZWS748QCN",
+      "variantId": "variant_01KE74Y597BE6G7E0NVKHZVMDM",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-slim-snow-globe",
+      "productId": "prod_01KE74Y4APJ1226YCZWS748QCN",
+      "variantId": "variant_01KFVDY6MFT9BHDF5Q6A2GE93C",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-mug-and-spoon",
+      "productId": "prod_01KE74Y4APP1Z259YX2A73W51C",
+      "variantId": "variant_01KE74Y58THDCXPKBMMPK6CWTQ",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-mug-and-spoon",
+      "productId": "prod_01KE74Y4APP1Z259YX2A73W51C",
+      "variantId": "variant_01KE74Y592G15RAYNGNS3DJNVZ",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-mug-and-spoon",
+      "productId": "prod_01KE74Y4APP1Z259YX2A73W51C",
+      "variantId": "variant_01KE74Y590ZASE6QN71VX2TBPY",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-mug-and-spoon",
+      "productId": "prod_01KE74Y4APP1Z259YX2A73W51C",
+      "variantId": "variant_01KE74Y591HM2T9RR5EFKG37GG",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-mug-and-spoon",
+      "productId": "prod_01KE74Y4APP1Z259YX2A73W51C",
+      "variantId": "variant_01KE74Y591MNHAKZR58CM0AJET",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-autumn-leaves",
+      "productId": "prod_01KE74Y4AT08HVCQCE6J6VTM9W",
+      "variantId": "variant_01KE74Y5A1G1HN574BG4XY6JZ8",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-gold-trim-tumbler",
+      "productId": "prod_01KE74Y4AT58SNES65ZSE6RNJJ",
+      "variantId": "variant_01KE74Y5A3N93M4SC2B0B7FHX0",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "cup-steel-sublimation",
+      "productId": "prod_01KE74Y4AT8Y1PJEGBPMFH6M51",
+      "variantId": "variant_01KE74Y59WQ8MWXTK4BVGE09V5",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-glass-tumbler",
+      "productId": "prod_01KE74Y4AT97XWR4CEJ36FX50Z",
+      "variantId": "variant_01KE74Y5A2CNW92MA0Z1133H9Z",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-glass-glow",
+      "productId": "prod_01KE74Y4ATCQHRA7XVBCYX7NQR",
+      "variantId": "variant_01KE74Y5A245E0S6STB55S6JAY",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "doormat-custom",
+      "productId": "prod_01KE74Y4ATYQ8C4SKD8SVWCA3N",
+      "variantId": "variant_01KE74Y59XP64THG6BBW5HRZ35",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-sublimation-water-bottle",
+      "productId": "prod_01KE74Y4AV134C8XHS1H9FPDBY",
+      "variantId": "variant_01KE74Y5BEAMNT5VSYCXZ9Y59H",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-tumbler-heaven",
+      "productId": "prod_01KE74Y4AV1C8M32Y63C605T6W",
+      "variantId": "variant_01KE74Y5BFQ9V7HAHQRJGN19QM",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-tumbler-heaven",
+      "productId": "prod_01KE74Y4AV1C8M32Y63C605T6W",
+      "variantId": "variant_01KE74Y5BFKHANHHKR4RBXETJM",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-tumbler-heaven",
+      "productId": "prod_01KE74Y4AV1C8M32Y63C605T6W",
+      "variantId": "variant_01KE74Y5BQAW6BNQ5VQTW2GHJE",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-tumbler-heaven",
+      "productId": "prod_01KE74Y4AV1C8M32Y63C605T6W",
+      "variantId": "variant_01KE74Y5BG2M2YZEAGNGKF04A2",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-tumbler-heaven",
+      "productId": "prod_01KE74Y4AV1C8M32Y63C605T6W",
+      "variantId": "variant_01KE74Y5BPXSAQJ63JXR2AYD03",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-macaron-sublimation",
+      "productId": "prod_01KE74Y4AV1JFAFWG1383W16CC",
+      "variantId": "variant_01KE74Y5AGMHJERCRVQMJZYAVM",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-macaron-sublimation",
+      "productId": "prod_01KE74Y4AV1JFAFWG1383W16CC",
+      "variantId": "variant_01KE74Y5AN5DZ9GXE6SH5MYC82",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-macaron-sublimation",
+      "productId": "prod_01KE74Y4AV1JFAFWG1383W16CC",
+      "variantId": "variant_01KE74Y5AGXGHEHWPVGP13YCTD",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-macaron-sublimation",
+      "productId": "prod_01KE74Y4AV1JFAFWG1383W16CC",
+      "variantId": "variant_01KE74Y5AH02MKA80NC7ZCYGH0",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-pink-flamingo",
+      "productId": "prod_01KE74Y4AV8PWBB5EH0PKYS8YR",
+      "variantId": "variant_01KE74Y5APNGAEF457WJAQ19BA",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-sip-cup",
+      "productId": "prod_01KE74Y4AVE9PKXKQJJ8MQCTS5",
+      "variantId": "variant_01KE74Y5AY3HSPY23B274PV3Y4",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-sublimation-tumblers",
+      "productId": "prod_01KE74Y4AVH7X28426NT5ZZZH0",
+      "variantId": "variant_01KE74Y5BB5C7AE0TS85VYNQXV",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-sublimation-tumblers",
+      "productId": "prod_01KE74Y4AVH7X28426NT5ZZZH0",
+      "variantId": "variant_01KE74Y5BB220GXGTFBWT8A2PT",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-sublimation-tumblers",
+      "productId": "prod_01KE74Y4AVH7X28426NT5ZZZH0",
+      "variantId": "variant_01KE74Y5BE971FS03H173KNQHD",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-sublimation-tumblers",
+      "productId": "prod_01KE74Y4AVH7X28426NT5ZZZH0",
+      "variantId": "variant_01KE74Y5BE54QSJ4K28WT4ER7P",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-pumpkin-spice",
+      "productId": "prod_01KE74Y4AVHAB0YDMC9DHJPPXG",
+      "variantId": "variant_01KE74Y5AP6KHYTDMG3BK0Q0PW",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-sublimation",
+      "productId": "prod_01KE74Y4AVM4PEEPY13CF39XPF",
+      "variantId": "variant_01KFX6SJFANA6SJDKZNF31RF51",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-sublimation",
+      "productId": "prod_01KE74Y4AVM4PEEPY13CF39XPF",
+      "variantId": "variant_01KE74Y5B361HVPSJHAWH4PE6B",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-sublimation",
+      "productId": "prod_01KE74Y4AVM4PEEPY13CF39XPF",
+      "variantId": "variant_01KE74Y5B3MVGH0S5RGVF3J1JD",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-sublimation",
+      "productId": "prod_01KE74Y4AVM4PEEPY13CF39XPF",
+      "variantId": "variant_01KE74Y5B8V5V8ZKFX4SPEMYXG",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-sublimation",
+      "productId": "prod_01KE74Y4AVM4PEEPY13CF39XPF",
+      "variantId": "variant_01KE74Y5B2VCCV8M1HD8VN4C7T",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-sublimation",
+      "productId": "prod_01KE74Y4AVM4PEEPY13CF39XPF",
+      "variantId": "variant_01KE74Y5B445E7BWS0ZJPGR0RX",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-silver-trim-tumbler",
+      "productId": "prod_01KE74Y4AVM6MR9R459KC0ET7Y",
+      "variantId": "variant_01KE74Y5AQ90ZYDXXNJ2GA27T5",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-silver-trim-tumbler",
+      "productId": "prod_01KE74Y4AVM6MR9R459KC0ET7Y",
+      "variantId": "variant_01KE74Y5AXV5BHRQF3WJ6RGX5J",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-silver-trim-tumbler",
+      "productId": "prod_01KE74Y4AVM6MR9R459KC0ET7Y",
+      "variantId": "variant_01KE74Y5AX3JY3C8TB64G1ZAE8",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-silver-trim-tumbler",
+      "productId": "prod_01KE74Y4AVM6MR9R459KC0ET7Y",
+      "variantId": "variant_01KE74Y5AX5P7T3ADE001CMN0G",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-silver-trim-tumbler",
+      "productId": "prod_01KE74Y4AVM6MR9R459KC0ET7Y",
+      "variantId": "variant_01KE74Y5APCGDTB6YQXZCZSHAT",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-kids-water-bottle",
+      "productId": "prod_01KE74Y4AVV725392ZRCTTA24Q",
+      "variantId": "variant_01KE74Y5A89DH6F9TEKTBP7JF3",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-kids-water-bottle",
+      "productId": "prod_01KE74Y4AVV725392ZRCTTA24Q",
+      "variantId": "variant_01KE74Y5A8JB9QPQN7F7Q91YW6",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-kids-water-bottle",
+      "productId": "prod_01KE74Y4AVV725392ZRCTTA24Q",
+      "variantId": "variant_01KE74Y5AFEZDJT99BY88TXT4Z",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-kids-water-bottle",
+      "productId": "prod_01KE74Y4AVV725392ZRCTTA24Q",
+      "variantId": "variant_01KE74Y5A7HBQGCQ94VCSAACBC",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-kids-water-bottle",
+      "productId": "prod_01KE74Y4AVV725392ZRCTTA24Q",
+      "variantId": "variant_01KE74Y5A9MH1ZGKVNN4WAS56G",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-water-bottle-tumbler",
+      "productId": "prod_01KE74Y4AWNZN0R8G402A9Y02B",
+      "variantId": "variant_01KE74Y5BQB7YTFSSFC7Z9063K",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-water-bottle-tumbler",
+      "productId": "prod_01KE74Y4AWNZN0R8G402A9Y02B",
+      "variantId": "variant_01KE74Y5BQXEWWVVFW3EVWMAJB",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-water-bottle-tumbler",
+      "productId": "prod_01KE74Y4AWNZN0R8G402A9Y02B",
+      "variantId": "variant_01KE74Y5BWMC5YRFY1H61C6FVZ",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-water-bottle-tumbler",
+      "productId": "prod_01KE74Y4AWNZN0R8G402A9Y02B",
+      "variantId": "variant_01KE74Y5BWHNRTKC7YW0TKF41J",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-water-bottle-tumbler",
+      "productId": "prod_01KE74Y4AWNZN0R8G402A9Y02B",
+      "variantId": "variant_01KE74Y5BYFF4D27YP2ADGRNXF",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-water-bottle-tumbler",
+      "productId": "prod_01KE74Y4AWNZN0R8G402A9Y02B",
+      "variantId": "variant_01KE74Y5BXPGTGZH49ASA79N4G",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-water-bottle-tumbler",
+      "productId": "prod_01KE74Y4AWNZN0R8G402A9Y02B",
+      "variantId": "variant_01KE74Y5BX82CQH0W5BMWH7WT7",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-water-bottle-tumbler",
+      "productId": "prod_01KE74Y4AWNZN0R8G402A9Y02B",
+      "variantId": "variant_01KE74Y5C263Q5QBFMX28TBQTP",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    },
+    {
+      "handle": "tumbler-water-bottle-tumbler",
+      "productId": "prod_01KE74Y4AWNZN0R8G402A9Y02B",
+      "variantId": "variant_01KE74Y5C3VRRX60ZQEG7PJPQ5",
+      "priceOk": true,
+      "shippingOk": true,
+      "ok": true,
+      "error": null
+    }
+  ]
+}

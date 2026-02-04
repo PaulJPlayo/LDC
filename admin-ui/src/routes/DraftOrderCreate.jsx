@@ -843,7 +843,7 @@ const DraftOrderCreate = () => {
               ) : null}
             </div>
 
-            <form className="rounded-2xl bg-white/70 p-4" onSubmit={handleAddCustomItem}>
+            <div className="rounded-2xl bg-white/70 p-4">
               <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
                 Add custom item
               </div>
@@ -879,11 +879,11 @@ const DraftOrderCreate = () => {
                     placeholder="Qty"
                   />
                 </div>
-                <button className="ldc-button-secondary" type="submit">
+                <button className="ldc-button-secondary" type="button" onClick={handleAddCustomItem}>
                   Add custom item
                 </button>
               </div>
-            </form>
+            </div>
           </div>
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-ldc-ink/70">
