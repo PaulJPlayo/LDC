@@ -266,6 +266,7 @@ const StorefrontLayout = () => {
       metadata: Object.keys(nextMetadata).length ? nextMetadata : null
     };
     try {
+      console.info('[StorefrontLayout] Saving metadata payload.', productId, payload.metadata);
       const response = await request(`/admin/products/${productId}`, {
         method: 'POST',
         body: payload
@@ -275,11 +276,11 @@ const StorefrontLayout = () => {
         setProducts((prev) =>
           prev.map((item) => (item.id === productId ? { ...item, metadata: payload.metadata } : item))
         );
-        console.info('[StorefrontLayout] Metadata saved (fallback).', productId);
+        console.info('[StorefrontLayout] Metadata saved (fallback).', productId, payload.metadata);
         return;
       }
       setProducts((prev) => prev.map((item) => (item.id === productId ? updated : item)));
-      console.info('[StorefrontLayout] Metadata saved.', productId);
+      console.info('[StorefrontLayout] Metadata saved.', productId, updated?.metadata || payload.metadata);
     } catch (err) {
       console.warn('[StorefrontLayout] Metadata save failed.', productId, err);
       throw err;
