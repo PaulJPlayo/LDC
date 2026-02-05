@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import PageHeader from '../components/PageHeader.jsx';
 import { formatApiError, getList, request } from '../lib/api.js';
 import { STOREFRONT_SECTIONS } from '../data/storefrontSections.js';
@@ -101,6 +101,30 @@ const getStorefrontOrderValue = (product, sectionKey) => {
   return null;
 };
 
+const setStorefrontOrder = (metadata, sectionKey, value) => {
+  const next = { ...metadata };
+  const current = normalizeMetadata(next.storefront_order);
+  if (current && typeof current === 'object' && !Array.isArray(current)) {
+    next.storefront_order = { ...current, [sectionKey]: value };
+    return next;
+  }
+  next.storefront_order = value;
+  return next;
+};
+
+const removeStorefrontOrder = (metadata, sectionKey) => {
+  const next = { ...metadata };
+  const current = normalizeMetadata(next.storefront_order);
+  if (current && typeof current === 'object' && !Array.isArray(current)) {
+    const cleaned = { ...current };
+    delete cleaned[sectionKey];
+    next.storefront_order = Object.keys(cleaned).length ? cleaned : null;
+    return next;
+  }
+  next.storefront_order = null;
+  return next;
+};
+
 const getProductTags = (product) => {
   const tags = Array.isArray(product?.tags) ? product.tags : [];
   return tags
@@ -161,6 +185,7 @@ const StorefrontLayout = () => {
   const [actionState, setActionState] = useState({ savingId: null, error: '' });
   const [sectionSearch, setSectionSearch] = useState({});
   const [dragState, setDragState] = useState({ sectionKey: '', productId: '' });
+  const savingSectionsRef = useRef(new Set());
 
   const productById = useMemo(() => {
     const map = new Map();
@@ -240,18 +265,25 @@ const StorefrontLayout = () => {
     const payload = {
       metadata: Object.keys(nextMetadata).length ? nextMetadata : null
     };
-    const response = await request(`/admin/products/${productId}`, {
-      method: 'POST',
-      body: payload
-    });
-    const updated = response?.product || response?.data?.product || response?.products?.[0] || null;
-    if (!updated) {
-      setProducts((prev) =>
-        prev.map((item) => (item.id === productId ? { ...item, metadata: payload.metadata } : item))
-      );
-      return;
+    try {
+      const response = await request(`/admin/products/${productId}`, {
+        method: 'POST',
+        body: payload
+      });
+      const updated = response?.product || response?.data?.product || response?.products?.[0] || null;
+      if (!updated) {
+        setProducts((prev) =>
+          prev.map((item) => (item.id === productId ? { ...item, metadata: payload.metadata } : item))
+        );
+        console.info('[StorefrontLayout] Metadata saved (fallback).', productId);
+        return;
+      }
+      setProducts((prev) => prev.map((item) => (item.id === productId ? updated : item)));
+      console.info('[StorefrontLayout] Metadata saved.', productId);
+    } catch (err) {
+      console.warn('[StorefrontLayout] Metadata save failed.', productId, err);
+      throw err;
     }
-    setProducts((prev) => prev.map((item) => (item.id === productId ? updated : item)));
   };
 
   const handleMove = (sectionKey, index, direction) => {
@@ -300,6 +332,9 @@ const StorefrontLayout = () => {
   const handleSaveOrder = async (sectionKey) => {
     const order = sectionOrder[sectionKey] || [];
     if (!order.length) return;
+    if (sectionSaving[sectionKey]) return;
+    if (savingSectionsRef.current.has(sectionKey)) return;
+    savingSectionsRef.current.add(sectionKey);
     setSectionSaving((prev) => ({ ...prev, [sectionKey]: true }));
     setActionState({ savingId: null, error: '' });
     try {
@@ -310,18 +345,17 @@ const StorefrontLayout = () => {
         const nextValue = index + 1;
         if (existing === nextValue) return null;
         return updateProductMetadata(productId, (metadata) => {
-          const next = { ...metadata };
-          const storefrontOrder = normalizeMetadata(next.storefront_order);
-          const nextOrder = { ...storefrontOrder, [sectionKey]: nextValue };
-          next.storefront_order = nextOrder;
-          return next;
+          return setStorefrontOrder(metadata, sectionKey, nextValue);
         });
       });
       await Promise.all(updates.filter(Boolean));
+      console.info('[StorefrontLayout] Order saved.', sectionKey);
     } catch (err) {
+      console.warn('[StorefrontLayout] Order save failed.', sectionKey, err);
       setActionState({ savingId: null, error: formatApiError(err, 'Unable to save order.') });
     } finally {
       setSectionSaving((prev) => ({ ...prev, [sectionKey]: false }));
+      savingSectionsRef.current.delete(sectionKey);
     }
   };
 
@@ -329,7 +363,7 @@ const StorefrontLayout = () => {
     setActionState({ savingId: productId, error: '' });
     try {
       await updateProductMetadata(productId, (metadata) => {
-        const next = { ...metadata };
+        let next = { ...metadata };
         const sections = parseStorefrontSections(next.storefront_sections);
         if (!sections.includes(sectionKey)) sections.push(sectionKey);
         next.storefront_sections = sections;
@@ -339,6 +373,8 @@ const StorefrontLayout = () => {
           delete cleaned[sectionKey];
           next.storefront_hidden = Object.keys(cleaned).length ? cleaned : undefined;
         }
+        const nextOrderValue = (sectionOrder[sectionKey] || []).length + 1;
+        next = setStorefrontOrder(next, sectionKey, nextOrderValue);
         return next;
       });
       setSectionOrder((prev) => {
@@ -346,7 +382,9 @@ const StorefrontLayout = () => {
         if (!list.includes(productId)) list.push(productId);
         return { ...prev, [sectionKey]: list };
       });
+      console.info('[StorefrontLayout] Added product to section.', sectionKey, productId);
     } catch (err) {
+      console.warn('[StorefrontLayout] Add product failed.', sectionKey, productId, err);
       setActionState({ savingId: null, error: formatApiError(err, 'Unable to add product.') });
     } finally {
       setActionState((prev) => ({ ...prev, savingId: null }));
@@ -357,7 +395,7 @@ const StorefrontLayout = () => {
     setActionState({ savingId: productId, error: '' });
     try {
       await updateProductMetadata(productId, (metadata) => {
-        const next = { ...metadata };
+        let next = { ...metadata };
         const sections = parseStorefrontSections(next.storefront_sections).filter(
           (key) => key !== sectionKey
         );
@@ -366,13 +404,16 @@ const StorefrontLayout = () => {
         } else {
           delete next.storefront_sections;
         }
+        next = removeStorefrontOrder(next, sectionKey);
         return next;
       });
       setSectionOrder((prev) => {
         const list = (prev[sectionKey] || []).filter((id) => id !== productId);
         return { ...prev, [sectionKey]: list };
       });
+      console.info('[StorefrontLayout] Removed product from section.', sectionKey, productId);
     } catch (err) {
+      console.warn('[StorefrontLayout] Remove product failed.', sectionKey, productId, err);
       setActionState({ savingId: null, error: formatApiError(err, 'Unable to remove product.') });
     } finally {
       setActionState((prev) => ({ ...prev, savingId: null }));
@@ -403,7 +444,9 @@ const StorefrontLayout = () => {
           return { ...prev, [sectionKey]: list };
         });
       }
+      console.info('[StorefrontLayout] Visibility updated.', sectionKey, productId, hide);
     } catch (err) {
+      console.warn('[StorefrontLayout] Visibility update failed.', sectionKey, productId, err);
       setActionState({ savingId: null, error: formatApiError(err, 'Unable to update visibility.') });
     } finally {
       setActionState((prev) => ({ ...prev, savingId: null }));
@@ -460,7 +503,7 @@ const StorefrontLayout = () => {
                   <button
                     className="ldc-button-secondary"
                     onClick={() => handleSaveOrder(section.key)}
-                    disabled={sectionSaving[section.key]}
+                    disabled={sectionSaving[section.key] || Boolean(dragState.productId)}
                   >
                     {sectionSaving[section.key] ? 'Saving order...' : 'Save order'}
                   </button>
