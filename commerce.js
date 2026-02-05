@@ -439,6 +439,19 @@
     return params;
   };
 
+  const buildMetadataProductsParams = ({ limit, offset, regionId }) => {
+    const params = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset),
+      fields: '+id,+title,+handle,+metadata,+thumbnail,+images,+variants',
+      expand: productExpand
+    });
+    if (regionId) {
+      params.set('region_id', regionId);
+    }
+    return params;
+  };
+
   const buildMinimalProductsParams = ({ limit, offset, regionId }) => {
     const params = new URLSearchParams({
       limit: String(limit),
@@ -450,32 +463,32 @@
     return params;
   };
 
-  const requestStoreProductsPage = async (params, fallbackParams) => {
-    try {
-      const payload = await request(`/store/products?${params.toString()}`);
-      if (debugEnabled) {
-        console.debug('[commerce] Products page fetched.', params.toString());
-      }
-      return payload;
-    } catch (error) {
-      if (fallbackParams) {
-        try {
-          const payload = await request(`/store/products?${fallbackParams.toString()}`);
-          if (debugEnabled) {
-            console.debug(
-              '[commerce] Products page fetched with fallback params.',
-              fallbackParams.toString()
-            );
-          }
-          return payload;
-        } catch (innerError) {
-          console.warn('[commerce] Unable to fetch products:', innerError);
-          return null;
+  const requestStoreProductsPage = async (paramsList) => {
+    for (let index = 0; index < paramsList.length; index += 1) {
+      const params = paramsList[index];
+      if (!params) continue;
+      try {
+        const payload = await request(`/store/products?${params.toString()}`);
+        if (debugEnabled) {
+          console.debug(
+            '[commerce] Products page fetched.',
+            params.toString(),
+            `attempt=${index + 1}`
+          );
+        }
+        return payload;
+      } catch (error) {
+        if (debugEnabled) {
+          console.debug(
+            '[commerce] Products page fetch failed.',
+            params.toString(),
+            error
+          );
         }
       }
-      console.warn('[commerce] Unable to fetch products:', error);
-      return null;
     }
+    console.warn('[commerce] Unable to fetch products.');
+    return null;
   };
 
   const fetchStoreProducts = async () => {
@@ -487,8 +500,9 @@
 
     while (hasMore) {
       const params = buildStoreProductsParams({ limit, offset, regionId });
+      const metadataParams = buildMetadataProductsParams({ limit, offset, regionId });
       const fallbackParams = buildMinimalProductsParams({ limit, offset, regionId });
-      const payload = await requestStoreProductsPage(params, fallbackParams);
+      const payload = await requestStoreProductsPage([params, metadataParams, fallbackParams]);
       if (!payload) return results;
 
       const products = payload?.products || payload?.data || [];
