@@ -206,7 +206,15 @@
 
   const getStorefrontSections = product => {
     const metadata = normalizeMetadata(product?.metadata);
-    return parseStorefrontList(metadata?.storefront_sections);
+    const raw = metadata?.storefront_sections;
+    const parsed = parseStorefrontList(raw);
+    console.info(
+      '[debug-section-match]',
+      product?.id || product?.handle || product?.title,
+      raw,
+      parsed
+    );
+    return parsed;
   };
 
   const isStorefrontHidden = (product, sectionKey) => {
