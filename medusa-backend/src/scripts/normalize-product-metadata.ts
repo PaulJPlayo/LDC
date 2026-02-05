@@ -17,6 +17,9 @@ type NormalizeResult<T> = {
 
 const ensureString = (value: unknown) => String(value ?? "").trim();
 
+const normalizeSectionKey = (value: unknown) =>
+  ensureString(value).replace(/^page-/i, "");
+
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
@@ -33,7 +36,7 @@ const dedupe = (items: string[]) => {
 
 const normalizeArray = (value: unknown[]): NormalizeResult<string[]> => {
   const raw = value.map(ensureString).filter(Boolean);
-  const normalized = dedupe(raw);
+  const normalized = dedupe(raw.map(normalizeSectionKey).filter(Boolean));
   const changed = JSON.stringify(raw) !== JSON.stringify(normalized);
   return {
     value: normalized,
@@ -62,7 +65,9 @@ const normalizeSections = (input: unknown): NormalizeResult<string[]> => {
         return normalizeArray(parsed);
       }
       if (isPlainObject(parsed)) {
-        const keys = Object.keys(parsed).map(ensureString).filter(Boolean);
+        const keys = Object.keys(parsed)
+          .map(normalizeSectionKey)
+          .filter(Boolean);
         return {
           value: dedupe(keys),
           changed: true,
@@ -74,7 +79,7 @@ const normalizeSections = (input: unknown): NormalizeResult<string[]> => {
     }
     const list = trimmed
       .split(",")
-      .map(ensureString)
+      .map(normalizeSectionKey)
       .filter(Boolean);
     return {
       value: dedupe(list),
@@ -84,7 +89,9 @@ const normalizeSections = (input: unknown): NormalizeResult<string[]> => {
   }
 
   if (isPlainObject(input)) {
-    const keys = Object.keys(input).map(ensureString).filter(Boolean);
+    const keys = Object.keys(input)
+      .map(normalizeSectionKey)
+      .filter(Boolean);
     return {
       value: dedupe(keys),
       changed: true,
@@ -95,9 +102,11 @@ const normalizeSections = (input: unknown): NormalizeResult<string[]> => {
   return { value: [], changed: true, reason: "invalid_sections" };
 };
 
-const normalizeOrder = (input: unknown): NormalizeResult<number | null> => {
+const normalizeOrder = (
+  input: unknown
+): NormalizeResult<number | Record<string, number> | null> => {
   if (input === null || input === undefined) {
-    return { value: null, changed: true, reason: "missing_order" };
+    return { value: null, changed: false, reason: "missing_order" };
   }
 
   if (typeof input === "number") {
@@ -117,6 +126,57 @@ const normalizeOrder = (input: unknown): NormalizeResult<number | null> => {
       return { value: parsed, changed: true, reason: "normalized_string_order" };
     }
     return { value: null, changed: true, reason: "invalid_order" };
+  }
+
+  if (isPlainObject(input)) {
+    const normalized: Record<string, number> = {};
+    let changed = false;
+    let hasEntries = false;
+
+    for (const [rawKey, rawValue] of Object.entries(input)) {
+      const isDefault = rawKey === "default";
+      const key = isDefault ? "default" : normalizeSectionKey(rawKey);
+      if (!key) {
+        changed = true;
+        continue;
+      }
+      const numericValue =
+        typeof rawValue === "number"
+          ? rawValue
+          : typeof rawValue === "string"
+            ? Number(rawValue.trim())
+            : NaN;
+      if (!Number.isFinite(numericValue)) {
+        changed = true;
+        continue;
+      }
+      hasEntries = true;
+      const existing = normalized[key];
+      if (existing == null) {
+        normalized[key] = numericValue;
+        if (key !== rawKey || typeof rawValue !== "number") {
+          changed = true;
+        }
+        continue;
+      }
+      const nextValue = Math.min(existing, numericValue);
+      if (nextValue !== existing) {
+        normalized[key] = nextValue;
+        changed = true;
+      } else if (key !== rawKey) {
+        changed = true;
+      }
+    }
+
+    if (!hasEntries) {
+      return { value: null, changed: true, reason: "empty_order_map" };
+    }
+
+    return {
+      value: normalized,
+      changed,
+      reason: changed ? "normalized_order_map" : "order_ok",
+    };
   }
 
   return { value: null, changed: true, reason: "invalid_order" };
@@ -153,6 +213,8 @@ export default async function normalizeProductMetadata({ container }: ExecArgs) 
     empty_string_order: 0,
     normalized_string_order: 0,
     invalid_order: 0,
+    normalized_order_map: 0,
+    empty_order_map: 0,
   };
 
   const updates: Array<{ id: string; metadata: Record<string, unknown> }> = [];
