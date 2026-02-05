@@ -10,6 +10,8 @@ const slugify = (value) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
+const normalizeSectionKey = (key) => String(key || '').replace(/^page-/, '');
+
 const normalizeMetadata = (metadata) => {
   if (!metadata) return {};
   if (typeof metadata === 'object') return metadata;
@@ -142,12 +144,13 @@ const getProductCollectionHandle = (product) => {
 };
 
 const productMatchesSection = (product, section) => {
+  const safeSectionKey = normalizeSectionKey(section.key);
   const metadata = normalizeMetadata(product?.metadata);
   const hiddenMap = parseStorefrontHidden(metadata?.storefront_hidden);
-  if (hiddenMap[section.key]) return false;
+  if (hiddenMap[safeSectionKey]) return false;
   const explicitSections = parseStorefrontSections(metadata?.storefront_sections);
   if (explicitSections.length) {
-    return explicitSections.includes(section.key);
+    return explicitSections.includes(safeSectionKey);
   }
   const filter = section?.filter || {};
   if (filter.collection) {
@@ -162,9 +165,10 @@ const productMatchesSection = (product, section) => {
 };
 
 const sortProductsForSection = (products, sectionKey) => {
+  const safeSectionKey = normalizeSectionKey(sectionKey);
   return [...products].sort((a, b) => {
-    const aOrder = getStorefrontOrderValue(a, sectionKey);
-    const bOrder = getStorefrontOrderValue(b, sectionKey);
+    const aOrder = getStorefrontOrderValue(a, safeSectionKey);
+    const bOrder = getStorefrontOrderValue(b, safeSectionKey);
     if (aOrder != null || bOrder != null) {
       if (aOrder == null) return 1;
       if (bOrder == null) return -1;
@@ -331,6 +335,7 @@ const StorefrontLayout = () => {
   };
 
   const handleSaveOrder = async (sectionKey) => {
+    const safeSectionKey = normalizeSectionKey(sectionKey);
     const order = sectionOrder[sectionKey] || [];
     if (!order.length) return;
     if (sectionSaving[sectionKey]) return;
@@ -342,17 +347,19 @@ const StorefrontLayout = () => {
       const updates = order.map((productId, index) => {
         const product = productById.get(productId);
         if (!product) return null;
-        const existing = getStorefrontOrderValue(product, sectionKey);
+        const existing = getStorefrontOrderValue(product, safeSectionKey);
         const nextValue = index + 1;
         if (existing === nextValue) return null;
         return updateProductMetadata(productId, (metadata) => {
-          return setStorefrontOrder(metadata, sectionKey, nextValue);
+          const next = setStorefrontOrder(metadata, safeSectionKey, nextValue);
+          console.info('[FixSectionKey] Final metadata:', safeSectionKey, next);
+          return next;
         });
       });
       await Promise.all(updates.filter(Boolean));
-      console.info('[StorefrontLayout] Order saved.', sectionKey);
+      console.info('[StorefrontLayout] Order saved.', safeSectionKey);
     } catch (err) {
-      console.warn('[StorefrontLayout] Order save failed.', sectionKey, err);
+      console.warn('[StorefrontLayout] Order save failed.', safeSectionKey, err);
       setActionState({ savingId: null, error: formatApiError(err, 'Unable to save order.') });
     } finally {
       setSectionSaving((prev) => ({ ...prev, [sectionKey]: false }));
@@ -361,21 +368,23 @@ const StorefrontLayout = () => {
   };
 
   const handleAddToSection = async (sectionKey, productId) => {
+    const safeSectionKey = normalizeSectionKey(sectionKey);
     setActionState({ savingId: productId, error: '' });
     try {
       await updateProductMetadata(productId, (metadata) => {
         let next = { ...metadata };
         const sections = parseStorefrontSections(next.storefront_sections);
-        if (!sections.includes(sectionKey)) sections.push(sectionKey);
+        if (!sections.includes(safeSectionKey)) sections.push(safeSectionKey);
         next.storefront_sections = sections;
         const hiddenMap = parseStorefrontHidden(next.storefront_hidden);
-        if (hiddenMap[sectionKey]) {
+        if (hiddenMap[safeSectionKey]) {
           const cleaned = { ...hiddenMap };
-          delete cleaned[sectionKey];
+          delete cleaned[safeSectionKey];
           next.storefront_hidden = Object.keys(cleaned).length ? cleaned : undefined;
         }
         const nextOrderValue = (sectionOrder[sectionKey] || []).length + 1;
-        next = setStorefrontOrder(next, sectionKey, nextOrderValue);
+        next = setStorefrontOrder(next, safeSectionKey, nextOrderValue);
+        console.info('[FixSectionKey] Final metadata:', safeSectionKey, next);
         return next;
       });
       setSectionOrder((prev) => {
@@ -383,9 +392,9 @@ const StorefrontLayout = () => {
         if (!list.includes(productId)) list.push(productId);
         return { ...prev, [sectionKey]: list };
       });
-      console.info('[StorefrontLayout] Added product to section.', sectionKey, productId);
+      console.info('[StorefrontLayout] Added product to section.', safeSectionKey, productId);
     } catch (err) {
-      console.warn('[StorefrontLayout] Add product failed.', sectionKey, productId, err);
+      console.warn('[StorefrontLayout] Add product failed.', safeSectionKey, productId, err);
       setActionState({ savingId: null, error: formatApiError(err, 'Unable to add product.') });
     } finally {
       setActionState((prev) => ({ ...prev, savingId: null }));
@@ -393,28 +402,30 @@ const StorefrontLayout = () => {
   };
 
   const handleRemoveFromSection = async (sectionKey, productId) => {
+    const safeSectionKey = normalizeSectionKey(sectionKey);
     setActionState({ savingId: productId, error: '' });
     try {
       await updateProductMetadata(productId, (metadata) => {
         let next = { ...metadata };
         const sections = parseStorefrontSections(next.storefront_sections).filter(
-          (key) => key !== sectionKey
+          (key) => key !== safeSectionKey
         );
         if (sections.length) {
           next.storefront_sections = sections;
         } else {
           delete next.storefront_sections;
         }
-        next = removeStorefrontOrder(next, sectionKey);
+        next = removeStorefrontOrder(next, safeSectionKey);
+        console.info('[FixSectionKey] Final metadata:', safeSectionKey, next);
         return next;
       });
       setSectionOrder((prev) => {
         const list = (prev[sectionKey] || []).filter((id) => id !== productId);
         return { ...prev, [sectionKey]: list };
       });
-      console.info('[StorefrontLayout] Removed product from section.', sectionKey, productId);
+      console.info('[StorefrontLayout] Removed product from section.', safeSectionKey, productId);
     } catch (err) {
-      console.warn('[StorefrontLayout] Remove product failed.', sectionKey, productId, err);
+      console.warn('[StorefrontLayout] Remove product failed.', safeSectionKey, productId, err);
       setActionState({ savingId: null, error: formatApiError(err, 'Unable to remove product.') });
     } finally {
       setActionState((prev) => ({ ...prev, savingId: null }));
@@ -422,21 +433,23 @@ const StorefrontLayout = () => {
   };
 
   const handleToggleHidden = async (sectionKey, productId, hide) => {
+    const safeSectionKey = normalizeSectionKey(sectionKey);
     setActionState({ savingId: productId, error: '' });
     try {
       await updateProductMetadata(productId, (metadata) => {
         const next = { ...metadata };
         const hiddenMap = parseStorefrontHidden(next.storefront_hidden);
         if (hide) {
-          hiddenMap[sectionKey] = true;
+          hiddenMap[safeSectionKey] = true;
         } else {
-          delete hiddenMap[sectionKey];
+          delete hiddenMap[safeSectionKey];
         }
         if (Object.keys(hiddenMap).length) {
           next.storefront_hidden = hiddenMap;
         } else {
           delete next.storefront_hidden;
         }
+        console.info('[FixSectionKey] Final metadata:', safeSectionKey, next);
         return next;
       });
       if (hide) {
@@ -445,9 +458,9 @@ const StorefrontLayout = () => {
           return { ...prev, [sectionKey]: list };
         });
       }
-      console.info('[StorefrontLayout] Visibility updated.', sectionKey, productId, hide);
+      console.info('[StorefrontLayout] Visibility updated.', safeSectionKey, productId, hide);
     } catch (err) {
-      console.warn('[StorefrontLayout] Visibility update failed.', sectionKey, productId, err);
+      console.warn('[StorefrontLayout] Visibility update failed.', safeSectionKey, productId, err);
       setActionState({ savingId: null, error: formatApiError(err, 'Unable to update visibility.') });
     } finally {
       setActionState((prev) => ({ ...prev, savingId: null }));
