@@ -189,6 +189,7 @@ const StorefrontLayout = () => {
   const [actionState, setActionState] = useState({ savingId: null, error: '' });
   const [sectionSearch, setSectionSearch] = useState({});
   const [dragState, setDragState] = useState({ sectionKey: '', productId: '' });
+  const [lastSavedMeta, setLastSavedMeta] = useState(null);
   const savingSectionsRef = useRef(new Set());
 
   const productById = useMemo(() => {
@@ -281,10 +282,32 @@ const StorefrontLayout = () => {
           prev.map((item) => (item.id === productId ? { ...item, metadata: payload.metadata } : item))
         );
         console.info('[StorefrontLayout] Metadata saved (fallback).', productId, payload.metadata);
+        setLastSavedMeta({
+          productId,
+          metadata: payload.metadata || {}
+        });
+        try {
+          const verify = await request(`/admin/products/${productId}`);
+          const live = verify?.product || verify?.data?.product || verify?.products?.[0] || null;
+          console.info('[StorefrontLayout] Live metadata verification.', productId, live?.metadata);
+        } catch (verifyError) {
+          console.warn('[StorefrontLayout] Live metadata verification failed.', productId, verifyError);
+        }
         return;
       }
       setProducts((prev) => prev.map((item) => (item.id === productId ? updated : item)));
       console.info('[StorefrontLayout] Metadata saved.', productId, updated?.metadata || payload.metadata);
+      setLastSavedMeta({
+        productId,
+        metadata: updated?.metadata || payload.metadata || {}
+      });
+      try {
+        const verify = await request(`/admin/products/${productId}`);
+        const live = verify?.product || verify?.data?.product || verify?.products?.[0] || null;
+        console.info('[StorefrontLayout] Live metadata verification.', productId, live?.metadata);
+      } catch (verifyError) {
+        console.warn('[StorefrontLayout] Live metadata verification failed.', productId, verifyError);
+      }
     } catch (err) {
       console.warn('[StorefrontLayout] Metadata save failed.', productId, err);
       throw err;
@@ -496,6 +519,26 @@ const StorefrontLayout = () => {
         <div className="ldc-card p-6 text-sm text-rose-600">{error}</div>
       ) : (
         <div className="space-y-6">
+          {lastSavedMeta ? (
+            <div className="ldc-card p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-ldc-ink/50">
+                Last Metadata Save
+              </div>
+              <div className="mt-2 text-xs text-ldc-ink/60">
+                Product ID: {lastSavedMeta.productId}
+              </div>
+              <pre className="mt-3 whitespace-pre-wrap break-words rounded-2xl border border-white/60 bg-white/70 p-3 text-xs text-ldc-ink">
+                {JSON.stringify(
+                  {
+                    storefront_sections: lastSavedMeta.metadata?.storefront_sections ?? null,
+                    storefront_order: lastSavedMeta.metadata?.storefront_order ?? null
+                  },
+                  null,
+                  2
+                )}
+              </pre>
+            </div>
+          ) : null}
           {actionState.error ? (
             <div className="ldc-card p-4 text-sm text-rose-600">{actionState.error}</div>
           ) : null}
