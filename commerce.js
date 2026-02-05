@@ -807,7 +807,7 @@
     };
   };
 
-  const filterProductsForSection = (products, filters) => {
+  const filterProductsForSection = (products, filters, enforceMetadata) => {
     if (!products?.length) return [];
     const { collectionHandles, tagHandles } = filters;
     return products.filter(product => {
@@ -816,6 +816,9 @@
         return false;
       }
       const explicitSections = getStorefrontSections(product);
+      if (enforceMetadata && sectionKey) {
+        return explicitSections.includes(sectionKey);
+      }
       if (tagHandles.length && sectionKey) {
         if (!explicitSections.length) return false;
         return explicitSections.includes(sectionKey);
@@ -869,6 +872,15 @@
       container.classList.remove('is-loaded');
       const filters = getSectionFilters(container);
       const products = await loadStoreProducts();
+      const enforceMetadata = Boolean(filters.sectionKey) && (
+        container.hasAttribute('data-medusa-tag') ||
+        container.hasAttribute('data-use-metadata')
+      );
+      console.info(
+        '[commerce] Grid products loaded.',
+        filters.sectionKey,
+        `count=${Array.isArray(products) ? products.length : 0}`
+      );
       if (debugEnabled) {
         console.debug(
           '[commerce] Grid products loaded.',
@@ -879,14 +891,19 @@
       if (!products.length) {
         container.querySelectorAll('.product-card').forEach(card => card.remove());
         if (filters.sectionKey) {
-          console.warn(
+          console.info(
             '[commerce] No products fetched for section.',
             filters.sectionKey
           );
         }
         return;
       }
-      let sectionProducts = filterProductsForSection(products, filters);
+      let sectionProducts = filterProductsForSection(products, filters, enforceMetadata);
+      console.info(
+        '[commerce] Grid products filtered.',
+        filters.sectionKey,
+        `count=${sectionProducts.length}`
+      );
       if (debugEnabled) {
         console.debug(
           '[commerce] Grid products filtered.',
@@ -901,7 +918,7 @@
       if (!sectionProducts.length) {
         container.querySelectorAll('.product-card').forEach(card => card.remove());
         if (filters.sectionKey) {
-          console.warn(
+          console.info(
             '[commerce] No products to render after filtering.',
             filters.sectionKey
           );
@@ -917,6 +934,11 @@
         const card = buildDynamicCard(template, product, filters.sectionKey);
         fragment.appendChild(card);
       });
+      console.info(
+        '[commerce] Grid products rendered.',
+        filters.sectionKey,
+        `count=${sectionProducts.length}`
+      );
       if (debugEnabled) {
         console.debug(
           '[commerce] Grid products injected.',
