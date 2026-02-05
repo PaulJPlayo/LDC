@@ -12,7 +12,9 @@
     return;
   }
   const publishableKey =
-    body.dataset.medusaPublishableKey || window.LDC_MEDUSA_PUBLISHABLE_KEY || '';
+    body.dataset.medusaPublishableKey ||
+    window.LDC_MEDUSA_PUBLISHABLE_KEY ||
+    'pk_427f7900e23e30a0e18feaf0604aa9caaa9d0cb21571889081d2cb93fb13ffb0';
   const debugEnabled = body.dataset.medusaDebug === 'true' || window.LDC_MEDUSA_DEBUG === true;
 
   const CART_ID_KEY = 'ldc:medusa:cart_id';
@@ -28,6 +30,9 @@
 
   const request = async (path, options = {}) => {
     const url = `${backendUrl}${path}`;
+    if (path.startsWith('/store/')) {
+      console.info('[verify-publishable-key] Attaching publishable key.', publishableKey);
+    }
     const response = await fetch(url, {
       method: options.method || 'GET',
       headers: {
