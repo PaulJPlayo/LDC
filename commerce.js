@@ -136,25 +136,38 @@
     return {};
   };
 
+  const normalizeSectionKey = key =>
+    slugify(String(key || '').replace(/^page-/, ''));
+
   const parseStorefrontList = raw => {
     if (!raw) return [];
-    if (Array.isArray(raw)) return raw.map(entry => String(entry)).filter(Boolean);
+    if (Array.isArray(raw)) {
+      return raw.map(entry => normalizeSectionKey(entry)).filter(Boolean);
+    }
     if (typeof raw === 'string') {
       try {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return parsed.map(entry => String(entry)).filter(Boolean);
+        if (Array.isArray(parsed)) {
+          return parsed.map(entry => normalizeSectionKey(entry)).filter(Boolean);
+        }
         if (parsed && typeof parsed === 'object') {
-          return Object.keys(parsed).filter(key => parsed[key]).map(key => String(key));
+          return Object.keys(parsed)
+            .filter(key => parsed[key])
+            .map(key => normalizeSectionKey(key))
+            .filter(Boolean);
         }
       } catch (error) {
         return raw
           .split(',')
-          .map(entry => entry.trim())
+          .map(entry => normalizeSectionKey(entry))
           .filter(Boolean);
       }
     }
     if (raw && typeof raw === 'object') {
-      return Object.keys(raw).filter(key => raw[key]).map(key => String(key));
+      return Object.keys(raw)
+        .filter(key => raw[key])
+        .map(key => normalizeSectionKey(key))
+        .filter(Boolean);
     }
     return [];
   };
@@ -811,11 +824,17 @@
     if (!products?.length) return [];
     const { collectionHandles, tagHandles } = filters;
     return products.filter(product => {
-      const sectionKey = filters.sectionKey;
+      const sectionKey = normalizeSectionKey(filters.sectionKey);
       if (sectionKey && isStorefrontHidden(product, sectionKey)) {
         return false;
       }
       const explicitSections = getStorefrontSections(product);
+      console.info(
+        '[fix-render] Filter input:',
+        sectionKey,
+        explicitSections,
+        product?.id || product?.handle || product?.title
+      );
       if (enforceMetadata && sectionKey) {
         return explicitSections.includes(sectionKey);
       }
@@ -871,6 +890,7 @@
       container.classList.add('product-grid');
       container.classList.remove('is-loaded');
       const filters = getSectionFilters(container);
+      const normalizedSectionKey = normalizeSectionKey(filters.sectionKey);
       const products = await loadStoreProducts();
       const enforceMetadata = Boolean(filters.sectionKey) && (
         container.hasAttribute('data-medusa-tag') ||
@@ -878,7 +898,7 @@
       );
       console.info(
         '[commerce] Grid products loaded.',
-        filters.sectionKey,
+        normalizedSectionKey,
         `count=${Array.isArray(products) ? products.length : 0}`
       );
       if (debugEnabled) {
@@ -893,7 +913,7 @@
         if (filters.sectionKey) {
           console.info(
             '[commerce] No products fetched for section.',
-            filters.sectionKey
+            normalizedSectionKey
           );
         }
         return;
@@ -901,7 +921,7 @@
       let sectionProducts = filterProductsForSection(products, filters, enforceMetadata);
       console.info(
         '[commerce] Grid products filtered.',
-        filters.sectionKey,
+        normalizedSectionKey,
         `count=${sectionProducts.length}`
       );
       if (debugEnabled) {
@@ -920,7 +940,7 @@
         if (filters.sectionKey) {
           console.info(
             '[commerce] No products to render after filtering.',
-            filters.sectionKey
+            normalizedSectionKey
           );
         }
         return;
@@ -935,8 +955,13 @@
         fragment.appendChild(card);
       });
       console.info(
+        '[fix-render] Final rendered products:',
+        normalizedSectionKey,
+        sectionProducts.map(product => product?.title || product?.handle || product?.id)
+      );
+      console.info(
         '[commerce] Grid products rendered.',
-        filters.sectionKey,
+        normalizedSectionKey,
         `count=${sectionProducts.length}`
       );
       if (debugEnabled) {
