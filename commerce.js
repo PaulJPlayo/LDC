@@ -427,30 +427,35 @@
     }
   };
 
-  const productFields =
-    '+variants,+variants.variant_rank,+variants.calculated_price,+variants.prices,+variants.metadata,+variants.thumbnail,+variants.options,+thumbnail,+images,+description,+subtitle,+collection,+tags,+metadata,+created_at';
-  const productExpand = 'variants,images';
+  const productFields = '+metadata';
+  const productExpand = '';
 
   const buildStoreProductsParams = ({ limit, offset, regionId }) => {
     const params = new URLSearchParams({
       limit: String(limit),
       offset: String(offset),
-      fields: productFields,
-      expand: productExpand
     });
+    if (productFields) {
+      params.set('fields', productFields);
+    }
+    if (productExpand) {
+      params.set('expand', productExpand);
+    }
     if (regionId) {
       params.set('region_id', regionId);
     }
     return params;
   };
 
-  const buildMetadataProductsParams = ({ limit, offset, regionId }) => {
+  const buildMetadataProductsParams = ({ limit, offset, regionId, includePlus }) => {
     const params = new URLSearchParams({
       limit: String(limit),
       offset: String(offset),
-      fields: '+id,+title,+handle,+metadata,+thumbnail,+images,+variants',
-      expand: productExpand
     });
+    const metadataFields = includePlus
+      ? '+id,+title,+handle,+metadata'
+      : 'id,title,handle,metadata';
+    params.set('fields', metadataFields);
     if (regionId) {
       params.set('region_id', regionId);
     }
@@ -505,9 +510,20 @@
 
     while (hasMore) {
       const params = buildStoreProductsParams({ limit, offset, regionId });
-      const metadataParams = buildMetadataProductsParams({ limit, offset, regionId });
+      const metadataParams = buildMetadataProductsParams({ limit, offset, regionId, includePlus: true });
+      const metadataFallbackParams = buildMetadataProductsParams({
+        limit,
+        offset,
+        regionId,
+        includePlus: false
+      });
       const fallbackParams = buildMinimalProductsParams({ limit, offset, regionId });
-      const payload = await requestStoreProductsPage([params, metadataParams, fallbackParams]);
+      const payload = await requestStoreProductsPage([
+        params,
+        metadataParams,
+        metadataFallbackParams,
+        fallbackParams
+      ]);
       if (!payload) return results;
 
       const products = payload?.products || payload?.data || [];
