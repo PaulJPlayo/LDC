@@ -49,38 +49,6 @@ const parseStorefrontSections = (raw) => {
   return [];
 };
 
-const parseStorefrontHidden = (raw) => {
-  if (!raw) return {};
-  if (Array.isArray(raw)) {
-    return raw.reduce((acc, key) => {
-      if (key) acc[String(key)] = true;
-      return acc;
-    }, {});
-  }
-  if (typeof raw === 'string') {
-    try {
-      const parsed = JSON.parse(raw);
-      return parseStorefrontHidden(parsed);
-    } catch (err) {
-      return raw
-        .split(',')
-        .map((entry) => entry.trim())
-        .filter(Boolean)
-        .reduce((acc, key) => {
-          acc[key] = true;
-          return acc;
-        }, {});
-    }
-  }
-  if (raw && typeof raw === 'object') {
-    return Object.entries(raw).reduce((acc, [key, value]) => {
-      if (value) acc[String(key)] = true;
-      return acc;
-    }, {});
-  }
-  return {};
-};
-
 const getStorefrontOrderValue = (product, sectionKey) => {
   const metadata = normalizeMetadata(product?.metadata);
   let raw = metadata?.storefront_order;
@@ -146,8 +114,6 @@ const getProductCollectionHandle = (product) => {
 const productMatchesSection = (product, section) => {
   const safeSectionKey = normalizeSectionKey(section.key);
   const metadata = normalizeMetadata(product?.metadata);
-  const hiddenMap = parseStorefrontHidden(metadata?.storefront_hidden);
-  if (hiddenMap[safeSectionKey]) return false;
   const explicitSections = parseStorefrontSections(metadata?.storefront_sections);
   if (explicitSections.length) {
     return explicitSections.includes(safeSectionKey);
@@ -190,6 +156,7 @@ const StorefrontLayout = () => {
   const [sectionSearch, setSectionSearch] = useState({});
   const [dragState, setDragState] = useState({ sectionKey: '', productId: '' });
   const [lastSavedMeta, setLastSavedMeta] = useState(null);
+  const [pendingRemovals, setPendingRemovals] = useState({});
   const savingSectionsRef = useRef(new Set());
 
   const productById = useMemo(() => {
@@ -249,7 +216,10 @@ const StorefrontLayout = () => {
       const next = { ...prev };
       STOREFRONT_SECTIONS.forEach((section) => {
         const current = next[section.key] || [];
-        const ids = (sectionProducts[section.key] || []).map((product) => product.id);
+        const removed = new Set(pendingRemovals[section.key] || []);
+        const ids = (sectionProducts[section.key] || [])
+          .map((product) => product.id)
+          .filter((id) => !removed.has(id));
         if (!current.length) {
           next[section.key] = ids;
         } else {
@@ -260,7 +230,7 @@ const StorefrontLayout = () => {
       });
       return next;
     });
-  }, [sectionProducts]);
+  }, [pendingRemovals, sectionProducts]);
 
   const updateProductMetadata = async (productId, updater) => {
     const product = productById.get(productId);
@@ -360,14 +330,17 @@ const StorefrontLayout = () => {
   const handleSaveOrder = async (sectionKey) => {
     const safeSectionKey = normalizeSectionKey(sectionKey);
     const order = sectionOrder[sectionKey] || [];
-    if (!order.length) return;
+    const removals = pendingRemovals[sectionKey] || [];
+    if (!order.length && !removals.length) return;
     if (sectionSaving[sectionKey]) return;
     if (savingSectionsRef.current.has(sectionKey)) return;
     savingSectionsRef.current.add(sectionKey);
     setSectionSaving((prev) => ({ ...prev, [sectionKey]: true }));
     setActionState({ savingId: null, error: '' });
     try {
+      const removalSet = new Set(removals);
       const updates = order.map((productId, index) => {
+        if (removalSet.has(productId)) return null;
         const product = productById.get(productId);
         if (!product) return null;
         const existing = getStorefrontOrderValue(product, safeSectionKey);
@@ -379,7 +352,29 @@ const StorefrontLayout = () => {
           return next;
         });
       });
-      await Promise.all(updates.filter(Boolean));
+      const removalUpdates = removals.map((productId) =>
+        updateProductMetadata(productId, (metadata) => {
+          let next = { ...metadata };
+          const sections = parseStorefrontSections(next.storefront_sections).filter(
+            (key) => key !== safeSectionKey
+          );
+          if (sections.length) {
+            next.storefront_sections = sections;
+          } else {
+            delete next.storefront_sections;
+          }
+          next = removeStorefrontOrder(next, safeSectionKey);
+          console.info('[FixSectionKey] Final metadata:', safeSectionKey, next);
+          return next;
+        })
+      );
+      await Promise.all([...updates, ...removalUpdates].filter(Boolean));
+      setPendingRemovals((prev) => {
+        if (!prev[sectionKey]) return prev;
+        const next = { ...prev };
+        delete next[sectionKey];
+        return next;
+      });
       console.info('[StorefrontLayout] Order saved.', safeSectionKey);
     } catch (err) {
       console.warn('[StorefrontLayout] Order save failed.', safeSectionKey, err);
@@ -399,12 +394,6 @@ const StorefrontLayout = () => {
         const sections = parseStorefrontSections(next.storefront_sections);
         if (!sections.includes(safeSectionKey)) sections.push(safeSectionKey);
         next.storefront_sections = sections;
-        const hiddenMap = parseStorefrontHidden(next.storefront_hidden);
-        if (hiddenMap[safeSectionKey]) {
-          const cleaned = { ...hiddenMap };
-          delete cleaned[safeSectionKey];
-          next.storefront_hidden = Object.keys(cleaned).length ? cleaned : undefined;
-        }
         const nextOrderValue = (sectionOrder[sectionKey] || []).length + 1;
         next = setStorefrontOrder(next, safeSectionKey, nextOrderValue);
         console.info('[FixSectionKey] Final metadata:', safeSectionKey, next);
@@ -415,6 +404,17 @@ const StorefrontLayout = () => {
         if (!list.includes(productId)) list.push(productId);
         return { ...prev, [sectionKey]: list };
       });
+      setPendingRemovals((prev) => {
+        if (!prev[sectionKey]) return prev;
+        const next = { ...prev };
+        const remaining = prev[sectionKey].filter((id) => id !== productId);
+        if (remaining.length) {
+          next[sectionKey] = remaining;
+        } else {
+          delete next[sectionKey];
+        }
+        return next;
+      });
       console.info('[StorefrontLayout] Added product to section.', safeSectionKey, productId);
     } catch (err) {
       console.warn('[StorefrontLayout] Add product failed.', safeSectionKey, productId, err);
@@ -424,70 +424,20 @@ const StorefrontLayout = () => {
     }
   };
 
-  const handleRemoveFromSection = async (sectionKey, productId) => {
+  const handleRemoveFromSection = (sectionKey, productId) => {
     const safeSectionKey = normalizeSectionKey(sectionKey);
-    setActionState({ savingId: productId, error: '' });
-    try {
-      await updateProductMetadata(productId, (metadata) => {
-        let next = { ...metadata };
-        const sections = parseStorefrontSections(next.storefront_sections).filter(
-          (key) => key !== safeSectionKey
-        );
-        if (sections.length) {
-          next.storefront_sections = sections;
-        } else {
-          delete next.storefront_sections;
-        }
-        next = removeStorefrontOrder(next, safeSectionKey);
-        console.info('[FixSectionKey] Final metadata:', safeSectionKey, next);
-        return next;
-      });
-      setSectionOrder((prev) => {
-        const list = (prev[sectionKey] || []).filter((id) => id !== productId);
-        return { ...prev, [sectionKey]: list };
-      });
-      console.info('[StorefrontLayout] Removed product from section.', safeSectionKey, productId);
-    } catch (err) {
-      console.warn('[StorefrontLayout] Remove product failed.', safeSectionKey, productId, err);
-      setActionState({ savingId: null, error: formatApiError(err, 'Unable to remove product.') });
-    } finally {
-      setActionState((prev) => ({ ...prev, savingId: null }));
-    }
-  };
-
-  const handleToggleHidden = async (sectionKey, productId, hide) => {
-    const safeSectionKey = normalizeSectionKey(sectionKey);
-    setActionState({ savingId: productId, error: '' });
-    try {
-      await updateProductMetadata(productId, (metadata) => {
-        const next = { ...metadata };
-        const hiddenMap = parseStorefrontHidden(next.storefront_hidden);
-        if (hide) {
-          hiddenMap[safeSectionKey] = true;
-        } else {
-          delete hiddenMap[safeSectionKey];
-        }
-        if (Object.keys(hiddenMap).length) {
-          next.storefront_hidden = hiddenMap;
-        } else {
-          delete next.storefront_hidden;
-        }
-        console.info('[FixSectionKey] Final metadata:', safeSectionKey, next);
-        return next;
-      });
-      if (hide) {
-        setSectionOrder((prev) => {
-          const list = (prev[sectionKey] || []).filter((id) => id !== productId);
-          return { ...prev, [sectionKey]: list };
-        });
-      }
-      console.info('[StorefrontLayout] Visibility updated.', safeSectionKey, productId, hide);
-    } catch (err) {
-      console.warn('[StorefrontLayout] Visibility update failed.', safeSectionKey, productId, err);
-      setActionState({ savingId: null, error: formatApiError(err, 'Unable to update visibility.') });
-    } finally {
-      setActionState((prev) => ({ ...prev, savingId: null }));
-    }
+    setSectionOrder((prev) => {
+      const list = (prev[sectionKey] || []).filter((id) => id !== productId);
+      return { ...prev, [sectionKey]: list };
+    });
+    setPendingRemovals((prev) => {
+      const next = { ...prev };
+      const current = new Set(next[sectionKey] || []);
+      current.add(productId);
+      next[sectionKey] = Array.from(current);
+      return next;
+    });
+    console.info('[StorefrontLayout] Queued removal from section.', safeSectionKey, productId);
   };
 
   const getSectionSearchResults = (sectionKey) => {
@@ -510,7 +460,7 @@ const StorefrontLayout = () => {
       <PageHeader
         eyebrow="Storefront"
         title="Storefront Layout"
-        subtitle="Assign products, reorder tiles, and manage visibility for each page section."
+        subtitle="Assign products and reorder tiles for each page section."
       />
 
       {loading ? (
@@ -612,18 +562,17 @@ const StorefrontLayout = () => {
                       No products assigned yet. Add products above or use tags/collections to populate.
                     </p>
                   ) : (
-                    list.map((productId, index) => {
+                    list.map((productId) => {
                       const product = productById.get(productId);
                       if (!product) return null;
                       const metadata = normalizeMetadata(product.metadata);
                       const explicitSections = parseStorefrontSections(metadata?.storefront_sections);
-                      const isExplicit = explicitSections.includes(section.key);
-                      const hiddenMap = parseStorefrontHidden(metadata?.storefront_hidden);
-                      const isHidden = hiddenMap[section.key];
+                      const safeSectionKey = normalizeSectionKey(section.key);
+                      const isExplicit = explicitSections.includes(safeSectionKey);
                       return (
                         <div
                           key={productId}
-                          className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/60 bg-white/70 px-4 py-3 text-sm text-ldc-ink ${
+                          className={`relative flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/60 bg-white/70 px-4 py-3 text-sm text-ldc-ink ${
                             dragState.productId === productId ? 'shadow-glow' : ''
                           }`}
                           draggable
@@ -631,6 +580,18 @@ const StorefrontLayout = () => {
                           onDragOver={handleDragOver}
                           onDrop={handleDrop(section.key, productId)}
                         >
+                          <button
+                            type="button"
+                            aria-label="Remove from section"
+                            className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full border border-white/70 bg-white/90 text-[0.7rem] font-semibold text-ldc-ink shadow-sm transition hover:bg-white"
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              handleRemoveFromSection(section.key, productId);
+                            }}
+                          >
+                            X
+                          </button>
                           <div className="min-w-[220px]">
                             <div className="font-semibold">
                               {product.title || product.handle || product.id}
@@ -646,26 +607,6 @@ const StorefrontLayout = () => {
                             <span className="rounded-full border border-white/80 bg-white px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-ldc-ink/60">
                               Drag to reorder
                             </span>
-                            {isExplicit ? (
-                              <button
-                                className="ldc-button-secondary"
-                                onClick={() => handleRemoveFromSection(section.key, productId)}
-                                disabled={actionState.savingId === productId}
-                              >
-                                {actionState.savingId === productId ? 'Removing...' : 'Remove'}
-                              </button>
-                            ) : null}
-                            <button
-                              className="ldc-button-secondary"
-                              onClick={() => handleToggleHidden(section.key, productId, !isHidden)}
-                              disabled={actionState.savingId === productId}
-                            >
-                              {actionState.savingId === productId
-                                ? 'Saving...'
-                                : isHidden
-                                  ? 'Show'
-                                  : 'Hide'}
-                            </button>
                           </div>
                         </div>
                       );
