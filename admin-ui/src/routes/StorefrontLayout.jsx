@@ -355,15 +355,18 @@ const StorefrontLayout = () => {
       const removalUpdates = removals.map((productId) =>
         updateProductMetadata(productId, (metadata) => {
           let next = { ...metadata };
-          const sections = parseStorefrontSections(next.storefront_sections).filter(
-            (key) => key !== safeSectionKey
-          );
-          if (sections.length) {
-            next.storefront_sections = sections;
-          } else {
-            delete next.storefront_sections;
-          }
+          const existingSections = parseStorefrontSections(next.storefront_sections);
+          const remainingSections = existingSections.filter((key) => {
+            const raw = String(key || "").trim();
+            if (!raw) return false;
+            const normalized = normalizeSectionKey(raw);
+            return normalized !== safeSectionKey;
+          });
+          next.storefront_sections = remainingSections;
           next = removeStorefrontOrder(next, safeSectionKey);
+          console.info("[StorefrontLayout] Removing section from product", productId, safeSectionKey);
+          console.info("[StorefrontLayout] Before sections", existingSections);
+          console.info("[StorefrontLayout] After sections", remainingSections);
           console.info('[FixSectionKey] Final metadata:', safeSectionKey, next);
           return next;
         })
