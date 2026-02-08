@@ -3,14 +3,7 @@ import PageHeader from '../components/PageHeader.jsx';
 import { formatApiError, getList, request } from '../lib/api.js';
 import { STOREFRONT_SECTIONS } from '../data/storefrontSections.js';
 
-const slugify = (value) =>
-  String(value || '')
-    .toLowerCase()
-    .replace(/&/g, 'and')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
-const normalizeSectionKey = (key) => String(key || '').replace(/^page-/, '');
+const normalizeSectionKey = (key) => String(key || '').trim().toLowerCase().replace(/^page-/, '');
 
 const normalizeMetadata = (metadata) => {
   if (!metadata) return {};
@@ -28,13 +21,16 @@ const normalizeMetadata = (metadata) => {
 
 const parseStorefrontSections = (raw) => {
   if (!raw) return [];
-  if (Array.isArray(raw)) return raw.map((entry) => String(entry)).filter(Boolean);
+  if (Array.isArray(raw)) return raw.map((entry) => String(entry).trim()).filter(Boolean);
   if (typeof raw === 'string') {
     try {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed.map((entry) => String(entry)).filter(Boolean);
+      if (Array.isArray(parsed)) return parsed.map((entry) => String(entry).trim()).filter(Boolean);
       if (parsed && typeof parsed === 'object') {
-        return Object.keys(parsed).filter((key) => parsed[key]).map((key) => String(key));
+        return Object.keys(parsed)
+          .filter((key) => parsed[key])
+          .map((key) => String(key).trim())
+          .filter(Boolean);
       }
     } catch (err) {
       return raw
@@ -44,10 +40,28 @@ const parseStorefrontSections = (raw) => {
     }
   }
   if (raw && typeof raw === 'object') {
-    return Object.keys(raw).filter((key) => raw[key]).map((key) => String(key));
+    return Object.keys(raw)
+      .filter((key) => raw[key])
+      .map((key) => String(key).trim())
+      .filter(Boolean);
   }
   return [];
 };
+
+const dedupe = (items) => {
+  const next = [];
+  const seen = new Set();
+  items.forEach((item) => {
+    const value = String(item || '');
+    if (!value || seen.has(value)) return;
+    seen.add(value);
+    next.push(value);
+  });
+  return next;
+};
+
+const normalizeStorefrontSections = (rawSections) =>
+  dedupe(parseStorefrontSections(rawSections).map(normalizeSectionKey).filter(Boolean));
 
 const getStorefrontOrderValue = (product, sectionKey) => {
   const metadata = normalizeMetadata(product?.metadata);
@@ -95,39 +109,11 @@ const removeStorefrontOrder = (metadata, sectionKey) => {
   return next;
 };
 
-const getProductTags = (product) => {
-  const tags = Array.isArray(product?.tags) ? product.tags : [];
-  return tags
-    .map((tag) => {
-      if (typeof tag === 'string') return tag;
-      return tag?.value || tag?.handle || tag?.title || '';
-    })
-    .filter(Boolean)
-    .map((tag) => slugify(tag));
-};
-
-const getProductCollectionHandle = (product) => {
-  const handle = product?.collection?.handle || product?.collection?.title || '';
-  return slugify(handle);
-};
-
-const productMatchesSection = (product, section) => {
-  const safeSectionKey = normalizeSectionKey(section.key);
+const isAssignedToSection = (product, sectionKey) => {
+  const safeSectionKey = normalizeSectionKey(sectionKey);
   const metadata = normalizeMetadata(product?.metadata);
-  const explicitSections = parseStorefrontSections(metadata?.storefront_sections);
-  if (explicitSections.length) {
-    return explicitSections.includes(safeSectionKey);
-  }
-  const filter = section?.filter || {};
-  if (filter.collection) {
-    const handle = getProductCollectionHandle(product);
-    if (handle !== slugify(filter.collection)) return false;
-  }
-  if (filter.tag) {
-    const tags = getProductTags(product);
-    if (!tags.includes(slugify(filter.tag))) return false;
-  }
-  return true;
+  const sections = normalizeStorefrontSections(metadata?.storefront_sections);
+  return sections.includes(safeSectionKey);
 };
 
 const sortProductsForSection = (products, sectionKey) => {
@@ -205,8 +191,10 @@ const StorefrontLayout = () => {
   const sectionProducts = useMemo(() => {
     const map = {};
     STOREFRONT_SECTIONS.forEach((section) => {
-      const filtered = products.filter((product) => productMatchesSection(product, section));
-      map[section.key] = sortProductsForSection(filtered, section.key);
+      const safeSectionKey = normalizeSectionKey(section.key);
+      const assigned = products.filter((product) => isAssignedToSection(product, section.key));
+      console.info('[SectionMembership]', safeSectionKey, 'assigned=', assigned.length);
+      map[section.key] = sortProductsForSection(assigned, section.key);
     });
     return map;
   }, [products]);
@@ -339,8 +327,8 @@ const StorefrontLayout = () => {
     setActionState({ savingId: null, error: '' });
     try {
       const removalSet = new Set(removals);
-      const updates = order.map((productId, index) => {
-        if (removalSet.has(productId)) return null;
+      const persistedOrder = order.filter((productId) => !removalSet.has(productId));
+      const updates = persistedOrder.map((productId, index) => {
         const product = productById.get(productId);
         if (!product) return null;
         const existing = getStorefrontOrderValue(product, safeSectionKey);
@@ -372,6 +360,7 @@ const StorefrontLayout = () => {
         })
       );
       await Promise.all([...updates, ...removalUpdates].filter(Boolean));
+      setSectionOrder((prev) => ({ ...prev, [sectionKey]: persistedOrder }));
       setPendingRemovals((prev) => {
         if (!prev[sectionKey]) return prev;
         const next = { ...prev };
@@ -394,7 +383,7 @@ const StorefrontLayout = () => {
     try {
       await updateProductMetadata(productId, (metadata) => {
         let next = { ...metadata };
-        const sections = parseStorefrontSections(next.storefront_sections);
+        const sections = normalizeStorefrontSections(next.storefront_sections);
         if (!sections.includes(safeSectionKey)) sections.push(safeSectionKey);
         next.storefront_sections = sections;
         const nextOrderValue = (sectionOrder[sectionKey] || []).length + 1;
@@ -429,6 +418,11 @@ const StorefrontLayout = () => {
 
   const handleRemoveFromSection = (sectionKey, productId) => {
     const safeSectionKey = normalizeSectionKey(sectionKey);
+    const product = productById.get(productId);
+    const sections = normalizeStorefrontSections(
+      normalizeMetadata(product?.metadata)?.storefront_sections
+    );
+    console.info('[SectionMembershipProduct]', productId, safeSectionKey, sections);
     setSectionOrder((prev) => {
       const list = (prev[sectionKey] || []).filter((id) => id !== productId);
       return { ...prev, [sectionKey]: list };
@@ -562,14 +556,14 @@ const StorefrontLayout = () => {
                 <div className="mt-6 space-y-3">
                   {!list.length ? (
                     <p className="text-sm text-ldc-ink/60">
-                      No products assigned yet. Add products above or use tags/collections to populate.
+                      No products assigned yet. Add products above.
                     </p>
                   ) : (
                     list.map((productId) => {
                       const product = productById.get(productId);
                       if (!product) return null;
                       const metadata = normalizeMetadata(product.metadata);
-                      const explicitSections = parseStorefrontSections(metadata?.storefront_sections);
+                      const explicitSections = normalizeStorefrontSections(metadata?.storefront_sections);
                       const safeSectionKey = normalizeSectionKey(section.key);
                       const isExplicit = explicitSections.includes(safeSectionKey);
                       return (
@@ -603,7 +597,7 @@ const StorefrontLayout = () => {
                               {product.handle ? `Handle ${product.handle}` : product.id}
                             </div>
                             <div className="mt-1 text-xs text-ldc-ink/60">
-                              {isExplicit ? 'Manual tile' : 'Auto from collection/tag'}
+                              {isExplicit ? 'Assigned in metadata' : 'Not assigned'}
                             </div>
                           </div>
                           <div className="flex flex-wrap items-center gap-2">
