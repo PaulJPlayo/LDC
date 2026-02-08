@@ -27,6 +27,21 @@
   let productIndexPromise = null;
   let regionIdPromise = null;
   const missingSwatchMeta = new Set();
+  const hiddenBypassLoggedSections = new Set();
+  const managedSectionKeys = new Set([
+    'home-tumblers',
+    'home-cups',
+    'home-accessories',
+    'tumblers',
+    'cups',
+    'accessories',
+    'new-arrivals',
+    'best-sellers',
+    'restock',
+    'deals',
+    'under-25',
+    'last-chance'
+  ]);
 
   const request = async (path, options = {}) => {
     const url = `${backendUrl}${path}`;
@@ -177,55 +192,28 @@
     return [];
   };
 
-  const parseStorefrontHidden = raw => {
-    if (!raw) return {};
-    if (Array.isArray(raw)) {
-      return raw.reduce((acc, key) => {
-        if (key) acc[String(key)] = true;
-        return acc;
-      }, {});
-    }
-    if (typeof raw === 'string') {
-      try {
-        const parsed = JSON.parse(raw);
-        return parseStorefrontHidden(parsed);
-      } catch (error) {
-        return raw
-          .split(',')
-          .map(entry => entry.trim())
-          .filter(Boolean)
-          .reduce((acc, key) => {
-            acc[key] = true;
-            return acc;
-          }, {});
-      }
-    }
-    if (raw && typeof raw === 'object') {
-      return Object.entries(raw).reduce((acc, [key, value]) => {
-        if (value) acc[String(key)] = true;
-        return acc;
-      }, {});
-    }
-    return {};
-  };
-
   const getStorefrontSections = product => {
     const metadata = normalizeMetadata(product?.metadata);
     const raw = metadata?.storefront_sections;
     const parsed = parseStorefrontList(raw);
-    console.info(
-      '[debug-section-match]',
-      product?.id || product?.handle || product?.title,
-      raw,
-      parsed
-    );
-    return parsed;
+    return Array.from(new Set(parsed));
   };
 
-  const isStorefrontHidden = (product, sectionKey) => {
-    const metadata = normalizeMetadata(product?.metadata);
-    const hidden = parseStorefrontHidden(metadata?.storefront_hidden);
-    return Boolean(hidden?.[sectionKey]);
+  const isStorefrontHidden = sectionKey => {
+    const safeSectionKey = normalizeSectionKey(sectionKey);
+    if (
+      debugEnabled &&
+      safeSectionKey &&
+      !hiddenBypassLoggedSections.has(safeSectionKey)
+    ) {
+      hiddenBypassLoggedSections.add(safeSectionKey);
+      console.info(
+        '[storefront-section]',
+        safeSectionKey,
+        'storefront_hidden ignored (metadata-only mode)'
+      );
+    }
+    return false;
   };
 
   const getStorefrontTileOverride = (product, sectionKey) => {
@@ -863,28 +851,22 @@
     };
   };
 
-  const filterProductsForSection = (products, filters, enforceMetadata) => {
+  const filterProductsForSection = (products, filters) => {
     if (!products?.length) return [];
     const { collectionHandles, tagHandles } = filters;
+    const sectionKey = normalizeSectionKey(filters.sectionKey);
+    if (!sectionKey) return [];
+    const isManagedSection = managedSectionKeys.has(sectionKey);
+    if (isManagedSection) {
+      isStorefrontHidden(sectionKey);
+      return products.filter(product => {
+        const explicitSections = getStorefrontSections(product);
+        return explicitSections.includes(sectionKey);
+      });
+    }
+
     return products.filter(product => {
-      const sectionKey = normalizeSectionKey(filters.sectionKey);
-      if (sectionKey && isStorefrontHidden(product, sectionKey)) {
-        return false;
-      }
       const explicitSections = getStorefrontSections(product);
-      console.info(
-        '[fix-render] Filter input:',
-        sectionKey,
-        explicitSections,
-        product?.id || product?.handle || product?.title
-      );
-      if (enforceMetadata && sectionKey) {
-        return explicitSections.includes(sectionKey);
-      }
-      if (tagHandles.length && sectionKey) {
-        if (!explicitSections.length) return false;
-        return explicitSections.includes(sectionKey);
-      }
       if (explicitSections.length) {
         return explicitSections.includes(sectionKey);
       }
@@ -904,17 +886,16 @@
   };
 
   const sortProductsForSection = (products, sectionKey) => {
+    const safeSectionKey = normalizeSectionKey(sectionKey);
     return [...products].sort((a, b) => {
-      const aOrder = getStorefrontOrderValue(a, sectionKey);
-      const bOrder = getStorefrontOrderValue(b, sectionKey);
+      const aOrder = getStorefrontOrderValue(a, safeSectionKey);
+      const bOrder = getStorefrontOrderValue(b, safeSectionKey);
       if (aOrder != null || bOrder != null) {
         if (aOrder == null) return 1;
         if (bOrder == null) return -1;
         if (aOrder !== bOrder) return aOrder - bOrder;
       }
-      const aDate = new Date(a?.created_at || 0).getTime();
-      const bDate = new Date(b?.created_at || 0).getTime();
-      return bDate - aDate;
+      return 0;
     });
   };
 
@@ -935,57 +916,28 @@
       const filters = getSectionFilters(container);
       const normalizedSectionKey = normalizeSectionKey(filters.sectionKey);
       const products = await loadStoreProducts();
-      const enforceMetadata = Boolean(filters.sectionKey) && (
-        container.hasAttribute('data-medusa-tag') ||
-        container.hasAttribute('data-use-metadata')
-      );
-      console.info(
-        '[commerce] Grid products loaded.',
-        normalizedSectionKey,
-        `count=${Array.isArray(products) ? products.length : 0}`
-      );
-      if (debugEnabled) {
-        console.debug(
-          '[commerce] Grid products loaded.',
-          filters.sectionKey,
-          `count=${Array.isArray(products) ? products.length : 0}`
-        );
-      }
       if (!products.length) {
         container.querySelectorAll('.product-card').forEach(card => card.remove());
-        if (filters.sectionKey) {
-          console.info(
-            '[commerce] No products fetched for section.',
-            normalizedSectionKey
-          );
-        }
         return;
       }
-      let sectionProducts = filterProductsForSection(products, filters, enforceMetadata);
-      console.info(
-        '[commerce] Grid products filtered.',
-        normalizedSectionKey,
-        `count=${sectionProducts.length}`
-      );
-      if (debugEnabled) {
-        console.debug(
-          '[commerce] Grid products filtered.',
-          filters.sectionKey,
-          `count=${sectionProducts.length}`
+      let sectionProducts = filterProductsForSection(products, filters);
+      sectionProducts = sortProductsForSection(sectionProducts, filters.sectionKey);
+      if (debugEnabled && normalizedSectionKey) {
+        const sectionTitles = sectionProducts.map(
+          product => product?.title || product?.handle || product?.id
+        );
+        console.info(
+          '[storefront-section]',
+          normalizedSectionKey,
+          `assigned=${sectionProducts.length}`,
+          `titles=${JSON.stringify(sectionTitles)}`
         );
       }
-      sectionProducts = sortProductsForSection(sectionProducts, filters.sectionKey);
       if (filters.limit) {
         sectionProducts = sectionProducts.slice(0, filters.limit);
       }
       if (!sectionProducts.length) {
         container.querySelectorAll('.product-card').forEach(card => card.remove());
-        if (filters.sectionKey) {
-          console.info(
-            '[commerce] No products to render after filtering.',
-            normalizedSectionKey
-          );
-        }
         return;
       }
 
@@ -997,23 +949,6 @@
         const card = buildDynamicCard(template, product, filters.sectionKey);
         fragment.appendChild(card);
       });
-      console.info(
-        '[fix-render] Final rendered products:',
-        normalizedSectionKey,
-        sectionProducts.map(product => product?.title || product?.handle || product?.id)
-      );
-      console.info(
-        '[commerce] Grid products rendered.',
-        normalizedSectionKey,
-        `count=${sectionProducts.length}`
-      );
-      if (debugEnabled) {
-        console.debug(
-          '[commerce] Grid products injected.',
-          filters.sectionKey,
-          `count=${sectionProducts.length}`
-        );
-      }
       container.appendChild(fragment);
       initSwatchSliders(container);
       const loading = container
