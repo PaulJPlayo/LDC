@@ -927,78 +927,98 @@
     const containers = Array.from(
       document.querySelectorAll('[data-medusa-collection], [data-medusa-tag]')
     );
+    const gridEntries = containers.map(container => {
+      const filters = getSectionFilters(container);
+      const normalizedSectionKey = normalizeSectionKey(filters.sectionKey);
+      const isManaged = managedSectionKeys.has(normalizedSectionKey);
+      if (isManaged) {
+        container.setAttribute('data-storefront-managed-grid', 'true');
+        container.setAttribute('data-storefront-grid-state', 'loading');
+      }
+      return { container, filters, normalizedSectionKey, isManaged };
+    });
     if (!gridDiscoveryLogged) {
       gridDiscoveryLogged = true;
-      const grids = containers.map(container => {
-        const filters = getSectionFilters(container);
-        return {
-          sectionKey: normalizeSectionKey(filters.sectionKey),
-          el: summarizeGridElement(container)
-        };
-      });
+      const grids = gridEntries.map(({ container, normalizedSectionKey }) => ({
+        sectionKey: normalizedSectionKey,
+        el: summarizeGridElement(container)
+      }));
       console.info(
         '[storefront-grids]',
         `path=${window.location.pathname}`,
         `grids=${JSON.stringify(grids)}`
       );
     }
-    if (!containers.length) return;
+    if (!gridEntries.length) return;
 
-    await Promise.all(containers.map(async container => {
+    await Promise.all(gridEntries.map(async entry => {
+      const { container, filters, normalizedSectionKey, isManaged } = entry;
+      let renderedCount = 0;
       const templateElement = container.querySelector('template[data-card-template]');
       const template =
         templateElement?.content?.firstElementChild ||
         container.querySelector('.product-card');
-      if (!template) return;
-      container.classList.add('product-grid');
-      container.classList.remove('is-loaded');
-      const filters = getSectionFilters(container);
-      const normalizedSectionKey = normalizeSectionKey(filters.sectionKey);
-      const products = await loadStoreProducts();
-      if (!products.length) {
-        container.querySelectorAll('.product-card').forEach(card => card.remove());
-        return;
-      }
-      let sectionProducts = filterProductsForSection(products, filters);
-      sectionProducts = sortProductsForSection(sectionProducts, filters.sectionKey);
-      if (debugEnabled && normalizedSectionKey) {
-        const sectionTitles = sectionProducts.map(
-          product => product?.title || product?.handle || product?.id
-        );
-        console.info(
-          '[storefront-section]',
-          normalizedSectionKey,
-          `assigned=${sectionProducts.length}`,
-          `titles=${JSON.stringify(sectionTitles)}`
-        );
-      }
-      if (filters.limit) {
-        sectionProducts = sectionProducts.slice(0, filters.limit);
-      }
-      if (!sectionProducts.length) {
-        container.querySelectorAll('.product-card').forEach(card => card.remove());
-        return;
-      }
+      try {
+        if (!template) return;
+        container.classList.add('product-grid');
+        container.classList.remove('is-loaded');
+        const products = await loadStoreProducts();
+        if (!products.length) {
+          container.querySelectorAll('.product-card').forEach(card => card.remove());
+          return;
+        }
+        let sectionProducts = filterProductsForSection(products, filters);
+        sectionProducts = sortProductsForSection(sectionProducts, filters.sectionKey);
+        if (debugEnabled && normalizedSectionKey) {
+          const sectionTitles = sectionProducts.map(
+            product => product?.title || product?.handle || product?.id
+          );
+          console.info(
+            '[storefront-section]',
+            normalizedSectionKey,
+            `assigned=${sectionProducts.length}`,
+            `titles=${JSON.stringify(sectionTitles)}`
+          );
+        }
+        if (filters.limit) {
+          sectionProducts = sectionProducts.slice(0, filters.limit);
+        }
+        renderedCount = sectionProducts.length;
+        if (!sectionProducts.length) {
+          container.querySelectorAll('.product-card').forEach(card => card.remove());
+          return;
+        }
 
-      container
-        .querySelectorAll('.product-card')
-        .forEach(card => card.remove());
-      const fragment = document.createDocumentFragment();
-      sectionProducts.forEach(product => {
-        const card = buildDynamicCard(template, product, filters.sectionKey);
-        fragment.appendChild(card);
-      });
-      container.appendChild(fragment);
-      initSwatchSliders(container);
-      const loading = container
-        .closest('section')
-        ?.querySelector(
-          `[data-products-loading][data-loading-for="${filters.sectionKey}"]`
-        );
-      if (loading) {
-        loading.style.display = 'none';
+        container
+          .querySelectorAll('.product-card')
+          .forEach(card => card.remove());
+        const fragment = document.createDocumentFragment();
+        sectionProducts.forEach(product => {
+          const card = buildDynamicCard(template, product, filters.sectionKey);
+          fragment.appendChild(card);
+        });
+        container.appendChild(fragment);
+        initSwatchSliders(container);
+        const loading = container
+          .closest('section')
+          ?.querySelector(
+            `[data-products-loading][data-loading-for="${filters.sectionKey}"]`
+          );
+        if (loading) {
+          loading.style.display = 'none';
+        }
+        container.classList.add('is-loaded');
+      } finally {
+        if (isManaged) {
+          container.setAttribute('data-storefront-grid-state', 'ready');
+          console.info(
+            '[storefront-grid-ready]',
+            normalizedSectionKey,
+            `rendered=${renderedCount}`,
+            `path=${window.location.pathname}`
+          );
+        }
       }
-      container.classList.add('is-loaded');
     }));
 
     if (missingSwatchMeta.size) {

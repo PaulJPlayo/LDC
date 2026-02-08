@@ -18,6 +18,29 @@ html { scroll-behavior: smooth; }
   display: none !important;
 }
 
+/* Hide managed storefront grids until commerce.js completes metadata render. */
+:is(
+  [data-medusa-collection][data-section-key="home-tumblers"],
+  [data-medusa-collection][data-section-key="home-cups"],
+  [data-medusa-collection][data-section-key="home-accessories"],
+  [data-medusa-collection][data-section-key="page-tumblers"],
+  [data-medusa-collection][data-section-key="page-cups"],
+  [data-medusa-collection][data-section-key="page-accessories"],
+  [data-medusa-tag][data-section-key="new-arrivals"],
+  [data-medusa-tag][data-section-key="best-sellers"],
+  [data-medusa-tag][data-section-key="restock"],
+  [data-medusa-tag][data-section-key="under-25"],
+  [data-medusa-tag][data-section-key="last-chance"],
+  [data-medusa-tag][data-section-key="sale"],
+  [data-medusa-tag][data-section-key="deals"]
+):not([data-storefront-grid-state="ready"]) {
+  visibility: hidden;
+}
+
+[data-storefront-managed-grid][data-storefront-grid-state="ready"] {
+  visibility: visible;
+}
+
 /* Dark thistle background utility */
 .bg-thistle-dark { background-color: #6B4A78; }
 
