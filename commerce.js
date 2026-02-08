@@ -16,6 +16,14 @@
     window.LDC_MEDUSA_PUBLISHABLE_KEY ||
     'pk_427f7900e23e30a0e18feaf0604aa9caaa9d0cb21571889081d2cb93fb13ffb0';
   const debugEnabled = body.dataset.medusaDebug === 'true' || window.LDC_MEDUSA_DEBUG === true;
+  const STOREFRONT_BUILD_SHA = '8b0573d';
+  const STOREFRONT_BUILD_UTC = '2026-02-08T21:29:30Z';
+  console.info(
+    '[storefront-build]',
+    STOREFRONT_BUILD_SHA,
+    STOREFRONT_BUILD_UTC,
+    `path=${window.location.pathname}`
+  );
 
   const CART_ID_KEY = 'ldc:medusa:cart_id';
   const LEGACY_CART_KEY = 'ldc:cart';
@@ -28,6 +36,7 @@
   let regionIdPromise = null;
   const missingSwatchMeta = new Set();
   const hiddenBypassLoggedSections = new Set();
+  let gridDiscoveryLogged = false;
   const managedSectionKeys = new Set([
     'home-tumblers',
     'home-cups',
@@ -851,6 +860,18 @@
     };
   };
 
+  const summarizeGridElement = container => {
+    const tag = container?.tagName ? container.tagName.toLowerCase() : 'unknown';
+    const idPart = container?.id ? `#${container.id}` : '';
+    const classes = String(container?.className || '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2);
+    const classPart = classes.length ? `.${classes.join('.')}` : '';
+    return `${tag}${idPart}${classPart}`;
+  };
+
   const filterProductsForSection = (products, filters) => {
     if (!products?.length) return [];
     const { collectionHandles, tagHandles } = filters;
@@ -903,6 +924,21 @@
     const containers = Array.from(
       document.querySelectorAll('[data-medusa-collection], [data-medusa-tag]')
     );
+    if (!gridDiscoveryLogged) {
+      gridDiscoveryLogged = true;
+      const grids = containers.map(container => {
+        const filters = getSectionFilters(container);
+        return {
+          sectionKey: normalizeSectionKey(filters.sectionKey),
+          el: summarizeGridElement(container)
+        };
+      });
+      console.info(
+        '[storefront-grids]',
+        `path=${window.location.pathname}`,
+        `grids=${JSON.stringify(grids)}`
+      );
+    }
     if (!containers.length) return;
 
     await Promise.all(containers.map(async container => {
