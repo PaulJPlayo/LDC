@@ -165,8 +165,11 @@
     return {};
   };
 
-  const normalizeSectionKey = key =>
-    slugify(String(key || '').replace(/^page-/, ''));
+  const normalizeSectionKey = key => {
+    const normalized = slugify(String(key || '').replace(/^page-/, ''));
+    if (normalized === 'sale') return 'deals';
+    return normalized;
+  };
 
   const parseStorefrontList = raw => {
     if (!raw) return [];
