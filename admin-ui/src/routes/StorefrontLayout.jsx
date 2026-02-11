@@ -63,6 +63,12 @@ const dedupe = (items) => {
 const normalizeStorefrontSections = (rawSections) =>
   dedupe(parseStorefrontSections(rawSections).map(normalizeSectionKey).filter(Boolean));
 
+const stripDeprecatedStorefrontMetadata = (metadata) => {
+  const next = { ...normalizeMetadata(metadata) };
+  if (next.storefront_hidden != null) delete next.storefront_hidden;
+  return next;
+};
+
 const getStorefrontOrderValue = (product, sectionKey) => {
   const metadata = normalizeMetadata(product?.metadata);
   let raw = metadata?.storefront_order;
@@ -223,8 +229,8 @@ const StorefrontLayout = () => {
   const updateProductMetadata = async (productId, updater) => {
     const product = productById.get(productId);
     if (!product) return;
-    const metadata = normalizeMetadata(product?.metadata);
-    const nextMetadata = updater({ ...metadata });
+    const metadata = stripDeprecatedStorefrontMetadata(product?.metadata);
+    const nextMetadata = stripDeprecatedStorefrontMetadata(updater({ ...metadata }));
     const payload = {
       metadata: Object.keys(nextMetadata).length ? nextMetadata : null
     };
@@ -336,7 +342,11 @@ const StorefrontLayout = () => {
         if (existing === nextValue) return null;
         return updateProductMetadata(productId, (metadata) => {
           const next = setStorefrontOrder(metadata, safeSectionKey, nextValue);
-          console.info('[FixSectionKey] Final metadata:', safeSectionKey, next);
+          console.info(
+            '[FixSectionKey] Final metadata:',
+            safeSectionKey,
+            stripDeprecatedStorefrontMetadata(next)
+          );
           return next;
         });
       });
@@ -355,7 +365,11 @@ const StorefrontLayout = () => {
           console.info("[StorefrontLayout] Removing section from product", productId, safeSectionKey);
           console.info("[StorefrontLayout] Before sections", existingSections);
           console.info("[StorefrontLayout] After sections", remainingSections);
-          console.info('[FixSectionKey] Final metadata:', safeSectionKey, next);
+          console.info(
+            '[FixSectionKey] Final metadata:',
+            safeSectionKey,
+            stripDeprecatedStorefrontMetadata(next)
+          );
           return next;
         })
       );
@@ -388,7 +402,11 @@ const StorefrontLayout = () => {
         next.storefront_sections = sections;
         const nextOrderValue = (sectionOrder[sectionKey] || []).length + 1;
         next = setStorefrontOrder(next, safeSectionKey, nextOrderValue);
-        console.info('[FixSectionKey] Final metadata:', safeSectionKey, next);
+        console.info(
+          '[FixSectionKey] Final metadata:',
+          safeSectionKey,
+          stripDeprecatedStorefrontMetadata(next)
+        );
         return next;
       });
       setSectionOrder((prev) => {
