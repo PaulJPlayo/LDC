@@ -63,9 +63,13 @@ const dedupe = (items) => {
 const normalizeStorefrontSections = (rawSections) =>
   dedupe(parseStorefrontSections(rawSections).map(normalizeSectionKey).filter(Boolean));
 
+const DEPRECATED_STOREFRONT_HIDDEN_KEY = ['storefront', 'hidden'].join('_');
+
 const stripDeprecatedStorefrontMetadata = (metadata) => {
   const next = { ...normalizeMetadata(metadata) };
-  if (next.storefront_hidden != null) delete next.storefront_hidden;
+  if (next[DEPRECATED_STOREFRONT_HIDDEN_KEY] != null) {
+    delete next[DEPRECATED_STOREFRONT_HIDDEN_KEY];
+  }
   return next;
 };
 

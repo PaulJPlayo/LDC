@@ -35,7 +35,6 @@
   let productIndexPromise = null;
   let regionIdPromise = null;
   const missingSwatchMeta = new Set();
-  const hiddenBypassLoggedSections = new Set();
   let gridDiscoveryLogged = false;
   const managedSectionKeys = new Set([
     'home-tumblers',
@@ -209,23 +208,6 @@
     const raw = metadata?.storefront_sections;
     const parsed = parseStorefrontList(raw);
     return Array.from(new Set(parsed));
-  };
-
-  const isStorefrontHidden = sectionKey => {
-    const safeSectionKey = normalizeSectionKey(sectionKey);
-    if (
-      debugEnabled &&
-      safeSectionKey &&
-      !hiddenBypassLoggedSections.has(safeSectionKey)
-    ) {
-      hiddenBypassLoggedSections.add(safeSectionKey);
-      console.info(
-        '[storefront-section]',
-        safeSectionKey,
-        'storefront_hidden ignored (metadata-only mode)'
-      );
-    }
-    return false;
   };
 
   const getStorefrontTileOverride = (product, sectionKey) => {
@@ -882,7 +864,6 @@
     if (!sectionKey) return [];
     const isManagedSection = managedSectionKeys.has(sectionKey);
     if (isManagedSection) {
-      isStorefrontHidden(sectionKey);
       return products.filter(product => {
         const explicitSections = getStorefrontSections(product);
         return explicitSections.includes(sectionKey);
