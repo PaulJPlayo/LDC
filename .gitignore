@@ -27,3 +27,7 @@ build/
 # Local git scratch dirs
 git-temp/
 git-work/
+
+# Local audit artifacts (generated during debugging)
+audit-storefront-metadata.ts
+storefront-metadata-audit.json
