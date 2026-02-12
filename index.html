@@ -3167,16 +3167,17 @@
             </a>
             <a class="insta-link relative block aspect-[4/5] rounded-md bg-gradient-to-br from-[#E0B0FF] to-[#D8B4FE] group" data-instagram-card data-instagram-index="2" href="https://instagram.com/lovetts._ldc" target="_blank" rel="noopener" aria-label="View on Instagram">
               <div class="absolute inset-0 overflow-hidden">
-                <iframe
-                  class="absolute inset-0 w-full h-full"
-                  style="border: 0; width: 140%; height: 140%; left: -20%; top: -20%;"
-                  src="https://customer-3ptq6xbmg2sfpv29.cloudflarestream.com/ca20fc32e887e4482686ce8154fd5224/iframe?autoplay=1&muted=1&loop=1&controls=0&preload=auto"
-                  title="Lovett's video"
-                  frameborder="0"
-                  allow="autoplay; encrypted-media; picture-in-picture"
-                  allowfullscreen
-                  loading="lazy"
-                ></iframe>
+                <video
+  class="absolute inset-0 w-full h-full"
+  style="border: 0; width: 140%; height: 140%; left: -20%; top: -20%; object-fit: cover;"
+  autoplay
+  muted
+  loop
+  playsinline
+  preload="auto"
+  disablepictureinpicture
+  data-hls-src="https://customer-3ptq6xbmg2sfpv29.cloudflarestream.com/ca20fc32e887e4482686ce8154fd5224/manifest/video.m3u8"
+></video>
               </div>
               <div class="absolute inset-0 bg-[#E0B0FF]/0 group-hover:bg-[#E0B0FF]/30 transition-colors pointer-events-none"></div>
               <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2 pointer-events-none">
@@ -6390,7 +6391,59 @@
         }
       })();
     </script>
+    <script src="assets/hls.min.js" defer></script>
     <script src="commerce.js" defer></script>
     <!-- Redeploy trigger: storefront metadata sync -->
-  </body>
+  
+    <script>
+      /* HLS_INIT_AUTOPLAY */
+      (function () {
+        function initVideo(video) {
+          try {
+            video.muted = true;
+            video.setAttribute('muted', '');
+            video.setAttribute('playsinline', '');
+            video.autoplay = true;
+            video.loop = true;
+            video.controls = false;
+          } catch (e) {}
+
+          const src = video.getAttribute('data-hls-src');
+          if (!src) return;
+
+          const canNative = video.canPlayType && video.canPlayType('application/vnd.apple.mpegurl');
+          if (canNative) {
+            video.src = src;
+            const play = () => video.play().catch(() => {});
+            video.addEventListener('loadedmetadata', play, { once: true });
+            video.addEventListener('canplay', play, { once: true });
+            return;
+          }
+
+          if (window.Hls && window.Hls.isSupported()) {
+            const hls = new window.Hls({
+              enableWorker: true,
+              lowLatencyMode: true,
+            });
+            hls.loadSource(src);
+            hls.attachMedia(video);
+            hls.on(window.Hls.Events.MANIFEST_PARSED, function () {
+              video.play().catch(() => {});
+            });
+          }
+        }
+
+        function boot() {
+          document.querySelectorAll('video[data-hls-src]').forEach(initVideo);
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', boot, { once: true });
+        } else {
+          boot();
+        }
+      })();
+    </script>
+
+</body>
 </html>
