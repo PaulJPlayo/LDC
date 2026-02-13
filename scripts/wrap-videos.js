@@ -27,7 +27,15 @@
     return `${base}/${id}/manifest/video.m3u8`;
   };
 
-  const getTargetVideos = () => Array.from(document.querySelectorAll('[data-design-video]'));
+  const shouldSkipElement = el => {
+    if (!el) return false;
+    if (typeof el.closest === 'function' && el.closest('[data-instagram-tile]')) return true;
+    if (typeof el.matches === 'function' && el.matches('video[data-hls-src]')) return true;
+    return false;
+  };
+
+  const getTargetVideos = () =>
+    Array.from(document.querySelectorAll('[data-design-video]')).filter(video => !shouldSkipElement(video));
   const getPromptTargets = () => Array.from(document.querySelectorAll('[data-design-video-prompt]'));
 
   const toggleVideoDisplay = show => {
@@ -120,6 +128,7 @@
     if (!config?.hls) return;
     hidePrompt();
     getTargetVideos().forEach(video => {
+      if (shouldSkipElement(video)) return;
       const sources = video.querySelectorAll('source[data-source]');
       const primarySource = Array.from(sources).find(src => src.dataset.source === 'hls') || video.querySelector('source');
       const dashSource = Array.from(sources).find(src => src.dataset.source === 'dash');
