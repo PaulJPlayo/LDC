@@ -197,6 +197,24 @@
         96% { text-shadow: none; }
         100% { opacity: 0; text-shadow: none; transform: translateY(0); }
       }
+      /* Instagram tile media hardening (scoped) */
+      [data-instagram-tile] .instagram-tile-media {
+        position: absolute !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        display: block !important;
+        object-fit: cover !important;
+        object-position: center !important;
+        border: 0 !important;
+        max-width: none !important;
+        max-height: none !important;
+        min-width: 100% !important;
+        min-height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        transform: none !important;
+      }
       @media (max-width: 767px) {
         .palette-menu summary {
           display: flex;
@@ -303,24 +321,6 @@
         #section-4 [data-instagram-grid] .insta-link {
           flex: 0 0 var(--carousel-card-width);
           scroll-snap-align: center;
-        }
-        /* Instagram tile media hardening (scoped) */
-        [data-instagram-tile] .instagram-tile-media {
-          position: absolute !important;
-          inset: 0 !important;
-          width: 100% !important;
-          height: 100% !important;
-          display: block !important;
-          object-fit: cover !important;
-          object-position: center !important;
-          border: 0 !important;
-          max-width: none !important;
-          max-height: none !important;
-          min-width: 100% !important;
-          min-height: 100% !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          transform: none !important;
         }
         #section-5 .popular-categories-carousel {
           --carousel-card-width: min(82vw, 18rem);
