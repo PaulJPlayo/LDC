@@ -5552,6 +5552,13 @@ const ResourceList = ({ resource }) => {
             ) : null}
             {isProductList ? (
               <div className="flex items-center gap-2">
+                <button
+                  className="ldc-button-primary"
+                  type="button"
+                  onClick={() => navigate('/products/new')}
+                >
+                  Create Product
+                </button>
                 <select
                   className="ldc-input h-11 w-44"
                   value={order}
