@@ -15,6 +15,10 @@ const STATUS_OPTIONS = [
   { value: 'published', label: 'Published' }
 ];
 
+const STYLE_OPTION_TITLE = 'Style';
+const STYLE_OPTION_VALUE = 'Default';
+const MAX_HANDLE_ATTEMPTS = 5;
+
 const DEFAULT_FORM = {
   title: '',
   prefix: 'tumbler',
@@ -46,6 +50,99 @@ const getCreatedProduct = (payload) => {
   if (payload.data?.product && typeof payload.data.product === 'object') return payload.data.product;
   if (Array.isArray(payload.products) && payload.products[0]) return payload.products[0];
   return null;
+};
+
+const isDuplicateHandleError = (error) => {
+  const message = String(error?.message || '').toLowerCase();
+  if (error?.status === 409) return true;
+  if (!message.includes('handle')) return false;
+  return (
+    message.includes('already') ||
+    message.includes('exists') ||
+    message.includes('taken') ||
+    message.includes('unique')
+  );
+};
+
+const buildProductMetadata = (productKey) => ({
+  product_key: productKey,
+  storefront_sections: [],
+  storefront_order: {}
+});
+
+const buildProductOptions = () => [
+  {
+    title: STYLE_OPTION_TITLE,
+    values: [STYLE_OPTION_VALUE]
+  }
+];
+
+const buildDefaultVariantPayload = (basePriceAmount) => ({
+  title: STYLE_OPTION_VALUE,
+  manage_inventory: false,
+  allow_backorder: false,
+  options: { [STYLE_OPTION_TITLE]: STYLE_OPTION_VALUE },
+  prices: [{ currency_code: 'usd', amount: basePriceAmount }]
+});
+
+const createProductWithInlineVariant = async ({
+  title,
+  handle,
+  status,
+  productKey,
+  basePriceAmount
+}) => {
+  const payload = await request('/admin/products', {
+    method: 'POST',
+    body: {
+      title,
+      handle,
+      status,
+      metadata: buildProductMetadata(productKey),
+      options: buildProductOptions(),
+      variants: [buildDefaultVariantPayload(basePriceAmount)]
+    }
+  });
+  const created = getCreatedProduct(payload);
+  const productId = created?.id || '';
+  if (!productId) {
+    throw new Error('Create response did not include a product ID.');
+  }
+  return { productId };
+};
+
+const createProductWithFollowupVariant = async ({
+  title,
+  handle,
+  status,
+  productKey,
+  basePriceAmount
+}) => {
+  const createPayload = await request('/admin/products', {
+    method: 'POST',
+    body: {
+      title,
+      handle,
+      status,
+      metadata: buildProductMetadata(productKey),
+      options: buildProductOptions()
+    }
+  });
+  const created = getCreatedProduct(createPayload);
+  const productId = created?.id || '';
+  if (!productId) {
+    throw new Error('Create response did not include a product ID.');
+  }
+  try {
+    await request(`/admin/products/${productId}/variants`, {
+      method: 'POST',
+      body: buildDefaultVariantPayload(basePriceAmount)
+    });
+  } catch (error) {
+    error.createdProductId = productId;
+    throw error;
+  }
+  return { productId };
 };
 
 const ProductCreate = () => {
@@ -115,49 +212,70 @@ const ProductCreate = () => {
       return;
     }
 
-    const status = form.status === 'published' ? 'published' : 'draft';
-    const productKey = `${selectedPrefix}-${derivedHandle}`;
-    const metadata = {
-      product_key: productKey,
-      storefront_sections: [],
-      storefront_order: {}
-    };
-
     let createdProductId = '';
 
     try {
-      const createPayload = await request('/admin/products', {
-        method: 'POST',
-        body: {
-          title,
-          handle: derivedHandle,
-          status,
-          metadata
-        }
-      });
+      const status = form.status === 'published' ? 'published' : 'draft';
+      let finalError = null;
 
-      const createdProduct = getCreatedProduct(createPayload);
-      createdProductId = createdProduct?.id || '';
-      if (!createdProductId) {
-        throw new Error('Create response did not include a product ID.');
+      for (let attempt = 0; attempt < MAX_HANDLE_ATTEMPTS; attempt += 1) {
+        const suffix = attempt === 0 ? '' : `-${attempt + 1}`;
+        const handleCandidate = `${derivedHandle}${suffix}`;
+        const productKeyCandidate = `${selectedPrefix}-${handleCandidate}`;
+
+        try {
+          const inlineResult = await createProductWithInlineVariant({
+            title,
+            handle: handleCandidate,
+            status,
+            productKey: productKeyCandidate,
+            basePriceAmount
+          });
+          createdProductId = inlineResult.productId;
+          navigate(`/products/${createdProductId}`);
+          return;
+        } catch (inlineError) {
+          if (isDuplicateHandleError(inlineError)) {
+            finalError = inlineError;
+            continue;
+          }
+
+          try {
+            const fallbackResult = await createProductWithFollowupVariant({
+              title,
+              handle: handleCandidate,
+              status,
+              productKey: productKeyCandidate,
+              basePriceAmount
+            });
+            createdProductId = fallbackResult.productId;
+            navigate(`/products/${createdProductId}`);
+            return;
+          } catch (fallbackError) {
+            if (fallbackError?.createdProductId) {
+              createdProductId = fallbackError.createdProductId;
+            }
+            if (isDuplicateHandleError(fallbackError)) {
+              finalError = fallbackError;
+              continue;
+            }
+            throw fallbackError;
+          }
+        }
       }
 
-      await request(`/admin/products/${createdProductId}/variants`, {
-        method: 'POST',
-        body: {
-          title: 'Default',
-          manage_inventory: false,
-          allow_backorder: false,
-          prices: [{ currency_code: 'usd', amount: basePriceAmount }]
-        }
-      });
-
-      navigate(`/products/${createdProductId}`);
+      if (finalError) {
+        throw finalError;
+      }
     } catch (error) {
       const baseMessage = formatApiError(error, 'Unable to create product.');
+      const handleMessage =
+        !createdProductId && isDuplicateHandleError(error)
+          ? ` Tried ${MAX_HANDLE_ATTEMPTS} unique handle attempts.`
+          : '';
       const errorMessage = createdProductId
         ? `${baseMessage} Product ${createdProductId} was created, but the default variant could not be created.`
-        : baseMessage;
+        : `${baseMessage}${handleMessage}`;
       setState({ saving: false, error: errorMessage, createdProductId });
     }
   };
