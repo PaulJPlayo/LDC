@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader.jsx';
-import { formatApiError, request } from '../lib/api.js';
+import { formatApiError, getList, request } from '../lib/api.js';
 
 const PREFIX_OPTIONS = [
   { value: 'tumbler', label: 'Tumbler' },
@@ -84,6 +84,58 @@ const buildDefaultVariantPayload = (basePriceAmount) => ({
   options: { [STYLE_OPTION_TITLE]: STYLE_OPTION_VALUE },
   prices: [{ currency_code: 'usd', amount: basePriceAmount }]
 });
+
+const getArrayFromPayload = (payload, key) => {
+  if (!payload || typeof payload !== 'object') return [];
+  if (key && Array.isArray(payload[key])) return payload[key];
+  const candidate = Object.values(payload).find((value) => Array.isArray(value));
+  return candidate || [];
+};
+
+const selectDefaultSalesChannel = (channels) => {
+  const list = Array.isArray(channels) ? channels : [];
+  const byNameEnabled = list.find(
+    (channel) =>
+      String(channel?.name || '')
+        .trim()
+        .toLowerCase() === 'default sales channel' && channel?.is_disabled !== true
+  );
+  if (byNameEnabled?.id) return byNameEnabled;
+  const byNameAny = list.find(
+    (channel) =>
+      String(channel?.name || '')
+        .trim()
+        .toLowerCase() === 'default sales channel'
+  );
+  if (byNameAny?.id) return byNameAny;
+  const firstEnabled = list.find((channel) => channel?.id && channel?.is_disabled !== true);
+  if (firstEnabled?.id) return firstEnabled;
+  return list.find((channel) => channel?.id) || null;
+};
+
+const assignProductToSalesChannelBestEffort = async (productId) => {
+  if (!productId) return '';
+  try {
+    const payload = await getList('/admin/sales-channels', { limit: 200 });
+    const channels = getArrayFromPayload(payload, 'sales_channels');
+    const channel = selectDefaultSalesChannel(channels);
+    if (!channel?.id) {
+      return 'Product created, but no sales channel was available for assignment.';
+    }
+    await request(`/admin/sales-channels/${channel.id}/products`, {
+      method: 'POST',
+      body: { add: [productId] }
+    });
+    return '';
+  } catch (error) {
+    console.warn('[ProductCreate] Sales channel assignment failed.', {
+      productId,
+      status: error?.status || null,
+      message: error?.message || 'Unknown error'
+    });
+    return 'Product created, but assigning it to the default sales channel failed.';
+  }
+};
 
 const createProductWithInlineVariant = async ({
   title,
@@ -232,7 +284,12 @@ const ProductCreate = () => {
             basePriceAmount
           });
           createdProductId = inlineResult.productId;
-          navigate(`/products/${createdProductId}`);
+          const warning = await assignProductToSalesChannelBestEffort(createdProductId);
+          if (warning) {
+            navigate(`/products/${createdProductId}`, { state: { warning } });
+          } else {
+            navigate(`/products/${createdProductId}`);
+          }
           return;
         } catch (inlineError) {
           if (isDuplicateHandleError(inlineError)) {
@@ -249,7 +306,12 @@ const ProductCreate = () => {
               basePriceAmount
             });
             createdProductId = fallbackResult.productId;
-            navigate(`/products/${createdProductId}`);
+            const warning = await assignProductToSalesChannelBestEffort(createdProductId);
+            if (warning) {
+              navigate(`/products/${createdProductId}`, { state: { warning } });
+            } else {
+              navigate(`/products/${createdProductId}`);
+            }
             return;
           } catch (fallbackError) {
             if (fallbackError?.createdProductId) {

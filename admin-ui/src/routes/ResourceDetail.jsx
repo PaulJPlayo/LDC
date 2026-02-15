@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import DataTable from '../components/DataTable.jsx';
 import PageHeader from '../components/PageHeader.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
@@ -9,7 +9,6 @@ import {
   getDetail,
   getList,
   request,
-  storeRequest,
   uploadFiles
 } from '../lib/api.js';
 import { formatDateTime, formatMoney } from '../lib/formatters.js';
@@ -1536,6 +1535,7 @@ const buildReturnItemRows = (items, fallbackId) => {
 
 const ResourceDetail = ({ resource }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
   const { user } = useAuth();
   const isAdmin = isAdminUser(user);
@@ -3625,11 +3625,9 @@ const ResourceDetail = ({ resource }) => {
     const loadStorefrontPrices = async () => {
       setStorefrontPriceState({ loading: true, error: '' });
       try {
-        const params = new URLSearchParams({
-          fields: '+variants,+variants.calculated_price,+variants.prices',
-          region_id: pricingRegionId
+        const payload = await getDetail('/admin/products', productId, {
+          fields: '+variants,+variants.calculated_price,+variants.prices'
         });
-        const payload = await storeRequest(`/store/products/${productId}?${params.toString()}`);
         if (!isActive) return;
         const product =
           payload?.product ||
@@ -3638,7 +3636,7 @@ const ResourceDetail = ({ resource }) => {
           payload?.products?.[0] ||
           null;
         if (!product) {
-          throw new Error('Storefront product unavailable.');
+          throw new Error(`Product with id: ${productId} was not found.`);
         }
         const fallbackCurrency = product?.currency_code || getDefaultCurrency(record);
         const next = {};
@@ -3653,9 +3651,22 @@ const ResourceDetail = ({ resource }) => {
       } catch (err) {
         if (!isActive) return;
         setStorefrontPriceMap({});
+        const isAdminNotFound = err instanceof ApiError && err.status === 404;
+        if (isAdminNotFound) {
+          setStorefrontPriceState({
+            loading: false,
+            error: `Product with id: ${productId} was not found in admin catalog.`
+          });
+          return;
+        }
+        console.warn('[VariantManager] Unable to load admin product pricing.', {
+          endpoint: `/admin/products/${productId}`,
+          status: err?.status || null,
+          message: err?.message || 'Unknown error'
+        });
         setStorefrontPriceState({
           loading: false,
-          error: err?.message || 'Unable to load storefront prices.'
+          error: 'Unable to load variant pricing from admin product data.'
         });
       }
     };
@@ -5512,6 +5523,8 @@ const ResourceDetail = ({ resource }) => {
   const orderLabel = isDraftOrder ? 'draft order' : 'order';
   const orderEditLabel = isDraftOrder ? 'draft order edit' : 'order edit';
   const primaryTitle = record?.title || record?.name || record?.email || record?.code || record?.id || '';
+  const navigationWarning =
+    typeof location?.state?.warning === 'string' ? location.state.warning : '';
 
   const applyProductPayload = (payload) => {
     const updated =
@@ -15007,6 +15020,11 @@ const ResourceDetail = ({ resource }) => {
       {isReadOnly ? (
         <div className="mb-4 ldc-card p-4 text-sm text-ldc-ink/70">
           This section is limited to admin users. You have view-only access.
+        </div>
+      ) : null}
+      {navigationWarning ? (
+        <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {navigationWarning}
         </div>
       ) : null}
 
