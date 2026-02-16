@@ -16,8 +16,8 @@
     window.LDC_MEDUSA_PUBLISHABLE_KEY ||
     'pk_427f7900e23e30a0e18feaf0604aa9caaa9d0cb21571889081d2cb93fb13ffb0';
   const debugEnabled = body.dataset.medusaDebug === 'true' || window.LDC_MEDUSA_DEBUG === true;
-  const STOREFRONT_BUILD_SHA = '1439c9f';
-  const STOREFRONT_BUILD_UTC = '2026-02-16T03:35:39.816Z';
+  const STOREFRONT_BUILD_SHA = '00fc27a';
+  const STOREFRONT_BUILD_UTC = '2026-02-16T15:08:33.952Z';
   console.info(
     '[storefront-build]',
     STOREFRONT_BUILD_SHA,
@@ -72,7 +72,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
         </button>
       </div>
-      <div class="flex items-center gap-1 swatch-slider ml-8 mt-1" data-swatch-slider data-swatch-kind="accessory" data-visible="1">
+      <div class="flex items-center gap-1 swatch-slider mt-1" data-swatch-slider data-swatch-kind="accessory" data-visible="1">
         <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous accessory">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
         </button>
@@ -122,11 +122,11 @@
     style.id = HOMEPAGE_TILE_STYLE_ID;
     style.textContent = `
 .ldc-home-tile.product-card {
-  background: linear-gradient(145deg, #d6a7ff 0%, #b983f4 55%, #9656da 100%) !important;
+  background: linear-gradient(145deg, #e7c8ff 0%, #dcb8fb 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.28) !important;
   border-radius: 1rem !important;
   padding: 0.95rem !important;
-  box-shadow: 0 14px 30px rgba(64, 25, 107, 0.28) !important;
+  box-shadow: 0 14px 30px rgba(88, 53, 133, 0.2) !important;
   color: #ffffff !important;
 }
 .ldc-home-tile .ldc-tile-media {
@@ -163,6 +163,14 @@
 .ldc-home-tile [data-tile-actions] {
   justify-content: flex-start !important;
 }
+.ldc-home-tile [data-swatch-slider] {
+  width: 100% !important;
+  justify-content: center !important;
+  margin-left: 0 !important;
+}
+.ldc-home-tile [data-swatch-window] {
+  box-sizing: border-box !important;
+}
 .ldc-home-tile .icon-button {
   border-radius: 999px !important;
   border: 1px solid rgba(255, 255, 255, 0.28) !important;
@@ -172,9 +180,6 @@
 .ldc-home-tile .icon-button:hover {
   background: rgba(255, 255, 255, 0.22) !important;
   border-color: rgba(255, 255, 255, 0.5) !important;
-}
-.ldc-home-tile [data-swatch-slider][data-swatch-kind="accessory"] {
-  margin-left: 2rem !important;
 }
 `;
     document.head.appendChild(style);
@@ -1451,10 +1456,11 @@
     }
 
     slider.style.display = '';
-    const visible = Math.max(
+    const configuredVisible = Math.max(
       1,
       parseInt(slider.getAttribute('data-visible') || '4', 10) || 4
     );
+    const effectiveVisible = Math.min(swatchCount, configuredVisible);
     const firstSwatch = track.children[0];
     const swatchWidth =
       firstSwatch?.getBoundingClientRect?.().width ||
@@ -1463,18 +1469,24 @@
     const trackStyles = window.getComputedStyle(track);
     const gap =
       parseFloat(trackStyles.gap || trackStyles.columnGap || '0') || 8;
-    const windowWidth = visible * swatchWidth + Math.max(0, visible - 1) * gap;
+    const safetyPadding = 5;
+    const windowWidth =
+      effectiveVisible * swatchWidth +
+      Math.max(0, effectiveVisible - 1) * gap +
+      safetyPadding * 2 +
+      2;
     windowEl.style.width = `${Math.ceil(windowWidth)}px`;
+    windowEl.style.paddingInline = `${safetyPadding}px`;
     windowEl.style.overflow = 'hidden';
 
-    const shouldHideArrows = swatchCount <= visible;
+    const shouldHideArrows = swatchCount <= effectiveVisible;
     [prev, next].forEach(button => {
       if (!button) return;
       button.style.display = shouldHideArrows ? 'none' : '';
       button.disabled = shouldHideArrows;
     });
 
-    return { swatchCount, visible, swatchWidth, gap };
+    return { swatchCount, visible: effectiveVisible, swatchWidth, gap };
   };
 
   const initSwatchSliders = (scope) => {
