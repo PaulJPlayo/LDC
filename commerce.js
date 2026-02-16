@@ -16,8 +16,8 @@
     window.LDC_MEDUSA_PUBLISHABLE_KEY ||
     'pk_427f7900e23e30a0e18feaf0604aa9caaa9d0cb21571889081d2cb93fb13ffb0';
   const debugEnabled = body.dataset.medusaDebug === 'true' || window.LDC_MEDUSA_DEBUG === true;
-  const STOREFRONT_BUILD_SHA = 'b629c15';
-  const STOREFRONT_BUILD_UTC = '2026-02-11T04:40:27.003Z';
+  const STOREFRONT_BUILD_SHA = '0d2899e';
+  const STOREFRONT_BUILD_UTC = '2026-02-16T02:43:12.939Z';
   console.info(
     '[storefront-build]',
     STOREFRONT_BUILD_SHA,
@@ -50,6 +50,70 @@
     'under-25',
     'last-chance'
   ]);
+  const HOMEPAGE_TILE_TEMPLATE_HTML = `
+<div class="group relative product-card">
+  <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center overflow-hidden relative">
+    <div class="badge-stack">
+      <span class="inline-block rounded bg-emerald-600 text-white px-3 py-0.5" data-product-badge style="display:none;"></span>
+    </div>
+    <img src="" alt="" class="h-full w-full object-cover" loading="lazy" data-product-image />
+  </div>
+  <div class="mt-4 flex items-center justify-between gap-2">
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
+        <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
+        </button>
+        <div class="relative overflow-hidden" data-swatch-window style="width:4.5rem; overflow:hidden !important;">
+          <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track></div>
+        </div>
+        <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next color">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
+        </button>
+      </div>
+      <div class="flex items-center gap-1 swatch-slider ml-8 mt-1" data-swatch-slider data-visible="4">
+        <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous accessory">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
+        </button>
+        <div class="relative overflow-hidden" data-swatch-window style="width:1.25rem;">
+          <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track></div>
+        </div>
+        <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next accessory">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="mt-1 text-xs text-slate-600" data-product-description></div>
+  <div class="mt-2 flex items-center justify-between gap-3">
+    <a href="#" class="block font-semibold tile-title" data-product-title data-product-link></a>
+  </div>
+  <div class="text-sm text-slate-700" data-product-price></div>
+  <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
+    <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
+    <span class="text-xs text-slate-600">0.0 (0)</span>
+  </div>
+  <div class="mt-3 flex items-center gap-2" data-tile-actions>
+    <a href="#section-customization" class="icon-button tile-action-design inline-flex items-center justify-center w-9 h-9" aria-label="Explore design options" title="Explore design options" data-design-source="" data-tile-design-action>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+        <path fill-rule="evenodd" d="M16.862 2.487a2.25 2.25 0 0 1 3.182 0l1.11 1.11a3.75 3.75 0 0 1 0 5.303l-8.92 8.92a4.5 4.5 0 0 1-2.038 1.159l-3.026.757a.75.75 0 0 1-.908-.908l.757-3.026a4.5 4.5 0 0 1 1.159-2.038l8.92-8.92a2.25 2.25 0 0 0 0-3.182l-1.11-1.11a.75.75 0 0 1 1.06-1.06Z" clip-rule="evenodd" />
+        <path d="M4.5 17.25c.414 0 .75.336.75.75a1.5 1.5 0 0 1-1.5 1.5H3a.75.75 0 0 1 0-1.5h1.5a.75.75 0 0 0 .75-.75Z" />
+      </svg>
+    </a>
+    <button type="button" class="icon-button tile-action-favorite inline-flex items-center justify-center w-9 h-9" aria-label="Add to favorites">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+        <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+      </svg>
+    </button>
+    <button type="button" class="icon-button tile-action-cart inline-flex items-center justify-center w-9 h-9" aria-label="Add to cart" data-add-to-cart>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+        <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+      </svg>
+    </button>
+  </div>
+</div>
+`.trim();
+  let sharedCardTemplate = null;
 
   const request = async (path, options = {}) => {
     const url = `${backendUrl}${path}`;
@@ -566,6 +630,45 @@
     );
   };
 
+  const getSharedCardTemplate = () => {
+    if (sharedCardTemplate) return sharedCardTemplate;
+    const wrapper = document.createElement('template');
+    wrapper.innerHTML = HOMEPAGE_TILE_TEMPLATE_HTML;
+    sharedCardTemplate = wrapper.content.firstElementChild || null;
+    return sharedCardTemplate;
+  };
+
+  const resolveBadgeText = (overrides, metadata) => {
+    const candidates = [
+      overrides?.badge,
+      overrides?.tile_badge,
+      metadata?.storefront_badge,
+      metadata?.tile_badge
+    ];
+    for (const value of candidates) {
+      const text = String(value || '').trim();
+      if (text) return text;
+    }
+    return '';
+  };
+
+  const isAccessoryProduct = (product, sectionKey) => {
+    const metadata = normalizeMetadata(product?.metadata);
+    const productKey = String(
+      metadata?.product_key || metadata?.productKey || product?.handle || ''
+    ).toLowerCase();
+    if (productKey.startsWith('accessory-')) return true;
+    if (getProductCollectionHandle(product) === 'accessories') return true;
+
+    const normalizedSectionKey = normalizeSectionKey(sectionKey);
+    if (normalizedSectionKey === 'accessories' || normalizedSectionKey === 'home-accessories') {
+      return true;
+    }
+    return getStorefrontSections(product).some(
+      section => section === 'accessories' || section === 'home-accessories'
+    );
+  };
+
   const updateProductCard = (container, product, preferredVariantId, sectionKey) => {
     if (!container || !product) return;
     const overrides = getStorefrontTileOverride(product, sectionKey);
@@ -659,11 +762,13 @@
       container.querySelector('.badge-custom') ||
       container.querySelector('.arrival-card .badge') ||
       container.querySelector('.arrival-body .badge');
-    if (badgeEl && !badgeEl.classList.contains('badge-new') && !badgeEl.classList.contains('badge-limited')) {
-      if (overrides?.badge) {
-        badgeEl.textContent = overrides.badge;
+    if (badgeEl) {
+      const badgeText = resolveBadgeText(overrides, metadata);
+      if (badgeText) {
+        badgeEl.textContent = badgeText;
         badgeEl.style.display = '';
       } else {
+        badgeEl.textContent = '';
         badgeEl.style.display = 'none';
       }
     }
@@ -700,6 +805,9 @@
     card.dataset.productId = product?.id || '';
     if (sectionKey) {
       card.dataset.sectionKey = sectionKey;
+    }
+    if (isAccessoryProduct(product, sectionKey)) {
+      card.querySelectorAll('[data-tile-design-action]').forEach(button => button.remove());
     }
 
     const addButton = card.querySelector('[data-add-to-cart]');
@@ -806,17 +914,6 @@
     updateAddToCartVariant(card, defaultVariant?.id || null);
     card.dataset.selectedColor = defaultLabel;
     card.dataset.selectedColorLabel = defaultLabel;
-
-    const newBadge = card.querySelector('.badge-new');
-    if (newBadge) {
-      const isNew = !overrides?.badge && getProductTags(product).includes('new-arrivals');
-      newBadge.style.display = isNew ? 'inline-flex' : 'none';
-    }
-    const limitedBadge = card.querySelector('.badge-limited');
-    if (limitedBadge) {
-      const isLimited = !overrides?.badge && getProductTags(product).includes('limited');
-      limitedBadge.style.display = isLimited ? 'inline-flex' : 'none';
-    }
 
     return card;
   };
@@ -935,8 +1032,10 @@
     await Promise.all(gridEntries.map(async entry => {
       const { container, filters, normalizedSectionKey, isManaged } = entry;
       let renderedCount = 0;
+      const sharedTemplate = getSharedCardTemplate();
       const templateElement = container.querySelector('template[data-card-template]');
       const template =
+        sharedTemplate ||
         templateElement?.content?.firstElementChild ||
         container.querySelector('.product-card');
       try {
