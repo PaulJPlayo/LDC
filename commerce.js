@@ -16,8 +16,8 @@
     window.LDC_MEDUSA_PUBLISHABLE_KEY ||
     'pk_427f7900e23e30a0e18feaf0604aa9caaa9d0cb21571889081d2cb93fb13ffb0';
   const debugEnabled = body.dataset.medusaDebug === 'true' || window.LDC_MEDUSA_DEBUG === true;
-  const STOREFRONT_BUILD_SHA = '00fc27a';
-  const STOREFRONT_BUILD_UTC = '2026-02-16T15:08:33.952Z';
+  const STOREFRONT_BUILD_SHA = '7821a35';
+  const STOREFRONT_BUILD_UTC = '2026-02-16T17:16:06.439Z';
   console.info(
     '[storefront-build]',
     STOREFRONT_BUILD_SHA,
@@ -59,24 +59,24 @@
     </div>
     <img src="" alt="" class="h-full w-full object-cover" loading="lazy" data-product-image />
   </div>
-  <div class="mt-4 flex items-center justify-between gap-2">
-    <div class="flex flex-col gap-2">
-      <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-swatch-kind="primary" data-visible="4">
+  <div class="mt-4 w-full" data-tile-swatches>
+    <div class="tile-swatches w-full flex flex-col gap-2">
+      <div class="flex items-center gap-1 swatch-slider w-full" data-swatch-slider data-swatch-kind="primary" data-visible="4">
         <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
         </button>
-        <div class="relative overflow-hidden" data-swatch-window style="overflow:hidden !important;">
+        <div class="relative" data-swatch-window>
           <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track></div>
         </div>
         <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next color">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
         </button>
       </div>
-      <div class="flex items-center gap-1 swatch-slider mt-1" data-swatch-slider data-swatch-kind="accessory" data-visible="1">
+      <div class="flex items-center gap-1 swatch-slider w-full mt-1" data-swatch-slider data-swatch-kind="accessory" data-visible="1">
         <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous accessory">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
         </button>
-        <div class="relative overflow-hidden" data-swatch-window style="overflow:hidden !important;">
+        <div class="relative" data-swatch-window>
           <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track></div>
         </div>
         <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next accessory">
@@ -86,7 +86,7 @@
     </div>
   </div>
   <div class="mt-1 text-xs ldc-tile-kicker" data-product-description></div>
-  <div class="mt-2 flex items-center justify-between gap-3">
+  <div class="mt-2 ldc-tile-title-row">
     <a href="#" class="block font-semibold tile-title ldc-tile-title" data-product-title data-product-link></a>
   </div>
   <div class="text-sm ldc-tile-price" data-product-price></div>
@@ -147,8 +147,17 @@
   color: rgba(255, 255, 255, 0.88) !important;
 }
 .ldc-home-tile .ldc-tile-title {
+  display: block !important;
+  width: 100% !important;
   color: #ffffff !important;
   text-decoration: none !important;
+  text-align: left !important;
+  justify-content: flex-start !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+.ldc-home-tile .ldc-tile-title-row {
+  width: 100% !important;
   text-align: left !important;
 }
 .ldc-home-tile .ldc-tile-price {
@@ -165,11 +174,18 @@
 }
 .ldc-home-tile [data-swatch-slider] {
   width: 100% !important;
+  display: flex !important;
   justify-content: center !important;
+  align-items: center !important;
+  min-height: 2.15rem !important;
   margin-left: 0 !important;
 }
 .ldc-home-tile [data-swatch-window] {
   box-sizing: border-box !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+  padding-block: 0.3rem !important;
+  margin-block: -0.12rem !important;
 }
 .ldc-home-tile .icon-button {
   border-radius: 999px !important;
