@@ -16,8 +16,8 @@
     window.LDC_MEDUSA_PUBLISHABLE_KEY ||
     'pk_427f7900e23e30a0e18feaf0604aa9caaa9d0cb21571889081d2cb93fb13ffb0';
   const debugEnabled = body.dataset.medusaDebug === 'true' || window.LDC_MEDUSA_DEBUG === true;
-  const STOREFRONT_BUILD_SHA = '0d2899e';
-  const STOREFRONT_BUILD_UTC = '2026-02-16T02:43:12.939Z';
+  const STOREFRONT_BUILD_SHA = '1439c9f';
+  const STOREFRONT_BUILD_UTC = '2026-02-16T03:35:39.816Z';
   console.info(
     '[storefront-build]',
     STOREFRONT_BUILD_SHA,
@@ -50,9 +50,10 @@
     'under-25',
     'last-chance'
   ]);
+  const HOMEPAGE_TILE_STYLE_ID = 'ldc-home-tile-styles';
   const HOMEPAGE_TILE_TEMPLATE_HTML = `
-<div class="group relative product-card">
-  <div class="aspect-[4/5] w-full rounded-lg tile-mauve border border-slate-200 flex items-center justify-center overflow-hidden relative">
+<div class="group relative product-card ldc-home-tile">
+  <div class="aspect-[4/5] w-full rounded-lg ldc-tile-media tile-mauve border border-slate-200 flex items-center justify-center overflow-hidden relative">
     <div class="badge-stack">
       <span class="inline-block rounded bg-emerald-600 text-white px-3 py-0.5" data-product-badge style="display:none;"></span>
     </div>
@@ -60,22 +61,22 @@
   </div>
   <div class="mt-4 flex items-center justify-between gap-2">
     <div class="flex flex-col gap-2">
-      <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-visible="4">
+      <div class="flex items-center gap-1 swatch-slider" data-swatch-slider data-swatch-kind="primary" data-visible="4">
         <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
         </button>
-        <div class="relative overflow-hidden" data-swatch-window style="width:4.5rem; overflow:hidden !important;">
+        <div class="relative overflow-hidden" data-swatch-window style="overflow:hidden !important;">
           <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track></div>
         </div>
         <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next color">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
         </button>
       </div>
-      <div class="flex items-center gap-1 swatch-slider ml-8 mt-1" data-swatch-slider data-visible="4">
+      <div class="flex items-center gap-1 swatch-slider ml-8 mt-1" data-swatch-slider data-swatch-kind="accessory" data-visible="1">
         <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous accessory">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
         </button>
-        <div class="relative overflow-hidden" data-swatch-window style="width:1.25rem;">
+        <div class="relative overflow-hidden" data-swatch-window style="overflow:hidden !important;">
           <div class="flex items-center gap-2 transition-transform duration-200" data-swatch-track></div>
         </div>
         <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-next aria-label="Next accessory">
@@ -84,14 +85,14 @@
       </div>
     </div>
   </div>
-  <div class="mt-1 text-xs text-slate-600" data-product-description></div>
+  <div class="mt-1 text-xs ldc-tile-kicker" data-product-description></div>
   <div class="mt-2 flex items-center justify-between gap-3">
-    <a href="#" class="block font-semibold tile-title" data-product-title data-product-link></a>
+    <a href="#" class="block font-semibold tile-title ldc-tile-title" data-product-title data-product-link></a>
   </div>
-  <div class="text-sm text-slate-700" data-product-price></div>
-  <div class="mt-1 flex items-center gap-1 text-slate-700 rating">
-    <span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span><span class="star text-slate-300">☆</span>
-    <span class="text-xs text-slate-600">0.0 (0)</span>
+  <div class="text-sm ldc-tile-price" data-product-price></div>
+  <div class="mt-1 flex items-center gap-1 rating ldc-tile-rating">
+    <span class="star">☆</span><span class="star">☆</span><span class="star">☆</span><span class="star">☆</span><span class="star">☆</span>
+    <span class="text-xs ldc-tile-rating-value">0.0 (0)</span>
   </div>
   <div class="mt-3 flex items-center gap-2" data-tile-actions>
     <a href="#section-customization" class="icon-button tile-action-design inline-flex items-center justify-center w-9 h-9" aria-label="Explore design options" title="Explore design options" data-design-source="" data-tile-design-action>
@@ -114,6 +115,70 @@
 </div>
 `.trim();
   let sharedCardTemplate = null;
+
+  const ensureHomepageTileStyles = () => {
+    if (document.getElementById(HOMEPAGE_TILE_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = HOMEPAGE_TILE_STYLE_ID;
+    style.textContent = `
+.ldc-home-tile.product-card {
+  background: linear-gradient(145deg, #d6a7ff 0%, #b983f4 55%, #9656da 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  border-radius: 1rem !important;
+  padding: 0.95rem !important;
+  box-shadow: 0 14px 30px rgba(64, 25, 107, 0.28) !important;
+  color: #ffffff !important;
+}
+.ldc-home-tile .ldc-tile-media {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.2) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.36) !important;
+}
+.ldc-home-tile .badge-stack {
+  position: absolute !important;
+  top: 0.75rem !important;
+  right: 0.75rem !important;
+  z-index: 2 !important;
+}
+.ldc-home-tile .badge-stack [data-product-badge] {
+  font-size: 0.68rem !important;
+  line-height: 1rem !important;
+}
+.ldc-home-tile .ldc-tile-kicker {
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+.ldc-home-tile .ldc-tile-title {
+  color: #ffffff !important;
+  text-decoration: none !important;
+  text-align: left !important;
+}
+.ldc-home-tile .ldc-tile-price {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+.ldc-home-tile .ldc-tile-rating,
+.ldc-home-tile .ldc-tile-rating .star,
+.ldc-home-tile .ldc-tile-rating-value {
+  color: rgba(255, 255, 255, 0.86) !important;
+}
+.ldc-home-tile [data-tile-actions] {
+  justify-content: flex-start !important;
+}
+.ldc-home-tile .icon-button {
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  color: #ffffff !important;
+  background: rgba(43, 15, 78, 0.35) !important;
+}
+.ldc-home-tile .icon-button:hover {
+  background: rgba(255, 255, 255, 0.22) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+.ldc-home-tile [data-swatch-slider][data-swatch-kind="accessory"] {
+  margin-left: 2rem !important;
+}
+`;
+    document.head.appendChild(style);
+  };
 
   const request = async (path, options = {}) => {
     const url = `${backendUrl}${path}`;
@@ -632,6 +697,7 @@
 
   const getSharedCardTemplate = () => {
     if (sharedCardTemplate) return sharedCardTemplate;
+    ensureHomepageTileStyles();
     const wrapper = document.createElement('template');
     wrapper.innerHTML = HOMEPAGE_TILE_TEMPLATE_HTML;
     sharedCardTemplate = wrapper.content.firstElementChild || null;
@@ -1371,6 +1437,46 @@
     });
   };
 
+  const finalizeSwatchSlider = slider => {
+    const track = slider?.querySelector?.('[data-swatch-track]');
+    const windowEl = slider?.querySelector?.('[data-swatch-window]');
+    const prev = slider?.querySelector?.('[data-swatch-prev]');
+    const next = slider?.querySelector?.('[data-swatch-next]');
+    const swatchCount = track?.children?.length || 0;
+    if (!track || !windowEl) return { swatchCount: 0, visible: 0 };
+
+    if (swatchCount === 0) {
+      slider.style.display = 'none';
+      return { swatchCount: 0, visible: 0 };
+    }
+
+    slider.style.display = '';
+    const visible = Math.max(
+      1,
+      parseInt(slider.getAttribute('data-visible') || '4', 10) || 4
+    );
+    const firstSwatch = track.children[0];
+    const swatchWidth =
+      firstSwatch?.getBoundingClientRect?.().width ||
+      parseFloat(window.getComputedStyle(firstSwatch).width || '0') ||
+      16;
+    const trackStyles = window.getComputedStyle(track);
+    const gap =
+      parseFloat(trackStyles.gap || trackStyles.columnGap || '0') || 8;
+    const windowWidth = visible * swatchWidth + Math.max(0, visible - 1) * gap;
+    windowEl.style.width = `${Math.ceil(windowWidth)}px`;
+    windowEl.style.overflow = 'hidden';
+
+    const shouldHideArrows = swatchCount <= visible;
+    [prev, next].forEach(button => {
+      if (!button) return;
+      button.style.display = shouldHideArrows ? 'none' : '';
+      button.disabled = shouldHideArrows;
+    });
+
+    return { swatchCount, visible, swatchWidth, gap };
+  };
+
   const initSwatchSliders = (scope) => {
     const root = scope || document;
     const sliders = Array.from(root.querySelectorAll('[data-swatch-slider]'));
@@ -1383,35 +1489,13 @@
       if (!track || !prev || !next) return;
       let index = 0;
 
-      const getGap = () => {
-        const styles = window.getComputedStyle(track);
-        const gapValue = styles.columnGap || styles.gap || '0px';
-        return parseFloat(gapValue) || 0;
-      };
-
       const update = () => {
-        const swatches = Array.from(track.children);
-        const total = swatches.length;
-        if (!total) return;
-        const visible = Number(slider.dataset.visible || 4) || 4;
-        const first = swatches[0];
-        const swatchWidth =
-          first.getBoundingClientRect().width ||
-          parseFloat(window.getComputedStyle(first).width) ||
-          0;
-        const gap = getGap();
-        const windowEl = slider.querySelector('[data-swatch-window]');
-        if (windowEl && slider.closest('.product-card')) {
-          const windowStyles = window.getComputedStyle(windowEl);
-          const paddingLeft = parseFloat(windowStyles.paddingLeft || '0');
-          const paddingRight = parseFloat(windowStyles.paddingRight || '0');
-          const windowWidth =
-            (swatchWidth + gap) * visible - gap + paddingLeft + paddingRight + 12;
-          if (windowWidth > 0) {
-            windowEl.style.width = `${windowWidth}px`;
-            windowEl.style.overflow = 'hidden';
-          }
-        }
+        const finalized = finalizeSwatchSlider(slider);
+        const total = finalized.swatchCount;
+        const visible = finalized.visible;
+        const swatchWidth = finalized.swatchWidth || 0;
+        const gap = finalized.gap || 0;
+        if (!total || !visible || !swatchWidth) return;
         const maxIndex = Math.max(0, total - visible);
         index = Math.max(0, Math.min(index, maxIndex));
         const offset = (swatchWidth + gap) * index;
