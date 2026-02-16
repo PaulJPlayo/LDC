@@ -1,6 +1,13 @@
 const API_BASE = (import.meta.env.VITE_MEDUSA_BACKEND_URL || 'https://api.lovettsldc.com')
   .replace(/\/$/, '');
 const PUBLISHABLE_KEY = import.meta.env.VITE_MEDUSA_PUBLISHABLE_KEY || '';
+const API_ORIGIN = (() => {
+  try {
+    return new URL(API_BASE).origin;
+  } catch (error) {
+    return '';
+  }
+})();
 
 export class ApiError extends Error {
   constructor(message, status) {
@@ -18,6 +25,52 @@ const parseResponse = async (response) => {
   } catch (error) {
     return text;
   }
+};
+
+const LOCAL_UPLOAD_ORIGINS = new Set(['http://localhost:9000', 'http://127.0.0.1:9000']);
+
+const normalizeUploadedUrl = (value) => {
+  const raw = String(value || '').trim();
+  if (!raw) return raw;
+
+  const withOrigin = (path, search = '', hash = '') => {
+    if (!API_ORIGIN) return `${path}${search}${hash}`;
+    return `${API_ORIGIN}${path}${search}${hash}`;
+  };
+
+  if (raw.startsWith('/static/') || raw.startsWith('static/')) {
+    const path = raw.startsWith('/') ? raw : `/${raw}`;
+    return withOrigin(path);
+  }
+
+  try {
+    const parsed = new URL(raw);
+    if (LOCAL_UPLOAD_ORIGINS.has(parsed.origin)) {
+      return withOrigin(parsed.pathname, parsed.search, parsed.hash);
+    }
+  } catch (error) {
+    return raw;
+  }
+
+  return raw;
+};
+
+const normalizeUploadPayload = (value) => {
+  if (Array.isArray(value)) {
+    return value.map((entry) => normalizeUploadPayload(entry));
+  }
+  if (value && typeof value === 'object') {
+    const next = {};
+    Object.entries(value).forEach(([key, entryValue]) => {
+      if (key === 'url' && typeof entryValue === 'string') {
+        next[key] = normalizeUploadedUrl(entryValue);
+      } else {
+        next[key] = normalizeUploadPayload(entryValue);
+      }
+    });
+    return next;
+  }
+  return value;
 };
 
 export const request = async (path, options = {}) => {
@@ -101,7 +154,7 @@ export const uploadFiles = async (files, path = '/admin/uploads') => {
         : payload?.message || `Upload failed (${response.status})`;
     throw new ApiError(message, response.status);
   }
-  return payload;
+  return normalizeUploadPayload(payload);
 };
 
 export const login = async (email, password) => {
