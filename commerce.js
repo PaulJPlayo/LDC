@@ -945,18 +945,24 @@
 
     const fillTrack = (track, trackVariants) => {
       if (!track) return;
-      trackVariants.forEach((variant, index) => {
+      trackVariants.forEach((variant) => {
         const label = getVariantLabel(variant);
         const meta = getVariantSwatchMeta(variant);
         const metaRaw = normalizeMetadata(variant?.metadata);
         if (metaRaw?.swatch_hide || metaRaw?.swatchHide) {
           return;
         }
+        if (isDefaultVariantLabel(label) && !meta.style && !meta.glyph) {
+          return;
+        }
         if (!meta.style && !meta.glyph && trackVariants.length > 1) {
           const handle = product?.handle || product?.id || 'unknown';
           missingSwatchMeta.add(handle);
         }
-        const swatch = buildSwatchElement(variant, label, index);
+        const swatch = buildSwatchElement(variant, label, track.children.length);
+        if (!swatch) {
+          return;
+        }
         if (!swatch.dataset.variantImage) {
           const variantImage = getVariantImage(variant, product);
           if (variantImage) {
@@ -1218,6 +1224,11 @@
       .replace(/\s+/g, ' ')
       .trim();
 
+  const isDefaultVariantLabel = value => {
+    const label = cleanVariantLabel(value);
+    return !label || /^default$/i.test(label);
+  };
+
   const getSwatchLabel = swatch => {
     if (!swatch) return '';
     const raw =
@@ -1234,10 +1245,14 @@
   const buildSwatchElement = (variant, label, index) => {
     const swatch = document.createElement('span');
     const meta = getVariantSwatchMeta(variant);
-    const swatchLabel = label || getVariantLabel(variant) || 'Variant';
+    const swatchLabel = cleanVariantLabel(label || getVariantLabel(variant) || '');
+    if (isDefaultVariantLabel(swatchLabel) && !meta.style && !meta.glyph) {
+      return null;
+    }
+    const resolvedLabel = swatchLabel || 'Variant';
     swatch.className = 'swatch swatch-auto cursor-pointer';
     swatch.dataset.variantId = variant?.id || '';
-    swatch.dataset.variantLabel = swatchLabel;
+    swatch.dataset.variantLabel = resolvedLabel;
     if (meta.type) {
       swatch.dataset.swatchType = meta.type;
     }
@@ -1247,7 +1262,7 @@
       swatch.setAttribute('style', `${baseStyle};${sizeStyle}`);
     } else {
       swatch.classList.add('is-text');
-      swatch.textContent = swatchLabel;
+      swatch.textContent = resolvedLabel;
     }
     if (meta.glyph) {
       swatch.classList.add('is-glyph');
@@ -1256,7 +1271,7 @@
     if (meta.image) {
       swatch.dataset.variantImage = meta.image;
     }
-    swatch.setAttribute('aria-label', swatchLabel);
+    swatch.setAttribute('aria-label', resolvedLabel);
     swatch.setAttribute('role', 'button');
     swatch.setAttribute('tabindex', '0');
     if (index === 0) {
@@ -1490,13 +1505,20 @@
     );
     const effectiveVisible = Math.min(swatchCount, configuredVisible);
     const firstSwatch = track.children[0];
-    const swatchWidth =
+    const measuredSwatchWidth =
       firstSwatch?.getBoundingClientRect?.().width ||
       parseFloat(window.getComputedStyle(firstSwatch).width || '0') ||
-      16;
+      0;
+    const swatchWidth =
+      Number.isFinite(measuredSwatchWidth) && measuredSwatchWidth >= 12
+        ? measuredSwatchWidth
+        : 20;
     const trackStyles = window.getComputedStyle(track);
+    const measuredGap = parseFloat(trackStyles.gap || trackStyles.columnGap || '0');
     const gap =
-      parseFloat(trackStyles.gap || trackStyles.columnGap || '0') || 8;
+      Number.isFinite(measuredGap) && measuredGap >= 4
+        ? measuredGap
+        : 8;
     const safetyPadding = 5;
     const windowWidth =
       effectiveVisible * swatchWidth +
@@ -1559,6 +1581,7 @@
       });
       window.addEventListener('resize', update);
       update();
+      requestAnimationFrame(update);
     });
   };
 
