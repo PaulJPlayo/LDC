@@ -31,3 +31,8 @@ git-work/
 # Local audit artifacts (generated during debugging)
 audit-storefront-metadata.ts
 storefront-metadata-audit.json
+
+# Generated cart audit artifacts
+artifacts/*.json
+artifacts/*.csv
+artifacts/*.md
