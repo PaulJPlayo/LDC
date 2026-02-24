@@ -27,6 +27,9 @@
 
   const CART_ID_KEY = 'ldc:medusa:cart_id';
   const LEGACY_CART_KEY = 'ldc:cart';
+  const CART_AUDIT_STORAGE_KEY = 'LDC_CART_ADD_FAILS';
+  const CART_AUDIT_LIMIT = 200;
+  const DEFAULT_LOCALE = 'en-US';
   const badgeEls = Array.from(document.querySelectorAll('[data-cart-count]'));
   const productMapUrl = body.dataset.productMap || window.LDC_PRODUCT_MAP || 'product-map.json';
   let productMapPromise = null;
@@ -504,15 +507,66 @@
     return { style, glyph, type, image };
   };
 
-  const formatCurrency = (amount, currencyCode = 'USD') => {
-    const value = Number(amount);
-    if (!Number.isFinite(value)) return '';
-    const code = String(currencyCode || 'USD').toUpperCase();
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: code
-    }).format(value / 100);
+  const currencyDivisorCache = new Map();
+
+  const getCurrencyCode = source => {
+    const code =
+      source?.currency_code ||
+      source?.currencyCode ||
+      source?.region?.currency_code ||
+      source?.region?.currencyCode ||
+      source?.cart?.currency_code ||
+      source?.cart?.currencyCode ||
+      source ||
+      'USD';
+    return String(code || 'USD').toUpperCase();
   };
+
+  const getCurrencyDivisor = (currencyCode, locale = DEFAULT_LOCALE) => {
+    const code = getCurrencyCode(currencyCode);
+    const cacheKey = `${locale}:${code}`;
+    if (currencyDivisorCache.has(cacheKey)) {
+      return currencyDivisorCache.get(cacheKey);
+    }
+    let digits = 2;
+    try {
+      digits = new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: code
+      }).resolvedOptions().maximumFractionDigits;
+    } catch (error) {
+      digits = 2;
+    }
+    const safeDigits = Number.isInteger(digits) && digits >= 0 ? digits : 2;
+    const divisor = 10 ** safeDigits;
+    currencyDivisorCache.set(cacheKey, divisor);
+    return divisor;
+  };
+
+  const toMajorUnits = (amountMinor, currencyCode, locale = DEFAULT_LOCALE) => {
+    const value = Number(amountMinor);
+    if (!Number.isFinite(value)) return 0;
+    const divisor = getCurrencyDivisor(currencyCode, locale);
+    if (!Number.isFinite(divisor) || divisor <= 0) return value;
+    return value / divisor;
+  };
+
+  const formatMoneyFromMinor = (amountMinor, currencyCode = 'USD', locale = DEFAULT_LOCALE) => {
+    const code = getCurrencyCode(currencyCode);
+    const amountMajor = toMajorUnits(amountMinor, code, locale);
+    if (!Number.isFinite(amountMajor)) return '';
+    try {
+      return new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: code
+      }).format(amountMajor);
+    } catch (error) {
+      return '';
+    }
+  };
+
+  const formatCurrency = (amountMinor, currencyCode = 'USD') =>
+    formatMoneyFromMinor(amountMinor, currencyCode);
 
   const resolveAssetUrl = src => {
     if (!src) return '';
@@ -1843,10 +1897,12 @@
     return metadata;
   };
 
-  const formatLegacyItem = (item, currencyCode) => {
+  const formatLegacyItem = (item, currencySource) => {
     if (!item) return null;
-    const rawUnitPrice = Number(item.unit_price || 0);
-    const unitPrice = Number.isFinite(rawUnitPrice) ? rawUnitPrice : 0;
+    const resolvedCurrency = getCurrencyCode(currencySource || item?.currency_code);
+    const rawUnitPriceMinor = Number(item.unit_price || 0);
+    const unitPriceMinor = Number.isFinite(rawUnitPriceMinor) ? rawUnitPriceMinor : 0;
+    const unitPrice = toMajorUnits(unitPriceMinor, resolvedCurrency);
     const productTitle =
       item.product_title || item.product?.title || item.productTitle || '';
     const lineTitle = item.title || '';
@@ -2004,6 +2060,8 @@
       id: String(item.id || displayTitle),
       name: String(displayTitle),
       price: unitPrice,
+      price_minor: unitPriceMinor,
+      currency_code: resolvedCurrency,
       quantity: Math.max(1, Number(item.quantity || 1)),
       previewStyle,
       options
@@ -2011,16 +2069,18 @@
   };
 
   const syncLegacyCart = cart => {
+    const currencyCode = getCurrencyCode(cart);
     const items = Array.isArray(cart?.items)
-      ? cart.items.map(item => formatLegacyItem(item, cart?.currency_code)).filter(Boolean)
+      ? cart.items.map(item => formatLegacyItem(item, currencyCode)).filter(Boolean)
       : [];
+    const payload = { items, currency_code: currencyCode };
     try {
-      localStorage.setItem(LEGACY_CART_KEY, JSON.stringify({ items }));
+      localStorage.setItem(LEGACY_CART_KEY, JSON.stringify(payload));
     } catch (error) {
       // Ignore storage errors.
     }
     try {
-      document.dispatchEvent(new CustomEvent('cart:set', { detail: { items } }));
+      document.dispatchEvent(new CustomEvent('cart:set', { detail: payload }));
     } catch (error) {
       // Ignore if CustomEvent is unavailable.
     }
@@ -2213,13 +2273,205 @@
     return data?.orders || data;
   };
 
+  const sanitizeAuditText = value =>
+    String(value || '')
+      .replace(/cart_[A-Za-z0-9]+/g, '[redacted-cart-id]')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const readStoredCartFailures = () => {
+    try {
+      const raw = localStorage.getItem(CART_AUDIT_STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.slice(-CART_AUDIT_LIMIT) : [];
+    } catch (error) {
+      return [];
+    }
+  };
+
+  const ensureCartAuditBuffer = () => {
+    const existing =
+      window.__LDC_CART_AUDIT && typeof window.__LDC_CART_AUDIT === 'object'
+        ? window.__LDC_CART_AUDIT
+        : {};
+    if (!Array.isArray(existing.adds)) existing.adds = [];
+    if (!Array.isArray(existing.fails)) existing.fails = readStoredCartFailures();
+    window.__LDC_CART_AUDIT = existing;
+    return existing;
+  };
+  ensureCartAuditBuffer();
+
+  const appendCappedEntry = (entries, value) => {
+    if (!Array.isArray(entries)) return;
+    entries.push(value);
+    if (entries.length > CART_AUDIT_LIMIT) {
+      entries.splice(0, entries.length - CART_AUDIT_LIMIT);
+    }
+  };
+
+  const persistAuditFailures = failures => {
+    try {
+      localStorage.setItem(CART_AUDIT_STORAGE_KEY, JSON.stringify(failures.slice(-CART_AUDIT_LIMIT)));
+    } catch (error) {
+      // Ignore storage errors.
+    }
+  };
+
+  const recordCartAddAttempt = entry => {
+    const audit = ensureCartAuditBuffer();
+    appendCappedEntry(audit.adds, entry);
+  };
+
+  const recordCartAddFailure = entry => {
+    const audit = ensureCartAuditBuffer();
+    appendCappedEntry(audit.fails, entry);
+    persistAuditFailures(audit.fails);
+  };
+
+  const getSelectedSwatchLabelsForAudit = button => {
+    const container = getVariantContainer(button);
+    if (!container) return [];
+    const labels = [];
+    const tracks = Array.from(container.querySelectorAll('[data-swatch-track]'));
+    tracks.forEach(track => {
+      const active =
+        track.querySelector('.swatch.is-active') ||
+        track.querySelector('.swatch[aria-pressed="true"]') ||
+        track.querySelector('.swatch');
+      if (!active) return;
+      const label = cleanVariantLabel(getSwatchLabel(active));
+      if (!label || isDefaultVariantLabel(label)) return;
+      const kind =
+        active.dataset.swatchType ||
+        track.closest('[data-swatch-slider]')?.dataset?.swatchKind ||
+        '';
+      labels.push(kind ? `${kind}:${label}` : label);
+    });
+    return labels;
+  };
+
+  const buildAddToCartContext = (button, variantId = null) => {
+    const container = getVariantContainer(button);
+    const titleEl =
+      container?.querySelector('[data-product-title]') ||
+      container?.querySelector('.product-title') ||
+      container?.querySelector('.tile-title') ||
+      container?.querySelector('h1, h2, h3');
+    const quantityRaw = Number(button?.dataset?.quantity || 1);
+    const quantity = Number.isFinite(quantityRaw) && quantityRaw > 0 ? quantityRaw : 1;
+    return {
+      timestamp: new Date().toISOString(),
+      path: window.location.pathname,
+      product_title: sanitizeAuditText(
+        button?.dataset?.productTitle ||
+          container?.dataset?.productTitle ||
+          titleEl?.textContent ||
+          ''
+      ),
+      product_handle: sanitizeAuditText(
+        button?.dataset?.productHandle ||
+          container?.dataset?.productHandle ||
+          getProductKeyFromContainer(container) ||
+          deriveProductKey(button) ||
+          ''
+      ),
+      variant_id:
+        variantId ||
+        button?.dataset?.variantId ||
+        button?.dataset?.medusaVariantId ||
+        container?.dataset?.selectedVariantId ||
+        null,
+      swatches: getSelectedSwatchLabelsForAudit(button),
+      quantity
+    };
+  };
+
+  const getAddToCartErrorDetails = error => {
+    const status = Number(error?.status);
+    const rawMessage = sanitizeAuditText(error?.message || String(error || ''));
+    let detail = rawMessage;
+    let message = rawMessage || 'Unable to add item to cart.';
+    try {
+      const parsed = JSON.parse(error?.message || '');
+      const parsedMessage = sanitizeAuditText(parsed?.message || '');
+      if (parsedMessage) {
+        message = parsedMessage;
+      }
+      detail = sanitizeAuditText(JSON.stringify(parsed));
+    } catch (parseError) {
+      // Ignore parse errors and keep raw message.
+    }
+    return {
+      status: Number.isFinite(status) ? status : null,
+      message: message.slice(0, 300),
+      detail: detail.slice(0, 700)
+    };
+  };
+
+  let cartToastEl = null;
+  let cartToastTimeout = null;
+
+  const ensureCartToast = () => {
+    if (cartToastEl && document.body?.contains(cartToastEl)) return cartToastEl;
+    const toast = document.createElement('div');
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    toast.style.position = 'fixed';
+    toast.style.left = '50%';
+    toast.style.bottom = '1.5rem';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.maxWidth = 'min(90vw, 32rem)';
+    toast.style.padding = '0.75rem 1rem';
+    toast.style.borderRadius = '0.75rem';
+    toast.style.background = '#7f1d1d';
+    toast.style.color = '#ffffff';
+    toast.style.fontSize = '0.9rem';
+    toast.style.fontWeight = '600';
+    toast.style.lineHeight = '1.3';
+    toast.style.boxShadow = '0 12px 30px rgba(15, 23, 42, 0.25)';
+    toast.style.opacity = '0';
+    toast.style.pointerEvents = 'none';
+    toast.style.zIndex = '9999';
+    toast.style.transition = 'opacity 160ms ease';
+    document.body.appendChild(toast);
+    cartToastEl = toast;
+    return toast;
+  };
+
+  const showCartToast = (message, tone = 'error') => {
+    const toast = ensureCartToast();
+    if (!toast) return;
+    toast.textContent = message;
+    toast.style.background = tone === 'error' ? '#7f1d1d' : '#065f46';
+    toast.style.opacity = '1';
+    if (cartToastTimeout) {
+      window.clearTimeout(cartToastTimeout);
+    }
+    cartToastTimeout = window.setTimeout(() => {
+      toast.style.opacity = '0';
+    }, 4500);
+  };
+
   const handleAddToCart = async button => {
+    if (!button || button.disabled || button.getAttribute('aria-busy') === 'true') return;
     const variantId = await resolveVariantId(button);
+    const context = buildAddToCartContext(button, variantId);
+    recordCartAddAttempt(context);
     if (!variantId) {
-      console.warn('[commerce] Missing variant ID for add-to-cart.');
+      const failure = {
+        ...context,
+        reason: 'missing_variant_id',
+        status: null,
+        error_message: 'Missing variant ID for add-to-cart.',
+        response_detail: ''
+      };
+      recordCartAddFailure(failure);
+      console.error('[commerce][add-to-cart]', failure);
+      showCartToast('Please select an option before adding to cart.', 'error');
       return;
     }
-    const quantity = Number(button.dataset.quantity || 1) || 1;
+    const quantity = context.quantity;
     const metadata = buildLineItemMetadata(button);
     button.setAttribute('aria-busy', 'true');
     button.disabled = true;
@@ -2228,7 +2480,18 @@
       await syncBadges();
       window.ldcCart?.open?.();
     } catch (error) {
-      console.warn('[commerce] Unable to add to cart:', error);
+      const details = getAddToCartErrorDetails(error);
+      const failure = {
+        ...context,
+        variant_id: variantId,
+        reason: 'add_line_item_failed',
+        status: details.status,
+        error_message: details.message,
+        response_detail: details.detail
+      };
+      recordCartAddFailure(failure);
+      console.error('[commerce][add-to-cart]', failure);
+      showCartToast('Unable to add this item right now. Please try again.', 'error');
     } finally {
       button.removeAttribute('aria-busy');
       button.disabled = false;
