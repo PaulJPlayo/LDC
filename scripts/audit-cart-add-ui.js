@@ -275,7 +275,7 @@ const runAddAttempt = async ({ page, tile, route, tileIndex, mode }) => {
 
 const summarize = rows => {
   const summary = {
-    total_actions: rows.length,
+    total_actions: 0,
     success_count: 0,
     failure_count: 0,
     click_no_effect_count: 0,
