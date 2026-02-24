@@ -640,6 +640,54 @@
     return src;
   };
 
+  const getFirstImageUrl = images => {
+    if (!Array.isArray(images) || !images.length) return '';
+    const first = images[0];
+    if (typeof first === 'string') return first;
+    return first?.url || first?.src || '';
+  };
+
+  const getLineItemDisplayImage = item => {
+    if (!item || typeof item !== 'object') return '';
+    const metadata = normalizeMetadata(item.metadata);
+    const variantThumbnail = item?.variant?.thumbnail || '';
+    if (variantThumbnail) {
+      return resolveAssetUrl(variantThumbnail);
+    }
+    const metadataPreview =
+      metadata?.design_preview_url ||
+      metadata?.designPreviewUrl ||
+      metadata?.preview_url ||
+      metadata?.previewUrl ||
+      metadata?.preview_image ||
+      metadata?.previewImage ||
+      '';
+    if (metadataPreview) {
+      return resolveAssetUrl(metadataPreview);
+    }
+    const itemThumbnail = item?.thumbnail || '';
+    if (itemThumbnail) {
+      return resolveAssetUrl(itemThumbnail);
+    }
+    const variantProductThumbnail = item?.variant?.product?.thumbnail || '';
+    if (variantProductThumbnail) {
+      return resolveAssetUrl(variantProductThumbnail);
+    }
+    const variantProductImage = getFirstImageUrl(item?.variant?.product?.images);
+    if (variantProductImage) {
+      return resolveAssetUrl(variantProductImage);
+    }
+    const productThumbnail = item?.product?.thumbnail || '';
+    if (productThumbnail) {
+      return resolveAssetUrl(productThumbnail);
+    }
+    const productImage = getFirstImageUrl(item?.product?.images);
+    if (productImage) {
+      return resolveAssetUrl(productImage);
+    }
+    return '';
+  };
+
   const updateProductImage = (container, imageUrl, title, label) => {
     if (!container || !imageUrl) return;
     const resolved = resolveAssetUrl(imageUrl);
@@ -2682,7 +2730,8 @@
     renderDynamicGrids,
     getCurrencyCode,
     getCurrencyDivisor,
-    formatMoneyFromMinor
+    formatMoneyFromMinor,
+    getLineItemDisplayImage
   };
 
   const initStorefront = () => {
