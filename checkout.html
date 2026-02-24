@@ -588,6 +588,24 @@
             currency: (currency || 'USD').toUpperCase()
           }).format(Number(amount || 0));
 
+          const getCheckoutItemImage = item => {
+            if (!item) return '';
+            if (typeof commerce?.getLineItemDisplayImage === 'function') {
+              return commerce.getLineItemDisplayImage(item);
+            }
+            const metadata = item.metadata || {};
+            const preview =
+              metadata.design_preview_url ||
+              metadata.designPreviewUrl ||
+              metadata.preview_url ||
+              metadata.previewUrl ||
+              metadata.preview_image ||
+              metadata.previewImage ||
+              item.thumbnail ||
+              '';
+            return String(preview || '');
+          };
+
           const formatMinorMoney = (amountMinor, currency) => {
             const value = Number(amountMinor);
             if (!Number.isFinite(value)) return '';
@@ -720,8 +738,9 @@
             }
 
             itemsContainer.innerHTML = items.map(item => {
-              const previewStyle = item.thumbnail
-                ? `background-image: url('${item.thumbnail.replace(/'/g, '%27')}');`
+              const lineImage = getCheckoutItemImage(item);
+              const previewStyle = lineImage
+                ? `background-image: url('${lineImage.replace(/'/g, '%27')}');`
                 : fallbackPreview;
               const lineTotal = (item.unit_price || 0) * (item.quantity || 0);
               const title = item.title || item.product_title || 'Item';
