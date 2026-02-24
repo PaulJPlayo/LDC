@@ -16,8 +16,8 @@
     window.LDC_MEDUSA_PUBLISHABLE_KEY ||
     'pk_427f7900e23e30a0e18feaf0604aa9caaa9d0cb21571889081d2cb93fb13ffb0';
   const debugEnabled = body.dataset.medusaDebug === 'true' || window.LDC_MEDUSA_DEBUG === true;
-  const STOREFRONT_BUILD_SHA = 'cad482b';
-  const STOREFRONT_BUILD_UTC = '2026-02-24T15:43:23.031Z';
+  const STOREFRONT_BUILD_SHA = '79b96bd';
+  const STOREFRONT_BUILD_UTC = '2026-02-24T17:43:05.487Z';
   console.info(
     '[storefront-build]',
     STOREFRONT_BUILD_SHA,
