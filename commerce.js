@@ -2456,20 +2456,77 @@
     const rawMessage = sanitizeAuditText(error?.message || String(error || ''));
     let detail = rawMessage;
     let message = rawMessage || 'Unable to add item to cart.';
+    let code = '';
     try {
       const parsed = JSON.parse(error?.message || '');
       const parsedMessage = sanitizeAuditText(parsed?.message || '');
       if (parsedMessage) {
         message = parsedMessage;
       }
+      code = sanitizeAuditText(parsed?.type || parsed?.code || '');
       detail = sanitizeAuditText(JSON.stringify(parsed));
     } catch (parseError) {
       // Ignore parse errors and keep raw message.
     }
+    if (!code && error?.code) {
+      code = sanitizeAuditText(error.code);
+    }
     return {
       status: Number.isFinite(status) ? status : null,
       message: message.slice(0, 300),
-      detail: detail.slice(0, 700)
+      detail: detail.slice(0, 700),
+      code
+    };
+  };
+
+  const classifyAddToCartFailure = details => {
+    const status = Number(details?.status);
+    const code = String(details?.code || '').toLowerCase();
+    const message = String(details?.message || '').toLowerCase();
+    const detail = String(details?.detail || '').toLowerCase();
+    const combined = `${code} ${message} ${detail}`;
+
+    if (
+      /not associated with any stock location/.test(combined) ||
+      (/sales channel/.test(combined) && /stock location/.test(combined))
+    ) {
+      return {
+        key: 'unavailable_stock_location',
+        userMessage: 'This option is unavailable right now. Please choose another option.'
+      };
+    }
+
+    if (/out of stock|not enough inventory|insufficient inventory|inventory item/.test(combined)) {
+      return {
+        key: 'out_of_stock',
+        userMessage: 'This option is currently out of stock. Please choose another option.'
+      };
+    }
+
+    if (/do not exist|does not exist|not published|variant .* not found|invalid_data/.test(combined)) {
+      return {
+        key: 'unavailable_variant',
+        userMessage: 'This option is unavailable right now. Please choose another option.'
+      };
+    }
+
+    if (/missing price|no price|not priced|price list|price.*region|region.*price/.test(combined)) {
+      return {
+        key: 'missing_price',
+        userMessage: 'This option is not priced yet for your region. Please choose another option.'
+      };
+    }
+
+    if (status >= 500) {
+      return {
+        key: 'server_error',
+        userMessage: 'The cart service is temporarily unavailable. Please try again.'
+      };
+    }
+
+    return {
+      key: 'unknown_add_failure',
+      userMessage: 'Unable to add this item right now. Please try again.'
     };
   };
 
@@ -2526,6 +2583,8 @@
       const failure = {
         ...context,
         reason: 'missing_variant_id',
+        failure_type: 'selection_required',
+        user_message: 'Please select an option before adding to cart.',
         status: null,
         error_message: 'Missing variant ID for add-to-cart.',
         response_detail: ''
@@ -2545,17 +2604,21 @@
       window.ldcCart?.open?.();
     } catch (error) {
       const details = getAddToCartErrorDetails(error);
+      const classified = classifyAddToCartFailure(details);
       const failure = {
         ...context,
         variant_id: variantId,
         reason: 'add_line_item_failed',
+        failure_type: classified.key,
+        user_message: classified.userMessage,
+        error_code: details.code || '',
         status: details.status,
         error_message: details.message,
         response_detail: details.detail
       };
       recordCartAddFailure(failure);
       console.error('[commerce][add-to-cart]', failure);
-      showCartToast('Unable to add this item right now. Please try again.', 'error');
+      showCartToast(classified.userMessage, 'error');
     } finally {
       button.removeAttribute('aria-busy');
       button.disabled = false;
