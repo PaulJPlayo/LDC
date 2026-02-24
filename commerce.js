@@ -30,6 +30,21 @@
   const CART_AUDIT_STORAGE_KEY = 'LDC_CART_ADD_FAILS';
   const CART_AUDIT_LIMIT = 200;
   const DEFAULT_LOCALE = 'en-US';
+  const CART_DISPLAY_MONEY_FIELDS = [
+    'subtotal',
+    'total',
+    'shipping_total',
+    'tax_total',
+    'discount_total',
+    'item_subtotal'
+  ];
+  const LINE_ITEM_DISPLAY_MONEY_FIELDS = [
+    'unit_price',
+    'subtotal',
+    'total',
+    'tax_total',
+    'discount_total'
+  ];
   const badgeEls = Array.from(document.querySelectorAll('[data-cart-count]'));
   const productMapUrl = body.dataset.productMap || window.LDC_PRODUCT_MAP || 'product-map.json';
   let productMapPromise = null;
@@ -567,6 +582,55 @@
 
   const formatCurrency = (amountMinor, currencyCode = 'USD') =>
     formatMoneyFromMinor(amountMinor, currencyCode);
+
+  const normalizeMoneyValueForDisplay = (value, currencyCode, locale = DEFAULT_LOCALE) => {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return value;
+    return toMajorUnits(numeric, currencyCode, locale);
+  };
+
+  const normalizeEntryMoneyFields = (entry, fields, currencyCode) => {
+    if (!entry || typeof entry !== 'object') return entry;
+    const normalized = { ...entry };
+    fields.forEach(field => {
+      if (!(field in normalized)) return;
+      normalized[field] = normalizeMoneyValueForDisplay(normalized[field], currencyCode);
+    });
+    return normalized;
+  };
+
+  const normalizeCartForDisplay = cart => {
+    if (!cart || typeof cart !== 'object') return cart;
+    const currencyCode = getCurrencyCode(cart);
+    const normalizedCart = normalizeEntryMoneyFields(
+      cart,
+      CART_DISPLAY_MONEY_FIELDS,
+      currencyCode
+    );
+    if (Array.isArray(cart.items)) {
+      normalizedCart.items = cart.items.map(item =>
+        normalizeEntryMoneyFields(item, LINE_ITEM_DISPLAY_MONEY_FIELDS, currencyCode)
+      );
+    }
+    return normalizedCart;
+  };
+
+  const normalizeCommerceResponseForDisplay = payload => {
+    if (!payload || typeof payload !== 'object') return payload;
+    if (payload.cart && typeof payload.cart === 'object') {
+      return { ...payload, cart: normalizeCartForDisplay(payload.cart) };
+    }
+    if (Array.isArray(payload.carts)) {
+      return {
+        ...payload,
+        carts: payload.carts.map(cart => normalizeCartForDisplay(cart))
+      };
+    }
+    if (Array.isArray(payload.items) && payload.id) {
+      return normalizeCartForDisplay(payload);
+    }
+    return payload;
+  };
 
   const resolveAssetUrl = src => {
     if (!src) return '';
@@ -2526,13 +2590,23 @@
   const signUpForm = document.querySelector('[data-signup-form]');
   if (signUpForm) signUpForm.addEventListener('submit', handleSignUp);
 
+  const requestForUi = async (path, options = {}) => {
+    const payload = await request(path, options);
+    return normalizeCommerceResponseForDisplay(payload);
+  };
+
+  const getOrCreateCartForUi = async () => {
+    const cart = await getOrCreateCart();
+    return normalizeCartForDisplay(cart);
+  };
+
   window.LDCCommerce = {
     enabled: true,
     backendUrl,
-    request,
+    request: requestForUi,
     getCustomer,
     getOrders,
-    getOrCreateCart,
+    getOrCreateCart: getOrCreateCartForUi,
     addLineItem,
     syncBadges,
     syncLegacyCart,
@@ -2542,7 +2616,10 @@
     changeLineItemQuantity,
     resetCart,
     hydrateProductCards,
-    renderDynamicGrids
+    renderDynamicGrids,
+    getCurrencyCode,
+    getCurrencyDivisor,
+    formatMoneyFromMinor
   };
 
   const initStorefront = () => {
