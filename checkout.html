@@ -588,6 +588,19 @@
             currency: (currency || 'USD').toUpperCase()
           }).format(Number(amount || 0));
 
+          const formatMinorMoney = (amountMinor, currency) => {
+            const value = Number(amountMinor);
+            if (!Number.isFinite(value)) return '';
+            if (typeof commerce?.formatMoneyFromMinor === 'function') {
+              return commerce.formatMoneyFromMinor(value, currency);
+            }
+            const divisor = typeof commerce?.getCurrencyDivisor === 'function'
+              ? Number(commerce.getCurrencyDivisor(currency))
+              : 100;
+            const safeDivisor = Number.isFinite(divisor) && divisor > 0 ? divisor : 100;
+            return formatMoney(value / safeDivisor, currency);
+          };
+
           const manualPaymentMessage =
             'LDC will accept your order! LDC accepts payment through the LDC cashapp: $eloveit22, the LDC venmo handle @eloveit22 or the LDC zelle handle 602-425-4516';
 
@@ -865,7 +878,7 @@
             }
             const currency = state.cart?.currency_code || 'USD';
             shippingOptionsEl.innerHTML = state.shippingOptions.map(option => {
-              const amount = typeof option.amount === 'number' ? formatMoney(option.amount, currency) : '—';
+              const amount = option.amount != null ? formatMinorMoney(option.amount, currency) : '—';
               const checked = option.id === state.selectedShippingOption ? 'checked' : '';
               const label = option.name || 'Shipping';
               return `
