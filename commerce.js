@@ -16,8 +16,8 @@
     window.LDC_MEDUSA_PUBLISHABLE_KEY ||
     'pk_427f7900e23e30a0e18feaf0604aa9caaa9d0cb21571889081d2cb93fb13ffb0';
   const debugEnabled = body.dataset.medusaDebug === 'true' || window.LDC_MEDUSA_DEBUG === true;
-  const STOREFRONT_BUILD_SHA = '5f8e2f4';
-  const STOREFRONT_BUILD_UTC = '2026-02-23T13:59:00.721Z';
+  const STOREFRONT_BUILD_SHA = 'c8d894d';
+  const STOREFRONT_BUILD_UTC = '2026-02-24T00:15:29.131Z';
   console.info(
     '[storefront-build]',
     STOREFRONT_BUILD_SHA,
@@ -51,6 +51,24 @@
     'last-chance'
   ]);
   const HOMEPAGE_TILE_STYLE_ID = 'ldc-home-tile-styles';
+  const SWATCH_DOT_SIZE = '1.25rem';
+  const MAX_VISIBLE_SWATCHES = 4;
+  const ALLOWED_SWATCH_STYLE_PROPS = new Set([
+    'background',
+    'background-color',
+    'background-image',
+    'background-position',
+    'background-repeat',
+    'background-size',
+    'border',
+    'border-color',
+    'box-shadow',
+    'color',
+    'opacity',
+    'outline',
+    'outline-color'
+  ]);
+  const BLOCKED_SWATCH_STYLE_VALUE_RE = /(javascript:|expression\s*\()/i;
   const HOMEPAGE_TILE_TEMPLATE_HTML = `
 <div class="group relative product-card ldc-home-tile">
   <div class="aspect-[4/5] w-full rounded-lg ldc-tile-media tile-mauve border border-slate-200 flex items-center justify-center overflow-hidden relative">
@@ -189,6 +207,21 @@
   overflow-y: visible !important;
   padding-block: 0.3rem !important;
   margin-block: -0.12rem !important;
+}
+.ldc-home-tile .swatch,
+.ldc-home-tile [data-swatch-track] > * {
+  width: ${SWATCH_DOT_SIZE} !important;
+  height: ${SWATCH_DOT_SIZE} !important;
+  min-width: ${SWATCH_DOT_SIZE} !important;
+  min-height: ${SWATCH_DOT_SIZE} !important;
+  border-radius: 9999px !important;
+  flex: 0 0 auto !important;
+  aspect-ratio: 1 / 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
 }
 .ldc-home-tile .icon-button {
   border-radius: 999px !important;
@@ -1229,6 +1262,41 @@
     return !label || /^default$/i.test(label);
   };
 
+  const sanitizeSwatchStyle = styleValue => {
+    if (!styleValue) return '';
+    const declarations = String(styleValue)
+      .split(';')
+      .map(chunk => chunk.trim())
+      .filter(Boolean)
+      .map(chunk => {
+        const separatorIndex = chunk.indexOf(':');
+        if (separatorIndex <= 0) return null;
+        const property = chunk.slice(0, separatorIndex).trim().toLowerCase();
+        const value = chunk.slice(separatorIndex + 1).trim();
+        if (!ALLOWED_SWATCH_STYLE_PROPS.has(property)) return null;
+        if (!value || BLOCKED_SWATCH_STYLE_VALUE_RE.test(value)) return null;
+        return `${property}:${value}`;
+      })
+      .filter(Boolean);
+    return declarations.join(';');
+  };
+
+  const enforceSwatchDotGeometry = swatch => {
+    if (!swatch?.style) return;
+    swatch.style.setProperty('width', SWATCH_DOT_SIZE, 'important');
+    swatch.style.setProperty('height', SWATCH_DOT_SIZE, 'important');
+    swatch.style.setProperty('min-width', SWATCH_DOT_SIZE, 'important');
+    swatch.style.setProperty('min-height', SWATCH_DOT_SIZE, 'important');
+    swatch.style.setProperty('border-radius', '9999px', 'important');
+    swatch.style.setProperty('flex', '0 0 auto', 'important');
+    swatch.style.setProperty('aspect-ratio', '1 / 1', 'important');
+    swatch.style.setProperty('display', 'inline-flex', 'important');
+    swatch.style.setProperty('align-items', 'center', 'important');
+    swatch.style.setProperty('justify-content', 'center', 'important');
+    swatch.style.setProperty('box-sizing', 'border-box', 'important');
+    swatch.style.setProperty('overflow', 'hidden', 'important');
+  };
+
   const getSwatchLabel = swatch => {
     if (!swatch) return '';
     const raw =
@@ -1257,9 +1325,10 @@
       swatch.dataset.swatchType = meta.type;
     }
     if (meta.style) {
-      const baseStyle = String(meta.style || '').trim().replace(/;$/, '');
-      const sizeStyle = 'width:1.25rem;height:1.25rem;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;';
-      swatch.setAttribute('style', `${baseStyle};${sizeStyle}`);
+      const baseStyle = sanitizeSwatchStyle(meta.style);
+      if (baseStyle) {
+        swatch.setAttribute('style', `${baseStyle};`);
+      }
     } else {
       swatch.classList.add('is-text');
       swatch.textContent = resolvedLabel;
@@ -1271,6 +1340,7 @@
     if (meta.image) {
       swatch.dataset.variantImage = meta.image;
     }
+    enforceSwatchDotGeometry(swatch);
     swatch.setAttribute('aria-label', resolvedLabel);
     swatch.setAttribute('role', 'button');
     swatch.setAttribute('tabindex', '0');
@@ -1499,11 +1569,7 @@
 
     slider.classList.remove('hidden');
     slider.style.removeProperty('display');
-    const configuredVisible = Math.max(
-      1,
-      parseInt(slider.getAttribute('data-visible') || '4', 10) || 4
-    );
-    const effectiveVisible = Math.min(swatchCount, configuredVisible);
+    const desiredVisible = Math.min(MAX_VISIBLE_SWATCHES, swatchCount);
     const firstSwatch = track.children[0];
     const measuredSwatchWidth =
       firstSwatch?.getBoundingClientRect?.().width ||
@@ -1521,22 +1587,22 @@
         : 8;
     const safetyPadding = 5;
     const windowWidth =
-      effectiveVisible * swatchWidth +
-      Math.max(0, effectiveVisible - 1) * gap +
+      desiredVisible * swatchWidth +
+      Math.max(0, desiredVisible - 1) * gap +
       safetyPadding * 2 +
       2;
     windowEl.style.width = `${Math.ceil(windowWidth)}px`;
     windowEl.style.paddingInline = `${safetyPadding}px`;
     windowEl.style.overflow = 'hidden';
 
-    const shouldHideArrows = swatchCount <= effectiveVisible;
+    const shouldHideArrows = swatchCount <= desiredVisible;
     [prev, next].forEach(button => {
       if (!button) return;
       button.style.display = shouldHideArrows ? 'none' : '';
       button.disabled = shouldHideArrows;
     });
 
-    return { swatchCount, visible: effectiveVisible, swatchWidth, gap };
+    return { swatchCount, visible: desiredVisible, swatchWidth, gap };
   };
 
   const initSwatchSliders = (scope) => {
