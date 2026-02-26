@@ -582,6 +582,17 @@
             selectedPaymentProvider: null,
             pending: false
           };
+          const shippingDebugEnabled = (() => {
+            try {
+              const params = new URLSearchParams(window.location.search || '');
+              if (params.get('ldc_debug_shipping') === '1') return true;
+            } catch {}
+            try {
+              return window.localStorage && window.localStorage.getItem('LDC_DEBUG_SHIPPING') === '1';
+            } catch {
+              return false;
+            }
+          })();
 
           const formatMoney = (amount, currency) => new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -617,6 +628,17 @@
               : 100;
             const safeDivisor = Number.isFinite(divisor) && divisor > 0 ? divisor : 100;
             return formatMoney(value / safeDivisor, currency);
+          };
+          const formatShippingTotalDisplay = (shippingTotal, currency) => {
+            if (typeof shippingTotal !== 'number') return '—';
+            return shippingTotal > 0 ? formatMoney(shippingTotal, currency) : 'Free';
+          };
+          const logShippingDebug = (phase, detail) => {
+            if (!shippingDebugEnabled) return;
+            console.info('[checkout][shipping-money-debug]', {
+              phase,
+              ...detail
+            });
           };
 
           const manualPaymentMessage =
@@ -863,11 +885,7 @@
             const itemCount = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
             if (subtotalEl) subtotalEl.textContent = formatMoney(cart.subtotal, cart.currency_code);
             if (shippingEl) {
-              if (typeof cart.shipping_total === 'number') {
-                shippingEl.textContent = cart.shipping_total > 0 ? formatMoney(cart.shipping_total, cart.currency_code) : 'Free';
-              } else {
-                shippingEl.textContent = '—';
-              }
+              shippingEl.textContent = formatShippingTotalDisplay(cart.shipping_total, cart.currency_code);
             }
             if (totalEl) totalEl.textContent = formatMoney(cart.total ?? cart.subtotal, cart.currency_code);
             if (countEl) countEl.textContent = `${itemCount} ${itemCount === 1 ? 'item' : 'items'}`;
@@ -891,13 +909,28 @@
 
           const renderShippingOptions = () => {
             if (!shippingOptionsEl) return;
+            const currency = state.cart?.currency_code || 'USD';
+            const currencyCode = String(currency || 'USD').toUpperCase();
+            const optionAmountField = 'amount';
             if (!state.shippingOptions.length) {
               shippingOptionsEl.innerHTML = '<div class="checkout-option">Enter your address to see shipping options.</div>';
+              logShippingDebug('render-options', {
+                cart_id: state.cart?.id || null,
+                currency_code: currencyCode,
+                option_amount_field: optionAmountField,
+                options: [],
+                cart_shipping_total_field: 'shipping_total',
+                raw_cart_shipping_total: state.cart?.shipping_total ?? null,
+                formatted_cart_shipping_total: formatShippingTotalDisplay(state.cart?.shipping_total, currency)
+              });
               return;
             }
-            const currency = state.cart?.currency_code || 'USD';
-            shippingOptionsEl.innerHTML = state.shippingOptions.map(option => {
-              const amount = option.amount != null ? formatMinorMoney(option.amount, currency) : '—';
+            const shippingOptionRows = state.shippingOptions.map(option => {
+              const rawAmount = option?.amount;
+              const formattedAmount = rawAmount != null ? formatMinorMoney(rawAmount, currency) : '—';
+              return { option, rawAmount, formattedAmount };
+            });
+            shippingOptionsEl.innerHTML = shippingOptionRows.map(({ option, formattedAmount }) => {
               const checked = option.id === state.selectedShippingOption ? 'checked' : '';
               const label = option.name || 'Shipping';
               return `
@@ -906,11 +939,25 @@
                     <input type="radio" name="shipping-option" value="${escapeHtml(option.id)}" ${checked} />
                     ${escapeHtml(label)}
                   </span>
-                  <span class="option-amount">${amount}</span>
+                  <span class="option-amount">${formattedAmount}</span>
                 </label>
               `;
             }).join('');
             updateOptionSelection(shippingOptionsEl);
+            logShippingDebug('render-options', {
+              cart_id: state.cart?.id || null,
+              currency_code: currencyCode,
+              option_amount_field: optionAmountField,
+              options: shippingOptionRows.map(({ option, rawAmount, formattedAmount }) => ({
+                id: option?.id || null,
+                name: option?.name || 'Shipping',
+                raw_amount: rawAmount ?? null,
+                formatted_amount: formattedAmount
+              })),
+              cart_shipping_total_field: 'shipping_total',
+              raw_cart_shipping_total: state.cart?.shipping_total ?? null,
+              formatted_cart_shipping_total: formatShippingTotalDisplay(state.cart?.shipping_total, currency)
+            });
 
             shippingOptionsEl.querySelectorAll('input[name="shipping-option"]').forEach(input => {
               input.addEventListener('change', async event => {
@@ -928,6 +975,22 @@
                   await commerce.request(`/store/carts/${state.cart.id}/taxes`, { method: 'POST' }).catch(() => {});
                   updateOptionSelection(shippingOptionsEl);
                   renderCart();
+                  const selectedOption = state.shippingOptions.find(option => option.id === optionId) || null;
+                  const selectedRawAmount = selectedOption?.amount ?? null;
+                  const selectedFormattedAmount = selectedRawAmount != null
+                    ? formatMinorMoney(selectedRawAmount, currency)
+                    : '—';
+                  logShippingDebug('shipping-method-set', {
+                    cart_id: state.cart?.id || null,
+                    selected_option_id: optionId,
+                    currency_code: currencyCode,
+                    option_amount_field: optionAmountField,
+                    raw_option_amount: selectedRawAmount,
+                    formatted_option_amount: selectedFormattedAmount,
+                    cart_shipping_total_field: 'shipping_total',
+                    raw_cart_shipping_total: state.cart?.shipping_total ?? null,
+                    formatted_cart_shipping_total: formatShippingTotalDisplay(state.cart?.shipping_total, currency)
+                  });
                 } catch (error) {
                   setMessage('Unable to update shipping method.', 'error');
                 } finally {
