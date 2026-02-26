@@ -5,7 +5,8 @@
   "scripts": {
     "build": "tailwindcss -i src/styles.css -o styles.css --minify && node scripts/inject-pages-build-marker.js",
     "dev": "tailwindcss -i src/styles.css -o styles.css --watch",
-    "instagram:fetch": "node scripts/fetch-instagram.js"
+    "instagram:fetch": "node scripts/fetch-instagram.js",
+    "test:shipping-money": "node --test tests/shipping-money-format.test.js"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",

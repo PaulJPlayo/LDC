@@ -12,6 +12,7 @@ Local development
 - Install deps: `npm install`
 - Build once: `npm run build` (outputs `styles.css` in project root)
 - Watch during edits: `npm run dev`
+- Shipping money sanity test: `npm run test:shipping-money`
 
 Instagram feed automation
 - Create an Instagram Basic Display app and generate a long-lived user token.
