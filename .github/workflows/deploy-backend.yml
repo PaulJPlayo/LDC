@@ -24,7 +24,7 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --targets "Key=InstanceIds,Values=${INSTANCE_ID}" \
             --comment "Deploy Medusa backend" \
-            --parameters commands='["set -e","sudo -u ubuntu -H bash -lc \"/home/ubuntu/ldc-medusa/scripts/deploy-medusa.sh\""]' \
+            --parameters commands='["set -euxo pipefail","bash /home/ubuntu/ldc-medusa/scripts/deploy-medusa.sh"]' \
             --timeout-seconds 3600 \
             --query "Command.CommandId" \
             --output text)
