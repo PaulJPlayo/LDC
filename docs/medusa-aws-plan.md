@@ -48,7 +48,7 @@ Use a Medusa backend on AWS to power real checkout, customer accounts, and autom
 - ADMIN_CORS (future use)
 - PAYPAL_CLIENT_ID
 - PAYPAL_CLIENT_SECRET
-- PAYPAL_ENV (sandbox|live)
+- PAYPAL_MODE (sandbox|live)
 - SES_REGION / SES_FROM_EMAIL
 - TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_FROM_NUMBER (if Twilio)
 

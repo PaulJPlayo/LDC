@@ -126,6 +126,13 @@ class PayPalProviderService extends AbstractPaymentProvider<PayPalOptions> {
     return Number(amount).toFixed(decimals);
   }
 
+  private formatAmountFromMinor(amountMinor: number, currencyCode: string) {
+    const decimals = this.getMinorUnits(currencyCode);
+    const divisor = 10 ** decimals;
+    const amountMajor = Number(amountMinor) / divisor;
+    return this.formatAmount(amountMajor, currencyCode);
+  }
+
   private async getAccessToken() {
     const now = Date.now();
     if (this.token_ && this.token_.expiresAt > now) {
@@ -194,7 +201,7 @@ class PayPalProviderService extends AbstractPaymentProvider<PayPalOptions> {
 
   private buildOrderPayload(input: InitiatePaymentInput) {
     const currency = (input.currency_code || "USD").toUpperCase();
-    const amountValue = this.formatAmount(Number(input.amount), currency);
+    const amountValue = this.formatAmountFromMinor(Number(input.amount), currency);
     const returnUrl = String(input.data?.return_url || "");
     const cancelUrl = String(input.data?.cancel_url || returnUrl);
 
@@ -421,7 +428,7 @@ class PayPalProviderService extends AbstractPaymentProvider<PayPalOptions> {
       );
     }
     const currency = String(input.data?.currency_code || "USD").toUpperCase();
-    const refundAmount = this.formatAmount(Number(input.amount), currency);
+    const refundAmount = this.formatAmountFromMinor(Number(input.amount), currency);
     const refund = await this.request<{ id: string; status: string }>(
       "POST",
       `/v2/payments/captures/${captureId}/refund`,
