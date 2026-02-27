@@ -18,87 +18,100 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Deploy Medusa backend via SSM
         id: deploy_ssm
-        continue-on-error: true
         run: |
           set -euxo pipefail
           INSTANCE_ID="${{ secrets.EC2_INSTANCE_ID }}"
-          COMMAND_ID=$(aws ssm send-command \
-            --document-name "AWS-RunShellScript" \
-            --targets "Key=InstanceIds,Values=${INSTANCE_ID}" \
-            --comment "Deploy Medusa backend" \
-            --parameters commands='["set -e","echo \"ssm-preflight-start\"","whoami || true","ls -ld /home/ubuntu /home/ubuntu/ldc-medusa /home/ubuntu/ldc-medusa/scripts || true","bash -euxo pipefail /home/ubuntu/ldc-medusa/scripts/deploy-medusa.sh"]' \
-            --timeout-seconds 3600 \
-            --query "Command.CommandId" \
-            --output text)
-          echo "SSM command id: ${COMMAND_ID}"
-
-          STATUS="InProgress"
-          ELAPSED=0
           TIMEOUT=3600
-          LAST_DETAILS=""
-          while [ "$STATUS" = "InProgress" ] || [ "$STATUS" = "Pending" ] || [ "$STATUS" = "Delayed" ]; do
-            sleep 10
-            ELAPSED=$((ELAPSED + 10))
-            STATUS=$(aws ssm get-command-invocation \
-              --command-id "$COMMAND_ID" \
-              --instance-id "${INSTANCE_ID}" \
-              --query "Status" \
+
+          run_deploy_command() {
+            local command_id status elapsed last_details
+            command_id=$(aws ssm send-command \
+              --document-name "AWS-RunShellScript" \
+              --targets "Key=InstanceIds,Values=${INSTANCE_ID}" \
+              --comment "Deploy Medusa backend" \
+              --parameters commands='["set -e","echo \"ssm-preflight-start\"","whoami || true","ls -ld /home/ubuntu /home/ubuntu/ldc-medusa /home/ubuntu/ldc-medusa/scripts || true","bash -euxo pipefail /home/ubuntu/ldc-medusa/scripts/deploy-medusa.sh"]' \
+              --timeout-seconds ${TIMEOUT} \
+              --query "Command.CommandId" \
               --output text)
-            LAST_DETAILS=$(aws ssm list-command-invocations \
-              --command-id "$COMMAND_ID" \
-              --details \
-              --query "CommandInvocations[0].StatusDetails" \
-              --output text || true)
-            echo "SSM status: $STATUS (elapsed ${ELAPSED}s)"
-            echo "SSM status details: ${LAST_DETAILS}"
-            if [ "$ELAPSED" -ge "$TIMEOUT" ]; then
-              echo "SSM command timed out after ${TIMEOUT}s"
-              break
+            echo "SSM command id: ${command_id}"
+
+            status="InProgress"
+            elapsed=0
+            last_details=""
+            while [ "$status" = "InProgress" ] || [ "$status" = "Pending" ] || [ "$status" = "Delayed" ]; do
+              sleep 10
+              elapsed=$((elapsed + 10))
+              status=$(aws ssm get-command-invocation \
+                --command-id "$command_id" \
+                --instance-id "${INSTANCE_ID}" \
+                --query "Status" \
+                --output text)
+              last_details=$(aws ssm list-command-invocations \
+                --command-id "$command_id" \
+                --details \
+                --query "CommandInvocations[0].StatusDetails" \
+                --output text || true)
+              echo "SSM status: $status (elapsed ${elapsed}s)"
+              echo "SSM status details: ${last_details}"
+              if [ "$elapsed" -ge "$TIMEOUT" ]; then
+                echo "SSM command timed out after ${TIMEOUT}s"
+                break
+              fi
+            done
+
+            echo "===== SSM invocation summary ====="
+            aws ssm list-command-invocations \
+              --command-id "$command_id" \
+              --details
+            echo "===== SSM invocation payload ====="
+            aws ssm get-command-invocation \
+              --command-id "$command_id" \
+              --instance-id "${INSTANCE_ID}"
+            echo "===== SSM standard output ====="
+            aws ssm get-command-invocation \
+              --command-id "$command_id" \
+              --instance-id "${INSTANCE_ID}" \
+              --query "StandardOutputContent" \
+              --output text || true
+            echo "===== SSM standard error ====="
+            aws ssm get-command-invocation \
+              --command-id "$command_id" \
+              --instance-id "${INSTANCE_ID}" \
+              --query "StandardErrorContent" \
+              --output text || true
+
+            if [ "$status" != "Success" ]; then
+              echo "SSM deploy failed with status: $status"
+              return 1
             fi
-          done
 
-          echo "===== SSM invocation summary ====="
-          aws ssm list-command-invocations \
-            --command-id "$COMMAND_ID" \
-            --details
-          echo "===== SSM invocation payload ====="
-          aws ssm get-command-invocation \
-            --command-id "$COMMAND_ID" \
-            --instance-id "${INSTANCE_ID}"
-          echo "===== SSM standard output ====="
-          aws ssm get-command-invocation \
-            --command-id "$COMMAND_ID" \
-            --instance-id "${INSTANCE_ID}" \
-            --query "StandardOutputContent" \
-            --output text || true
-          echo "===== SSM standard error ====="
-          aws ssm get-command-invocation \
-            --command-id "$COMMAND_ID" \
-            --instance-id "${INSTANCE_ID}" \
-            --query "StandardErrorContent" \
-            --output text || true
+            return 0
+          }
 
-          if [ "$STATUS" != "Success" ]; then
-            echo "SSM deploy failed with status: $STATUS"
-            exit 1
+          wait_for_ssm_online() {
+            local ping_status
+            for _ in $(seq 1 60); do
+              ping_status=$(aws ssm describe-instance-information \
+                --filters "Key=InstanceIds,Values=${INSTANCE_ID}" \
+                --query "InstanceInformationList[0].PingStatus" \
+                --output text || true)
+              echo "SSM ping status: ${ping_status}"
+              if [ "${ping_status}" = "Online" ]; then
+                return 0
+              fi
+              sleep 10
+            done
+            echo "SSM agent did not return Online after reboot."
+            return 1
+          }
+
+          if ! run_deploy_command; then
+            echo "Initial SSM deploy failed; rebooting instance and retrying once."
+            aws ec2 reboot-instances --instance-ids "${INSTANCE_ID}"
+            aws ec2 wait instance-status-ok --instance-ids "${INSTANCE_ID}"
+            wait_for_ssm_online
+            run_deploy_command
           fi
-      - name: Deploy Medusa backend via SSH fallback
-        id: deploy_ssh
-        if: steps.deploy_ssm.outcome != 'success'
-        run: |
-          set -euxo pipefail
-          mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh -o StrictHostKeyChecking=no \
-            -i ~/.ssh/id_rsa \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-            "/home/ubuntu/ldc-medusa/scripts/deploy-medusa.sh"
-      - name: Ensure deploy succeeded
-        if: steps.deploy_ssm.outcome != 'success' && steps.deploy_ssh.outcome != 'success'
-        run: |
-          echo "Both SSM deploy and SSH fallback failed."
-          exit 1
       - name: Health check
         run: |
           curl -fsS --retry 10 --retry-connrefused --retry-delay 5 https://api.lovettsldc.com/health
