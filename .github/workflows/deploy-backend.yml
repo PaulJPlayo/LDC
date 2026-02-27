@@ -82,17 +82,16 @@ jobs:
             echo "SSM deploy failed with status: $STATUS"
             exit 1
           fi
-      - name: Configure SSH fallback
-        if: steps.deploy_ssm.outcome != 'success'
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
       - name: Deploy Medusa backend via SSH fallback
         id: deploy_ssh
         if: steps.deploy_ssm.outcome != 'success'
         run: |
           set -euxo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
           ssh -o StrictHostKeyChecking=no \
+            -i ~/.ssh/id_rsa \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
             "/home/ubuntu/ldc-medusa/scripts/deploy-medusa.sh"
       - name: Ensure deploy succeeded
