@@ -116,6 +116,27 @@ jobs:
             aws ssm get-command-invocation \
               --command-id "$command_id" \
               --instance-id "${INSTANCE_ID}" || true
+            echo "===== SSM update invocation summary ====="
+            aws ssm list-command-invocations \
+              --command-id "$command_id" \
+              --details || true
+            echo "===== SSM update plugin payload ====="
+            aws ssm get-command-invocation \
+              --command-id "$command_id" \
+              --instance-id "${INSTANCE_ID}" \
+              --plugin-name "aws:updateSsmAgent" || true
+            echo "===== SSM update standard output ====="
+            aws ssm get-command-invocation \
+              --command-id "$command_id" \
+              --instance-id "${INSTANCE_ID}" \
+              --query "StandardOutputContent" \
+              --output text || true
+            echo "===== SSM update standard error ====="
+            aws ssm get-command-invocation \
+              --command-id "$command_id" \
+              --instance-id "${INSTANCE_ID}" \
+              --query "StandardErrorContent" \
+              --output text || true
 
             if [ "$status" != "Success" ]; then
               echo "SSM agent update failed with status: $status"
