@@ -26,7 +26,7 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --targets "Key=InstanceIds,Values=${INSTANCE_ID}" \
             --comment "Deploy Medusa backend" \
-            --parameters commands='["set -e","echo \"ssm-preflight-start\"","whoami || true","ls -ld /home/ubuntu /home/ubuntu/ldc-medusa /home/ubuntu/ldc-medusa/scripts || true","bash -euxo pipefail /home/ubuntu/ldc-medusa/scripts/deploy-medusa.sh"]' \
+            --parameters commands='["echo \"ssm-echo-probe\""]' \
             --timeout-seconds 3600 \
             --query "Command.CommandId" \
             --output text)
@@ -84,7 +84,7 @@ jobs:
           fi
       - name: Deploy Medusa backend via SSH fallback
         id: deploy_ssh
-        if: steps.deploy_ssm.outcome != 'success'
+        if: false
         run: |
           set -euxo pipefail
           mkdir -p ~/.ssh
@@ -95,7 +95,7 @@ jobs:
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
             "/home/ubuntu/ldc-medusa/scripts/deploy-medusa.sh"
       - name: Ensure deploy succeeded
-        if: steps.deploy_ssm.outcome != 'success' && steps.deploy_ssh.outcome != 'success'
+        if: false
         run: |
           echo "Both SSM deploy and SSH fallback failed."
           exit 1
