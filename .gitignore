@@ -17,6 +17,7 @@ build/
 # Environment files
 .env
 .env.*
+*.pem
 
 # OS files
 .DS_Store
@@ -33,6 +34,7 @@ audit-storefront-metadata.ts
 storefront-metadata-audit.json
 
 # Generated cart audit artifacts
+artifacts/
 artifacts/*.json
 artifacts/*.csv
 artifacts/*.md
