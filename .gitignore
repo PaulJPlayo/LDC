@@ -33,6 +33,13 @@ audit-storefront-metadata.ts
 storefront-metadata-audit.json
 
 # Generated cart audit artifacts
+artifacts/
 artifacts/*.json
 artifacts/*.csv
 artifacts/*.md
+artifacts/*.log
+artifacts/*.tmp
+artifacts/**/logs/*
+
+# Local key material
+*.pem
