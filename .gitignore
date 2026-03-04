@@ -17,6 +17,7 @@ build/
 # Environment files
 .env
 .env.*
+*.pem
 
 # OS files
 .DS_Store
