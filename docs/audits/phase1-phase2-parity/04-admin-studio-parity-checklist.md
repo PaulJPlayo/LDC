@@ -1,35 +1,81 @@
 # 04 - Admin Studio Parity Checklist
 
 ## Objective
-Track Admin Studio parity against expected Medusa admin operational requirements.
+Capture Admin Studio parity expectations from repo code and separate documented known gaps from possible live drift.
 
 ## Repo-expected state
-- Admin parity work is evidence-only during Phase 1A.
-- Role, order, catalog, inventory, and settings checks are documented without behavior changes.
-- Any unresolved parity claims remain `UNKNOWN` until evidence is captured.
+### Route/screen inventory (repo)
+- Core routes from `admin-ui/src/App.jsx`:
+  - `/login`
+  - `/invite`
+  - `/dashboard`
+  - `/storefront-layout`
+  - `/settings`
+  - `/draft-orders/new`
+  - `/products/new`
+- Resource routes generated from `admin-ui/src/data/resources.js` include (list/detail):
+  - `/orders`, `/draft-orders`, `/returns`, `/exchanges`, `/gift-cards`
+  - `/return-reasons`, `/refund-reasons`
+  - `/products`, `/variants`, `/collections`, `/categories`, `/product-types`, `/product-tags`
+  - `/price-lists`, `/promotions`, `/campaigns`
+  - `/customers`, `/customer-groups`
+  - `/inventory`, `/stock-locations`
+  - `/regions`, `/shipping-profiles`, `/shipping-options`, `/tax-regions`, `/tax-rates`
+  - `/users`, `/invites`, `/api-keys`, `/notifications`, `/stores`, `/sales-channels`, `/uploads`
+
+### Expected auth/session behavior (repo)
+- `RequireAuth` gate redirects anonymous users to `/login`.
+- Auth provider lifecycle (`admin-ui/src/state/auth.jsx`):
+  - initial status `checking`
+  - calls `getCurrentUser()` on boot
+  - status transitions to `authenticated` or `anonymous`
+- Login flow (`admin-ui/src/lib/api.js`):
+  - `POST /auth/user/emailpass` to obtain token
+  - `POST /auth/session` with bearer token to establish cookie-backed session
+- Session-bearing API requests use `credentials: 'include'`.
+- Logout calls `DELETE /auth/session` and clears local auth state.
+
+### Backend URL expectations (repo)
+- Admin API base is `VITE_MEDUSA_BACKEND_URL` or default `https://api.lovettsldc.com`.
+- Admin README expects Cloudflare Pages env to set `VITE_MEDUSA_BACKEND_URL=https://api.lovettsldc.com`.
+- Store API helper in admin client optionally uses `VITE_MEDUSA_PUBLISHABLE_KEY` for store endpoints.
+
+### Known documented gaps (from `docs/admin-parity-audit.md`)
+- Role enforcement not implemented (member/admin permissions not gated).
+- Fulfillment set/service zone management UI is minimal.
+- Notifications management lacks mark read/clear controls.
+- Media gallery controls are simpler than Medusa Admin.
+- Some screens depend on backend provider configuration and may error if providers are missing.
+
+### Possible live drift to verify later (not yet validated)
+- Session persistence behavior in deployed admin environment (cookie/CORS behavior).
+- Route-level data loading parity across all resources and detail pages.
+- Dashboard metrics and operational widgets against current backend data.
+- Draft order and product-creation flows under real data and permissions.
 
 ## Manual evidence to capture later
-- Screen captures for key admin workflows and settings pages.
-- API response snippets/logs that support admin behavior claims.
-- Cross-reference to `docs/admin-parity-audit.md` where applicable.
+- Login/session flow capture (redirects, cookies/session behavior, logout).
+- Screen captures for dashboard, settings, storefront-layout, draft order create, product create.
+- Resource list/detail checks for high-impact routes (orders/products/inventory/regions/shipping/tax/users).
+- API/network evidence for failed calls and status codes where drift is suspected.
 
 ## Findings
-- Item:
-- Evidence:
-- Interpretation:
-- Proposed status: `MATCH` | `DRIFT` | `UNKNOWN`
+- Repo route/auth/backend-url expectations captured from source.
+- Known gaps are documented and treated as baseline context, not newly observed live regressions.
+- Live admin parity status remains `UNKNOWN` pending manual verification.
 
 ## Status
-- `UNKNOWN`
+- Repo inventory and expectation capture: `MATCH`
+- Live admin parity verification: `UNKNOWN`
 
 ## Risk
-- Risk of admin operational gaps impacting fulfillment/config workflows.
+- Authentication/session or provider-configuration drift can make admin parity appear inconsistent across environments.
 
 ## Next action
-- Record parity outcomes for highest-impact admin workflows first.
+- Execute manual admin evidence pass; classify each major workflow as `MATCH`, `DRIFT`, or `UNKNOWN` with artifact links.
 
 ## Blockers
-- Note access-role limits, unavailable endpoints, or missing fixtures.
+- Requires admin credentials and environment access for non-repo verification.
 
 ## Signoff
 - Reviewer:

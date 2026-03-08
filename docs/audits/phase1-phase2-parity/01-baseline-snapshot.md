@@ -1,32 +1,53 @@
 # 01 - Baseline Snapshot
 
 ## Objective
-Capture a reproducible baseline of repository state for Phase 1A parity audit.
+Capture a reproducible repository baseline for Phase 1A and make clear what is repo-confirmed versus still pending live evidence.
 
 ## Repo-expected state
-- Active audit branch: `audit/phase1-phase2-parity`.
-- Baseline source branch: `main` (or documented alternative).
-- No app behavior changes introduced during baseline capture.
+- Active audit branch at capture time: `audit/phase1-phase2-parity`.
+- HEAD commit at capture time: `205f0ba052c61736f602a03fdb919109618b560d`.
+- Baseline source branch: `main`.
+- Baseline docs are audit-only and do not change storefront/admin/backend runtime behavior.
 
 ## Manual evidence to capture later
-- `git status --short --branch` output.
-- `git rev-parse HEAD` and timestamp of snapshot.
-- Relevant file inventory references used in this audit.
+- Runtime process ownership evidence from server (`systemd`/`pm2`) is still pending.
+- Live storefront parity screenshots/network traces are still pending.
+- Live admin parity screenshots/API traces are still pending.
+- Live backend runtime and health verification evidence is still pending.
 
 ## Findings
-- Add evidence-backed observations only.
+### Repo baseline captured
+- Branch and commit recorded from local git state at baseline capture time.
+- Root `AGENTS.md` added in Phase 1A with repo-level audit guardrails.
+- Audit workspace scaffolding added in Phase 1A under `docs/audits/phase1-phase2-parity/`:
+  - `README.md`
+  - `01-baseline-snapshot.md`
+  - `02-repo-expected-state.md`
+  - `03-storefront-parity-checklist.md`
+  - `04-admin-studio-parity-checklist.md`
+  - `05-backend-config-deploy-parity-checklist.md`
+  - `06-drift-register.md`
+  - `07-phase1-phase2-signoff.md`
+  - `manual-findings-template.md`
+- Local artifact folders were created under `artifacts/phase1-phase2-parity/` and remain gitignored/local-only.
+
+### Live evidence still pending
+- No live parity validation is claimed in this document.
+- Any runtime or UI assertions requiring environment access remain `UNKNOWN` until evidence is captured.
 
 ## Status
-- `UNKNOWN`
+- Repo baseline capture: `MATCH`
+- Live/runtime parity evidence: `UNKNOWN`
 
 ## Risk
-- Risk if baseline cannot be reproduced or if snapshot is incomplete.
+- If baseline metadata is not kept aligned with branch/head changes, later parity conclusions may be attributed to the wrong code snapshot.
 
 ## Next action
-- Record exact commit SHA and local timestamp once evidence is captured.
+- For each checklist (`03`-`05`), execute manual evidence capture and update `MATCH`/`DRIFT`/`UNKNOWN` per item with artifact references.
 
 ## Blockers
-- Note missing access, missing files, or branch restrictions.
+- No repo-access blockers.
+- Live environment access and manual execution windows are required for pending evidence.
 
 ## Signoff
 - Reviewer:

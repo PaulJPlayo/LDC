@@ -1,7 +1,7 @@
 # 06 - Drift Register
 
 ## Objective
-Maintain a centralized list of confirmed/parital drift findings with risk and action tracking.
+Maintain a centralized list of confirmed/partial drift findings with risk and action tracking.
 
 ## Repo-expected state
 - Every drift entry maps to a specific expected-state rule.

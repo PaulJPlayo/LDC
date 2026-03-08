@@ -2,7 +2,7 @@
 
 ## Scope
 - Phase 1 scope: establish baseline and audit parity without changing application behavior.
-- Phase 2 scope: execute approved remediation and verification steps based on Phase 1 findings.
+- Phase 2 scope: perform repo-to-production parity audit and parity verification using Phase 1 evidence, without introducing unapproved behavior changes.
 
 ## Status legend
 - `MATCH`: Repository/runtime state matches expected state.
@@ -28,4 +28,4 @@
 
 ## What Phase 2 uses next
 - Phase 2 planning consumes the drift register, risk ratings, and unresolved unknowns from this workspace.
-- Any remediation sequence should map directly to `DRIFT` findings and signoff blockers documented here.
+- Phase 2 verification work should map directly to parity assertions and unresolved blockers documented here.
