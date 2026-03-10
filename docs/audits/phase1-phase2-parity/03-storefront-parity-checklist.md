@@ -87,6 +87,7 @@ Track storefront parity against repo-defined expectations without changing store
   - `/best-sellers.html`
   - `/restock.html`
   - `/sale.html`
+  - `/under-25.html` (recapture completed with screenshot, console, and HAR evidence)
   - `/last-chance.html`
   - `/tumblers.html`
   - `/cups.html`
@@ -95,8 +96,7 @@ Track storefront parity against repo-defined expectations without changing store
   - `/checkout.html`
   - `/account.html`
 - `UNKNOWN`:
-  - `/under-25.html` (console evidence incomplete)
-  - `/favorites.html` (console/HAR evidence incomplete)
+  - `/favorites.html` (route loaded with screenshot/HAR/notes, but console recapture was effectively empty and storefront-build evidence remains inconclusive)
 
 ### Behavior and integration checks
 - Build marker appeared on key routes including `/` and `/checkout.html`: `MATCH`.
@@ -108,18 +108,18 @@ Track storefront parity against repo-defined expectations without changing store
 ## Status
 - Repo inventory capture: `MATCH`
 - Live storefront checked routes/behaviors: `MATCH`
-- Remaining storefront evidence gaps: `UNKNOWN` (`/under-25.html`, `/favorites.html`)
+- Remaining storefront evidence gaps: `UNKNOWN` (`/favorites.html`)
 - Confirmed storefront drift items: none in this pass
 
 ## Risk
-- Residual risk is concentrated in routes with incomplete evidence capture (`/under-25.html`, `/favorites.html`).
+- Residual storefront risk is limited to one route with inconclusive console/build-marker evidence (`/favorites.html`).
 
 ## Next action
-- Capture complete console and HAR evidence for `/under-25.html` and `/favorites.html`.
-- Reclassify those two routes as `MATCH` or `DRIFT` once evidence is complete.
+- Capture a definitive console recapture for `/favorites.html` confirming or disproving storefront-build marker evidence.
+- Reclassify `/favorites.html` as `MATCH` or `DRIFT` once that evidence is complete.
 
 ## Blockers
-- Incomplete console/HAR evidence for two storefront routes prevents full storefront signoff.
+- Inconclusive `/favorites.html` console/build-marker evidence prevents full storefront closeout.
 
 ## Signoff
 - Reviewer:

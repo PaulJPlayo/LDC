@@ -15,19 +15,19 @@ Maintain a centralized list of confirmed/partial drift findings with risk and ac
 ## Findings
 | ID | Area | Expected | Observed | Evidence | Status | Risk | Next action | Blockers | Owner | Date |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DRIFT-001 | Backend / Runtime | `medusa-backend` is active under systemd and enabled for auto-start on boot; PM2 does not own Medusa runtime. | Service is currently active, but `systemd` status output indicates `medusa-backend.service` is disabled for auto-start on boot. | Backend runtime live findings from Phase 1B/Phase 2 evidence pass (`systemctl status medusa-backend` output). | `DRIFT` | High | Schedule controlled change to enable service on boot; verify enabled+active after change. | Operational change window/approval required; do not change in docs-only pass. | Ops | 2026-03-09 |
+| DRIFT-001 | Backend / Runtime | `medusa-backend` is active under systemd and enabled for auto-start on boot; PM2 does not own Medusa runtime. | Post-remediation verification shows service is enabled for auto-start and active at runtime (`is-enabled=enabled`, `is-active=active`, service status enabled). | Backend remediation verification output from Phase 1 + Phase 2 closeout pass. | `MATCH` | Low | Keep routine monitoring only; no further drift action required for DRIFT-001. | None | Ops | 2026-03-10 |
 
 ## Status
-- `DRIFT` (1 open item)
+- `MATCH` (no open drift items)
 
 ## Risk
-- Reboot persistence risk for backend availability until DRIFT-001 is remediated.
+- No open drift risk from DRIFT-001 after remediation verification.
 
 ## Next action
-- Resolve DRIFT-001 and attach verification evidence proving boot persistence.
+- Continue normal operational checks; reopen only if runtime ownership/boot persistence regresses.
 
 ## Blockers
-- Ops approval and maintenance window required for service enablement change.
+- None.
 
 ## Signoff
 - Reviewer:

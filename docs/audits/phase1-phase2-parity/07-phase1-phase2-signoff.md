@@ -15,38 +15,32 @@ Capture formal decision to advance from Phase 1 audit outputs into Phase 2 actio
 
 ## Findings
 - Summary of key parity outcomes:
-  - Backend/runtime checked items: 7 `MATCH`, 1 `DRIFT`.
-  - Storefront checked items: 12 route `MATCH`, 2 route `UNKNOWN`, no confirmed drift.
+  - Backend/runtime checked items (including explicit CORS and DRIFT-001 closeout): 10 `MATCH`, 0 `DRIFT`, 0 `UNKNOWN`.
+  - Storefront checked items: 13 route `MATCH`, 1 route `UNKNOWN`, no confirmed drift.
   - Admin checked items: 12 `MATCH`, no confirmed drift.
-  - Total checked items in this pass: 31 `MATCH`, 1 `DRIFT`, 2 `UNKNOWN`.
+  - Total checked items in this pass: 35 `MATCH`, 0 `DRIFT`, 1 `UNKNOWN`.
 - Summary of high-risk drifts:
-  - DRIFT-001: `medusa-backend.service` appears disabled for auto-start on boot while currently active.
+  - None open. DRIFT-001 is remediated and closed.
 - Summary of unresolved unknowns:
-  - Storefront route evidence incomplete for `/under-25.html`.
-  - Storefront route evidence incomplete for `/favorites.html`.
-  - Backend live CORS verification remains unconfirmed in this finding set.
+  - `/favorites.html` remains `UNKNOWN` because console recapture was effectively empty and storefront-build evidence is inconclusive, despite screenshot/HAR/notes evidence of route load.
 
 ## Status
-- `UNKNOWN` (signoff hold recommended: open drift and unresolved unknowns)
+- `UNKNOWN` (single unresolved storefront evidence gap)
 
 ## Risk
-- Entering later phases without resolving DRIFT-001 risks backend non-recovery on reboot.
-- Remaining unknown route coverage can hide storefront regressions.
+- Residual risk is limited to incomplete build-marker evidence on `/favorites.html`.
 
 ## Next action
 - Recommended next work order:
-  1. Resolve DRIFT-001 (`medusa-backend` auto-start disabled) in a controlled operational change.
-  2. Capture missing storefront console/HAR evidence for `/under-25.html` and `/favorites.html` and reclassify.
-  3. Complete explicit backend CORS runtime verification and classify.
-  4. Refresh signoff and decide `Approve Phase 2` vs `Hold` based on updated evidence.
+  1. Capture one additional `/favorites.html` console recapture to conclusively classify storefront-build evidence.
+  2. If `/favorites.html` closes to `MATCH`, finalize signoff decision.
+  3. Keep DRIFT-001 in closed state unless new contradictory runtime evidence appears.
 
 ## Blockers
-- Open high-risk drift DRIFT-001.
-- Incomplete storefront evidence for two routes.
-- Missing explicit backend CORS runtime verification evidence.
+- Inconclusive `/favorites.html` console/build-marker evidence.
 
 ## Signoff
 - Technical reviewer: Pending
 - Product/operations reviewer: Pending
-- Date: 2026-03-09
-- Decision: `Hold` (recommended until open drift and unknowns are resolved)
+- Date: 2026-03-10
+- Decision: `Hold` (recommended until `/favorites.html` unknown is resolved)

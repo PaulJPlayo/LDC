@@ -64,29 +64,40 @@ Document backend/runtime/config/deploy expectations from repo state and prepare 
 - `ldc-disk-cleanup.timer` exists and is scheduled: `MATCH`.
 - Deploy workflow metadata shows recent successful `deploy-backend.yml` runs: `MATCH`.
 
-### Confirmed drift
-- `medusa-backend.service` observed as disabled for auto-start on boot while currently active.
-- Classification: `DRIFT` (runtime persistence risk after reboot).
+### Explicit CORS verification findings
+- Storefront-origin CORS verification succeeded: `MATCH`.
+  - Result: `HTTP/2 204`
+  - `access-control-allow-origin: https://lovettsldc.com`
+  - `access-control-allow-methods: GET,HEAD,PUT,PATCH,POST,DELETE`
+- Admin-origin CORS verification succeeded: `MATCH`.
+  - Result: `HTTP/2 204`
+  - `access-control-allow-origin: https://admin.lovettsldc.com`
+  - `access-control-allow-methods: GET,HEAD,PUT,PATCH,POST,DELETE`
 
-### Remaining unresolved checks
-- Live CORS behavior was not explicitly confirmed in this finding set.
-- Classification: `UNKNOWN`.
+### DRIFT-001 closeout
+- Remediation succeeded for `medusa-backend` auto-start configuration.
+- Verification showed:
+  - `is-enabled=enabled`
+  - `is-active=active`
+  - `systemd` status reflects `medusa-backend.service` enabled
+- Classification: `MATCH` (DRIFT-001 remediated/closed).
 
 ## Status
 - Repo expectation capture: `MATCH`
-- Live backend/runtime check set: `MATCH` with one confirmed `DRIFT`
-- Confirmed backend/runtime drift items: 1
-- Remaining unresolved backend checks: `UNKNOWN` (CORS runtime validation)
+- Live backend/runtime check set: `MATCH`
+- Live CORS runtime verification: `MATCH`
+- Confirmed backend/runtime open drift items: none
 
 ## Risk
-- High risk: if `medusa-backend` is disabled on boot, service may not recover automatically after reboot.
+- No open high-risk backend drift from this finding set.
+- Standard operational monitoring remains required.
 
 ## Next action
-- Plan controlled remediation to enable `medusa-backend` auto-start, then verify active+enabled state.
-- Capture explicit CORS runtime evidence and classify as `MATCH` or `DRIFT`.
+- Keep routine runtime ownership and health checks in place.
+- No backend drift remediation items remain open from this audit set.
 
 ## Blockers
-- Remediating auto-start drift requires approved operational change window (outside this docs-only run).
+- None in backend closeout scope.
 
 ## Signoff
 - Reviewer:
