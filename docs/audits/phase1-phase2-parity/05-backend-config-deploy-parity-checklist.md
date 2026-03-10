@@ -55,22 +55,38 @@ Document backend/runtime/config/deploy expectations from repo state and prepare 
 - CORS/browser evidence for storefront/admin origins against backend.
 
 ## Findings
-- Repo-derived backend/deploy/runtime expectations captured.
-- No deploy executed in this phase.
-- Live runtime/health/CORS verification remains pending (`UNKNOWN`).
+### Completed backend/runtime checks
+- Health endpoint returned `HTTP/2 200` with body `OK`: `MATCH`.
+- `medusa-backend` service active and running under systemd: `MATCH`.
+- Port `9000` owned by Medusa node process: `MATCH`.
+- PM2 not running Medusa: `MATCH`.
+- CloudWatch agent active: `MATCH`.
+- `ldc-disk-cleanup.timer` exists and is scheduled: `MATCH`.
+- Deploy workflow metadata shows recent successful `deploy-backend.yml` runs: `MATCH`.
+
+### Confirmed drift
+- `medusa-backend.service` observed as disabled for auto-start on boot while currently active.
+- Classification: `DRIFT` (runtime persistence risk after reboot).
+
+### Remaining unresolved checks
+- Live CORS behavior was not explicitly confirmed in this finding set.
+- Classification: `UNKNOWN`.
 
 ## Status
 - Repo expectation capture: `MATCH`
-- Live runtime/deploy parity verification: `UNKNOWN`
+- Live backend/runtime check set: `MATCH` with one confirmed `DRIFT`
+- Confirmed backend/runtime drift items: 1
+- Remaining unresolved backend checks: `UNKNOWN` (CORS runtime validation)
 
 ## Risk
-- High risk if runtime ownership or CORS/env values drift from repo assumptions; this can break checkout/admin flows without code changes.
+- High risk: if `medusa-backend` is disabled on boot, service may not recover automatically after reboot.
 
 ## Next action
-- Execute safe read-only runtime checks and record outcomes in this file and `06-drift-register.md`.
+- Plan controlled remediation to enable `medusa-backend` auto-start, then verify active+enabled state.
+- Capture explicit CORS runtime evidence and classify as `MATCH` or `DRIFT`.
 
 ## Blockers
-- Requires host/runtime access and CI metadata access for live evidence capture.
+- Remediating auto-start drift requires approved operational change window (outside this docs-only run).
 
 ## Signoff
 - Reviewer:

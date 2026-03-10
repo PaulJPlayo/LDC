@@ -77,21 +77,49 @@ Track storefront parity against repo-defined expectations without changing store
 - Local artifact references under `artifacts/phase1-phase2-parity/storefront/`.
 
 ## Findings
-- Repo route/section inventory captured from source files.
-- Live storefront parity checks are pending and remain `UNKNOWN` until executed.
+- Live storefront parity pass completed for the checked routes and behaviors below.
+- No confirmed storefront `DRIFT` items were identified in this pass.
+
+### Route results from completed checks
+- `MATCH`:
+  - `/`
+  - `/new-arrivals.html`
+  - `/best-sellers.html`
+  - `/restock.html`
+  - `/sale.html`
+  - `/last-chance.html`
+  - `/tumblers.html`
+  - `/cups.html`
+  - `/accessories.html`
+  - `/customization.html`
+  - `/checkout.html`
+  - `/account.html`
+- `UNKNOWN`:
+  - `/under-25.html` (console evidence incomplete)
+  - `/favorites.html` (console/HAR evidence incomplete)
+
+### Behavior and integration checks
+- Build marker appeared on key routes including `/` and `/checkout.html`: `MATCH`.
+- `/store/*` network calls hit `api.lovettsldc.com`: `MATCH`.
+- Add-to-cart behavior worked: `MATCH`.
+- Checkout hydrated without final completion: `MATCH`.
+- Logged-out account page behavior accepted (`401` on `/store/customers/me` in logged-out state): `MATCH`.
 
 ## Status
 - Repo inventory capture: `MATCH`
-- Live storefront parity verification: `UNKNOWN`
+- Live storefront checked routes/behaviors: `MATCH`
+- Remaining storefront evidence gaps: `UNKNOWN` (`/under-25.html`, `/favorites.html`)
+- Confirmed storefront drift items: none in this pass
 
 ## Risk
-- Drift risk if deployed storefront HTML/`commerce.js` does not match current repo snapshot or if section-key mappings diverge at runtime.
+- Residual risk is concentrated in routes with incomplete evidence capture (`/under-25.html`, `/favorites.html`).
 
 ## Next action
-- Execute safe manual route and console checks, then record evidence IDs and status transitions in this file and `06-drift-register.md`.
+- Capture complete console and HAR evidence for `/under-25.html` and `/favorites.html`.
+- Reclassify those two routes as `MATCH` or `DRIFT` once evidence is complete.
 
 ## Blockers
-- Requires access to deployed storefront and browser tooling for live evidence collection.
+- Incomplete console/HAR evidence for two storefront routes prevents full storefront signoff.
 
 ## Signoff
 - Reviewer:

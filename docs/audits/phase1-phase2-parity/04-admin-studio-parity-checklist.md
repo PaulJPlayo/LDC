@@ -60,22 +60,49 @@ Capture Admin Studio parity expectations from repo code and separate documented 
 - API/network evidence for failed calls and status codes where drift is suspected.
 
 ## Findings
-- Repo route/auth/backend-url expectations captured from source.
-- Known gaps are documented and treated as baseline context, not newly observed live regressions.
-- Live admin parity status remains `UNKNOWN` pending manual verification.
+- Live admin parity checks completed for the listed check set.
+- No confirmed admin `DRIFT` items were identified in this pass.
+
+### Completed check results
+- `MATCH`:
+  - `login-page-load`
+  - `login-success`
+  - `session-persist-after-refresh`
+  - `dashboard-load`
+  - `storefront-layout-load`
+  - `settings-load`
+  - `orders-list-load`
+  - `products-list-load`
+  - `inventory-list-load`
+  - `draft-order-create-load`
+  - `product-create-load`
+  - `logout-flow`
+
+### Auth bootstrap note
+- One early `401` on `me?fields=+metadata` occurred before auth/session establishment.
+- Subsequent authenticated requests succeeded.
+- Classification: non-blocking auth bootstrap behavior, not confirmed drift.
+
+### Network target behavior
+- Admin network requests hit `api.lovettsldc.com`: `MATCH`.
+- No visible blank states or blocking errors during checked flows: `MATCH`.
 
 ## Status
 - Repo inventory and expectation capture: `MATCH`
-- Live admin parity verification: `UNKNOWN`
+- Live admin check set: `MATCH`
+- Confirmed admin drift items: none in this pass
+- Broader route coverage outside the completed check set: `UNKNOWN`
 
 ## Risk
-- Authentication/session or provider-configuration drift can make admin parity appear inconsistent across environments.
+- Residual risk remains in admin routes not included in this check pass and in known documented feature gaps.
 
 ## Next action
-- Execute manual admin evidence pass; classify each major workflow as `MATCH`, `DRIFT`, or `UNKNOWN` with artifact links.
+- Expand validation to remaining lower-priority resource routes not covered in this pass.
+- Keep known documented gaps tracked separately from new drift findings.
 
 ## Blockers
-- Requires admin credentials and environment access for non-repo verification.
+- No blockers for completed admin checks.
+- Full admin route coverage is still incomplete.
 
 ## Signoff
 - Reviewer:
