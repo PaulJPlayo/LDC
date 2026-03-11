@@ -439,7 +439,7 @@
           if (result?.ok) {
             setStatus('Item sent to cart');
           } else {
-            setStatus('Unable to move item to cart', true);
+            setStatus(result?.user_message || 'Unable to move item to cart', true);
           }
         });
 

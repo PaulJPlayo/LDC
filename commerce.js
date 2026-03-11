@@ -1685,6 +1685,115 @@
     return match?.id || variants[0]?.id || null;
   };
 
+  const getFavoriteVariantLabelCandidates = favorite => {
+    if (!favorite || typeof favorite !== 'object') return [];
+    const candidates = [];
+    const push = value => {
+      const normalized = cleanVariantLabel(value || '');
+      if (!normalized) return;
+      if (candidates.includes(normalized)) return;
+      candidates.push(normalized);
+    };
+
+    push(favorite.variant_title || favorite.variantTitle);
+    push(favorite.options_summary || favorite.optionsSummary);
+
+    const selectedOptions =
+      Array.isArray(favorite.selected_options)
+        ? favorite.selected_options
+        : Array.isArray(favorite.selectedOptions)
+          ? favorite.selectedOptions
+          : [];
+    selectedOptions.forEach(option => {
+      push(option?.value);
+      push(option?.label);
+    });
+
+    return candidates;
+  };
+
+  const getFavoriteLookupKeys = favorite => {
+    if (!favorite || typeof favorite !== 'object') return [];
+    const keys = [];
+    const push = value => {
+      const normalized = slugify(value || '');
+      if (!normalized) return;
+      if (keys.includes(normalized)) return;
+      keys.push(normalized);
+    };
+
+    push(favorite.product_handle || favorite.productHandle);
+    push(favorite.product_id || favorite.productId);
+    push(favorite.title || favorite.name);
+
+    const rawUrl = String(favorite.product_url || favorite.productUrl || '').trim();
+    if (rawUrl) {
+      const path = rawUrl.split('?')[0].split('#')[0];
+      const parts = path.split('/').filter(Boolean);
+      if (parts.length) {
+        push(parts[parts.length - 1].replace(/\.html?$/i, ''));
+      }
+    }
+
+    return keys;
+  };
+
+  const resolveVariantIdForFavorite = async favorite => {
+    if (!favorite || typeof favorite !== 'object') return null;
+
+    const directVariant = String(
+      favorite.variant_id ||
+      favorite.variantId ||
+      favorite.selected_variant_id ||
+      favorite.selectedVariantId ||
+      ''
+    ).trim();
+    if (directVariant) return directVariant;
+
+    const labels = getFavoriteVariantLabelCandidates(favorite);
+    const lookupKeys = getFavoriteLookupKeys(favorite);
+    const [map, index] = await Promise.all([loadProductMap(), loadProductIndex()]);
+    const byId = index?.byId;
+    const byHandle = index?.byHandle;
+    let product = null;
+
+    const rawProductId = String(favorite.product_id || favorite.productId || '').trim();
+    if (rawProductId && byId?.has(rawProductId)) {
+      product = byId.get(rawProductId);
+    }
+
+    if (!product && byHandle && lookupKeys.length) {
+      for (const key of lookupKeys) {
+        if (!key) continue;
+        product = byHandle.get(key) || null;
+        if (product) break;
+      }
+    }
+
+    if (product) {
+      for (const label of labels) {
+        const resolved = resolveVariantFromProduct(product, label);
+        if (resolved) return resolved;
+      }
+      return resolveVariantFromProduct(product, null);
+    }
+
+    if (map?.products && lookupKeys.length) {
+      for (const key of lookupKeys) {
+        const entry = map.products[key];
+        if (!entry) continue;
+        for (const label of labels) {
+          const resolved = resolveVariantFromEntry(entry, label);
+          if (resolved) return resolved;
+        }
+        const fallback = entry?.variantId || entry?.variant_id || null;
+        if (fallback) return fallback;
+      }
+    }
+
+    return null;
+  };
+
   const updateCardPriceForSwatch = async swatch => {
     const container = getVariantContainer(swatch);
     if (!container) return;
@@ -2722,6 +2831,7 @@
     syncBadges,
     syncLegacyCart,
     resolveVariantId,
+    resolveVariantIdForFavorite,
     removeLineItem,
     updateLineItemQuantity,
     changeLineItemQuantity,

@@ -658,15 +658,26 @@
       return Promise.resolve({ ok: false, reason: 'adapter_not_set', id: favorite.id });
     }
 
+    function normalizeMoveResult(rawResult) {
+      if (rawResult === true) return { ok: true };
+      if (rawResult === false) {
+        return { ok: false, reason: 'adapter_returned_false', id: favorite.id };
+      }
+      if (isObject(rawResult)) {
+        return Object.assign({ id: favorite.id }, rawResult);
+      }
+      return { ok: false, reason: 'adapter_invalid_result', id: favorite.id };
+    }
+
+    var adapterResult;
     try {
-      var adapterResult = moveToCartAdapter(cloneFavorite(favorite), {
+      adapterResult = moveToCartAdapter(cloneFavorite(favorite), {
         context: isObject(context) ? context : {},
         api: publicApi,
         buildCartItem: function buildCartItem(overrides) {
           return buildCartItemFromFavorite(favorite, overrides);
         }
       });
-      return Promise.resolve(adapterResult);
     } catch (error) {
       return Promise.resolve({
         ok: false,
@@ -675,6 +686,28 @@
         error: toText(error && error.message)
       });
     }
+
+    return Promise.resolve(adapterResult)
+      .then(function onAdapterResult(rawResult) {
+        var normalized = normalizeMoveResult(rawResult);
+        if (!normalized.ok) {
+          return normalized;
+        }
+        var removed = removeFavorite(favorite.id);
+        return Object.assign({}, normalized, {
+          id: favorite.id,
+          moved: true,
+          removed: removed
+        });
+      })
+      .catch(function onAdapterFailure(error) {
+        return {
+          ok: false,
+          reason: 'adapter_error',
+          id: favorite.id,
+          error: toText(error && error.message)
+        };
+      });
   }
 
   function handleStorageEvent(event) {
@@ -1208,10 +1241,91 @@
       });
   }
 
+  function resolveVariantIdForMove(favorite) {
+    var direct = toText(
+      favorite && (
+        favorite.variant_id ||
+        favorite.variantId ||
+        favorite.selected_variant_id ||
+        favorite.selectedVariantId
+      )
+    );
+    if (direct) return Promise.resolve(direct);
+
+    var commerce = global.LDCCommerce;
+    if (!commerce || typeof commerce.resolveVariantIdForFavorite !== 'function') {
+      return Promise.resolve('');
+    }
+
+    return Promise.resolve(commerce.resolveVariantIdForFavorite(favorite))
+      .then(function onResolved(variantId) {
+        return toText(variantId);
+      })
+      .catch(function onError() {
+        return '';
+      });
+  }
+
   function defaultMoveToCartAdapter(favorite, payload) {
     var buildCartItem = payload && typeof payload.buildCartItem === 'function'
       ? payload.buildCartItem
       : function identity(overrides) { return Object.assign({}, favorite, overrides || {}); };
+    var commerce = global.LDCCommerce;
+    if (commerce && commerce.enabled) {
+      if (typeof commerce.addLineItem !== 'function') {
+        return {
+          ok: false,
+          reason: 'commerce_add_unavailable',
+          user_message: 'Cart service is unavailable on this page.',
+          id: favorite.id
+        };
+      }
+
+      return resolveVariantIdForMove(favorite).then(function onVariantResolved(variantId) {
+        if (!variantId) {
+          return {
+            ok: false,
+            reason: 'missing_variant_id',
+            user_message: 'Select this product again before moving it to cart.',
+            id: favorite.id
+          };
+        }
+
+        favorite.variant_id = variantId;
+        var cartItem = buildCartItem({
+          id: variantId,
+          variant_id: variantId,
+          product_id: favorite.product_id || '',
+          product_handle: favorite.product_handle || '',
+          product_url: favorite.product_url || '',
+          image: favorite.preview_image || favorite.image_url || '',
+          previewStyle: favorite.preview_style || ''
+        });
+
+        return Promise.resolve(commerce.addLineItem(variantId, 1))
+          .then(function onAdded() {
+            var syncPromise = typeof commerce.syncBadges === 'function'
+              ? Promise.resolve(commerce.syncBadges())
+              : Promise.resolve();
+            return syncPromise.then(function afterSync() {
+              if (global.ldcCart && typeof global.ldcCart.open === 'function') {
+                global.ldcCart.open();
+              }
+              return { ok: true, mode: 'medusa', variant_id: variantId, cart_item: cartItem };
+            });
+          })
+          .catch(function onFailure(error) {
+            return {
+              ok: false,
+              reason: 'medusa_add_failed',
+              user_message: 'Unable to move this favorite to cart right now.',
+              error: toText(error && error.message),
+              id: favorite.id
+            };
+          });
+      });
+    }
+
     var cartItem = buildCartItem({
       id: favorite.variant_id || favorite.id,
       variant_id: favorite.variant_id || '',
@@ -1227,37 +1341,15 @@
       if (typeof global.ldcCart.open === 'function') {
         global.ldcCart.open();
       }
-      return { ok: true, mode: 'ldcCart' };
+      return { ok: true, mode: 'ldcCart', cart_item: cartItem };
     }
 
-    var commerce = global.LDCCommerce;
-    if (commerce && commerce.enabled && favorite.variant_id && typeof commerce.addLineItem === 'function') {
-      return Promise.resolve(commerce.addLineItem(favorite.variant_id, 1))
-        .then(function onAdded() {
-          if (typeof commerce.syncBadges === 'function') {
-            return Promise.resolve(commerce.syncBadges()).then(function done() {
-              return { ok: true, mode: 'medusa' };
-            });
-          }
-          return { ok: true, mode: 'medusa' };
-        })
-        .catch(function onFailure(error) {
-          return {
-            ok: false,
-            reason: 'medusa_add_failed',
-            error: toText(error && error.message)
-          };
-        });
-    }
-
-    try {
-      document.dispatchEvent(new CustomEvent('cart:add', {
-        detail: { product: cartItem, source: 'favorites-drawer' }
-      }));
-      return { ok: true, mode: 'event' };
-    } catch (error) {
-      return { ok: false, reason: 'no_cart_bridge', error: toText(error && error.message) };
-    }
+    return {
+      ok: false,
+      reason: 'no_cart_bridge',
+      user_message: 'Cart bridge is unavailable on this page.',
+      id: favorite.id
+    };
   }
 
   function getFavoriteIdFromControl(control) {
@@ -1280,6 +1372,13 @@
     if (!id) return;
     Promise.resolve(api.moveFavoriteToCart(id, { source: 'favorites-drawer' }))
       .then(function onResult(result) {
+        if (!result || !result.ok) {
+          console.warn('[favorites] move-to-cart failed', {
+            favorite_id: id,
+            reason: result && result.reason,
+            error: result && result.error
+          });
+        }
         try {
           document.dispatchEvent(new CustomEvent('ldc:favorites:move-to-cart', {
             detail: {
