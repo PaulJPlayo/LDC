@@ -1409,6 +1409,7 @@
 
     </div>
 
+    <script src="favorites.js"></script>
     <script>
       (() => {
         const footerYear = document.getElementById('year');
@@ -1416,6 +1417,8 @@
 
         const CART_STORAGE_KEY = 'ldc:cart';
         const FAVORITES_STORAGE_KEY = 'ldc:favorites';
+        const usingSharedFavorites = Boolean(window.ldcFavorites && window.ldcFavorites.__sharedStore);
+        const sharedFavoritesApi = usingSharedFavorites ? window.ldcFavorites : null;
         const cartDrawer = document.querySelector('[data-cart-drawer]');
         const cartOverlay = document.querySelector('[data-cart-overlay]');
         const cartPanel = document.querySelector('[data-cart-panel]');
@@ -1497,6 +1500,7 @@
           localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartState));
         };
         const saveFavorites = () => {
+          if (usingSharedFavorites) return;
           localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favoritesState));
         };
         const activateSwatchVisual = swatch => {
@@ -1520,7 +1524,9 @@
         };
         const syncBadges = () => {
           const cartCount = cartState.items?.length || 0;
-          const favCount = favoritesState.items?.length || 0;
+          const favCount = usingSharedFavorites && sharedFavoritesApi
+            ? sharedFavoritesApi.getFavorites().length
+            : (favoritesState.items?.length || 0);
           if (cartCountEl) {
             cartCountEl.textContent = cartCount > 0 ? cartCount : '';
             cartCountEl.hidden = cartCount === 0;
@@ -1692,6 +1698,7 @@
         };
 
         const renderFavorites = () => {
+          if (usingSharedFavorites) return;
           if (!favoritesItemsEl) return;
           const items = favoritesState.items || [];
           if (!items.length) {
