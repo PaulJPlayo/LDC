@@ -1978,6 +1978,7 @@
 
     </div>
 
+    <script src="favorites.js"></script>
     <script>
       (() => {
         const footerYear = document.getElementById('year');
@@ -1988,6 +1989,8 @@
 
         const CART_STORAGE_KEY = 'ldc:cart';
         const FAVORITES_STORAGE_KEY = 'ldc:favorites';
+        const usingSharedFavorites = Boolean(window.ldcFavorites && window.ldcFavorites.__sharedStore);
+        const sharedFavoritesApi = usingSharedFavorites ? window.ldcFavorites : null;
         const cartDrawer = document.querySelector('[data-cart-drawer]');
         const cartOverlay = document.querySelector('[data-cart-overlay]');
         const cartPanel = document.querySelector('[data-cart-panel]');
@@ -2051,6 +2054,7 @@
           localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartState));
         };
         const saveFavorites = () => {
+          if (usingSharedFavorites) return;
           localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favoritesState));
         };
         const activateSwatchVisual = swatch => {
@@ -2110,7 +2114,9 @@
         saveFavorites();
         const syncBadges = () => {
           const cartCount = cartState.items?.length || 0;
-          const favCount = favoritesState.items?.length || 0;
+          const favCount = usingSharedFavorites && sharedFavoritesApi
+            ? sharedFavoritesApi.getFavorites().length
+            : (favoritesState.items?.length || 0);
           if (cartCountEl) {
             cartCountEl.textContent = cartCount > 0 ? cartCount : '';
             cartCountEl.hidden = cartCount === 0;
@@ -2282,6 +2288,7 @@
         };
 
         const renderFavorites = () => {
+          if (usingSharedFavorites) return;
           if (!favoritesItemsEl) return;
           const items = favoritesState.items || [];
           if (!items.length) {
@@ -2349,22 +2356,24 @@
           if (!exists) openFavorites();
         };
 
-        favoritesOverlay?.addEventListener('click', closeFavorites);
-        document.querySelectorAll('[data-favorites-close]').forEach(btn =>
-          btn.addEventListener('click', closeFavorites)
-        );
-        document.querySelectorAll('[data-favorites-open]').forEach(btn =>
-          btn.addEventListener('click', event => {
-            event.preventDefault();
-            openFavorites();
-          })
-        );
-        window.addEventListener('keydown', event => {
-          if (event.key === 'Escape') {
-            closeFavorites();
-          }
-        });
-        favoritesCta?.addEventListener('click', closeFavorites);
+        if (!usingSharedFavorites) {
+          favoritesOverlay?.addEventListener('click', closeFavorites);
+          document.querySelectorAll('[data-favorites-close]').forEach(btn =>
+            btn.addEventListener('click', closeFavorites)
+          );
+          document.querySelectorAll('[data-favorites-open]').forEach(btn =>
+            btn.addEventListener('click', event => {
+              event.preventDefault();
+              openFavorites();
+            })
+          );
+          window.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+              closeFavorites();
+            }
+          });
+          favoritesCta?.addEventListener('click', closeFavorites);
+        }
 
         const getProductDetails = trigger => {
           const card = trigger.closest('.product-card');
@@ -2409,15 +2418,17 @@
           });
         });
 
-        document.querySelectorAll('.tile-action-favorite').forEach(button => {
-          if (button.dataset.favInit) return;
-          button.dataset.favInit = 'true';
-          button.addEventListener('click', () => {
-            const product = getProductDetails(button);
-            if (!product) return;
-            toggleFavorite(product);
+        if (!usingSharedFavorites) {
+          document.querySelectorAll('.tile-action-favorite').forEach(button => {
+            if (button.dataset.favInit) return;
+            button.dataset.favInit = 'true';
+            button.addEventListener('click', () => {
+              const product = getProductDetails(button);
+              if (!product) return;
+              toggleFavorite(product);
+            });
           });
-        });
+        }
 
         const initSwatchSliders = () => {
           document.querySelectorAll('[data-swatch-slider]').forEach(slider => {

@@ -3403,6 +3403,7 @@
   </div>
 
     <script src="scripts/wrap-videos.js"></script>
+    <script src="favorites.js"></script>
     <script>
       const y = document.getElementById('year');
       if (y) y.textContent = new Date().getFullYear();
@@ -4287,6 +4288,8 @@
       };
 
       const FAVORITES_STORAGE_KEY = 'ldc:favorites';
+      const usingSharedFavorites = Boolean(window.ldcFavorites && window.ldcFavorites.__sharedStore);
+      const sharedFavoritesApi = usingSharedFavorites ? window.ldcFavorites : null;
       const favoritesDrawer = document.querySelector('[data-favorites-drawer]');
       const favoritesPanel = favoritesDrawer?.querySelector('[data-favorites-panel]');
       const favoritesOverlay = favoritesDrawer?.querySelector('[data-favorites-overlay]');
@@ -4340,6 +4343,7 @@
       dedupeFavorites();
 
       const saveFavorites = () => {
+        if (usingSharedFavorites) return;
         if (storage) {
           storage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favoritesState));
         }
@@ -4378,6 +4382,7 @@
       };
 
       const renderFavorites = () => {
+        if (usingSharedFavorites) return;
         if (!favoritesItemsContainer) return;
         if (!favoritesState.items.length) {
           favoritesItemsContainer.innerHTML = '<div class="favorites-empty">No favorites yet.</div>';
@@ -4454,6 +4459,7 @@
       const favoritesHas = id => favoritesState.items.some(item => item.id === id);
 
       const syncFavoriteButtons = () => {
+        if (usingSharedFavorites) return;
         document.querySelectorAll('.tile-action-favorite').forEach(btn => {
           const product = getProductDetails(btn);
           if (!product) return;
@@ -4470,7 +4476,9 @@
 
       const syncFavoritesBadge = () => {
         if (!favoritesBadge) return;
-        const count = favoritesState.items.length;
+        const count = usingSharedFavorites && sharedFavoritesApi
+          ? sharedFavoritesApi.getFavorites().length
+          : favoritesState.items.length;
         if (count > 0) {
           favoritesBadge.textContent = count;
           favoritesBadge.removeAttribute('hidden');
@@ -4506,25 +4514,27 @@
         favoritesPanel?.setAttribute('aria-hidden', 'true');
       };
 
-      favoritesOverlay?.addEventListener('click', closeFavorites);
-      favoritesCloseBtn?.addEventListener('click', closeFavorites);
-      document.addEventListener('keydown', event => {
-        if (event.key === 'Escape' && favoritesDrawer?.classList.contains('is-open')) {
-          closeFavorites();
-        }
-      });
-
-      favoritesOpeners.forEach(trigger => {
-        trigger.addEventListener('click', event => {
-          event.preventDefault();
-          openFavorites();
+      if (!usingSharedFavorites) {
+        favoritesOverlay?.addEventListener('click', closeFavorites);
+        favoritesCloseBtn?.addEventListener('click', closeFavorites);
+        document.addEventListener('keydown', event => {
+          if (event.key === 'Escape' && favoritesDrawer?.classList.contains('is-open')) {
+            closeFavorites();
+          }
         });
-      });
-      favoritesCTA?.addEventListener('click', () => {
-        if (!favoritesState.items.length) return;
-        closeFavorites();
-        window.location.href = 'favorites.html';
-      });
+
+        favoritesOpeners.forEach(trigger => {
+          trigger.addEventListener('click', event => {
+            event.preventDefault();
+            openFavorites();
+          });
+        });
+        favoritesCTA?.addEventListener('click', () => {
+          if (!favoritesState.items.length) return;
+          closeFavorites();
+          window.location.href = 'favorites.html';
+        });
+      }
 
       const normalizeFavoriteProduct = product => {
         const normalized = normalizeProduct(product);
@@ -4559,8 +4569,10 @@
       };
 
       updateFavoritesUI();
-      window.ldcFavorites = favoritesApi;
-      if (favoritesItemsContainer) {
+      if (!usingSharedFavorites) {
+        window.ldcFavorites = favoritesApi;
+      }
+      if (!usingSharedFavorites && favoritesItemsContainer) {
         favoritesItemsContainer.addEventListener('click', event => {
           const addBtn = event.target.closest('[data-favorite-add-cart]');
           if (addBtn) {
@@ -4597,6 +4609,7 @@
       };
 
       const wireFavoriteButtons = () => {
+        if (usingSharedFavorites) return;
         document.querySelectorAll('.tile-action-favorite').forEach(btn => {
           btn.addEventListener('click', () => {
             const product = getProductDetails(btn);
