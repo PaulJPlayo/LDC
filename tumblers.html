@@ -2356,22 +2356,24 @@
           if (!exists) openFavorites();
         };
 
-        favoritesOverlay?.addEventListener('click', closeFavorites);
-        document.querySelectorAll('[data-favorites-close]').forEach(btn =>
-          btn.addEventListener('click', closeFavorites)
-        );
-        document.querySelectorAll('[data-favorites-open]').forEach(btn =>
-          btn.addEventListener('click', event => {
-            event.preventDefault();
-            openFavorites();
-          })
-        );
-        window.addEventListener('keydown', event => {
-          if (event.key === 'Escape') {
-            closeFavorites();
-          }
-        });
-        favoritesCta?.addEventListener('click', closeFavorites);
+        if (!usingSharedFavorites) {
+          favoritesOverlay?.addEventListener('click', closeFavorites);
+          document.querySelectorAll('[data-favorites-close]').forEach(btn =>
+            btn.addEventListener('click', closeFavorites)
+          );
+          document.querySelectorAll('[data-favorites-open]').forEach(btn =>
+            btn.addEventListener('click', event => {
+              event.preventDefault();
+              openFavorites();
+            })
+          );
+          window.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+              closeFavorites();
+            }
+          });
+          favoritesCta?.addEventListener('click', closeFavorites);
+        }
 
         const getProductDetails = trigger => {
           const card = trigger.closest('.product-card');
@@ -2416,15 +2418,17 @@
           });
         });
 
-        document.querySelectorAll('.tile-action-favorite').forEach(button => {
-          if (button.dataset.favInit) return;
-          button.dataset.favInit = 'true';
-          button.addEventListener('click', () => {
-            const product = getProductDetails(button);
-            if (!product) return;
-            toggleFavorite(product);
+        if (!usingSharedFavorites) {
+          document.querySelectorAll('.tile-action-favorite').forEach(button => {
+            if (button.dataset.favInit) return;
+            button.dataset.favInit = 'true';
+            button.addEventListener('click', () => {
+              const product = getProductDetails(button);
+              if (!product) return;
+              toggleFavorite(product);
+            });
           });
-        });
+        }
 
         const initSwatchSliders = () => {
           document.querySelectorAll('[data-swatch-slider]').forEach(slider => {

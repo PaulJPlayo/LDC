@@ -4514,25 +4514,27 @@
         favoritesPanel?.setAttribute('aria-hidden', 'true');
       };
 
-      favoritesOverlay?.addEventListener('click', closeFavorites);
-      favoritesCloseBtn?.addEventListener('click', closeFavorites);
-      document.addEventListener('keydown', event => {
-        if (event.key === 'Escape' && favoritesDrawer?.classList.contains('is-open')) {
-          closeFavorites();
-        }
-      });
-
-      favoritesOpeners.forEach(trigger => {
-        trigger.addEventListener('click', event => {
-          event.preventDefault();
-          openFavorites();
+      if (!usingSharedFavorites) {
+        favoritesOverlay?.addEventListener('click', closeFavorites);
+        favoritesCloseBtn?.addEventListener('click', closeFavorites);
+        document.addEventListener('keydown', event => {
+          if (event.key === 'Escape' && favoritesDrawer?.classList.contains('is-open')) {
+            closeFavorites();
+          }
         });
-      });
-      favoritesCTA?.addEventListener('click', () => {
-        if (!favoritesState.items.length) return;
-        closeFavorites();
-        window.location.href = 'favorites.html';
-      });
+
+        favoritesOpeners.forEach(trigger => {
+          trigger.addEventListener('click', event => {
+            event.preventDefault();
+            openFavorites();
+          });
+        });
+        favoritesCTA?.addEventListener('click', () => {
+          if (!favoritesState.items.length) return;
+          closeFavorites();
+          window.location.href = 'favorites.html';
+        });
+      }
 
       const normalizeFavoriteProduct = product => {
         const normalized = normalizeProduct(product);
@@ -4570,7 +4572,7 @@
       if (!usingSharedFavorites) {
         window.ldcFavorites = favoritesApi;
       }
-      if (favoritesItemsContainer) {
+      if (!usingSharedFavorites && favoritesItemsContainer) {
         favoritesItemsContainer.addEventListener('click', event => {
           const addBtn = event.target.closest('[data-favorite-add-cart]');
           if (addBtn) {
