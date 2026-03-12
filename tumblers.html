@@ -1490,6 +1490,15 @@
             return { items: [] };
           }
         };
+        const syncCartStateFromStorage = () => {
+          const next = loadCartState();
+          cartState.items = (next.items || []).map(normalizeCartItem).filter(Boolean);
+        };
+        const syncCartStateFromPayload = payload => {
+          if (!payload || !Array.isArray(payload.items)) return false;
+          cartState.items = payload.items.map(normalizeCartItem).filter(Boolean);
+          return true;
+        };
 
         bindUploadLabels();
 
@@ -1690,6 +1699,14 @@
           renderCart();
           openCart();
         };
+        const cartBridge = window.ldcCart && typeof window.ldcCart === 'object' ? window.ldcCart : {};
+        cartBridge.open = openCart;
+        cartBridge.close = closeCart;
+        cartBridge.sync = () => {
+          syncCartStateFromStorage();
+          renderCart();
+        };
+        window.ldcCart = cartBridge;
 
         cartOverlay?.addEventListener('click', closeCart);
         document.querySelectorAll('[data-cart-close]').forEach(btn =>
@@ -1714,8 +1731,25 @@
         document.querySelectorAll('[data-open-cart],[data-cart-open]').forEach(trigger => {
           trigger.addEventListener('click', event => {
             event.preventDefault();
+            syncCartStateFromStorage();
+            renderCart();
             openCart();
           });
+        });
+        document.addEventListener('cart:set', event => {
+          const detail = event?.detail;
+          if (!syncCartStateFromPayload(detail)) return;
+          renderCart();
+        });
+        document.addEventListener('cart:reset', () => {
+          cartState.items = [];
+          saveCart();
+          renderCart();
+        });
+        window.addEventListener('storage', event => {
+          if (event?.key !== CART_STORAGE_KEY) return;
+          syncCartStateFromStorage();
+          renderCart();
         });
 
         const openFavorites = () => {
