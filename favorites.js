@@ -773,6 +773,8 @@
 
   var document = global.document;
   var UI_STYLE_ID = 'ldc-favorites-ui-style';
+  var THEME_STYLESHEET_ID = 'ldc-favorites-theme-link';
+  var THEME_STYLESHEET_HREF = 'favorites-theme.css';
   var TAB_OPEN_CLASS = 'favorites-open';
   var activeFocus = null;
   var ui = {
@@ -848,6 +850,20 @@
     return match ? match[1] : '';
   }
 
+  function ensureThemeStylesheet() {
+    if (document.getElementById(THEME_STYLESHEET_ID)) return;
+    var existing = document.querySelector('link[href*="' + THEME_STYLESHEET_HREF + '"]');
+    if (existing) {
+      existing.id = THEME_STYLESHEET_ID;
+      return;
+    }
+    var link = document.createElement('link');
+    link.id = THEME_STYLESHEET_ID;
+    link.rel = 'stylesheet';
+    link.href = THEME_STYLESHEET_HREF;
+    document.head.appendChild(link);
+  }
+
   function ensureStyles() {
     if (document.getElementById(UI_STYLE_ID)) return;
     var style = document.createElement('style');
@@ -855,33 +871,10 @@
     style.textContent = [
       '.ldc-favorites-drawer{position:fixed;inset:0;z-index:1300;pointer-events:none;}',
       '.ldc-favorites-drawer.is-open{pointer-events:auto;}',
-      '.ldc-favorites-overlay{position:absolute;inset:0;background:rgba(15,23,42,.48);opacity:0;transition:opacity 180ms ease;}',
-      '.ldc-favorites-drawer.is-open .ldc-favorites-overlay{opacity:1;}',
-      '.ldc-favorites-panel{position:absolute;top:0;right:0;width:min(26rem,92vw);height:100%;background:#fff;color:#111827;box-shadow:-20px 0 40px rgba(15,23,42,.22);display:flex;flex-direction:column;transform:translateX(108%);transition:transform 200ms ease;}',
-      '.ldc-favorites-drawer.is-open .ldc-favorites-panel{transform:translateX(0);} ',
-      '.ldc-favorites-header{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:1rem 1rem .75rem;border-bottom:1px solid rgba(15,23,42,.12);}',
-      '.ldc-favorites-title{margin:0;font-size:1rem;letter-spacing:.08em;text-transform:uppercase;}',
-      '.ldc-favorites-close{border:0;background:transparent;font-size:1.45rem;line-height:1;padding:.15rem .35rem;border-radius:.5rem;color:#111827;cursor:pointer;}',
-      '.ldc-favorites-close:focus-visible{outline:2px solid #7c3aed;outline-offset:2px;}',
-      '.ldc-favorites-body{flex:1 1 auto;overflow:auto;padding:.85rem;display:grid;gap:.75rem;align-content:start;}',
-      '.ldc-favorites-empty{padding:1rem;border:1px dashed rgba(15,23,42,.24);border-radius:.85rem;text-align:center;color:#475569;background:#f8fafc;}',
-      '.ldc-favorites-item{position:relative;border:1px solid rgba(15,23,42,.1);border-radius:.85rem;padding:.75rem .75rem 3rem;background:#fff;box-shadow:0 8px 20px rgba(15,23,42,.06);}',
-      '.ldc-favorites-item-main{display:flex;align-items:flex-start;gap:.7rem;}',
-      '.ldc-favorites-item-preview{width:3.25rem;height:3.25rem;border-radius:.7rem;overflow:hidden;flex:0 0 auto;background:#eef2ff;display:flex;align-items:center;justify-content:center;}',
-      '.ldc-favorites-item-preview img{width:100%;height:100%;object-fit:cover;display:block;}',
-      '.ldc-favorites-item-info{min-width:0;display:grid;gap:.2rem;}',
-      '.ldc-favorites-item-title{font-size:.9rem;font-weight:700;line-height:1.3;color:#111827;word-break:break-word;}',
-      '.ldc-favorites-item-variant{font-size:.73rem;color:#334155;line-height:1.3;}',
-      '.ldc-favorites-item-description{font-size:.73rem;color:#64748b;line-height:1.3;}',
-      '.ldc-favorites-item-price{font-size:.8rem;font-weight:700;color:#111827;letter-spacing:.04em;}',
-      '.ldc-favorites-item-actions{position:absolute;right:.7rem;bottom:.7rem;display:flex;align-items:center;gap:.45rem;}',
-      '.ldc-favorites-icon-btn{border:1px solid rgba(15,23,42,.18);background:#fff;border-radius:999px;width:2rem;height:2rem;display:inline-flex;align-items:center;justify-content:center;color:#111827;cursor:pointer;}',
-      '.ldc-favorites-icon-btn:hover{background:#f8fafc;}',
-      '.ldc-favorites-icon-btn:focus-visible{outline:2px solid #7c3aed;outline-offset:2px;}',
-      '.ldc-favorites-icon-btn[data-favorite-add-cart]{background:#111827;border-color:#111827;color:#fff;}',
-      '.ldc-favorites-icon-btn[data-favorite-add-cart]:hover{background:#1f2937;}',
-      '.ldc-favorites-footer{padding:.75rem 1rem 1rem;border-top:1px solid rgba(15,23,42,.12);}',
-      '.ldc-favorites-cta{display:inline-flex;align-items:center;justify-content:center;width:100%;text-decoration:none;padding:.8rem 1rem;border-radius:.75rem;background:#111827;color:#fff;letter-spacing:.08em;text-transform:uppercase;font-size:.76rem;font-weight:700;}',
+      '.ldc-favorites-drawer .favorites-overlay{position:absolute;inset:0;}',
+      '.ldc-favorites-drawer .favorites-panel{position:absolute;top:0;right:0;height:100%;width:min(28rem,94vw);display:flex;flex-direction:column;transform:translateX(108%);transition:transform 210ms ease;}',
+      '.ldc-favorites-drawer.is-open .favorites-panel{transform:translateX(0);}',
+      '.ldc-favorites-drawer .favorites-body{flex:1 1 auto;overflow:auto;}',
       '.tile-action-favorite.is-active{background:rgba(244,114,182,.18)!important;color:#e11d48!important;border-color:rgba(225,29,72,.45)!important;}'
     ].join('');
     document.head.appendChild(style);
@@ -902,15 +895,15 @@
     drawer.classList.add('favorites-drawer', 'ldc-favorites-drawer');
     if (drawer.getAttribute('data-favorites-managed') !== 'shared-ready') {
       drawer.innerHTML = [
-        '<div class="favorites-overlay ldc-favorites-overlay" data-favorites-overlay></div>',
-        '<aside class="favorites-panel ldc-favorites-panel" data-favorites-panel role="dialog" aria-modal="true" aria-label="Favorites drawer" aria-hidden="true" tabindex="-1">',
-        '  <header class="favorites-header ldc-favorites-header">',
-        '    <h2 class="favorites-title ldc-favorites-title">Your Favorites</h2>',
-        '    <button type="button" class="favorites-close-btn ldc-favorites-close" data-favorites-close aria-label="Close favorites">×</button>',
+        '<div class="favorites-overlay" data-favorites-overlay></div>',
+        '<aside class="favorites-panel favorites-card ldc-favorites-panel" data-favorites-panel role="dialog" aria-modal="true" aria-label="Favorites drawer" aria-hidden="true" tabindex="-1">',
+        '  <header class="favorites-header">',
+        '    <h2 class="favorites-title">Your Favorites</h2>',
+        '    <button type="button" class="favorites-close-btn" data-favorites-close aria-label="Close favorites">×</button>',
         '  </header>',
-        '  <div class="favorites-body ldc-favorites-body" data-favorites-items aria-live="polite"></div>',
-        '  <footer class="favorites-footer ldc-favorites-footer">',
-        '    <a class="favorites-btn ldc-favorites-cta" data-favorites-cta href="favorites.html">Favorites</a>',
+        '  <div class="favorites-body" data-favorites-items aria-live="polite"></div>',
+        '  <footer class="favorites-footer">',
+        '    <a class="favorites-btn favorites-cta" data-favorites-cta href="favorites.html">Favorites</a>',
         '  </footer>',
         '</aside>'
       ].join('');
@@ -1147,7 +1140,7 @@
     if (!ui.itemsContainer) return;
     var items = api.getFavorites();
     if (!items.length) {
-      ui.itemsContainer.innerHTML = '<div class="favorites-empty ldc-favorites-empty">No favorites yet.</div>';
+      ui.itemsContainer.innerHTML = '<div class="favorites-empty">No favorites yet.</div>';
       return;
     }
 
@@ -1163,24 +1156,24 @@
         : '';
       var productUrl = toText(item.product_url);
       var titleContent = productUrl
-        ? '<a class="ldc-favorites-item-title" href="' + escapeHtml(productUrl) + '">' + title + '</a>'
-        : '<div class="ldc-favorites-item-title">' + title + '</div>';
+        ? '<a class="favorites-item-name" href="' + escapeHtml(productUrl) + '">' + title + '</a>'
+        : '<div class="favorites-item-name">' + title + '</div>';
       return [
-        '<article class="favorites-item ldc-favorites-item" data-favorite-id="', id, '">',
-        '  <div class="favorites-item-main ldc-favorites-item-main">',
-        '    <div class="favorites-item-preview ldc-favorites-item-preview">', imageHtml, '</div>',
-        '    <div class="favorites-item-info ldc-favorites-item-info">',
+        '<article class="favorites-item" data-favorite-id="', id, '">',
+        '  <div class="favorites-item-main">',
+        '    <div class="favorites-item-preview">', imageHtml, '</div>',
+        '    <div class="favorites-item-info">',
         '      ', titleContent,
-        variantInfo ? '      <div class="ldc-favorites-item-variant">' + variantInfo + '</div>' : '',
-        description ? '      <div class="ldc-favorites-item-description">' + description + '</div>' : '',
-        '      <div class="favorites-item-price ldc-favorites-item-price">', price, '</div>',
+        variantInfo ? '      <div class="favorites-item-variant">' + variantInfo + '</div>' : '',
+        description ? '      <div class="favorites-item-description">' + description + '</div>' : '',
+        '      <div class="favorites-item-price">', price, '</div>',
         '    </div>',
         '  </div>',
-        '  <div class="favorites-actions ldc-favorites-item-actions">',
-        '    <button type="button" class="favorites-remove-btn ldc-favorites-icon-btn" data-favorite-remove aria-label="Remove ', title, '">×</button>',
-        '    <button type="button" class="favorites-add-cart ldc-favorites-icon-btn" data-favorite-add-cart aria-label="Add ', title, ' to cart">',
+        '  <div class="favorites-item-actions">',
+        '    <button type="button" class="favorites-move-btn" data-favorite-add-cart aria-label="Move ', title, ' to cart">',
         '      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l1 7h12l1-4H6" /><circle cx="9" cy="19" r="1.25" /><circle cx="17" cy="19" r="1.25" /></svg>',
         '    </button>',
+        '    <button type="button" class="favorites-remove-btn" data-favorite-remove aria-label="Remove ', title, '">×</button>',
         '  </div>',
         '</article>'
       ].join('');
@@ -1393,6 +1386,7 @@
   }
 
   function syncUi() {
+    ensureThemeStylesheet();
     ensureStyles();
     ensureDrawerStructure();
     renderDrawerItems();
