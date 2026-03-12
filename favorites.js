@@ -4,6 +4,11 @@
  * Exposes: window.ldcFavorites
  * Storage key: ldc:favorites
  *
+ * Supported migration path:
+ * - same-key payload-shape normalization for historical favorites payloads stored at ldc:favorites
+ * - legacy-key migration remains extensible, but repo/history evidence only shows ldc:favorites as the
+ *   persisted favorites payload key
+ *
  * Core API:
  * - getFavorites(), getFavoriteById(id), hasFavorite(id)
  * - addFavorite(item), removeFavorite(id), toggleFavorite(item), clearFavorites()
@@ -20,6 +25,7 @@
   var STORE_VERSION = 2;
   var STORAGE_KEY = 'ldc:favorites';
   var CHANGE_EVENT = 'ldc:favorites:change';
+  // Future-ready hook for real alternate-key migration. Current repo/history evidence only found ldc:favorites.
   var LEGACY_KEYS = ['ldc:favorites'];
 
   var listeners = new Set();
@@ -106,6 +112,13 @@
     }
   }
 
+  function extractImageUrlFromStyle(styleValue) {
+    var style = toText(styleValue);
+    if (!style) return '';
+    var match = style.match(/url\(["']?(.*?)["']?\)/i);
+    return match ? toText(match[1]) : '';
+  }
+
   function normalizeOption(rawOption) {
     if (!rawOption) return null;
 
@@ -173,6 +186,111 @@
       })
       .filter(Boolean)
       .join(' | ');
+  }
+
+  function normalizeLegacyId(value) {
+    var text = toText(value);
+    if (!text) return '';
+    return 'legacy:' + toLowerSlug(text);
+  }
+
+  function hasCanonicalProductIdentity(item) {
+    return Boolean(
+      toText(item && item.product_id) ||
+      toText(item && item.product_handle) ||
+      toText(item && item.product_url)
+    );
+  }
+
+  function hasCanonicalVariantIdentity(item) {
+    return Boolean(
+      toText(item && item.variant_id) ||
+      toText(item && item.variant_title) ||
+      (Array.isArray(item && item.selected_options) && item.selected_options.length) ||
+      toText(item && item.options_summary)
+    );
+  }
+
+  function buildLooseLegacySignature(item) {
+    if (!item || typeof item !== 'object') return '';
+    var parts = [];
+    var title = toText(item.title);
+    var variant = toText(item.options_summary || item.variant_title);
+    var preview =
+      toText(item.preview_image || item.image_url) ||
+      extractImageUrlFromStyle(item.preview_style) ||
+      toText(item.preview_style);
+    var price = Number(item.price);
+
+    if (title) parts.push(title);
+    if (variant) parts.push(variant);
+    if (Number.isFinite(price)) parts.push(String(price));
+    if (preview) parts.push(preview);
+
+    if (!parts.length) return '';
+    return 'shape:' + toLowerSlug(parts.join('|'));
+  }
+
+  function collectFavoriteAliases(item, source) {
+    var aliases = [];
+
+    function push(value) {
+      var text = toText(value);
+      if (!text) return;
+      if (aliases.indexOf(text) !== -1) return;
+      aliases.push(text);
+    }
+
+    push(toText(source && (source.favorite_key || source.favoriteKey)));
+    push(normalizeLegacyId(source && source.id));
+    push(buildFavoriteKey(item));
+    push(buildLooseLegacySignature(item));
+
+    return aliases;
+  }
+
+  function hasAliasOverlap(left, right) {
+    if (!Array.isArray(left) || !Array.isArray(right) || !left.length || !right.length) {
+      return false;
+    }
+
+    for (var i = 0; i < left.length; i += 1) {
+      if (right.indexOf(left[i]) !== -1) return true;
+    }
+
+    return false;
+  }
+
+  function chooseStoredFavoriteId(item, source) {
+    var explicitKey = toText(source && (source.favorite_key || source.favoriteKey));
+    if (explicitKey) return explicitKey;
+
+    if (hasCanonicalProductIdentity(item) && hasCanonicalVariantIdentity(item)) {
+      return buildFavoriteKey(item);
+    }
+
+    var explicitId = normalizeLegacyId(source && source.id);
+    if (explicitId) return explicitId;
+
+    if (hasCanonicalProductIdentity(item)) {
+      return buildFavoriteKey(item);
+    }
+
+    return buildLooseLegacySignature(item) || buildFavoriteKey(item);
+  }
+
+  function scoreFavoriteIdentity(item, source) {
+    var score = 0;
+    if (toText(source && (source.favorite_key || source.favoriteKey))) score += 100;
+    if (toText(item && item.product_id)) score += 40;
+    if (toText(item && item.product_handle)) score += 30;
+    if (toText(item && item.product_url)) score += 20;
+    if (toText(item && item.variant_id)) score += 20;
+    if (Array.isArray(item && item.selected_options) && item.selected_options.length) score += 15;
+    if (toText(item && item.variant_title)) score += 10;
+    if (toText(item && item.preview_image)) score += 5;
+    if (toText(item && item.preview_style)) score += 3;
+    return score;
   }
 
   function buildProductRef(item) {
@@ -309,6 +427,10 @@
       canonical.description = canonical.short_description;
     }
 
+    if (!canonical.preview_image && canonical.preview_style) {
+      canonical.preview_image = extractImageUrlFromStyle(canonical.preview_style);
+    }
+
     canonical.image_url = canonical.preview_image;
     canonical.options_summary = optionsSummary(canonical.selected_options);
 
@@ -316,16 +438,7 @@
       canonical.added_at = canonical.updated_at;
     }
 
-    var explicitKey = toText(source.favorite_key || source.favoriteKey);
-    var explicitId = toText(source.id);
-    var stableKey = explicitKey || buildFavoriteKey(canonical);
-
-    if (!stableKey && explicitId) {
-      stableKey = toLowerSlug(explicitId);
-    }
-    if (!stableKey) {
-      stableKey = buildFavoriteKey(canonical);
-    }
+    var stableKey = chooseStoredFavoriteId(canonical, source);
 
     canonical.id = stableKey;
     canonical.favorite_key = stableKey;
@@ -379,6 +492,53 @@
     return merged;
   }
 
+  function mergeFavoriteRecordsWithSource(current, currentSource, incoming, incomingSource) {
+    var merged = mergeFavoriteRecords(current, incoming);
+    var currentScore = scoreFavoriteIdentity(current, currentSource);
+    var incomingScore = scoreFavoriteIdentity(incoming, incomingSource);
+    var preferredSource = incomingScore >= currentScore ? incomingSource : currentSource;
+    var preferredId = chooseStoredFavoriteId(merged, preferredSource);
+
+    if (preferredId) {
+      merged.id = preferredId;
+      merged.favorite_key = preferredId;
+    }
+
+    return merged;
+  }
+
+  function findFavoriteMatch(rawInput) {
+    var directId = '';
+    var lookupAliases = [];
+
+    if (typeof rawInput === 'string') {
+      directId = toText(rawInput);
+      if (directId) lookupAliases.push(directId);
+    } else if (isObject(rawInput)) {
+      var normalized = normalizeFavoriteItem(rawInput, {});
+      lookupAliases = collectFavoriteAliases(normalized, rawInput);
+      if (normalized.id) lookupAliases.push(normalized.id);
+    } else {
+      return null;
+    }
+
+    if (!directId && !lookupAliases.length) return null;
+
+    for (var i = 0; i < state.items.length; i += 1) {
+      var item = state.items[i];
+      if (!item) continue;
+      if (directId && (item.id === directId || item.favorite_key === directId)) {
+        return item;
+      }
+      var itemAliases = collectFavoriteAliases(item, item);
+      if (hasAliasOverlap(lookupAliases, itemAliases)) {
+        return item;
+      }
+    }
+
+    return null;
+  }
+
   function normalizeFavoritesPayload(rawPayload, meta) {
     var payload = rawPayload;
     if (!payload) {
@@ -398,11 +558,52 @@
     }
 
     var byId = new Map();
+    var aliasToId = new Map();
+    var sourceById = new Map();
+    // Historical payloads reused the same key with drifting shapes, so dedupe by alias set instead of exact id only.
     rawItems.forEach(function eachRaw(rawItem) {
       var normalized = normalizeFavoriteItem(rawItem, meta);
       if (!normalized.id) return;
-      var existing = byId.get(normalized.id);
-      byId.set(normalized.id, mergeFavoriteRecords(existing, normalized));
+      var aliases = collectFavoriteAliases(normalized, rawItem);
+      var matchedId = '';
+
+      for (var i = 0; i < aliases.length; i += 1) {
+        var alias = aliases[i];
+        var knownId = aliasToId.get(alias);
+        if (knownId) {
+          matchedId = knownId;
+          break;
+        }
+      }
+
+      var targetId = matchedId || normalized.id;
+      var existing = byId.get(targetId);
+      var existingSource = sourceById.get(targetId) || {};
+      var preferredSource =
+        scoreFavoriteIdentity(normalized, rawItem) >= scoreFavoriteIdentity(existing, existingSource)
+          ? rawItem
+          : existingSource;
+      var merged = mergeFavoriteRecordsWithSource(existing, existingSource, normalized, rawItem);
+      var finalId = merged.id || targetId;
+
+      if (existing && finalId !== targetId) {
+        aliasToId.forEach(function eachMappedId(mappedId, aliasKey) {
+          if (mappedId === targetId) {
+            aliasToId.set(aliasKey, finalId);
+          }
+        });
+        byId.delete(targetId);
+        sourceById.delete(targetId);
+      }
+
+      byId.set(finalId, merged);
+      sourceById.set(finalId, preferredSource);
+
+      aliases.push(targetId);
+      aliases.push(finalId);
+      aliases.forEach(function eachAlias(alias) {
+        aliasToId.set(alias, finalId);
+      });
     });
 
     return {
@@ -541,32 +742,32 @@
   }
 
   function getFavoriteById(id) {
-    var favoriteId = toText(id);
-    if (!favoriteId) return null;
-    var match = state.items.find(function findItem(item) {
-      return item.id === favoriteId;
-    });
+    var match = findFavoriteMatch(id);
     return match ? cloneFavorite(match) : null;
   }
 
   function hasFavorite(id) {
-    var favoriteId = toText(id);
-    if (!favoriteId) return false;
-    return state.items.some(function hasItem(item) {
-      return item.id === favoriteId;
-    });
+    return Boolean(findFavoriteMatch(id));
   }
 
   function upsertFavorite(rawItem, meta) {
     var normalized = normalizeFavoriteItem(rawItem, meta);
     if (!normalized.id) return null;
 
-    var existingIndex = state.items.findIndex(function findIndex(item) {
-      return item.id === normalized.id;
-    });
+    var existing = findFavoriteMatch(rawItem) || findFavoriteMatch(normalized.id);
+    var existingIndex = existing
+      ? state.items.findIndex(function findIndex(item) {
+          return item.id === existing.id;
+        })
+      : -1;
 
     if (existingIndex >= 0) {
-      var merged = mergeFavoriteRecords(state.items[existingIndex], normalized);
+      var merged = mergeFavoriteRecordsWithSource(
+        state.items[existingIndex],
+        state.items[existingIndex],
+        normalized,
+        rawItem
+      );
       state.items.splice(existingIndex, 1, merged);
       persistState('update', { id: merged.id });
       return cloneFavorite(merged);
@@ -578,7 +779,8 @@
   }
 
   function removeFavorite(id) {
-    var favoriteId = toText(id);
+    var match = findFavoriteMatch(id);
+    var favoriteId = toText(match && match.id) || toText(id);
     if (!favoriteId) return false;
     var nextItems = state.items.filter(function filterItem(item) {
       return item.id !== favoriteId;
@@ -593,9 +795,10 @@
     var normalized = normalizeFavoriteItem(rawItem, meta);
     if (!normalized.id) return { action: 'noop', item: null };
 
-    if (hasFavorite(normalized.id)) {
-      removeFavorite(normalized.id);
-      return { action: 'removed', item: null, id: normalized.id };
+    var existing = findFavoriteMatch(rawItem) || findFavoriteMatch(normalized.id);
+    if (existing) {
+      removeFavorite(existing.id);
+      return { action: 'removed', item: null, id: existing.id };
     }
 
     var added = upsertFavorite(normalized, meta);
@@ -1083,10 +1286,14 @@
       }
       var normalized = api.normalizeFavoriteItem(payload, { source_path: payload.source_path });
       var favoriteId = toText(normalized.id || normalized.favorite_key);
-      if (favoriteId) {
+      var matched = api.getFavoriteById(payload);
+      var matchedId = toText(matched && (matched.id || matched.favorite_key));
+      if (matchedId) {
+        button.dataset.favoriteId = matchedId;
+      } else if (favoriteId) {
         button.dataset.favoriteId = favoriteId;
       }
-      setHeartState(button, favoriteId ? api.hasFavorite(favoriteId) : false);
+      setHeartState(button, Boolean(matched));
     });
   }
 
