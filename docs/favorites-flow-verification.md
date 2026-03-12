@@ -41,6 +41,11 @@
 - Disabled obsolete inline favorites listeners when shared store is active to prevent duplicated favorites mutations.
 - Kept legacy fallback logic only for non-shared fallback mode.
 
+### Drawer/Page theme alignment update
+- Added a shared visual theme layer in `favorites-theme.css` and moved `favorites.html` to consume that shared stylesheet.
+- Updated shared drawer rendering in `favorites.js` to use the same favorites-page class vocabulary (`favorites-card`, `favorites-item*`, `favorites-move-btn`, `favorites-remove-btn`, `favorites-cta`).
+- `favorites.html` remains the visual source of truth, and drawer styling now follows the same palette, typography, card language, and button language.
+
 ## Route coverage in closeout
 - Explicitly included and verified in implementation path:
   - `new-arrivals.html`
