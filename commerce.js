@@ -1360,10 +1360,13 @@
       let renderedCount = 0;
       const sharedTemplate = getSharedCardTemplate();
       const templateElement = container.querySelector('template[data-card-template]');
-      const template =
-        sharedTemplate ||
+      const localTemplate =
         templateElement?.content?.firstElementChild ||
         container.querySelector('.product-card');
+      const preferCardTemplate = container.dataset.preferCardTemplate === 'true';
+      const template = preferCardTemplate
+        ? (localTemplate || sharedTemplate)
+        : (sharedTemplate || localTemplate);
       try {
         if (!template) return;
         container.classList.add('product-grid');
