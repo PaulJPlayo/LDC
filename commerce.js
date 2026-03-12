@@ -68,6 +68,45 @@
     'under-25',
     'last-chance'
   ]);
+  const TUMBLER_LIMITED_PRODUCTS = new Set([
+    'tumbler-sip-cup',
+    'tumbler-autumn-leaves',
+    'tumbler-gold-trim-tumbler'
+  ]);
+  const TUMBLER_LIMITED_VARIANTS = new Map([
+    ['tumbler-sublimation', new Set(['glow-in-the-dark', 'orange'])]
+  ]);
+  const SWATCH_FALLBACK_STYLES = new Map([
+    ['white', 'background: linear-gradient(145deg,#ffffff 0%,#f5f5f5 40%,#e2e8f0 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.25), inset 0 6px 12px rgba(255,255,255,0.7); border-color: rgba(226,232,240,0.65);'],
+    ['pearl-white', 'background: linear-gradient(145deg,#ffffff 0%,#f5f5f5 40%,#e2e8f0 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.25), inset 0 6px 12px rgba(255,255,255,0.7); border-color: rgba(226,232,240,0.65);'],
+    ['cream-white', 'background: radial-gradient(circle, #fff7eb 0%, #fbe8c7 55%, #f3d7a6 100%); box-shadow: 0 0 6px rgba(243, 215, 166, 0.45); border-color: rgba(243, 215, 166, 0.35);'],
+    ['white-cream', 'background: radial-gradient(circle, #fff9f0 0%, #f5e6d2 55%, #e7caa1 100%); box-shadow: 0 0 6px rgba(231,202,161,0.5); border-color: rgba(231,202,161,0.45);'],
+    ['cream-pink', 'background: radial-gradient(circle, #ffe6f2 0%, #f9a8d4 55%, #f472b6 100%); box-shadow: 0 0 6px rgba(244,114,182,0.45); border-color: rgba(244,114,182,0.35);'],
+    ['light-pink', 'background: radial-gradient(circle, #ffd6e8 0%, #f9a8d4 55%, #ec4899 100%); box-shadow: 0 0 6px rgba(236, 72, 153, 0.45);'],
+    ['hot-pink', 'background: radial-gradient(circle at 30% 30%, #ffd1e8 0%, #ff4ba5 45%, #d9048e 100%);'],
+    ['very-light-pink', 'background: radial-gradient(circle, #fff0f7 0%, #ffe4f0 55%, #f5cde2 100%);'],
+    ['vanilla-pink', 'background: radial-gradient(circle, #fff0f7 0%, #ffe4f0 55%, #f5cde2 100%);'],
+    ['cream-peach', 'background: radial-gradient(circle, #ffe9c7 0%, #ffc17a 55%, #ffad55 100%); box-shadow: 0 0 6px rgba(255, 193, 122, 0.6);'],
+    ['light-orange', 'background: radial-gradient(circle, #ffe9c7 0%, #ffc17a 55%, #ffad55 100%); box-shadow: 0 0 6px rgba(255, 193, 122, 0.6);'],
+    ['orange', 'background: radial-gradient(circle, #ffbb66 0%, #ff931e 60%, #ff7b00 100%); box-shadow: 0 0 8px rgba(255, 147, 30, 0.65);'],
+    ['pumpkin-orange', 'background: radial-gradient(circle, #ffbb66 0%, #ff931e 60%, #ff7b00 100%); box-shadow: 0 0 8px rgba(255, 147, 30, 0.65);'],
+    ['coffee', 'background: radial-gradient(circle at 35% 35%, #f3e2c5 0%, #c58d5a 55%, #8b5a2b 100%); box-shadow: 0 0 8px rgba(139,90,43,0.4); border-color: rgba(139,90,43,0.35);'],
+    ['tan-brown', 'background: radial-gradient(circle, #f6e0c3 0%, #e0b989 55%, #b27a3c 100%);'],
+    ['chocolate-brown', 'background: radial-gradient(circle at 30% 30%, #fbd5a8 0%, #8b4513 55%, #4a2505 100%); box-shadow: 0 0 10px rgba(139, 69, 19, 0.45); border-color: rgba(139,69,19,0.35);'],
+    ['blue', 'background: radial-gradient(circle, #d8ecff 0%, #8fc7ff 55%, #4da3ff 100%); box-shadow: 0 0 8px rgba(79, 163, 255, 0.6); border-color: rgba(79,163,255,0.6);'],
+    ['baby-blue', 'background: radial-gradient(circle, #e8f4ff 0%, #b8ddff 55%, #7bb7ff 100%); box-shadow: 0 0 6px rgba(123, 183, 255, 0.5);'],
+    ['light-blue', 'background: radial-gradient(circle, #e8f4ff 0%, #b8ddff 55%, #7bb7ff 100%); box-shadow: 0 0 6px rgba(123, 183, 255, 0.5);'],
+    ['light-teal', 'background: radial-gradient(circle, #e0fffb 0%, #a5f3fc 55%, #38bdf8 100%); box-shadow: 0 0 6px rgba(56,189,248,0.45); border-color: rgba(56,189,248,0.35);'],
+    ['dark-teal', 'background: radial-gradient(circle, #bfe4df 0%, #1fb79f 55%, #0b534d 100%);'],
+    ['green', 'background: radial-gradient(circle, #e3fcec 0%, #6ee7b7 55%, #22c55e 100%); box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);'],
+    ['red', 'background: radial-gradient(circle, #ffd1d1 0%, #f87171 55%, #dc2626 100%); box-shadow: 0 0 6px rgba(220, 38, 38, 0.45);'],
+    ['black', 'background: #1f2937;'],
+    ['metallic-purple', 'background: linear-gradient(135deg, #b388ff 0%, #8b5cf6 50%, #6d28d9 100%); box-shadow: 0 0 8px rgba(139, 92, 246, 0.55);'],
+    ['lavender', 'background: radial-gradient(circle, #f3e8ff 0%, #d8b4fe 55%, #a855f7 100%); box-shadow: 0 0 6px rgba(168,85,247,0.45); border-color: rgba(168,85,247,0.35);'],
+    ['glow-in-the-dark', 'background: radial-gradient(circle, #ccff88 0%, #8dff3a 65%, #48ff5b 100%); box-shadow: 0 0 8px rgba(141, 255, 58, 0.65); border-color: rgba(190,242,100,0.6);'],
+    ['glass-finish', 'background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 60%), linear-gradient(135deg, rgba(226,232,240,0.7) 0%, rgba(148,163,184,0.4) 100%); box-shadow: inset 0 0 0 1px rgba(148,163,184,0.45), inset 0 8px 14px rgba(255,255,255,0.4), inset 0 -10px 18px rgba(148,163,184,0.35);'],
+    ['two-tone-pink', 'background: linear-gradient(135deg, #ffd1e8 0%, #ff4ba5 45%, #f9a8d4 100%);']
+  ]);
   const HOMEPAGE_TILE_STYLE_ID = 'ldc-home-tile-styles';
   const SWATCH_DOT_SIZE = '1.25rem';
   const MAX_VISIBLE_SWATCHES = 4;
@@ -965,6 +1004,94 @@
     return '';
   };
 
+  const getBadgeElement = container =>
+    container?.querySelector('[data-product-badge]') ||
+    container?.querySelector('.badge-custom') ||
+    container?.querySelector('.arrival-card .badge') ||
+    container?.querySelector('.arrival-body .badge') ||
+    null;
+
+  const setBadgeText = (badgeEl, text) => {
+    if (!badgeEl) return;
+    const value = String(text || '').trim();
+    if (value) {
+      badgeEl.textContent = value;
+      badgeEl.style.display = '';
+    } else {
+      badgeEl.textContent = '';
+      badgeEl.style.display = 'none';
+    }
+  };
+
+  const resolveTumblersBadgeText = (productHandle, variantLabel) => {
+    const handle = slugify(productHandle || '');
+    if (!handle) return '';
+    if (TUMBLER_LIMITED_PRODUCTS.has(handle)) {
+      return 'Limited Edition';
+    }
+    const limitedVariants = TUMBLER_LIMITED_VARIANTS.get(handle);
+    if (!limitedVariants) return '';
+    const variantKey = slugify(variantLabel || '');
+    return variantKey && limitedVariants.has(variantKey) ? 'Limited Edition' : '';
+  };
+
+  const syncVariantBadge = (container, product, sectionKey, variantLabel, overrides = {}) => {
+    const badgeEl = getBadgeElement(container);
+    if (!badgeEl) return;
+    const metadata = normalizeMetadata(product?.metadata);
+    const defaultBadge = resolveBadgeText(overrides, metadata);
+    if (defaultBadge) {
+      setBadgeText(badgeEl, defaultBadge);
+      return;
+    }
+    const normalizedSection = normalizeSectionKey(sectionKey);
+    if (normalizedSection !== 'tumblers' && normalizedSection !== 'home-tumblers') {
+      setBadgeText(badgeEl, '');
+      return;
+    }
+    const productHandle = product?.handle || product?.id || '';
+    setBadgeText(badgeEl, resolveTumblersBadgeText(productHandle, variantLabel));
+  };
+
+  const getVariantImageFromEntry = (entry, label, variantId) => {
+    if (!entry || typeof entry !== 'object') return '';
+    const targetLabel = slugify(label || '');
+    const targetVariantId = String(variantId || '').trim();
+    const variants = entry.variants;
+
+    if (Array.isArray(variants)) {
+      for (const record of variants) {
+        if (!record || typeof record !== 'object') continue;
+        const recordVariantId = String(record.variantId || record.variant_id || '').trim();
+        if (targetVariantId && recordVariantId === targetVariantId && record.image) {
+          return record.image;
+        }
+        const recordLabel = slugify(record.label || record.title || '');
+        if (targetLabel && recordLabel === targetLabel && record.image) {
+          return record.image;
+        }
+      }
+    } else if (variants && typeof variants === 'object') {
+      for (const [key, recordValue] of Object.entries(variants)) {
+        const record = recordValue && typeof recordValue === 'object'
+          ? recordValue
+          : null;
+        if (!record) continue;
+        const recordVariantId = String(record.variantId || record.variant_id || '').trim();
+        if (targetVariantId && recordVariantId === targetVariantId && record.image) {
+          return record.image;
+        }
+        const keyLabel = slugify(key);
+        const recordLabel = slugify(record.label || record.title || '');
+        if (targetLabel && (keyLabel === targetLabel || recordLabel === targetLabel) && record.image) {
+          return record.image;
+        }
+      }
+    }
+
+    return entry.image || '';
+  };
+
   const isAccessoryProduct = (product, sectionKey) => {
     const metadata = normalizeMetadata(product?.metadata);
     const productKey = String(
@@ -1070,20 +1197,10 @@
       }
     }
 
-    const badgeEl =
-      container.querySelector('[data-product-badge]') ||
-      container.querySelector('.badge-custom') ||
-      container.querySelector('.arrival-card .badge') ||
-      container.querySelector('.arrival-body .badge');
+    const badgeEl = getBadgeElement(container);
     if (badgeEl) {
       const badgeText = resolveBadgeText(overrides, metadata);
-      if (badgeText) {
-        badgeEl.textContent = badgeText;
-        badgeEl.style.display = '';
-      } else {
-        badgeEl.textContent = '';
-        badgeEl.style.display = 'none';
-      }
+      setBadgeText(badgeEl, badgeText);
     }
   };
 
@@ -1105,7 +1222,7 @@
     });
   };
 
-  const buildDynamicCard = (template, product, sectionKey) => {
+  const buildDynamicCard = (template, product, sectionKey, mapEntry = null) => {
     const card = template.cloneNode(true);
     if (card?.removeAttribute) {
       card.removeAttribute('id');
@@ -1187,7 +1304,9 @@
           return;
         }
         if (!swatch.dataset.variantImage) {
-          const variantImage = getVariantImage(variant, product);
+          const variantImage =
+            getVariantImage(variant, product) ||
+            getVariantImageFromEntry(mapEntry, label, variant?.id);
           if (variantImage) {
             swatch.dataset.variantImage = variantImage;
           }
@@ -1234,10 +1353,14 @@
     const defaultVariant = variants[0] || null;
     const defaultLabel = defaultVariant ? getVariantLabel(defaultVariant) : '';
     const overrides = getStorefrontTileOverride(product, sectionKey);
-    const defaultImage = overrides?.image || getVariantImage(defaultVariant, product);
+    const defaultImage =
+      overrides?.image ||
+      getVariantImage(defaultVariant, product) ||
+      getVariantImageFromEntry(mapEntry, defaultLabel, defaultVariant?.id);
     updateProductCard(card, product, defaultVariant?.id || null, sectionKey);
     updateProductImage(card, defaultImage, product?.title || '', defaultLabel);
     updateAddToCartVariant(card, defaultVariant?.id || null);
+    syncVariantBadge(card, product, sectionKey, defaultLabel, overrides);
     card.dataset.selectedColor = defaultLabel;
     card.dataset.selectedColorLabel = defaultLabel;
 
@@ -1360,15 +1483,21 @@
       let renderedCount = 0;
       const sharedTemplate = getSharedCardTemplate();
       const templateElement = container.querySelector('template[data-card-template]');
-      const template =
-        sharedTemplate ||
+      const localTemplate =
         templateElement?.content?.firstElementChild ||
         container.querySelector('.product-card');
+      const preferCardTemplate = container.dataset.preferCardTemplate === 'true';
+      const template = preferCardTemplate
+        ? (localTemplate || sharedTemplate)
+        : (sharedTemplate || localTemplate);
       try {
         if (!template) return;
         container.classList.add('product-grid');
         container.classList.remove('is-loaded');
-        const products = await loadStoreProducts();
+        const [products, productMap] = await Promise.all([
+          loadStoreProducts(),
+          loadProductMap()
+        ]);
         if (!products.length) {
           container.querySelectorAll('.product-card').forEach(card => card.remove());
           return;
@@ -1400,7 +1529,13 @@
           .forEach(card => card.remove());
         const fragment = document.createDocumentFragment();
         sectionProducts.forEach(product => {
-          const card = buildDynamicCard(template, product, filters.sectionKey);
+          const productHandle = product?.handle || product?.id || '';
+          const productKey = slugify(productHandle);
+          const mapEntry =
+            productMap?.products?.[productHandle] ||
+            productMap?.products?.[productKey] ||
+            null;
+          const card = buildDynamicCard(template, product, filters.sectionKey, mapEntry);
           fragment.appendChild(card);
         });
         container.appendChild(fragment);
@@ -1471,6 +1606,12 @@
     return declarations.join(';');
   };
 
+  const getFallbackSwatchStyle = label => {
+    const normalized = slugify(cleanVariantLabel(label || ''));
+    if (!normalized) return '';
+    return SWATCH_FALLBACK_STYLES.get(normalized) || '';
+  };
+
   const enforceSwatchDotGeometry = swatch => {
     if (!swatch?.style) return;
     swatch.style.setProperty('width', SWATCH_DOT_SIZE, 'important');
@@ -1514,8 +1655,10 @@
     if (meta.type) {
       swatch.dataset.swatchType = meta.type;
     }
-    if (meta.style) {
-      const baseStyle = sanitizeSwatchStyle(meta.style);
+    const fallbackStyle = !meta.style ? getFallbackSwatchStyle(resolvedLabel) : '';
+    const resolvedStyle = meta.style || fallbackStyle;
+    if (resolvedStyle) {
+      const baseStyle = sanitizeSwatchStyle(resolvedStyle);
       if (baseStyle) {
         swatch.setAttribute('style', `${baseStyle};`);
       }
@@ -1837,10 +1980,14 @@
     const variant = variantId ? variants.find(item => item?.id === variantId) : null;
     const sectionKey = container?.dataset?.sectionKey || '';
     const overrides = getStorefrontTileOverride(product, sectionKey);
-    const imageUrl = overrides?.image || getVariantImage(variant, product);
+    const imageUrl =
+      overrides?.image ||
+      getVariantImage(variant, product) ||
+      getVariantImageFromEntry(entry, label, variantId);
     updateProductPrice(container, product, variantId, overrides);
     updateProductImage(container, imageUrl, product?.title || '', label);
     updateAddToCartVariant(container, variantId);
+    syncVariantBadge(container, product, sectionKey, label, overrides);
   };
 
   const scheduleSwatchPriceUpdate = swatch => {
