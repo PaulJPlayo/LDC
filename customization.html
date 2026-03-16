@@ -781,8 +781,24 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        border-radius: 0.85rem;
+        transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
       }
-      .wrap-menu li span {
+      .wrap-menu li[role="button"] {
+        cursor: pointer;
+      }
+      .wrap-menu li[role="button"]:hover,
+      .wrap-menu li[role="button"]:focus-visible {
+        background: rgba(153, 40, 177, 0.12);
+        box-shadow: inset 0 0 0 1px rgba(153, 40, 177, 0.18);
+        transform: translateY(-1px);
+      }
+      .wrap-menu li[aria-pressed="true"] {
+        background: rgba(153, 40, 177, 0.18);
+        box-shadow: inset 0 0 0 1px rgba(153, 40, 177, 0.24);
+      }
+      .wrap-menu li span,
+      .wrap-menu li small {
         font-weight: 600;
       }
       .palette-menu {
@@ -1239,7 +1255,7 @@
                             <div class="design-video-message-inner">
                               <p class="design-video-message-title" data-prompt-title>Need a Special Character or Designer Wrap?</p>
                               <p class="design-video-message-body" data-prompt-body>Share your character or designer theme with us and we will send next steps.</p>
-                              <a class="design-video-message-cta" data-prompt-cta href="mailto:lovettsdandc@gmail.com">Request Custom Wrap</a>
+                              <a class="design-video-message-cta" data-prompt-cta href="mailto:lovettsdandc@gmail.com?subject=LDC%20Custom%20Wrap%20Request%20%E2%80%94%20Special%20Character%20%2F%20Designer&amp;body=Name%3A%20%0AEmail%3A%20%0AProduct%20type%3A%20%0ACharacter%20%2F%20designer%20requested%3A%20%0ANotes%20%2F%20inspiration%3A%20%0ABest%20contact%20method%3A%20">Request Custom Wrap</a>
                             </div>
                           </div>
                           <video id="designWrapVideo" data-design-video controls muted playsinline>
@@ -1358,24 +1374,27 @@
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
                         </summary>
                         <ul>
-                          <li data-wrap-option="seasonal-holiday" data-wrap-default="true" data-video-id="de65351aa0c825fa0c3d3a71ea6db687"><span>Seasonal / Holiday</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                          <li data-wrap-option="women" data-video-id="281dfbc0a9072b1ee25b87ccc9d016b6"><span>Women</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="seasonal-holiday" data-wrap-default="true" data-video-id="de65351aa0c825fa0c3d3a71ea6db687" role="button" tabindex="0" aria-pressed="false"><span>Seasonal / Holiday</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="women" data-video-id="281dfbc0a9072b1ee25b87ccc9d016b6" role="button" tabindex="0" aria-pressed="false"><span>Women</span><small>cups &middot; mugs &middot; tumblers</small></li>
                           <li
                             data-wrap-option="special-designers"
                             data-video-prompt-title="Need a Special Character or Designer Wrap?"
                             data-video-prompt="Share your character or designer theme with us and we will send next steps."
                             data-video-prompt-cta-label="Request Custom Wrap"
-                            data-video-prompt-cta-href="mailto:lovettsdandc@gmail.com"
+                            data-video-prompt-cta-href="mailto:lovettsdandc@gmail.com?subject=LDC%20Custom%20Wrap%20Request%20%E2%80%94%20Special%20Character%20%2F%20Designer&amp;body=Name%3A%20%0AEmail%3A%20%0AProduct%20type%3A%20%0ACharacter%20%2F%20designer%20requested%3A%20%0ANotes%20%2F%20inspiration%3A%20%0ABest%20contact%20method%3A%20"
+                            role="button"
+                            tabindex="0"
+                            aria-pressed="false"
                           >
                             <span>Special Characters &amp; Designers</span><small>email for custom details</small>
                           </li>
-                          <li><span>Drinks</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                          <li data-wrap-option="boys-girls" data-video-id="4e6abab155e7cf1cd2810b095e8ac5db"><span>Boys &amp; Girls</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                          <li data-wrap-option="supporting-causes" data-video-id="d9c0f246f9b66240d23e875a2ddcce99"><span>Supporting Causes</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                          <li data-wrap-option="men" data-video-id="3b6e9b07e55512bf69b1f4bcd59489b1"><span>Men</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                          <li data-wrap-option="careers-hobbies" data-video-id="f003a3be6d1efc71dfd7a1051ae931c1"><span>Careers &amp; Hobbies</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                          <li data-wrap-option="sports" data-video-id="b256183a06842b86d88c6cbfb1de0225"><span>Sports</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                          <li data-wrap-option="religion" data-video-id="9bcf826bc7560dfa80644d3f4bc37f00"><span>Religion</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="drinks" role="button" tabindex="0" aria-pressed="false"><span>Drinks</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="boys-girls" data-video-id="4e6abab155e7cf1cd2810b095e8ac5db" role="button" tabindex="0" aria-pressed="false"><span>Boys &amp; Girls</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="supporting-causes" data-video-id="d9c0f246f9b66240d23e875a2ddcce99" role="button" tabindex="0" aria-pressed="false"><span>Supporting Causes</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="men" data-video-id="3b6e9b07e55512bf69b1f4bcd59489b1" role="button" tabindex="0" aria-pressed="false"><span>Men</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="careers-hobbies" data-video-id="f003a3be6d1efc71dfd7a1051ae931c1" role="button" tabindex="0" aria-pressed="false"><span>Careers &amp; Hobbies</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="sports" data-video-id="b256183a06842b86d88c6cbfb1de0225" role="button" tabindex="0" aria-pressed="false"><span>Sports</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="religion" data-video-id="9bcf826bc7560dfa80644d3f4bc37f00" role="button" tabindex="0" aria-pressed="false"><span>Religion</span><small>cups &middot; mugs &middot; tumblers</small></li>
                         </ul>
                       </details>
                     </div>
@@ -1441,6 +1460,7 @@
       </footer>
     </div>
     <script src="commerce.js" defer></script>
+    <script src="assets/hls.min.js" defer></script>
     <script>
       (() => {
         const DESIGN_SELECTION_KEY = 'ldcDesignSelection';
@@ -1754,6 +1774,9 @@
             }
             wrapTarget.classList.remove('has-selection');
           });
+          document.querySelectorAll('[data-wrap-option]').forEach(option => {
+            option.setAttribute('aria-pressed', 'false');
+          });
           selectedWrapLabel = '';
           wrapPrice = 0;
         };
@@ -1825,20 +1848,139 @@
             alt: designImage.getAttribute('alt') || 'Custom design preview'
           };
         };
+        const specialCharacterPromptMailto = 'mailto:lovettsdandc@gmail.com?subject=LDC%20Custom%20Wrap%20Request%20%E2%80%94%20Special%20Character%20%2F%20Designer&body=Name%3A%20%0AEmail%3A%20%0AProduct%20type%3A%20%0ACharacter%20%2F%20designer%20requested%3A%20%0ANotes%20%2F%20inspiration%3A%20%0ABest%20contact%20method%3A%20';
+        const cloudflareStreamBase = (document.body?.dataset?.cloudflareAccount || 'https://customer-3ptq6xbmg2sfpv29.cloudflarestream.com').replace(/\/+$/, '');
+        const buildDesignVideoSourceUrl = videoId => (videoId ? `${cloudflareStreamBase}/${videoId}/manifest/video.m3u8` : '');
+        let designVideoHls = null;
+        let designVideoRequestId = 0;
+        let designHlsLibraryPromise = null;
+        const destroyDesignVideoHls = () => {
+          if (designVideoHls && typeof designVideoHls.destroy === 'function') {
+            designVideoHls.destroy();
+          }
+          designVideoHls = null;
+        };
+        const clearDesignVideoPlayback = () => {
+          designVideoRequestId += 1;
+          destroyDesignVideoHls();
+          if (!designVideo) return;
+          designVideo.pause?.();
+          try {
+            designVideo.currentTime = 0;
+          } catch {}
+          designVideo.removeAttribute('src');
+          designVideo.removeAttribute('poster');
+          const sourceEl =
+            designVideo.querySelector('source[data-source="hls"]') ||
+            designVideo.querySelector('source');
+          if (sourceEl) {
+            sourceEl.removeAttribute('src');
+          }
+          designVideo.load?.();
+        };
+        const loadDesignHlsLibrary = () => {
+          if (window.Hls) return Promise.resolve(window.Hls);
+          if (designHlsLibraryPromise) return designHlsLibraryPromise;
+          designHlsLibraryPromise = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'assets/hls.min.js';
+            script.async = true;
+            script.dataset.designHlsLoader = 'true';
+            script.addEventListener('load', () => {
+              if (window.Hls) {
+                resolve(window.Hls);
+                return;
+              }
+              reject(new Error('HLS library unavailable'));
+            }, { once: true });
+            script.addEventListener('error', () => reject(new Error('Failed to load HLS library')), { once: true });
+            document.head.appendChild(script);
+          }).catch(error => {
+            designHlsLibraryPromise = null;
+            throw error;
+          });
+          return designHlsLibraryPromise;
+        };
+        const playDesignVideo = () => {
+          if (!designVideo) return;
+          const playPromise = designVideo.play?.();
+          if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(() => {});
+          }
+        };
+        const startDesignVideoPlayback = async sourceUrl => {
+          if (!designVideo || !sourceUrl) return;
+          const requestId = ++designVideoRequestId;
+          destroyDesignVideoHls();
+          designVideo.pause?.();
+          try {
+            designVideo.currentTime = 0;
+          } catch {}
+          designVideo.removeAttribute('src');
+          const sourceEl =
+            designVideo.querySelector('source[data-source="hls"]') ||
+            designVideo.querySelector('source');
+          if (sourceEl) {
+            sourceEl.setAttribute('src', sourceUrl);
+            sourceEl.setAttribute('type', 'application/x-mpegURL');
+          }
+          const attemptPlayback = () => {
+            if (requestId !== designVideoRequestId) return;
+            playDesignVideo();
+          };
+          const canNative = designVideo.canPlayType && designVideo.canPlayType('application/vnd.apple.mpegurl');
+          if (canNative) {
+            designVideo.src = sourceUrl;
+            const onReady = () => {
+              designVideo.removeEventListener('loadedmetadata', onReady);
+              designVideo.removeEventListener('canplay', onReady);
+              attemptPlayback();
+            };
+            designVideo.addEventListener('loadedmetadata', onReady);
+            designVideo.addEventListener('canplay', onReady);
+            designVideo.load?.();
+            return;
+          }
+          const HlsCtor = window.Hls || await loadDesignHlsLibrary();
+          if (requestId !== designVideoRequestId || !HlsCtor?.isSupported?.()) {
+            designVideo.load?.();
+            return;
+          }
+          const hls = new HlsCtor({
+            enableWorker: true,
+            lowLatencyMode: true,
+          });
+          designVideoHls = hls;
+          hls.attachMedia(designVideo);
+          hls.on(HlsCtor.Events.MEDIA_ATTACHED, () => {
+            if (requestId !== designVideoRequestId || designVideoHls !== hls) return;
+            hls.loadSource(sourceUrl);
+          });
+          hls.on(HlsCtor.Events.MANIFEST_PARSED, () => {
+            if (requestId !== designVideoRequestId || designVideoHls !== hls) return;
+            attemptPlayback();
+          });
+          hls.on(HlsCtor.Events.ERROR, (_event, data) => {
+            if (requestId !== designVideoRequestId || designVideoHls !== hls || !data?.fatal) return;
+            console.warn('Design wrap HLS error', data);
+            if (data.type === HlsCtor.ErrorTypes.NETWORK_ERROR) {
+              hls.startLoad();
+              return;
+            }
+            if (data.type === HlsCtor.ErrorTypes.MEDIA_ERROR) {
+              hls.recoverMediaError();
+              return;
+            }
+            destroyDesignVideoHls();
+          });
+        };
 
         const showImagePreview = () => {
           if (!designFrame || !designImage) return;
           designFrame.classList.remove('is-video-active', 'is-prompt-active');
           designVideoPrompt?.setAttribute('hidden', 'true');
           designVideoPrompt?.setAttribute('aria-hidden', 'true');
-          if (designVideo) {
-            designVideo.pause?.();
-            const sourceEl = designVideo.querySelector('source');
-            if (sourceEl) {
-              sourceEl.removeAttribute('src');
-            }
-            designVideo.load?.();
-          }
+          clearDesignVideoPlayback();
           if (lastImageState?.src) {
             setDesignPreviewImage(lastImageState.src, lastImageState.alt);
           } else {
@@ -1853,33 +1995,23 @@
           if (!videoId || !designFrame || !designVideo) return;
           designFrame.classList.remove('is-prompt-active');
           rememberCurrentImage();
-          const sourceUrl = `https://customer-3ptq6xbmg2sfpv29.cloudflarestream.com/${videoId}/manifest/video.m3u8`;
-          const sourceEl = designVideo.querySelector('source');
-          if (sourceEl) {
-            sourceEl.setAttribute('src', sourceUrl);
-          }
+          const sourceUrl = buildDesignVideoSourceUrl(videoId);
           designVideoPrompt?.setAttribute('hidden', 'true');
           designVideoPrompt?.setAttribute('aria-hidden', 'true');
           designFrame.classList.add('is-video-active');
           if (designBackButton) {
             designBackButton.hidden = false;
           }
-          designVideo.load?.();
-          designVideo.play?.();
+          void startDesignVideoPlayback(sourceUrl).catch(error => {
+            console.warn('Unable to start design wrap video', error);
+          });
         };
 
         const showVideoPrompt = (title, body, ctaLabel, ctaHref) => {
           if (!designFrame || !designVideoPrompt) return;
           designFrame.classList.add('is-prompt-active');
           rememberCurrentImage();
-          if (designVideo) {
-            designVideo.pause?.();
-            const sourceEl = designVideo.querySelector('source');
-            if (sourceEl) {
-              sourceEl.removeAttribute('src');
-            }
-            designVideo.load?.();
-          }
+          clearDesignVideoPlayback();
           if (designVideoPromptTitle) {
             designVideoPromptTitle.textContent = title || 'Need a Special Character or Designer Wrap?';
           }
@@ -1887,8 +2019,10 @@
             designVideoPromptBody.textContent = body || 'Share your character or designer theme with us and we will send next steps.';
           }
           if (designVideoPromptCta) {
+            const resolvedCtaHref = ctaHref || specialCharacterPromptMailto;
             designVideoPromptCta.textContent = ctaLabel || 'Request Custom Wrap';
-            designVideoPromptCta.setAttribute('href', ctaHref || 'mailto:lovettsdandc@gmail.com');
+            designVideoPromptCta.setAttribute('href', resolvedCtaHref);
+            designVideoPromptCta.toggleAttribute('hidden', !resolvedCtaHref);
           }
           designVideoPrompt.removeAttribute('hidden');
           designVideoPrompt.setAttribute('aria-hidden', 'false');
@@ -2184,7 +2318,7 @@
             });
           };
 
-        const applyWrapSelection = label => {
+        const applyWrapSelection = (label, activeOption = null) => {
           if (!wrapTarget) return;
           const swatchNode = wrapTarget.querySelector('.design-selection-swatch');
           const labelNode = wrapTarget.querySelector('.design-selection-label');
@@ -2204,6 +2338,9 @@
             wrapPrice = 0;
             selectedWrapLabel = '';
           }
+          document.querySelectorAll('[data-wrap-option]').forEach(option => {
+            option.setAttribute('aria-pressed', option === activeOption ? 'true' : 'false');
+          });
           updateDesignTotal();
           scrollDesignPreviewIntoView();
         };
@@ -2213,18 +2350,23 @@
             document.querySelectorAll('[data-wrap-option]').forEach(option => {
               if (option.dataset.wrapSelectionInit) return;
               option.dataset.wrapSelectionInit = 'true';
+              option.setAttribute('role', option.getAttribute('role') || 'button');
+              option.setAttribute('tabindex', option.getAttribute('tabindex') || '0');
+              option.setAttribute('aria-pressed', option.getAttribute('aria-pressed') || 'false');
               const getLabel = () => {
                 const span = option.querySelector('span');
                 return span ? span.textContent.trim() : option.textContent.trim();
             };
             const activate = event => {
               if (event) event.preventDefault();
-              applyWrapSelection(getLabel());
+              applyWrapSelection(getLabel(), option);
               const videoId = option.getAttribute('data-video-id');
               const promptTitle = option.getAttribute('data-video-prompt-title');
               const promptBody = option.getAttribute('data-video-prompt');
               const promptCtaLabel = option.getAttribute('data-video-prompt-cta-label');
-              const promptCtaHref = option.getAttribute('data-video-prompt-cta-href');
+              const promptCtaHref =
+                option.getAttribute('data-video-prompt-cta-href') ||
+                (option.getAttribute('data-wrap-option') === 'special-designers' ? specialCharacterPromptMailto : '');
               if (videoId) {
                 showVideoById(videoId);
               } else if (promptTitle || promptBody || promptCtaHref) {
