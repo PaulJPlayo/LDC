@@ -839,45 +839,32 @@
       }
       .design-preview-row {
         width: 100%;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-template-areas:
-          "preview preview"
-          "color accessory";
+        display: flex;
         align-items: center;
-        justify-items: center;
-        gap: 1.25rem;
-      }
-      .design-preview-row .design-preview-frame {
-        grid-area: preview;
-      }
-      .design-preview-row .design-preview-tile--color {
-        grid-area: color;
-      }
-      .design-preview-row .design-preview-tile--accessory {
-        grid-area: accessory;
-      }
-      @media (min-width: 900px) {
-        .design-preview-row {
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          justify-content: center;
-        }
+        justify-content: center;
       }
       .design-preview-tile {
-        width: min(40vw, 180px);
-        height: min(40vw, 180px);
-        border-radius: 1.5rem;
+        position: absolute;
+        bottom: var(--design-preview-chip-inset);
+        z-index: 4;
+        width: var(--design-preview-chip-size);
+        height: var(--design-preview-chip-size);
+        border-radius: 1.1rem;
         border: 1px solid rgba(153, 40, 177, 0.18);
-        background: rgba(248, 245, 255, 0.85);
+        background: rgba(248, 245, 255, 0.78);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
         box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
         overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: center;
-        flex-shrink: 0;
-        position: relative;
+      }
+      .design-preview-tile--color {
+        left: var(--design-preview-chip-inset);
+      }
+      .design-preview-tile--accessory {
+        right: var(--design-preview-chip-inset);
       }
       .design-preview-fill {
         width: 100%;
@@ -891,29 +878,24 @@
         position: relative;
       }
       .design-preview-tile.has-selection .design-preview-fill {
-        transform: scale(1.01);
+        transform: scale(1.02);
       }
       .design-preview-placeholder {
-        font-size: 0.75rem;
-        letter-spacing: 0.18em;
+        font-size: clamp(0.52rem, 1.6vw, 0.66rem);
+        letter-spacing: 0.12em;
         text-transform: uppercase;
         color: #6b4a78;
         text-align: center;
-        padding: 0 1rem;
-        line-height: 1.4;
-      }
-      @media (max-width: 899px) {
-        .design-preview-tile--color .design-preview-placeholder {
-          display: inline-block;
-          max-width: 7rem;
-        }
+        padding: 0 0.5rem;
+        line-height: 1.25;
+        max-width: 5rem;
       }
       .design-preview-tile.has-selection .design-preview-placeholder {
         opacity: 0;
       }
       .design-preview-glyph {
         position: absolute;
-        font-size: 1.8rem;
+        font-size: clamp(1rem, 3.6vw, 1.4rem);
         line-height: 1;
       }
       .design-preview-tile:not(.has-selection) .design-preview-glyph {
@@ -921,6 +903,10 @@
       }
       .design-preview-frame {
         position: relative;
+        overflow: hidden;
+        isolation: isolate;
+        --design-preview-chip-size: clamp(4.75rem, 18vw, 6.5rem);
+        --design-preview-chip-inset: clamp(0.75rem, 2vw, 1rem);
       }
       .design-preview-clear {
         position: absolute;
@@ -950,14 +936,28 @@
         background: #ffffff;
         color: #b05cf7;
       }
+      .design-preview-tile .design-preview-clear {
+        top: 0.35rem;
+        right: 0.35rem;
+        width: 1.35rem;
+        height: 1.35rem;
+        font-size: 0.9rem;
+        z-index: 2;
+      }
+      .design-preview-frame > .design-preview-clear,
+      .design-preview-return {
+        z-index: 6;
+      }
       .design-preview-tile.has-selection .design-preview-clear,
-      .design-preview-frame.has-image .design-preview-clear {
+      .design-preview-frame.has-image > .design-preview-clear[data-clear-preview-image] {
         opacity: 1;
         pointer-events: auto;
       }
       .design-preview-layer {
         width: 100%;
         height: 100%;
+        position: relative;
+        z-index: 1;
       }
       .design-preview-image {
         display: block;
@@ -978,6 +978,10 @@
       .design-preview-frame .design-video-message-title,
       .design-preview-frame .design-video-message-body {
         color: #6B4A78 !important;
+      }
+      .design-preview-frame .design-video-message {
+        z-index: 2;
+        padding: 1.5rem 1.5rem calc(var(--design-preview-chip-size) + var(--design-preview-chip-inset) + 1rem);
       }
       .design-preview-icon-inline {
         display: inline-flex;
@@ -1002,6 +1006,7 @@
       }
       .design-preview-video {
         display: none;
+        position: relative;
       }
       .design-preview-frame.is-video-active .design-preview-image {
         display: none;
@@ -1208,13 +1213,6 @@
                 <div class="design-palette-grid">
                   <div class="design-center">
                     <div class="design-preview-row">
-                      <div class="design-preview-tile design-preview-tile--color" aria-live="polite">
-                        <button type="button" class="design-preview-clear" data-clear-preview-color aria-label="Clear color preview">&times;</button>
-                        <div class="design-preview-fill" data-color-preview>
-                          <span class="design-preview-placeholder">Color preview</span>
-                          <span class="design-preview-glyph" aria-hidden="true"></span>
-                        </div>
-                      </div>
                       <div class="design-card-frame design-video-frame design-preview-frame" data-design-frame>
                         <button type="button" class="design-preview-return" data-design-back aria-label="Return to image" hidden>Return</button>
                         <button type="button" class="design-preview-clear" data-clear-preview-image aria-label="Clear image preview">&times;</button>
@@ -1248,12 +1246,19 @@
                             <source data-source="hls" src="" type="application/x-mpegURL" />
                           </video>
                         </div>
-                      </div>
-                      <div class="design-preview-tile design-preview-tile--accessory" aria-live="polite">
-                        <button type="button" class="design-preview-clear" data-clear-preview-accessory aria-label="Clear accessory preview">&times;</button>
-                        <div class="design-preview-fill" data-accessory-preview>
-                          <span class="design-preview-placeholder">Accessory preview</span>
-                          <span class="design-preview-glyph" aria-hidden="true"></span>
+                        <div class="design-preview-tile design-preview-tile--color" aria-live="polite">
+                          <button type="button" class="design-preview-clear" data-clear-preview-color aria-label="Clear color preview">&times;</button>
+                          <div class="design-preview-fill" data-color-preview>
+                            <span class="design-preview-placeholder">Color preview</span>
+                            <span class="design-preview-glyph" aria-hidden="true"></span>
+                          </div>
+                        </div>
+                        <div class="design-preview-tile design-preview-tile--accessory" aria-live="polite">
+                          <button type="button" class="design-preview-clear" data-clear-preview-accessory aria-label="Clear accessory preview">&times;</button>
+                          <div class="design-preview-fill" data-accessory-preview>
+                            <span class="design-preview-placeholder">Accessory preview</span>
+                            <span class="design-preview-glyph" aria-hidden="true"></span>
+                          </div>
                         </div>
                       </div>
                     </div>
