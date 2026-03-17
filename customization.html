@@ -1375,7 +1375,7 @@
                         </summary>
                         <ul>
                           <li data-wrap-option="seasonal-holiday" data-wrap-default="true" data-video-id="de65351aa0c825fa0c3d3a71ea6db687" role="button" tabindex="0" aria-pressed="false"><span>Seasonal / Holiday</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                          <li data-wrap-option="women" data-video-id="281dfbc0a9072b1ee25b87ccc9d016b6" role="button" tabindex="0" aria-pressed="false"><span>Women</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="women" data-video-src="assets/women.MOV" role="button" tabindex="0" aria-pressed="false"><span>Women</span><small>cups &middot; mugs &middot; tumblers</small></li>
                           <li
                             data-wrap-option="special-designers"
                             data-video-prompt-title="Need a Special Character or Designer Wrap?"
@@ -1388,13 +1388,12 @@
                           >
                             <span>Special Characters &amp; Designers</span><small>email for custom details</small>
                           </li>
-                          <li data-wrap-option="drinks" role="button" tabindex="0" aria-pressed="false"><span>Drinks</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                          <li data-wrap-option="boys-girls" data-video-id="4e6abab155e7cf1cd2810b095e8ac5db" role="button" tabindex="0" aria-pressed="false"><span>Boys &amp; Girls</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                          <li data-wrap-option="supporting-causes" data-video-id="d9c0f246f9b66240d23e875a2ddcce99" role="button" tabindex="0" aria-pressed="false"><span>Supporting Causes</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                          <li data-wrap-option="men" data-video-id="3b6e9b07e55512bf69b1f4bcd59489b1" role="button" tabindex="0" aria-pressed="false"><span>Men</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                          <li data-wrap-option="careers-hobbies" data-video-id="f003a3be6d1efc71dfd7a1051ae931c1" role="button" tabindex="0" aria-pressed="false"><span>Careers &amp; Hobbies</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                          <li data-wrap-option="sports" data-video-id="b256183a06842b86d88c6cbfb1de0225" role="button" tabindex="0" aria-pressed="false"><span>Sports</span><small>cups &middot; mugs &middot; tumblers</small></li>
-                          <li data-wrap-option="religion" data-video-id="9bcf826bc7560dfa80644d3f4bc37f00" role="button" tabindex="0" aria-pressed="false"><span>Religion</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="drinks" data-video-src="assets/drinks.MOV" role="button" tabindex="0" aria-pressed="false"><span>Drinks</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="boys-men" data-video-src="assets/boys-men.MOV" role="button" tabindex="0" aria-pressed="false"><span>Boys &amp; Men</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="supporting-causes" data-video-src="assets/supporting-causes.MOV" role="button" tabindex="0" aria-pressed="false"><span>Supporting Causes</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="careers-hobbies" data-video-src="assets/careers-hobbies.MOV" role="button" tabindex="0" aria-pressed="false"><span>Careers &amp; Hobbies</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="sports" data-video-src="assets/sports.MOV" role="button" tabindex="0" aria-pressed="false"><span>Sports</span><small>cups &middot; mugs &middot; tumblers</small></li>
+                          <li data-wrap-option="religion" data-video-src="assets/religion.MOV" role="button" tabindex="0" aria-pressed="false"><span>Religion</span><small>cups &middot; mugs &middot; tumblers</small></li>
                         </ul>
                       </details>
                     </div>
@@ -1851,6 +1850,15 @@
         const specialCharacterPromptMailto = 'mailto:lovettsdandc@gmail.com?subject=LDC%20Custom%20Wrap%20Request%20%E2%80%94%20Special%20Character%20%2F%20Designer&body=Name%3A%20%0AEmail%3A%20%0AProduct%20type%3A%20%0ACharacter%20%2F%20designer%20requested%3A%20%0ANotes%20%2F%20inspiration%3A%20%0ABest%20contact%20method%3A%20';
         const cloudflareStreamBase = (document.body?.dataset?.cloudflareAccount || 'https://customer-3ptq6xbmg2sfpv29.cloudflarestream.com').replace(/\/+$/, '');
         const buildDesignVideoSourceUrl = videoId => (videoId ? `${cloudflareStreamBase}/${videoId}/manifest/video.m3u8` : '');
+        const getDesignVideoMimeType = sourceUrl => {
+          if (!sourceUrl) return '';
+          if (/\.m3u8(?:[?#]|$)/i.test(sourceUrl)) return 'application/x-mpegURL';
+          if (/\.mov(?:[?#]|$)/i.test(sourceUrl)) return 'video/quicktime';
+          if (/\.mp4(?:[?#]|$)/i.test(sourceUrl)) return 'video/mp4';
+          if (/\.webm(?:[?#]|$)/i.test(sourceUrl)) return 'video/webm';
+          return '';
+        };
+        const isDesignVideoHlsSource = sourceUrl => /\.m3u8(?:[?#]|$)/i.test(sourceUrl);
         let designVideoHls = null;
         let designVideoRequestId = 0;
         let designHlsLibraryPromise = null;
@@ -1875,6 +1883,7 @@
             designVideo.querySelector('source');
           if (sourceEl) {
             sourceEl.removeAttribute('src');
+            sourceEl.removeAttribute('type');
           }
           designVideo.load?.();
         };
@@ -1911,6 +1920,8 @@
         const startDesignVideoPlayback = async sourceUrl => {
           if (!designVideo || !sourceUrl) return;
           const requestId = ++designVideoRequestId;
+          const sourceType = getDesignVideoMimeType(sourceUrl);
+          const sourceIsHls = isDesignVideoHlsSource(sourceUrl);
           destroyDesignVideoHls();
           designVideo.pause?.();
           try {
@@ -1922,14 +1933,17 @@
             designVideo.querySelector('source');
           if (sourceEl) {
             sourceEl.setAttribute('src', sourceUrl);
-            sourceEl.setAttribute('type', 'application/x-mpegURL');
+            if (sourceType) {
+              sourceEl.setAttribute('type', sourceType);
+            } else {
+              sourceEl.removeAttribute('type');
+            }
           }
           const attemptPlayback = () => {
             if (requestId !== designVideoRequestId) return;
             playDesignVideo();
           };
-          const canNative = designVideo.canPlayType && designVideo.canPlayType('application/vnd.apple.mpegurl');
-          if (canNative) {
+          const bindNativePlayback = () => {
             designVideo.src = sourceUrl;
             const onReady = () => {
               designVideo.removeEventListener('loadedmetadata', onReady);
@@ -1939,6 +1953,14 @@
             designVideo.addEventListener('loadedmetadata', onReady);
             designVideo.addEventListener('canplay', onReady);
             designVideo.load?.();
+          };
+          if (!sourceIsHls) {
+            bindNativePlayback();
+            return;
+          }
+          const canNative = designVideo.canPlayType && designVideo.canPlayType('application/vnd.apple.mpegurl');
+          if (canNative) {
+            bindNativePlayback();
             return;
           }
           const HlsCtor = window.Hls || await loadDesignHlsLibrary();
@@ -1991,11 +2013,10 @@
           }
         };
 
-        const showVideoById = videoId => {
-          if (!videoId || !designFrame || !designVideo) return;
+        const showVideoSource = sourceUrl => {
+          if (!sourceUrl || !designFrame || !designVideo) return;
           designFrame.classList.remove('is-prompt-active');
           rememberCurrentImage();
-          const sourceUrl = buildDesignVideoSourceUrl(videoId);
           designVideoPrompt?.setAttribute('hidden', 'true');
           designVideoPrompt?.setAttribute('aria-hidden', 'true');
           designFrame.classList.add('is-video-active');
@@ -2005,6 +2026,10 @@
           void startDesignVideoPlayback(sourceUrl).catch(error => {
             console.warn('Unable to start design wrap video', error);
           });
+        };
+        const showVideoById = videoId => {
+          if (!videoId) return;
+          showVideoSource(buildDesignVideoSourceUrl(videoId));
         };
 
         const showVideoPrompt = (title, body, ctaLabel, ctaHref) => {
@@ -2361,13 +2386,16 @@
               if (event) event.preventDefault();
               applyWrapSelection(getLabel(), option);
               const videoId = option.getAttribute('data-video-id');
+              const videoSrc = option.getAttribute('data-video-src');
               const promptTitle = option.getAttribute('data-video-prompt-title');
               const promptBody = option.getAttribute('data-video-prompt');
               const promptCtaLabel = option.getAttribute('data-video-prompt-cta-label');
               const promptCtaHref =
                 option.getAttribute('data-video-prompt-cta-href') ||
                 (option.getAttribute('data-wrap-option') === 'special-designers' ? specialCharacterPromptMailto : '');
-              if (videoId) {
+              if (videoSrc) {
+                showVideoSource(videoSrc);
+              } else if (videoId) {
                 showVideoById(videoId);
               } else if (promptTitle || promptBody || promptCtaHref) {
                 showVideoPrompt(promptTitle, promptBody, promptCtaLabel, promptCtaHref);

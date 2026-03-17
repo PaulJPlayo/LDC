@@ -27,6 +27,15 @@
     return `${base}/${id}/manifest/video.m3u8`;
   };
 
+  const getVideoMimeType = src => {
+    if (!src) return '';
+    if (/\.m3u8(?:[?#]|$)/i.test(src)) return 'application/x-mpegURL';
+    if (/\.mov(?:[?#]|$)/i.test(src)) return 'video/quicktime';
+    if (/\.mp4(?:[?#]|$)/i.test(src)) return 'video/mp4';
+    if (/\.webm(?:[?#]|$)/i.test(src)) return 'video/webm';
+    return '';
+  };
+
   const shouldSkipElement = el => {
     if (!el) return false;
     if (typeof el.closest === 'function' && el.closest('[data-instagram-tile]')) return true;
@@ -132,14 +141,22 @@
       const sources = video.querySelectorAll('source[data-source]');
       const primarySource = Array.from(sources).find(src => src.dataset.source === 'hls') || video.querySelector('source');
       const dashSource = Array.from(sources).find(src => src.dataset.source === 'dash');
+      const primaryType = getVideoMimeType(config.hls);
       if (primarySource) {
         if (primarySource.getAttribute('src') === config.hls) return;
         primarySource.setAttribute('src', config.hls);
-        primarySource.setAttribute('type', 'application/x-mpegURL');
+        if (primaryType) {
+          primarySource.setAttribute('type', primaryType);
+        } else {
+          primarySource.removeAttribute('type');
+        }
       }
       if (dashSource && config.dash) {
         dashSource.setAttribute('src', config.dash);
         dashSource.setAttribute('type', 'application/dash+xml');
+      } else if (dashSource) {
+        dashSource.removeAttribute('src');
+        dashSource.removeAttribute('type');
       }
       if (config.poster) {
         video.setAttribute('poster', config.poster);
