@@ -1004,6 +1004,7 @@
         justify-content: center;
         position: relative;
         overflow: hidden;
+        --design-mobile-selector-drag-x: 0px;
       }
       .design-mobile-selector-option .swatch {
         flex: 0 0 auto;
@@ -1011,20 +1012,25 @@
         position: absolute;
         top: 50%;
         left: 50%;
-        transform: translate(-50%, -50%);
+        transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+        will-change: transform;
+      }
+      .design-mobile-selector-option[data-dragging="true"] .swatch {
+        transition: none;
       }
       .design-mobile-selector-option .swatch.design-mobile-selector-swatch--current {
+        transform: translate(-50%, -50%) translateX(var(--design-mobile-selector-drag-x));
         z-index: 2;
       }
       .design-mobile-selector-option .swatch.design-mobile-selector-swatch--prev {
         left: 0;
-        transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%) translateX(var(--design-mobile-selector-drag-x));
         z-index: 1;
       }
       .design-mobile-selector-option .swatch.design-mobile-selector-swatch--next {
         left: auto;
         right: 0;
-        transform: translate(50%, -50%);
+        transform: translate(50%, -50%) translateX(var(--design-mobile-selector-drag-x));
         z-index: 1;
       }
       .design-preview-glyph {
@@ -1928,7 +1934,9 @@
             recentSwipeAt: 0,
             touchStartX: 0,
             touchStartY: 0,
+            dragOffsetX: 0,
             touching: false,
+            settleTimer: 0,
           }
         };
         const isMobileDesignSelectorViewport = () => window.matchMedia('(max-width: 767px)').matches;
@@ -1948,6 +1956,32 @@
           const config = mobileDesignSelectors[key];
           if (!config) return;
           config.index = clampMobileSelectorIndex(config, nextIndex);
+        };
+        const clearMobileSelectorSettle = config => {
+          if (!config?.settleTimer) return;
+          window.clearTimeout(config.settleTimer);
+          config.settleTimer = 0;
+        };
+        const getMobileSelectorStepDistance = config => {
+          const optionWidth = config?.option?.getBoundingClientRect()?.width || 0;
+          return optionWidth > 0 ? optionWidth / 2 : 0;
+        };
+        const applyMobileSelectorDragOffset = (key, nextOffset, { dragging = false } = {}) => {
+          const config = mobileDesignSelectors[key];
+          if (!config?.option) return;
+          config.dragOffsetX = nextOffset;
+          config.option.style.setProperty('--design-mobile-selector-drag-x', `${nextOffset}px`);
+          config.option.dataset.dragging = dragging ? 'true' : 'false';
+        };
+        const getMobileSelectorDragOffset = (config, rawOffset) => {
+          const swatches = getDesignSourceSwatches(config?.track);
+          const maxIndex = swatches.length - 1;
+          const stepDistance = getMobileSelectorStepDistance(config) || 56;
+          let nextOffset = Math.max(Math.min(rawOffset, stepDistance), -stepDistance);
+          if ((config.index <= 0 && nextOffset > 0) || (config.index >= maxIndex && nextOffset < 0)) {
+            nextOffset *= 0.35;
+          }
+          return nextOffset;
         };
         const syncMobileSelectorToActiveSwatch = key => {
           const config = mobileDesignSelectors[key];
@@ -1972,13 +2006,17 @@
         const renderMobileSelector = key => {
           const config = mobileDesignSelectors[key];
           if (!config?.host || !config.button || !config.option) return;
+          clearMobileSelectorSettle(config);
           const swatches = getDesignSourceSwatches(config.track);
           const shouldShow =
             isMobileDesignSelectorViewport() &&
             !config.previewWrap?.classList.contains('has-selection') &&
             swatches.length > 0;
           config.host.hidden = !shouldShow;
+          config.touching = false;
+          config.dragOffsetX = 0;
           config.option.replaceChildren();
+          applyMobileSelectorDragOffset(key, 0);
           if (!swatches.length) return;
           config.index = clampMobileSelectorIndex(config, config.index);
           const sourceSwatch = swatches[config.index];
@@ -2006,6 +2044,7 @@
             'aria-label',
             `Swipe to browse ${key} options. Tap to select ${label || key}.`
           );
+          applyMobileSelectorDragOffset(key, config.dragOffsetX);
         };
         const renderAllMobileSelectors = () => {
           renderMobileSelector('color');
@@ -2022,9 +2061,31 @@
           renderMobileSelector(key);
           return changed;
         };
+        const settleMobileSelector = (key, direction = 0) => {
+          const config = mobileDesignSelectors[key];
+          if (!config?.option) return;
+          clearMobileSelectorSettle(config);
+          const swatches = getDesignSourceSwatches(config.track);
+          const maxIndex = swatches.length - 1;
+          let targetDirection = Math.sign(direction);
+          if ((targetDirection < 0 && config.index <= 0) || (targetDirection > 0 && config.index >= maxIndex)) {
+            targetDirection = 0;
+          }
+          const stepDistance = getMobileSelectorStepDistance(config) || 56;
+          const targetOffset = targetDirection > 0 ? -stepDistance : targetDirection < 0 ? stepDistance : 0;
+          applyMobileSelectorDragOffset(key, targetOffset);
+          if (!targetDirection) return;
+          config.settleTimer = window.setTimeout(() => {
+            config.settleTimer = 0;
+            config.index = clampMobileSelectorIndex(config, config.index + targetDirection);
+            config.dragOffsetX = 0;
+            renderMobileSelector(key);
+          }, 220);
+        };
         const selectMobileSelectorOption = key => {
           const config = mobileDesignSelectors[key];
           if (!config) return;
+          clearMobileSelectorSettle(config);
           const swatches = getDesignSourceSwatches(config.track);
           if (!swatches.length) return;
           const sourceSwatch = swatches[clampMobileSelectorIndex(config, config.index)];
@@ -2063,9 +2124,11 @@
           config.button.addEventListener('touchstart', event => {
             const touch = event.touches?.[0];
             if (!touch) return;
+            clearMobileSelectorSettle(config);
             config.touching = true;
             config.touchStartX = touch.clientX;
             config.touchStartY = touch.clientY;
+            applyMobileSelectorDragOffset(key, 0, { dragging: true });
           }, { passive: true });
           config.button.addEventListener('touchmove', event => {
             if (!config.touching) return;
@@ -2075,6 +2138,11 @@
             const deltaY = touch.clientY - config.touchStartY;
             if (Math.abs(deltaX) > 8 && Math.abs(deltaX) > Math.abs(deltaY)) {
               event.preventDefault();
+              applyMobileSelectorDragOffset(
+                key,
+                getMobileSelectorDragOffset(config, deltaX),
+                { dragging: true }
+              );
             }
           }, { passive: false });
           config.button.addEventListener('touchend', event => {
@@ -2085,13 +2153,21 @@
             const deltaX = touch.clientX - config.touchStartX;
             const deltaY = touch.clientY - config.touchStartY;
             if (Math.abs(deltaX) > 24 && Math.abs(deltaX) > Math.abs(deltaY)) {
-              if (stepMobileSelector(key, deltaX < 0 ? 1 : -1)) {
-                config.recentSwipeAt = Date.now();
-              }
+              const stepDistance = getMobileSelectorStepDistance(config) || 56;
+              const swatches = getDesignSourceSwatches(config.track);
+              const maxIndex = swatches.length - 1;
+              let direction = 0;
+              if (deltaX <= -(stepDistance / 2) && config.index < maxIndex) direction = 1;
+              if (deltaX >= stepDistance / 2 && config.index > 0) direction = -1;
+              config.recentSwipeAt = Date.now();
+              settleMobileSelector(key, direction);
+              return;
             }
+            settleMobileSelector(key, 0);
           });
           config.button.addEventListener('touchcancel', () => {
             config.touching = false;
+            settleMobileSelector(key, 0);
           });
         };
         const initMobilePreviewSelectors = () => {
