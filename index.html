@@ -443,6 +443,7 @@
         gap: 1rem;
         align-items: center;
         width: 100%;
+        overflow-anchor: none;
       }
       .design-stage {
         width: 100%;
@@ -482,9 +483,9 @@
       @media (min-width: 1024px) {
         .design-stage {
           display: grid;
-          grid-template-columns: minmax(0, 18rem) minmax(0, 1fr) minmax(0, 18rem);
+          grid-template-columns: minmax(0, 19rem) minmax(0, 1fr) minmax(0, 19rem);
           align-items: center;
-          gap: 1.5rem;
+          gap: 1rem;
         }
         .design-preview-row {
           grid-column: 2;
@@ -499,24 +500,34 @@
           grid-row: 1;
         }
         .design-swatch-rail {
-          max-width: 18rem;
+          max-width: 19rem;
           justify-self: center;
         }
         .design-swatch-rail .design-swatch-slider {
-          flex-direction: column;
-          gap: 0.75rem;
+          flex-direction: row;
+          gap: 0.25rem;
+          width: 100%;
+          justify-content: center;
         }
         .design-swatch-rail .design-swatch-window {
-          margin: 0 auto;
+          margin: 0;
+          padding-left: 0.35rem;
+          padding-right: 0.35rem;
+          box-sizing: content-box;
         }
         .design-swatch-rail .design-swatch-slider button[data-swatch-prev],
         .design-swatch-rail .design-swatch-slider button[data-swatch-next] {
-          width: 2.35rem !important;
-          height: 2.35rem !important;
+          width: 2rem !important;
+          height: 2rem !important;
         }
         .design-swatch-rail .design-swatch-slider button[data-swatch-prev] svg,
         .design-swatch-rail .design-swatch-slider button[data-swatch-next] svg {
-          transform: rotate(90deg);
+          transform: none;
+        }
+        .design-swatch-rail .design-swatch-slider .swatch.is-active {
+          scale: 1;
+          transform: none;
+          outline-offset: 0;
         }
       }
       .design-preview-tile {
@@ -3084,7 +3095,7 @@
                         <div class="w-full flex justify-center">
                           <p class="design-palette-title design-palette-title--center design-palette-title--bar">Colors</p>
                         </div>
-                        <div class="design-swatch-slider swatch-slider flex items-center gap-2" data-swatch-slider data-visible="5" data-visible-mobile="4">
+                        <div class="design-swatch-slider swatch-slider flex items-center gap-2" data-swatch-slider data-visible="4" data-visible-mobile="4">
                           <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous color">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                           </button>
@@ -3148,7 +3159,7 @@
                         <div class="w-full flex justify-center">
                           <p class="design-palette-title design-palette-title--center design-palette-title--bar">Accessories</p>
                         </div>
-                        <div class="design-swatch-slider swatch-slider flex items-center gap-2 mt-2" data-swatch-slider data-visible="5" data-visible-mobile="4">
+                        <div class="design-swatch-slider swatch-slider flex items-center gap-2 mt-2" data-swatch-slider data-visible="4" data-visible-mobile="4">
                           <button type="button" class="w-8 h-8 inline-flex items-center justify-center" style="background:transparent;border:none;box-shadow:none;padding:0;color:inherit;" data-swatch-prev aria-label="Previous accessory">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7"/></svg>
                           </button>
@@ -5914,13 +5925,6 @@
               showImagePreview();
             }
           }
-          const previewTarget =
-            target === colorTarget
-              ? designColorPreviewWrap
-              : target === accessoryTarget
-                ? designAccessoryPreviewWrap
-                : designFrame;
-          scrollDesignPreviewIntoView(previewTarget);
         };
 
         const clearTarget = (target, placeholder) => {
@@ -5958,6 +5962,9 @@
             swatch.dataset.selectionInit = 'true';
             swatch.setAttribute('role', 'button');
             swatch.setAttribute('tabindex', '0');
+            swatch.addEventListener('mousedown', event => {
+              event.preventDefault();
+            });
             const activate = event => {
               if (event) event.preventDefault();
               applyToTarget(target, swatch, placeholder);
@@ -6446,13 +6453,6 @@
               showImagePreview();
             }
           }
-          const previewTarget =
-            target === colorTarget
-              ? designColorPreviewWrap
-              : target === accessoryTarget
-                ? designAccessoryPreviewWrap
-                : designFrame;
-          scrollDesignPreviewIntoView(previewTarget);
         };
 
         const bind = (selector, target, placeholder) => {
@@ -6460,6 +6460,9 @@
           document.querySelectorAll(selector).forEach(swatch => {
             if (swatch.dataset.homeSelectionInit) return;
             swatch.dataset.homeSelectionInit = 'true';
+            swatch.addEventListener('mousedown', event => {
+              event.preventDefault();
+            });
             swatch.addEventListener('click', event => {
               event.preventDefault();
               applySelection(target, swatch, placeholder);
@@ -6544,13 +6547,6 @@
             showImagePreview();
           }
         }
-        const previewTarget =
-          target === colorTarget
-            ? designColorPreviewWrap
-            : target === accessoryTarget
-              ? designAccessoryPreviewWrap
-              : designFrame;
-        scrollDesignPreviewIntoView(previewTarget);
       };
 
         const clearTarget = (target, placeholder) => {
