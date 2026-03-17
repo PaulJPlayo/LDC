@@ -993,6 +993,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        position: relative;
+        overflow: hidden;
       }
       .design-mobile-selector-option {
         width: 100%;
@@ -1000,10 +1002,30 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        position: relative;
+        overflow: hidden;
       }
       .design-mobile-selector-option .swatch {
         flex: 0 0 auto;
         pointer-events: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .design-mobile-selector-option .swatch.design-mobile-selector-swatch--current {
+        z-index: 2;
+      }
+      .design-mobile-selector-option .swatch.design-mobile-selector-swatch--prev {
+        left: 0;
+        transform: translate(-50%, -50%);
+        z-index: 1;
+      }
+      .design-mobile-selector-option .swatch.design-mobile-selector-swatch--next {
+        left: auto;
+        right: 0;
+        transform: translate(50%, -50%);
+        z-index: 1;
       }
       .design-preview-glyph {
         position: absolute;
@@ -1197,7 +1219,7 @@
           display: none;
         }
         .design-mobile-selector-button {
-          padding: 1.85rem 0.5rem 0.7rem;
+          padding: 1.85rem 0 0.7rem;
           touch-action: pan-y;
           cursor: pointer;
         }
@@ -1914,8 +1936,8 @@
         const clampMobileSelectorIndex = (config, nextIndex) => {
           const swatches = getDesignSourceSwatches(config?.track);
           if (!swatches.length) return 0;
-          const numeric = Number.isFinite(nextIndex) ? nextIndex : 0;
-          return ((numeric % swatches.length) + swatches.length) % swatches.length;
+          const numeric = Number.isFinite(nextIndex) ? Math.trunc(nextIndex) : 0;
+          return Math.min(Math.max(numeric, 0), swatches.length - 1);
         };
         const getActiveSourceSwatchIndex = track => {
           const swatches = getDesignSourceSwatches(track);
@@ -1935,6 +1957,18 @@
             config.index = activeIndex;
           }
         };
+        const buildMobilePreviewSwatch = (sourceSwatch, slot) => {
+          if (!sourceSwatch) return null;
+          const previewSwatch = sourceSwatch.cloneNode(true);
+          previewSwatch.classList.remove('is-active');
+          previewSwatch.classList.add(`design-mobile-selector-swatch--${slot}`);
+          previewSwatch.removeAttribute('role');
+          previewSwatch.removeAttribute('tabindex');
+          delete previewSwatch.dataset.selectionInit;
+          delete previewSwatch.dataset.homeSelectionInit;
+          previewSwatch.setAttribute('aria-hidden', 'true');
+          return previewSwatch;
+        };
         const renderMobileSelector = key => {
           const config = mobileDesignSelectors[key];
           if (!config?.host || !config.button || !config.option) return;
@@ -1949,13 +1983,20 @@
           config.index = clampMobileSelectorIndex(config, config.index);
           const sourceSwatch = swatches[config.index];
           if (!sourceSwatch) return;
-          const previewSwatch = sourceSwatch.cloneNode(true);
-          previewSwatch.classList.remove('is-active');
-          previewSwatch.removeAttribute('role');
-          previewSwatch.removeAttribute('tabindex');
-          delete previewSwatch.dataset.selectionInit;
-          previewSwatch.setAttribute('aria-hidden', 'true');
-          config.option.replaceChildren(previewSwatch);
+          const previewSwatches = [];
+          const previousSwatch = swatches[config.index - 1];
+          const nextSwatch = swatches[config.index + 1];
+          if (previousSwatch) {
+            const previewPreviousSwatch = buildMobilePreviewSwatch(previousSwatch, 'prev');
+            if (previewPreviousSwatch) previewSwatches.push(previewPreviousSwatch);
+          }
+          const previewCurrentSwatch = buildMobilePreviewSwatch(sourceSwatch, 'current');
+          if (previewCurrentSwatch) previewSwatches.push(previewCurrentSwatch);
+          if (nextSwatch) {
+            const previewNextSwatch = buildMobilePreviewSwatch(nextSwatch, 'next');
+            if (previewNextSwatch) previewSwatches.push(previewNextSwatch);
+          }
+          config.option.replaceChildren(...previewSwatches);
           const label = formatMobileSwatchLabel(
             sourceSwatch.getAttribute('aria-label') ||
             sourceSwatch.getAttribute('title') ||
@@ -1972,11 +2013,14 @@
         };
         const stepMobileSelector = (key, direction) => {
           const config = mobileDesignSelectors[key];
-          if (!config) return;
+          if (!config) return false;
           const swatches = getDesignSourceSwatches(config.track);
-          if (!swatches.length) return;
-          config.index = clampMobileSelectorIndex(config, config.index + direction);
+          if (!swatches.length) return false;
+          const nextIndex = clampMobileSelectorIndex(config, config.index + direction);
+          const changed = nextIndex !== config.index;
+          config.index = nextIndex;
           renderMobileSelector(key);
+          return changed;
         };
         const selectMobileSelectorOption = key => {
           const config = mobileDesignSelectors[key];
@@ -2041,8 +2085,9 @@
             const deltaX = touch.clientX - config.touchStartX;
             const deltaY = touch.clientY - config.touchStartY;
             if (Math.abs(deltaX) > 24 && Math.abs(deltaX) > Math.abs(deltaY)) {
-              config.recentSwipeAt = Date.now();
-              stepMobileSelector(key, deltaX < 0 ? 1 : -1);
+              if (stepMobileSelector(key, deltaX < 0 ? 1 : -1)) {
+                config.recentSwipeAt = Date.now();
+              }
             }
           });
           config.button.addEventListener('touchcancel', () => {
