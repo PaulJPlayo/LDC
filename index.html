@@ -580,6 +580,34 @@
       .design-preview-tile.has-selection .design-preview-placeholder {
         opacity: 0;
       }
+      .design-mobile-selector {
+        display: none;
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+      }
+      .design-mobile-selector-button {
+        appearance: none;
+        border: none;
+        background: transparent;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .design-mobile-selector-option {
+        width: 100%;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .design-mobile-selector-option .swatch {
+        flex: 0 0 auto;
+        pointer-events: none;
+      }
       .design-preview-glyph {
         position: absolute;
         font-size: clamp(1rem, 3.6vw, 1.4rem);
@@ -746,6 +774,49 @@
       .design-preview-return:hover,
       .design-preview-return:focus-visible {
         transform: translateY(-1px);
+      }
+      @media (max-width: 767px) {
+        .design-preview-frame {
+          --design-preview-chip-size: clamp(6.15rem, 30vw, 7.35rem);
+          --design-preview-chip-inset: clamp(0.6rem, 3.5vw, 0.9rem);
+        }
+        .design-preview-tile {
+          border-radius: 1.3rem;
+        }
+        .design-preview-placeholder {
+          position: absolute;
+          top: 0.6rem;
+          left: 0.5rem;
+          right: 0.5rem;
+          z-index: 2;
+          padding: 0;
+          max-width: none;
+          font-size: 0.54rem;
+          line-height: 1.2;
+        }
+        .design-mobile-selector {
+          display: block;
+        }
+        .design-preview-tile.has-selection .design-mobile-selector {
+          display: none;
+        }
+        .design-mobile-selector-button {
+          padding: 1.85rem 0.5rem 0.7rem;
+          touch-action: pan-y;
+          cursor: pointer;
+        }
+        .design-mobile-selector-button:focus-visible {
+          outline: 2px solid rgba(107, 74, 122, 0.34);
+          outline-offset: -4px;
+        }
+        .design-mobile-selector-option .swatch {
+          width: 48px;
+          height: 48px;
+          border-width: 3px;
+        }
+        .design-swatch-rail {
+          display: none;
+        }
       }
       .design-card-frame.design-video-frame {
         padding: 0;
@@ -3079,6 +3150,11 @@
                             <button type="button" class="design-preview-clear" data-clear-preview-color aria-label="Clear color preview">&times;</button>
                             <div class="design-preview-fill" data-color-preview>
                               <span class="design-preview-placeholder">Color preview</span>
+                              <div class="design-mobile-selector" data-mobile-selector="color" hidden>
+                                <button type="button" class="design-mobile-selector-button" data-mobile-selector-button="color" aria-label="Browse color options">
+                                  <span class="design-mobile-selector-option" data-mobile-selector-option="color"></span>
+                                </button>
+                              </div>
                               <span class="design-preview-glyph" aria-hidden="true"></span>
                             </div>
                           </div>
@@ -3086,6 +3162,11 @@
                             <button type="button" class="design-preview-clear" data-clear-preview-accessory aria-label="Clear accessory preview">&times;</button>
                             <div class="design-preview-fill" data-accessory-preview>
                               <span class="design-preview-placeholder">Accessory preview</span>
+                              <div class="design-mobile-selector" data-mobile-selector="accessory" hidden>
+                                <button type="button" class="design-mobile-selector-button" data-mobile-selector-button="accessory" aria-label="Browse accessory options">
+                                  <span class="design-mobile-selector-option" data-mobile-selector-option="accessory"></span>
+                                </button>
+                              </div>
                               <span class="design-preview-glyph" aria-hidden="true"></span>
                             </div>
                           </div>
@@ -5074,6 +5155,7 @@
       }
 
       const designColorTrack = document.querySelector('[data-design-colors-source]');
+      const designAccessoryTrack = document.querySelector('[data-design-accessories-source]');
       const normalizeSwatchLabel = raw => {
         if (!raw) return '';
         return raw
@@ -5136,7 +5218,191 @@
         if (data?.imageAlt) swatch.setAttribute('data-image-alt', data.imageAlt);
         return swatch;
       };
+      const formatMobileSwatchLabel = raw => {
+        const normalized = normalizeSwatchLabel(raw);
+        if (!normalized) return '';
+        return normalized.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1));
+      };
+      const mobileDesignSelectors = {
+        color: {
+          key: 'color',
+          track: designColorTrack,
+          previewWrap: designColorPreviewWrap,
+          host: designColorPreview?.querySelector('[data-mobile-selector="color"]'),
+          button: designColorPreview?.querySelector('[data-mobile-selector-button="color"]'),
+          option: designColorPreview?.querySelector('[data-mobile-selector-option="color"]'),
+          index: 0,
+          recentSwipeAt: 0,
+          touchStartX: 0,
+          touchStartY: 0,
+          touching: false,
+        },
+        accessory: {
+          key: 'accessory',
+          track: designAccessoryTrack,
+          previewWrap: designAccessoryPreviewWrap,
+          host: designAccessoryPreview?.querySelector('[data-mobile-selector="accessory"]'),
+          button: designAccessoryPreview?.querySelector('[data-mobile-selector-button="accessory"]'),
+          option: designAccessoryPreview?.querySelector('[data-mobile-selector-option="accessory"]'),
+          index: 0,
+          recentSwipeAt: 0,
+          touchStartX: 0,
+          touchStartY: 0,
+          touching: false,
+        }
+      };
+      const isMobileDesignSelectorViewport = () => window.matchMedia('(max-width: 767px)').matches;
+      const getDesignSourceSwatches = track => Array.from(track?.querySelectorAll('.swatch') || []);
+      const clampMobileSelectorIndex = (config, nextIndex) => {
+        const swatches = getDesignSourceSwatches(config?.track);
+        if (!swatches.length) return 0;
+        const numeric = Number.isFinite(nextIndex) ? nextIndex : 0;
+        return ((numeric % swatches.length) + swatches.length) % swatches.length;
+      };
+      const getActiveSourceSwatchIndex = track => {
+        const swatches = getDesignSourceSwatches(track);
+        const activeIndex = swatches.findIndex(swatch => swatch.classList.contains('is-active'));
+        return activeIndex >= 0 ? activeIndex : null;
+      };
+      const setMobileSelectorIndex = (key, nextIndex) => {
+        const config = mobileDesignSelectors[key];
+        if (!config) return;
+        config.index = clampMobileSelectorIndex(config, nextIndex);
+      };
+      const syncMobileSelectorToActiveSwatch = key => {
+        const config = mobileDesignSelectors[key];
+        if (!config) return;
+        const activeIndex = getActiveSourceSwatchIndex(config.track);
+        if (activeIndex != null) {
+          config.index = activeIndex;
+        }
+      };
+      const renderMobileSelector = key => {
+        const config = mobileDesignSelectors[key];
+        if (!config?.host || !config.button || !config.option) return;
+        const swatches = getDesignSourceSwatches(config.track);
+        const shouldShow =
+          isMobileDesignSelectorViewport() &&
+          !config.previewWrap?.classList.contains('has-selection') &&
+          swatches.length > 0;
+        config.host.hidden = !shouldShow;
+        config.option.replaceChildren();
+        if (!swatches.length) return;
+        config.index = clampMobileSelectorIndex(config, config.index);
+        const sourceSwatch = swatches[config.index];
+        if (!sourceSwatch) return;
+        const previewSwatch = sourceSwatch.cloneNode(true);
+        previewSwatch.classList.remove('is-active');
+        previewSwatch.removeAttribute('role');
+        previewSwatch.removeAttribute('tabindex');
+        delete previewSwatch.dataset.selectionInit;
+        delete previewSwatch.dataset.homeSelectionInit;
+        previewSwatch.setAttribute('aria-hidden', 'true');
+        config.option.replaceChildren(previewSwatch);
+        const label = formatMobileSwatchLabel(
+          sourceSwatch.getAttribute('aria-label') ||
+          sourceSwatch.getAttribute('title') ||
+          `${key} option`
+        );
+        config.button.setAttribute(
+          'aria-label',
+          `Swipe to browse ${key} options. Tap to select ${label || key}.`
+        );
+      };
+      const renderAllMobileSelectors = () => {
+        renderMobileSelector('color');
+        renderMobileSelector('accessory');
+      };
+      const stepMobileSelector = (key, direction) => {
+        const config = mobileDesignSelectors[key];
+        if (!config) return;
+        const swatches = getDesignSourceSwatches(config.track);
+        if (!swatches.length) return;
+        config.index = clampMobileSelectorIndex(config, config.index + direction);
+        renderMobileSelector(key);
+      };
+      const selectMobileSelectorOption = key => {
+        const config = mobileDesignSelectors[key];
+        if (!config) return;
+        const swatches = getDesignSourceSwatches(config.track);
+        if (!swatches.length) return;
+        const sourceSwatch = swatches[clampMobileSelectorIndex(config, config.index)];
+        sourceSwatch?.click();
+      };
+      const bindMobileSelector = key => {
+        const config = mobileDesignSelectors[key];
+        if (!config?.button || config.button.dataset.mobileSelectorInit) return;
+        config.button.dataset.mobileSelectorInit = 'true';
+        config.button.addEventListener('mousedown', event => {
+          event.preventDefault();
+        });
+        config.button.addEventListener('click', event => {
+          event.preventDefault();
+          if (Date.now() - (config.recentSwipeAt || 0) < 80) {
+            return;
+          }
+          selectMobileSelectorOption(key);
+        });
+        config.button.addEventListener('keydown', event => {
+          if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            stepMobileSelector(key, -1);
+            return;
+          }
+          if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            stepMobileSelector(key, 1);
+            return;
+          }
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            selectMobileSelectorOption(key);
+          }
+        });
+        config.button.addEventListener('touchstart', event => {
+          const touch = event.touches?.[0];
+          if (!touch) return;
+          config.touching = true;
+          config.touchStartX = touch.clientX;
+          config.touchStartY = touch.clientY;
+        }, { passive: true });
+        config.button.addEventListener('touchmove', event => {
+          if (!config.touching) return;
+          const touch = event.touches?.[0];
+          if (!touch) return;
+          const deltaX = touch.clientX - config.touchStartX;
+          const deltaY = touch.clientY - config.touchStartY;
+          if (Math.abs(deltaX) > 8 && Math.abs(deltaX) > Math.abs(deltaY)) {
+            event.preventDefault();
+          }
+        }, { passive: false });
+        config.button.addEventListener('touchend', event => {
+          if (!config.touching) return;
+          config.touching = false;
+          const touch = event.changedTouches?.[0];
+          if (!touch) return;
+          const deltaX = touch.clientX - config.touchStartX;
+          const deltaY = touch.clientY - config.touchStartY;
+          if (Math.abs(deltaX) > 24 && Math.abs(deltaX) > Math.abs(deltaY)) {
+            config.recentSwipeAt = Date.now();
+            stepMobileSelector(key, deltaX < 0 ? 1 : -1);
+          }
+        });
+        config.button.addEventListener('touchcancel', () => {
+          config.touching = false;
+        });
+      };
+      const initMobilePreviewSelectors = () => {
+        bindMobileSelector('color');
+        bindMobileSelector('accessory');
+        if (!document.documentElement.dataset.designMobileSelectorResizeInit) {
+          document.documentElement.dataset.designMobileSelectorResizeInit = 'true';
+          window.addEventListener('resize', renderAllMobileSelectors);
+        }
+        renderAllMobileSelectors();
+      };
       const resetDesignColorSelection = () => {
+        const activeIndex = getActiveSourceSwatchIndex(designColorTrack);
         document.querySelectorAll('[data-selected-color]').forEach(colorTarget => {
           const swatchNode = colorTarget.querySelector('.design-selection-swatch');
           const labelNode = colorTarget.querySelector('.design-selection-label');
@@ -5156,8 +5422,13 @@
         document
           .querySelectorAll('[data-design-colors-source] .swatch.is-active')
           .forEach(el => el.classList.remove('is-active'));
+        if (activeIndex != null) {
+          setMobileSelectorIndex('color', activeIndex);
+        }
+        renderMobileSelector('color');
       };
       const resetDesignAccessorySelection = () => {
+        const activeIndex = getActiveSourceSwatchIndex(designAccessoryTrack);
         document.querySelectorAll('[data-selected-accessory]').forEach(accessoryTarget => {
           const swatchNode = accessoryTarget.querySelector('.design-selection-swatch');
           const labelNode = accessoryTarget.querySelector('.design-selection-label');
@@ -5180,6 +5451,10 @@
         document
           .querySelectorAll('[data-design-accessories-source] .swatch.is-active')
           .forEach(el => el.classList.remove('is-active'));
+        if (activeIndex != null) {
+          setMobileSelectorIndex('accessory', activeIndex);
+        }
+        renderMobileSelector('accessory');
       };
       const resetDesignWrapSelection = () => {
         document.querySelectorAll('[data-selected-wrap]').forEach(wrapTarget => {
@@ -5233,6 +5508,8 @@
         next.forEach(item => designColorTrack.appendChild(buildDesignSwatch(item)));
         designColorTrack.querySelectorAll('.swatch.is-active').forEach(el => el.classList.remove('is-active'));
         resetDesignColorSelection();
+        setMobileSelectorIndex('color', 0);
+        renderMobileSelector('color');
         resetDesignSwatchSlider();
       };
 
@@ -5900,6 +6177,11 @@
           }
           target.classList.add('has-selection');
           activateSwatchVisual(swatch);
+          if (target === colorTarget) {
+            syncMobileSelectorToActiveSwatch('color');
+          } else if (target === accessoryTarget) {
+            syncMobileSelectorToActiveSwatch('accessory');
+          }
           if (target === accessoryTarget) {
             const priceAttr = swatch.getAttribute('data-price');
             const parsedPrice = priceAttr ? parseFloat(priceAttr) : 0;
@@ -5947,11 +6229,13 @@
             selectedAccessoryImageSrc = '';
             selectedAccessoryImageAlt = '';
             updateAccessoryPreview('', '');
+            renderMobileSelector('accessory');
           } else if (target === colorTarget) {
             selectedColorLabel = '';
             selectedColorStyle = '';
             selectedColorGlyph = '';
             updateColorPreview('', '');
+            renderMobileSelector('color');
           }
         };
 
@@ -6052,6 +6336,9 @@
         bindSwatches('[data-design-colors-source] .swatch', colorTarget, 'Color selected');
         bindSwatches('[data-design-accessories-source] .swatch', accessoryTarget, 'Accessory selected');
         bindWrapOptions();
+        syncMobileSelectorToActiveSwatch('color');
+        syncMobileSelectorToActiveSwatch('accessory');
+        renderAllMobileSelectors();
 
         const bindClear = (buttonSelector, target, placeholder, onClear) => {
           const button = document.querySelector(buttonSelector);
@@ -6263,6 +6550,7 @@
       wireSwatchActiveFallback();
       wireDesignButtons();
       initDesignSelections();
+      initMobilePreviewSelectors();
       moveBadgesToImages();
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', applyStoredDesignSelection, { once: true });
@@ -6428,6 +6716,11 @@
           }
           target.classList.add('has-selection');
           activateSwatchVisual(swatch);
+          if (target === colorTarget) {
+            syncMobileSelectorToActiveSwatch('color');
+          } else if (target === accessoryTarget) {
+            syncMobileSelectorToActiveSwatch('accessory');
+          }
           if (target === accessoryTarget && typeof updateDesignTotal === 'function') {
             const priceAttr = swatch.getAttribute('data-price');
             const parsedPrice = priceAttr ? parseFloat(priceAttr) : 0;
@@ -6522,6 +6815,12 @@
             labelNode.textContent = label;
           }
           target.classList.add('has-selection');
+          activateSwatchVisual(swatch);
+          if (target === colorTarget) {
+            syncMobileSelectorToActiveSwatch('color');
+          } else if (target === accessoryTarget) {
+            syncMobileSelectorToActiveSwatch('accessory');
+          }
           if (target === accessoryTarget) {
             const priceAttr = swatch.getAttribute('data-price');
             const parsedPrice = priceAttr ? parseFloat(priceAttr) : 0;
@@ -6569,11 +6868,13 @@
             selectedAccessoryImageSrc = '';
             selectedAccessoryImageAlt = '';
             updateAccessoryPreview('', '');
+            renderMobileSelector('accessory');
           } else if (target === colorTarget) {
             selectedColorLabel = '';
             selectedColorStyle = '';
             selectedColorGlyph = '';
             updateColorPreview('', '');
+            renderMobileSelector('color');
           }
         };
 
