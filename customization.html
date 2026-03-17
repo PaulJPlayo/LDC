@@ -1030,6 +1030,11 @@
       .design-preview-frame.is-video-active .design-preview-video {
         display: block;
       }
+      .design-preview-frame.is-video-active:not(.is-prompt-active) .design-preview-tile {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
       .design-preview-frame.is-prompt-active .design-preview-video {
         display: flex;
         align-items: center;
