@@ -564,8 +564,31 @@
         transition: transform 160ms ease;
         position: relative;
       }
+      .design-preview-artwork {
+        display: block;
+        width: auto;
+        height: auto;
+        max-width: calc(100% - 0.7rem);
+        max-height: calc(100% - 0.7rem);
+        object-fit: contain;
+        object-position: center;
+        pointer-events: none;
+        position: relative;
+        z-index: 1;
+        background: transparent;
+        box-shadow: none;
+      }
+      .design-preview-artwork[hidden] {
+        display: none;
+      }
       .design-preview-tile.has-selection .design-preview-fill {
         transform: scale(1.02);
+      }
+      [data-accessory-preview][data-preview-selected="true"] {
+        background: transparent !important;
+      }
+      [data-accessory-preview][data-preview-selected="true"] .design-preview-placeholder {
+        display: none;
       }
       .design-preview-placeholder {
         font-size: clamp(0.52rem, 1.6vw, 0.66rem);
@@ -3196,6 +3219,7 @@
                             <button type="button" class="design-preview-clear" data-clear-preview-accessory aria-label="Clear accessory preview">&times;</button>
                             <div class="design-preview-fill" data-accessory-preview>
                               <span class="design-preview-placeholder">Accessory preview</span>
+                              <img class="design-preview-artwork" data-accessory-preview-image alt="" hidden />
                               <div class="design-mobile-selector" data-mobile-selector="accessory" hidden>
                                 <button type="button" class="design-mobile-selector-button" data-mobile-selector-button="accessory" aria-label="Browse accessory options">
                                   <span class="design-mobile-selector-option" data-mobile-selector-option="accessory"></span>
@@ -5080,6 +5104,7 @@
       const designAccessoryPreview = document.querySelector('[data-accessory-preview]');
       const designAccessoryPreviewWrap = designAccessoryPreview?.closest('.design-preview-tile');
       const designAccessoryPreviewGlyph = designAccessoryPreview?.querySelector('.design-preview-glyph');
+      const designAccessoryPreviewImage = designAccessoryPreview?.querySelector('[data-accessory-preview-image]');
       const designColorPreviewClear = designColorPreviewWrap?.querySelector('[data-clear-preview-color]');
       const designAccessoryPreviewClear = designAccessoryPreviewWrap?.querySelector('[data-clear-preview-accessory]');
       const designImagePreviewClear = designFrame?.querySelector('[data-clear-preview-image]');
@@ -5150,38 +5175,40 @@
         }
       }
 
-      const buildAccessoryPreviewStyle = (baseStyle, imageSrc) => {
-        const parts = [];
-        if (baseStyle) parts.push(baseStyle.trim().replace(/;$/, ''));
-        if (imageSrc) {
-          parts.push(
-            `background-image: url("${imageSrc}"); background-size: contain; background-position: center; background-repeat: no-repeat;`
-          );
-        }
-        return parts.filter(Boolean).join('; ');
-      };
-
       function updateAccessoryPreview(style, label, glyph = '', imageSrc = '', imageAlt = '') {
         if (!designAccessoryPreview) return;
         const resolvedImageSrc = typeof imageSrc === 'string' ? imageSrc : '';
         const resolvedImageAlt = typeof imageAlt === 'string' ? imageAlt : '';
         if (style || resolvedImageSrc) {
-          const previewStyle = buildAccessoryPreviewStyle(style, resolvedImageSrc);
-          if (previewStyle) {
-            designAccessoryPreview.setAttribute('style', `${previewStyle};`);
-          } else {
-            designAccessoryPreview.removeAttribute('style');
-          }
           const labelText = label || resolvedImageAlt;
+          designAccessoryPreview.removeAttribute('style');
+          designAccessoryPreview.dataset.previewSelected = 'true';
           designAccessoryPreview.setAttribute('aria-label', labelText ? `Selected accessory ${labelText}` : 'Selected accessory');
           designAccessoryPreviewWrap?.classList.add('has-selection');
+          if (designAccessoryPreviewImage) {
+            if (resolvedImageSrc) {
+              designAccessoryPreviewImage.src = resolvedImageSrc;
+              designAccessoryPreviewImage.alt = labelText || resolvedImageAlt || 'Selected accessory';
+              designAccessoryPreviewImage.hidden = false;
+            } else {
+              designAccessoryPreviewImage.hidden = true;
+              designAccessoryPreviewImage.removeAttribute('src');
+              designAccessoryPreviewImage.alt = '';
+            }
+          }
           if (designAccessoryPreviewGlyph) {
             designAccessoryPreviewGlyph.textContent = resolvedImageSrc ? '' : (glyph || '');
           }
         } else {
           designAccessoryPreview.removeAttribute('style');
+          delete designAccessoryPreview.dataset.previewSelected;
           designAccessoryPreview.setAttribute('aria-label', 'No accessory selected');
           designAccessoryPreviewWrap?.classList.remove('has-selection');
+          if (designAccessoryPreviewImage) {
+            designAccessoryPreviewImage.hidden = true;
+            designAccessoryPreviewImage.removeAttribute('src');
+            designAccessoryPreviewImage.alt = '';
+          }
           if (designAccessoryPreviewGlyph) {
             designAccessoryPreviewGlyph.textContent = '';
           }
