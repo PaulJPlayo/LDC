@@ -1457,7 +1457,7 @@
                               <div class="design-video-message-inner">
                                 <p class="design-video-message-title" data-prompt-title>Need a Special Character or Designer Wrap?</p>
                                 <p class="design-video-message-body" data-prompt-body>Share your character or designer theme with us and we will send next steps.</p>
-                                <a class="design-video-message-cta" data-prompt-cta href="mailto:lovettsdandc@gmail.com?subject=LDC%20Custom%20Wrap%20Request%20%E2%80%94%20Special%20Character%20%2F%20Designer&amp;body=Name%3A%20%0AEmail%3A%20%0AProduct%20type%3A%20%0ACharacter%20%2F%20designer%20requested%3A%20%0ANotes%20%2F%20inspiration%3A%20%0ABest%20contact%20method%3A%20">Request Custom Wrap</a>
+                                <a class="design-video-message-cta" data-prompt-cta href="mailto:lovettsdandc@gmail.com?subject=LDC%20Custom%20Wrap%20Request%20%E2%80%94%20Special%20Character%20%2F%20Designer&amp;body=Name%3A%0D%0AEmail%3A%0D%0AProduct%20type%3A%0D%0ACharacter%20%2F%20designer%20requested%3A%0D%0ANotes%20%2F%20inspiration%3A%0D%0ABest%20contact%20method%3A">Request Custom Wrap</a>
                               </div>
                             </div>
                             <video id="designWrapVideo" data-design-video controls muted playsinline>
@@ -1599,7 +1599,7 @@
                             data-video-prompt-title="Need a Special Character or Designer Wrap?"
                             data-video-prompt="Share your character or designer theme with us and we will send next steps."
                             data-video-prompt-cta-label="Request Custom Wrap"
-                            data-video-prompt-cta-href="mailto:lovettsdandc@gmail.com?subject=LDC%20Custom%20Wrap%20Request%20%E2%80%94%20Special%20Character%20%2F%20Designer&amp;body=Name%3A%20%0AEmail%3A%20%0AProduct%20type%3A%20%0ACharacter%20%2F%20designer%20requested%3A%20%0ANotes%20%2F%20inspiration%3A%20%0ABest%20contact%20method%3A%20"
+                            data-video-prompt-cta-href="mailto:lovettsdandc@gmail.com?subject=LDC%20Custom%20Wrap%20Request%20%E2%80%94%20Special%20Character%20%2F%20Designer&amp;body=Name%3A%0D%0AEmail%3A%0D%0AProduct%20type%3A%0D%0ACharacter%20%2F%20designer%20requested%3A%0D%0ANotes%20%2F%20inspiration%3A%0D%0ABest%20contact%20method%3A"
                             role="button"
                             tabindex="0"
                             aria-pressed="false"
@@ -2363,7 +2363,7 @@
             alt: designImage.getAttribute('alt') || 'Custom design preview'
           };
         };
-        const specialCharacterPromptMailto = 'mailto:lovettsdandc@gmail.com?subject=LDC%20Custom%20Wrap%20Request%20%E2%80%94%20Special%20Character%20%2F%20Designer&body=Name%3A%20%0AEmail%3A%20%0AProduct%20type%3A%20%0ACharacter%20%2F%20designer%20requested%3A%20%0ANotes%20%2F%20inspiration%3A%20%0ABest%20contact%20method%3A%20';
+        const specialCharacterPromptMailto = 'mailto:lovettsdandc@gmail.com?subject=LDC%20Custom%20Wrap%20Request%20%E2%80%94%20Special%20Character%20%2F%20Designer&body=Name%3A%0D%0AEmail%3A%0D%0AProduct%20type%3A%0D%0ACharacter%20%2F%20designer%20requested%3A%0D%0ANotes%20%2F%20inspiration%3A%0D%0ABest%20contact%20method%3A';
         const cloudflareStreamBase = (document.body?.dataset?.cloudflareAccount || 'https://customer-3ptq6xbmg2sfpv29.cloudflarestream.com').replace(/\/+$/, '');
         const buildDesignVideoSourceUrl = videoId => (videoId ? `${cloudflareStreamBase}/${videoId}/manifest/video.m3u8` : '');
         const getDesignVideoMimeType = sourceUrl => {
