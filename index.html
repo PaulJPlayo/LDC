@@ -608,6 +608,7 @@
         position: relative;
         overflow: hidden;
         --design-mobile-selector-drag-x: 0px;
+        --design-mobile-selector-step-distance: 0px;
       }
       .design-mobile-selector-option .swatch {
         flex: 0 0 auto;
@@ -626,25 +627,19 @@
         z-index: 2;
       }
       .design-mobile-selector-option .swatch.design-mobile-selector-swatch--prev {
-        left: 0;
-        transform: translate(-50%, -50%) translateX(var(--design-mobile-selector-drag-x));
+        transform: translate(-50%, -50%) translateX(calc(var(--design-mobile-selector-drag-x) - var(--design-mobile-selector-step-distance)));
         z-index: 1;
       }
       .design-mobile-selector-option .swatch.design-mobile-selector-swatch--prev2 {
-        left: 0;
-        transform: translate(-150%, -50%) translateX(var(--design-mobile-selector-drag-x));
+        transform: translate(-50%, -50%) translateX(calc(var(--design-mobile-selector-drag-x) - (var(--design-mobile-selector-step-distance) * 2)));
         z-index: 0;
       }
       .design-mobile-selector-option .swatch.design-mobile-selector-swatch--next {
-        left: auto;
-        right: 0;
-        transform: translate(50%, -50%) translateX(var(--design-mobile-selector-drag-x));
+        transform: translate(-50%, -50%) translateX(calc(var(--design-mobile-selector-drag-x) + var(--design-mobile-selector-step-distance)));
         z-index: 1;
       }
       .design-mobile-selector-option .swatch.design-mobile-selector-swatch--next2 {
-        left: auto;
-        right: 0;
-        transform: translate(150%, -50%) translateX(var(--design-mobile-selector-drag-x));
+        transform: translate(-50%, -50%) translateX(calc(var(--design-mobile-selector-drag-x) + (var(--design-mobile-selector-step-distance) * 2)));
         z-index: 0;
       }
       .design-preview-glyph {
@@ -5326,6 +5321,13 @@
         config.option.style.setProperty('--design-mobile-selector-drag-x', `${nextOffset}px`);
         config.option.dataset.dragging = dragging ? 'true' : 'false';
       };
+      const syncMobileSelectorStepDistance = key => {
+        const config = mobileDesignSelectors[key];
+        if (!config?.option) return 0;
+        const stepDistance = getMobileSelectorStepDistance(config) || 56;
+        config.option.style.setProperty('--design-mobile-selector-step-distance', `${stepDistance}px`);
+        return stepDistance;
+      };
       const getMobileSelectorDragOffset = (config, rawOffset) => {
         const swatches = getDesignSourceSwatches(config?.track);
         const maxIndex = swatches.length - 1;
@@ -5369,6 +5371,7 @@
         config.touching = false;
         config.dragOffsetX = 0;
         config.option.replaceChildren();
+        syncMobileSelectorStepDistance(key);
         applyMobileSelectorDragOffset(key, 0);
         if (!swatches.length) return;
         config.index = clampMobileSelectorIndex(config, config.index);
@@ -5395,6 +5398,7 @@
           'aria-label',
           `Swipe to browse ${key} options. Tap to select ${label || key}.`
         );
+        syncMobileSelectorStepDistance(key);
         applyMobileSelectorDragOffset(key, config.dragOffsetX);
       };
       const renderAllMobileSelectors = () => {
