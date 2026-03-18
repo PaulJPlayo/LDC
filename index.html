@@ -5142,9 +5142,12 @@
       let selectedWrapLabel = '';
       let selectedDesignName = '';
       let selectedDesignVariantId = '';
+      let selectedDesignBaseVariantId = '';
       let selectedDesignProductKey = '';
       let selectedDesignProductHandle = '';
       let selectedDesignProductId = '';
+      let selectedColorPrice = null;
+      let designBasePrice = 0;
       const formatPrice = value => {
         const num = typeof value === 'number' && !Number.isNaN(value) ? value : 0;
         return `$${num.toFixed(2)}`;
@@ -5172,9 +5175,63 @@
         }
       };
       const DESIGN_SESSION_KEY = 'ldc:design:last';
+      const normalizeDesignAmount = value => {
+        const numeric = Number(value);
+        return Number.isFinite(numeric) ? numeric : 0;
+      };
+      const getCurrentDesignBasePrice = () =>
+        selectedColorPrice != null
+          ? normalizeDesignAmount(selectedColorPrice)
+          : normalizeDesignAmount(designBasePrice || lastPrice?.amount);
+      const getDesignPricingContext = () => {
+        const pricingInput = {
+          basePrice: getCurrentDesignBasePrice(),
+          addonPrice: normalizeDesignAmount(accessoryPrice) + normalizeDesignAmount(wrapPrice)
+        };
+        if (typeof window.LDCCommerce?.resolveDesignPricing === 'function') {
+          return window.LDCCommerce.resolveDesignPricing(pricingInput);
+        }
+        return {
+          basePrice: pricingInput.basePrice,
+          addonPrice: pricingInput.addonPrice,
+          totalPrice: pricingInput.basePrice + pricingInput.addonPrice
+        };
+      };
       const updateDesignTotal = () => {
-        const base = typeof lastPrice?.amount === 'number' ? lastPrice.amount : 0;
-        setDesignPrice(base + accessoryPrice + wrapPrice);
+        setDesignPrice(getDesignPricingContext().totalPrice);
+      };
+      const resolveDesignSelectionBasePrice = async selection => {
+        const directPrice = Number(selection?.price);
+        if (Number.isFinite(directPrice)) {
+          return directPrice;
+        }
+        const selectionLabel =
+          (Array.isArray(selection?.swatches)
+            ? (
+                selection.swatches.find(item => item?.variantId === selection?.variantId)?.label ||
+                selection.swatches[0]?.label ||
+                ''
+              )
+            : '') ||
+          '';
+        if (typeof window.LDCCommerce?.resolveVariantDisplayData === 'function') {
+          try {
+            const resolved = await window.LDCCommerce.resolveVariantDisplayData({
+              productKey: selection?.productKey || '',
+              productHandle: selection?.productHandle || '',
+              productId: selection?.productId || '',
+              variantId: selection?.variantId || '',
+              label: selectionLabel
+            });
+            const resolvedPrice = Number(resolved?.price);
+            if (Number.isFinite(resolvedPrice)) {
+              return resolvedPrice;
+            }
+          } catch (error) {
+            console.warn('Unable to resolve design selection base price', error);
+          }
+        }
+        return null;
       };
 
       function updateColorPreview(style, label, glyph = '') {
@@ -5261,12 +5318,16 @@
       const readSwatchData = swatch => {
         if (!swatch) return null;
         const rawLabel = swatch.getAttribute('aria-label') || swatch.getAttribute('title') || '';
+        const rawPrice = swatch.getAttribute('data-price');
+        const parsedPrice = rawPrice != null && rawPrice !== '' ? parseFloat(rawPrice) : NaN;
         return {
           style: sanitizeSwatchStyle(swatch.getAttribute('style') || ''),
           label: normalizeSwatchLabel(rawLabel),
           glyph: (swatch.textContent || '').trim(),
           imageSrc: swatch.getAttribute('data-image-src') || '',
-          imageAlt: swatch.getAttribute('data-image-alt') || ''
+          imageAlt: swatch.getAttribute('data-image-alt') || '',
+          variantId: swatch.getAttribute('data-variant-id') || swatch.dataset.variantId || '',
+          price: Number.isFinite(parsedPrice) ? parsedPrice : undefined
         };
       };
       const defaultDesignSwatches = designColorTrack
@@ -5290,6 +5351,40 @@
           .map(readSwatchData)
           .filter(item => item && (item.style || item.glyph || item.imageSrc));
       };
+      const enrichDesignSwatches = async (swatches, refs = {}) => {
+        const items = Array.isArray(swatches) ? swatches.filter(Boolean) : [];
+        if (!items.length) return [];
+        const commerce = window.LDCCommerce;
+        if (typeof commerce?.resolveVariantDisplayData !== 'function') {
+          return items;
+        }
+        return Promise.all(items.map(async item => {
+          if (!item?.label) return item;
+          if (item.variantId && typeof item.price === 'number' && item.imageSrc) {
+            return item;
+          }
+          try {
+            const resolved = await commerce.resolveVariantDisplayData({
+              productKey: refs.productKey || '',
+              productHandle: refs.productHandle || '',
+              productId: refs.productId || '',
+              label: item.label,
+              variantId: item.variantId || ''
+            });
+            return {
+              ...item,
+              variantId: item.variantId || resolved?.variantId || '',
+              price: typeof item.price === 'number'
+                ? item.price
+                : (Number.isFinite(Number(resolved?.price)) ? Number(resolved.price) : undefined),
+              imageSrc: item.imageSrc || resolved?.image || ''
+            };
+          } catch (error) {
+            console.warn('Unable to enrich design swatch data', error);
+            return item;
+          }
+        }));
+      };
       const buildDesignSwatch = data => {
         const swatch = document.createElement('span');
         swatch.className = 'swatch';
@@ -5298,6 +5393,10 @@
         if (data?.glyph) swatch.textContent = data.glyph;
         if (data?.imageSrc) swatch.setAttribute('data-image-src', data.imageSrc);
         if (data?.imageAlt) swatch.setAttribute('data-image-alt', data.imageAlt);
+        if (data?.variantId) swatch.setAttribute('data-variant-id', data.variantId);
+        if (typeof data?.price === 'number' && Number.isFinite(data.price)) {
+          swatch.setAttribute('data-price', String(data.price));
+        }
         return swatch;
       };
       const formatMobileSwatchLabel = raw => {
@@ -5599,6 +5698,8 @@
         selectedColorLabel = '';
         selectedColorStyle = '';
         selectedColorGlyph = '';
+        selectedColorPrice = null;
+        selectedDesignVariantId = selectedDesignBaseVariantId || '';
         updateColorPreview('', '');
         document
           .querySelectorAll('[data-design-colors-source] .swatch.is-active')
@@ -5607,6 +5708,7 @@
           setMobileSelectorIndex('color', activeIndex);
         }
         renderMobileSelector('color');
+        updateDesignTotal();
       };
       const resetDesignAccessorySelection = () => {
         const activeIndex = getActiveSourceSwatchIndex(designAccessoryTrack);
@@ -5665,7 +5767,11 @@
       const clearDesignImageSelection = () => {
         lastImageState = null;
         selectedDesignName = '';
+        designBasePrice = 0;
         lastPrice = { amount: 0 };
+        selectedColorPrice = null;
+        selectedDesignVariantId = '';
+        selectedDesignBaseVariantId = '';
         try {
           localStorage.removeItem(DESIGN_SELECTION_KEY);
           localStorage.removeItem(DESIGN_SELECTION_PENDING_KEY);
@@ -5982,12 +6088,15 @@
         }
         if (selection.variantId) {
           selectedDesignVariantId = selection.variantId;
+          selectedDesignBaseVariantId = selection.variantId;
         }
         selectedDesignProductKey = selection.productKey || selectedDesignProductKey;
         selectedDesignProductHandle = selection.productHandle || selectedDesignProductHandle;
         selectedDesignProductId = selection.productId || selectedDesignProductId;
         if (typeof selection.price === 'number') {
+          designBasePrice = selection.price;
           lastPrice = { amount: selection.price };
+          selectedColorPrice = null;
           accessoryPrice = 0;
           wrapPrice = 0;
           updateDesignTotal();
@@ -6060,7 +6169,7 @@
         }
       };
 
-      const applyStoredDesignSelection = () => {
+      const applyStoredDesignSelection = async () => {
         let stored = null;
         let selectedDesignProductKeyValue = null;
         try {
@@ -6080,9 +6189,15 @@
         if (selectedDesignProductKeyValue) selectedDesignProductKey = selectedDesignProductKeyValue;
         if (stored.productHandle) selectedDesignProductHandle = stored.productHandle;
         if (stored.productId) selectedDesignProductId = stored.productId;
-        if (stored.variantId) selectedDesignVariantId = stored.variantId;
-        if (typeof stored.price === 'number') {
-          lastPrice = { amount: stored.price };
+        if (stored.variantId) {
+          selectedDesignVariantId = stored.variantId;
+          selectedDesignBaseVariantId = stored.variantId;
+        }
+        const resolvedBasePrice = await resolveDesignSelectionBasePrice(stored);
+        if (typeof resolvedBasePrice === 'number') {
+          designBasePrice = resolvedBasePrice;
+          lastPrice = { amount: resolvedBasePrice };
+          selectedColorPrice = null;
         }
       };
 
@@ -6252,8 +6367,11 @@
         const extractPrice = card => {
           if (!card) return null;
           const priceEl =
+            card.querySelector('[data-product-price]') ||
+            card.querySelector('[data-price-value]') ||
             card.querySelector('.product-price') ||
             card.querySelector('.price-line') ||
+            card.querySelector('.ldc-tile-price') ||
             card.querySelector('.text-sm.text-slate-700');
           if (!priceEl) return null;
           const match = priceEl.textContent.replace(/[, ]/g, '').match(/(\d+(\.\d{1,2})?)/);
@@ -6273,7 +6391,6 @@
             };
             if (!selection.src) return;
             const { card, key, handle, id } = resolveDesignContext(btn);
-            const price = extractPrice(card);
             const nameNode = card?.querySelector('.product-title, .tile-title');
             if (nameNode) {
               selection.name = nameNode.textContent.trim();
@@ -6297,6 +6414,7 @@
                 if (variantId) {
                   selection.variantId = variantId;
                   selectedDesignVariantId = variantId;
+                  selectedDesignBaseVariantId = variantId;
                 }
               } catch (error) {
                 console.warn('Unable to resolve variant for design selection', error);
@@ -6305,13 +6423,23 @@
             selectedDesignProductKey = selection.productKey || '';
             selectedDesignProductHandle = selection.productHandle || '';
             selectedDesignProductId = selection.productId || '';
-            const swatches = extractCardSwatches(card);
+            const swatches = await enrichDesignSwatches(extractCardSwatches(card), {
+              productKey: key,
+              productHandle: handle,
+              productId: id
+            });
             if (swatches.length) {
               selection.swatches = swatches;
             }
-            if (typeof price === 'number') {
-              selection.price = price;
-              lastPrice = { amount: price };
+            const resolvedBasePrice = await resolveDesignSelectionBasePrice({
+              ...selection,
+              price: extractPrice(card)
+            });
+            if (typeof resolvedBasePrice === 'number') {
+              selection.price = resolvedBasePrice;
+              designBasePrice = resolvedBasePrice;
+              lastPrice = { amount: resolvedBasePrice };
+              selectedColorPrice = null;
             }
             setDesignColorSwatches(swatches);
             initDesignSelections();
@@ -6378,6 +6506,11 @@
             selectedColorLabel = label;
             selectedColorStyle = style;
             selectedColorGlyph = text;
+            const priceAttr = swatch.getAttribute('data-price');
+            const parsedPrice = priceAttr != null && priceAttr !== '' ? parseFloat(priceAttr) : NaN;
+            selectedColorPrice = Number.isFinite(parsedPrice) ? parsedPrice : null;
+            const variantId = swatch.getAttribute('data-variant-id') || '';
+            selectedDesignVariantId = variantId || selectedDesignBaseVariantId || selectedDesignVariantId;
             updateColorPreview(style, label, text);
             const imageSrc = swatch.getAttribute('data-image-src');
             if (imageSrc) {
@@ -6387,6 +6520,7 @@
               };
               showImagePreview();
             }
+            updateDesignTotal();
           }
         };
 
@@ -6415,8 +6549,11 @@
             selectedColorLabel = '';
             selectedColorStyle = '';
             selectedColorGlyph = '';
+            selectedColorPrice = null;
+            selectedDesignVariantId = selectedDesignBaseVariantId || '';
             updateColorPreview('', '');
             renderMobileSelector('color');
+            updateDesignTotal();
           }
         };
 
@@ -6589,8 +6726,7 @@
       };
 
       const buildDesignProduct = async (idOverride, uploadedAttachment = null) => {
-        const basePrice = typeof lastPrice?.amount === 'number' ? lastPrice.amount : 0;
-        const totalPrice = basePrice + accessoryPrice + wrapPrice;
+        const pricing = getDesignPricingContext();
         const nameParts = [];
         if (selectedDesignName) nameParts.push(selectedDesignName);
         if (selectedColorLabel) nameParts.push(`Color: ${selectedColorLabel}`);
@@ -6605,7 +6741,7 @@
         return {
           id: idOverride || `design-${Date.now()}`,
           name: cartName,
-          price: totalPrice,
+          price: pricing.totalPrice,
           quantity: 1,
           previewStyle,
           options: [
@@ -6636,11 +6772,10 @@
       const buildDesignMetadata = async (variantIdOverride, uploadedAttachment = null, attachment = null) => {
         const previewSrc = lastImageState?.src || designImage?.getAttribute('src') || '';
         const previewAlt = lastImageState?.alt || designImage?.getAttribute('alt') || 'Custom design preview';
+        const previewStyle = buildImagePreviewStyle(previewSrc);
         const notesEl = document.getElementById('design-notes-home');
         const resolvedAttachment = attachment || (await readDesignAttachment());
-        const basePrice = typeof lastPrice?.amount === 'number' ? lastPrice.amount : 0;
-        const addonPrice = accessoryPrice + wrapPrice;
-        const totalPrice = basePrice + addonPrice;
+        const pricing = getDesignPricingContext();
         let storedSelection = null;
         try {
           storedSelection = JSON.parse(localStorage.getItem(DESIGN_SELECTION_KEY) || 'null');
@@ -6648,15 +6783,17 @@
         const metadata = {
           design_mode: 'custom',
           design_preview_url: previewSrc || undefined,
+          design_preview_style: previewStyle || undefined,
           preview_url: previewSrc || undefined,
+          preview_style: previewStyle || undefined,
           design_preview_alt: previewAlt || undefined,
           design_product_key: selectedDesignProductKey || storedSelection?.productKey || undefined,
           design_product_handle: selectedDesignProductHandle || storedSelection?.productHandle || undefined,
           design_product_id: selectedDesignProductId || storedSelection?.productId || undefined,
           design_variant_id: variantIdOverride || selectedDesignVariantId || storedSelection?.variantId || undefined,
-          design_base_price: basePrice || undefined,
-          design_addon_price: addonPrice || undefined,
-          design_total_price: totalPrice || undefined,
+          design_base_price: pricing.basePrice || undefined,
+          design_addon_price: pricing.addonPrice || undefined,
+          design_total_price: pricing.totalPrice || undefined,
           design_color_label: selectedColorLabel || undefined,
           design_color_style: selectedColorStyle || undefined,
           design_color_glyph: selectedColorGlyph || undefined,
@@ -6917,6 +7054,11 @@
             selectedColorLabel = label;
             selectedColorStyle = style;
             selectedColorGlyph = glyph;
+            const priceAttr = swatch.getAttribute('data-price');
+            const parsedPrice = priceAttr != null && priceAttr !== '' ? parseFloat(priceAttr) : NaN;
+            selectedColorPrice = Number.isFinite(parsedPrice) ? parsedPrice : null;
+            const variantId = swatch.getAttribute('data-variant-id') || '';
+            selectedDesignVariantId = variantId || selectedDesignBaseVariantId || selectedDesignVariantId;
             updateColorPreview(style, label, glyph);
             const imageSrc = swatch.getAttribute('data-image-src');
             if (imageSrc) {
@@ -6926,6 +7068,7 @@
               };
               showImagePreview();
             }
+            if (typeof updateDesignTotal === 'function') updateDesignTotal();
           }
         };
 
@@ -7017,14 +7160,21 @@
             selectedColorLabel = label;
             selectedColorStyle = style;
             selectedColorGlyph = glyph;
+            const priceAttr = swatch.getAttribute('data-price');
+            const parsedPrice = priceAttr != null && priceAttr !== '' ? parseFloat(priceAttr) : NaN;
+            selectedColorPrice = Number.isFinite(parsedPrice) ? parsedPrice : null;
+            const variantId = swatch.getAttribute('data-variant-id') || '';
+            selectedDesignVariantId = variantId || selectedDesignBaseVariantId || selectedDesignVariantId;
             updateColorPreview(style, label, glyph);
             const imageSrc = swatch.getAttribute('data-image-src');
-          if (imageSrc) {
-            lastImageState = {
-              src: imageSrc,
-              alt: swatch.getAttribute('data-image-alt') || label || 'Custom design preview'
-            };
-            showImagePreview();
+            if (imageSrc) {
+              lastImageState = {
+                src: imageSrc,
+                alt: swatch.getAttribute('data-image-alt') || label || 'Custom design preview'
+              };
+              showImagePreview();
+            }
+            if (typeof updateDesignTotal === 'function') updateDesignTotal();
           }
         }
       };
@@ -7054,7 +7204,10 @@
             selectedColorLabel = '';
             selectedColorStyle = '';
             selectedColorGlyph = '';
+            selectedColorPrice = null;
+            selectedDesignVariantId = selectedDesignBaseVariantId || '';
             updateColorPreview('', '');
+            if (typeof updateDesignTotal === 'function') updateDesignTotal();
             renderMobileSelector('color');
           }
         };

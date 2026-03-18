@@ -39,7 +39,6 @@
     'item_subtotal'
   ];
   const LINE_ITEM_DISPLAY_MONEY_FIELDS = [
-    'unit_price',
     'subtotal',
     'total',
     'tax_total',
@@ -2138,6 +2137,67 @@
     return variantId || null;
   };
 
+  const resolveProductAndEntry = async ({ productKey = '', productHandle = '', productId = '' } = {}) => {
+    const normalizedKey = String(productKey || '').trim();
+    const normalizedHandle = String(productHandle || '').trim();
+    const normalizedId = String(productId || '').trim();
+    const [map, index] = await Promise.all([loadProductMap(), loadProductIndex()]);
+    const product =
+      (normalizedId && index?.byId?.get(normalizedId)) ||
+      (normalizedHandle && (
+        index?.byHandle?.get(normalizedHandle) ||
+        index?.byHandle?.get(slugify(normalizedHandle))
+      )) ||
+      (normalizedKey && (
+        index?.byHandle?.get(normalizedKey) ||
+        index?.byHandle?.get(slugify(normalizedKey))
+      )) ||
+      null;
+    const entry =
+      (normalizedKey && (map?.products?.[normalizedKey] || map?.products?.[slugify(normalizedKey)])) ||
+      (normalizedHandle && (map?.products?.[normalizedHandle] || map?.products?.[slugify(normalizedHandle)])) ||
+      null;
+    return { product, entry };
+  };
+
+  const resolveVariantDisplayData = async ({
+    productKey = '',
+    productHandle = '',
+    productId = '',
+    label = '',
+    variantId = ''
+  } = {}) => {
+    const { product, entry } = await resolveProductAndEntry({ productKey, productHandle, productId });
+    const normalizedLabel = cleanVariantLabel(label || '');
+    let resolvedVariantId = String(variantId || '').trim();
+    if (!resolvedVariantId && product && normalizedLabel) {
+      resolvedVariantId = resolveVariantFromProduct(product, normalizedLabel) || '';
+    }
+    if (!resolvedVariantId && entry && normalizedLabel) {
+      resolvedVariantId = resolveVariantFromEntry(entry, normalizedLabel) || '';
+    }
+    if (!resolvedVariantId) {
+      resolvedVariantId = entry?.variantId || entry?.variant_id || '';
+    }
+
+    const variants = getSortedVariants(product);
+    const variant = resolvedVariantId
+      ? variants.find(item => item?.id === resolvedVariantId) || null
+      : null;
+    const priceInfo = product ? getProductPrice(product, resolvedVariantId || null) : null;
+    const image =
+      getVariantImage(variant, product) ||
+      getVariantImageFromEntry(entry, normalizedLabel, resolvedVariantId) ||
+      '';
+
+    return {
+      variantId: resolvedVariantId,
+      price: priceInfo ? toMajorUnits(priceInfo.amount, priceInfo.currency) : null,
+      currency: priceInfo?.currency || product?.currency_code || '',
+      image: image ? resolveAssetUrl(image) : ''
+    };
+  };
+
   const readCartId = () => {
     try {
       return localStorage.getItem(CART_ID_KEY);
@@ -2218,6 +2278,25 @@
       ? `background-color: #ffffff; background-image: url("${src}"); background-size: cover; background-position: center; background-repeat: no-repeat;`
       : '';
 
+  const resolveDesignPricing = ({ basePrice = 0, addonPrice = 0, totalPrice = null } = {}) => {
+    const normalizedBasePrice = Number(basePrice);
+    const normalizedAddonPrice = Number(addonPrice);
+    const hasExplicitTotalPrice =
+      totalPrice !== null &&
+      totalPrice !== undefined &&
+      !(typeof totalPrice === 'string' && totalPrice.trim() === '');
+    const normalizedTotalPrice = hasExplicitTotalPrice ? Number(totalPrice) : NaN;
+    const safeBasePrice = Number.isFinite(normalizedBasePrice) ? normalizedBasePrice : 0;
+    const safeAddonPrice = Number.isFinite(normalizedAddonPrice) ? normalizedAddonPrice : 0;
+    return {
+      basePrice: safeBasePrice,
+      addonPrice: safeAddonPrice,
+      totalPrice: Number.isFinite(normalizedTotalPrice)
+        ? normalizedTotalPrice
+        : safeBasePrice + safeAddonPrice
+    };
+  };
+
   const extractImageFromCard = card => {
     if (!card) return '';
     const img =
@@ -2292,8 +2371,32 @@
       '';
     const previewStyle =
       (previewUrl ? buildPreviewStyle(previewUrl) : '') ||
+      (metadata.design_preview_style || metadata.designPreviewStyle || '') ||
       (item.thumbnail ? buildPreviewStyle(item.thumbnail) : '') ||
       (metadata.preview_style || metadata.previewStyle || '');
+    const hasDesignPricing =
+      metadata.design_mode === 'custom' ||
+      metadata.design_total_price != null ||
+      metadata.designTotalPrice != null ||
+      metadata.design_base_price != null ||
+      metadata.designBasePrice != null ||
+      metadata.design_addon_price != null ||
+      metadata.designAddonPrice != null;
+    const designPricing = resolveDesignPricing({
+      basePrice:
+        metadata.design_base_price ??
+        metadata.designBasePrice ??
+        unitPrice,
+      addonPrice:
+        metadata.design_addon_price ??
+        metadata.designAddonPrice ??
+        0,
+      totalPrice:
+        metadata.design_total_price ??
+        metadata.designTotalPrice ??
+        null
+    });
+    const displayUnitPrice = hasDesignPricing ? designPricing.totalPrice : unitPrice;
     const metadataLabel = cleanVariantLabel(
       metadata.variant_label ||
         metadata.color_label ||
@@ -2426,7 +2529,7 @@
     return {
       id: String(item.id || displayTitle),
       name: String(displayTitle),
-      price: unitPrice,
+      price: displayUnitPrice,
       price_minor: unitPriceMinor,
       currency_code: resolvedCurrency,
       quantity: Math.max(1, Number(item.quantity || 1)),
@@ -3025,7 +3128,9 @@
     formatMoneyFromMinor,
     getLineItemDisplayImage,
     formatLineItemForDisplay: formatLegacyItem,
-    normalizeDisplayOption
+    normalizeDisplayOption,
+    resolveDesignPricing,
+    resolveVariantDisplayData
   };
 
   const initStorefront = () => {
