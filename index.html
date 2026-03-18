@@ -630,11 +630,22 @@
         transform: translate(-50%, -50%) translateX(var(--design-mobile-selector-drag-x));
         z-index: 1;
       }
+      .design-mobile-selector-option .swatch.design-mobile-selector-swatch--prev2 {
+        left: 0;
+        transform: translate(-150%, -50%) translateX(var(--design-mobile-selector-drag-x));
+        z-index: 0;
+      }
       .design-mobile-selector-option .swatch.design-mobile-selector-swatch--next {
         left: auto;
         right: 0;
         transform: translate(50%, -50%) translateX(var(--design-mobile-selector-drag-x));
         z-index: 1;
+      }
+      .design-mobile-selector-option .swatch.design-mobile-selector-swatch--next2 {
+        left: auto;
+        right: 0;
+        transform: translate(150%, -50%) translateX(var(--design-mobile-selector-drag-x));
+        z-index: 0;
       }
       .design-preview-glyph {
         position: absolute;
@@ -5364,18 +5375,16 @@
         const sourceSwatch = swatches[config.index];
         if (!sourceSwatch) return;
         const previewSwatches = [];
-        const previousSwatch = swatches[config.index - 1];
-        const nextSwatch = swatches[config.index + 1];
-        if (previousSwatch) {
-          const previewPreviousSwatch = buildMobilePreviewSwatch(previousSwatch, 'prev');
-          if (previewPreviousSwatch) previewSwatches.push(previewPreviousSwatch);
-        }
-        const previewCurrentSwatch = buildMobilePreviewSwatch(sourceSwatch, 'current');
-        if (previewCurrentSwatch) previewSwatches.push(previewCurrentSwatch);
-        if (nextSwatch) {
-          const previewNextSwatch = buildMobilePreviewSwatch(nextSwatch, 'next');
-          if (previewNextSwatch) previewSwatches.push(previewNextSwatch);
-        }
+        [
+          { offset: -2, slot: 'prev2' },
+          { offset: -1, slot: 'prev' },
+          { offset: 0, slot: 'current' },
+          { offset: 1, slot: 'next' },
+          { offset: 2, slot: 'next2' },
+        ].forEach(({ offset, slot }) => {
+          const previewSwatch = buildMobilePreviewSwatch(swatches[config.index + offset], slot);
+          if (previewSwatch) previewSwatches.push(previewSwatch);
+        });
         config.option.replaceChildren(...previewSwatches);
         const label = formatMobileSwatchLabel(
           sourceSwatch.getAttribute('aria-label') ||
