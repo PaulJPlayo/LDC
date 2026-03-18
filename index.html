@@ -4139,6 +4139,54 @@
         }
       };
 
+      const normalizeCartDisplayOption = option => {
+        if (typeof window.LDCCommerce?.normalizeDisplayOption === 'function') {
+          return window.LDCCommerce.normalizeDisplayOption(option);
+        }
+        if (!option || (!option.label && !option.value)) return null;
+        const label = String(option.label ?? '').trim();
+        const value = String(option.value ?? '').trim();
+        const normalizedLabel = label.toLowerCase();
+        const kind =
+          normalizedLabel === 'color'
+            ? 'color'
+            : normalizedLabel === 'accessory'
+              ? 'accessory'
+              : normalizedLabel === 'attachment'
+                ? 'attachment'
+                : 'text';
+        const showSwatch = kind === 'color' || kind === 'accessory';
+        const swatchGlyph = typeof option.swatchGlyph === 'string' ? option.swatchGlyph : '';
+        const isTextSwatch = /[A-Za-z]/.test(swatchGlyph);
+        const swatchStyle = showSwatch
+          ? ((typeof option.swatchStyle === 'string' && option.swatchStyle.trim())
+              ? option.swatchStyle.trim()
+              : (kind === 'accessory' ? 'background:#d8b4fe;' : 'background:#e2e8f0;'))
+          : '';
+        return {
+          ...option,
+          label,
+          value,
+          normalizedLabel,
+          kind,
+          showSwatch,
+          swatchGlyph,
+          swatchStyle,
+          isTextSwatch,
+          attachmentData: typeof option.attachmentData === 'string' ? option.attachmentData : ''
+        };
+      };
+
+      const getCartDisplayOptions = item => {
+        const options = Array.isArray(item?.options)
+          ? item.options.filter(opt => opt && (opt.label || opt.value))
+          : [];
+        if (item?.notes) {
+          options.push({ label: 'Notes', value: item.notes });
+        }
+        return options.map(normalizeCartDisplayOption).filter(Boolean);
+      };
+
       const renderCart = () => {
         if (!cartItemsContainer || !cartTotalEl) return;
         if (!cartState.items.length) {
@@ -4156,47 +4204,20 @@
           const previewStyle = (item.previewStyle && item.previewStyle.trim()) ? item.previewStyle : fallbackPreview;
           const safePreviewStyle = previewStyle.replace(/"/g, '&quot;');
           const isAccessoryOnly = item.accessoryOnly || /straw toppers/i.test(item.name || '');
-          const isPackageItem = /^(christmas diamond|flower premium|flower deluxe)$/i.test(String(item.name || item.title || '').trim());
-          const options = Array.isArray(item.options)
-            ? item.options.filter(opt => {
-                if (!opt) return false;
-                if (isAccessoryOnly && (opt.label || '').toLowerCase() === 'color') return false;
-                return opt.label || opt.value;
-              })
-            : [];
-          const notesRow = item.notes
-            ? `<div class="cart-item-option"><span class="label">Notes:</span> <span class="value">${item.notes}</span></div>`
-            : '';
+          const options = getCartDisplayOptions(item).filter(opt => !(isAccessoryOnly && opt.kind === 'color'));
           const optionsMarkup = options.length
             ? `<div class="cart-item-options">${options.map(opt => {
-                const normalizedLabel = (opt.label || '').toLowerCase();
-                const isColor = normalizedLabel === 'color';
-                const isAccessory = normalizedLabel === 'accessory';
-                const isAttachment = normalizedLabel === 'attachment';
-                const swatchGlyph = opt.swatchGlyph || '';
-                const isTextSwatch = /[A-Za-z]/.test(swatchGlyph);
-                const baseSwatchStyle = opt.swatchStyle && opt.swatchStyle.trim()
-                  ? opt.swatchStyle.trim()
-                  : (isAccessory ? 'background:#d8b4fe;' : 'background:#e2e8f0;');
-                const swatch = baseSwatchStyle && !isAttachment
-                  ? `<span class="cart-item-swatch${isTextSwatch ? ' is-text' : ''}" style="${baseSwatchStyle.replace(/"/g, '&quot;')};">${swatchGlyph}</span>`
+                const swatch = opt.showSwatch && opt.swatchStyle
+                  ? `<span class="cart-item-swatch${opt.isTextSwatch ? ' is-text' : ''}" style="${opt.swatchStyle.replace(/"/g, '&quot;')};">${opt.swatchGlyph || ''}</span>`
                   : '';
-                if (isColor) {
-                  return `<span class="cart-item-option">${swatch} <span class="value">${opt.value || ''}</span></span>`;
-                }
-                if (isAccessory) {
-                  return `<span class="cart-item-option"><span class="label">Accessory:</span>${swatch} <span class="value">${opt.value || ''}</span></span>`;
-                }
-                if (isAttachment) {
+                if (opt.kind === 'attachment') {
                   const badge = opt.attachmentData ? ' (attached)' : '';
                   const viewLink = opt.attachmentData ? `<a href="${opt.attachmentData.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="cart-attachment-link">View</a>` : '';
                   return `<span class="cart-item-option"><span class="label">Attachment:</span> <span class="value">${opt.value || 'Attached file'}${badge}</span> ${viewLink}</span>`;
                 }
-                return `<span class="cart-item-option"><span class="label">${opt.label}:</span> <span class="value">${opt.value}</span>${swatch}</span>`;
-              }).join('')}${notesRow}</div>`
-            : notesRow
-              ? `<div class="cart-item-options">${notesRow}</div>`
-              : '';
+                return `<span class="cart-item-option"><span class="label">${opt.label}:</span>${swatch ? `${swatch} ` : ' '}<span class="value">${opt.value}</span></span>`;
+              }).join('')}</div>`
+            : '';
           return `
           <div class="cart-item" data-cart-item="${item.id}">
             <div class="cart-item-main">

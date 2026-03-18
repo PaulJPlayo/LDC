@@ -550,6 +550,90 @@
     <script src="commerce.js"></script>
     <script>
       (() => {
+        const escapeCheckoutHtml = value => String(value ?? '').replace(/[&<>"']/g, char => {
+          const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+          };
+          return map[char] || char;
+        });
+
+        const normalizeCheckoutDisplayOption = (commerce, option) => {
+          if (typeof commerce?.normalizeDisplayOption === 'function') {
+            return commerce.normalizeDisplayOption(option);
+          }
+          if (!option || (!option.label && !option.value)) return null;
+          const label = String(option.label ?? '').trim();
+          const value = String(option.value ?? '').trim();
+          const normalizedLabel = label.toLowerCase();
+          const kind =
+            normalizedLabel === 'color'
+              ? 'color'
+              : normalizedLabel === 'accessory'
+                ? 'accessory'
+                : normalizedLabel === 'attachment'
+                  ? 'attachment'
+                  : 'text';
+          const showSwatch = kind === 'color' || kind === 'accessory';
+          const swatchGlyph = typeof option.swatchGlyph === 'string' ? option.swatchGlyph : '';
+          const isTextSwatch = /[A-Za-z]/.test(swatchGlyph);
+          const swatchStyle = showSwatch
+            ? ((typeof option.swatchStyle === 'string' && option.swatchStyle.trim())
+                ? option.swatchStyle.trim()
+                : (kind === 'accessory' ? 'background:#d8b4fe;' : 'background:#e2e8f0;'))
+            : '';
+          return {
+            ...option,
+            label,
+            value,
+            normalizedLabel,
+            kind,
+            showSwatch,
+            swatchGlyph,
+            swatchStyle,
+            isTextSwatch,
+            attachmentData: typeof option.attachmentData === 'string' ? option.attachmentData : '',
+            attachmentKey: typeof option.attachmentKey === 'string' ? option.attachmentKey : ''
+          };
+        };
+
+        const renderCheckoutOptionsMarkup = (commerce, options) => {
+          const normalizedOptions = Array.isArray(options)
+            ? options.map(option => normalizeCheckoutDisplayOption(commerce, option)).filter(Boolean)
+            : [];
+          if (!normalizedOptions.length) return '';
+          return `<ul class="checkout-item-options">${normalizedOptions.map(opt => {
+            const swatch = opt.showSwatch && opt.swatchStyle
+              ? `<span class="checkout-item-swatch${opt.isTextSwatch ? ' is-text' : ''}" style="${escapeCheckoutHtml(opt.swatchStyle.replace(/\"/g, '&quot;'))};">${escapeCheckoutHtml(opt.swatchGlyph || '')}</span>`
+              : '';
+            if (opt.kind === 'attachment') {
+              const badge = opt.attachmentData ? ' (attached)' : '';
+              const viewLink = opt.attachmentData
+                ? `<a href="${escapeCheckoutHtml(String(opt.attachmentData).replace(/\"/g, '&quot;'))}" target="_blank" rel="noopener" class="checkout-attachment-link">View</a>`
+                : '';
+              return `<li><span class="label">Attachment:</span> <span class="value">${escapeCheckoutHtml(opt.value || 'Attached file')}${badge}</span> ${viewLink}</li>`;
+            }
+            return `<li><span class="label">${escapeCheckoutHtml(opt.label)}:</span>${swatch ? ` ${swatch}` : ''} <span class="value">${escapeCheckoutHtml(opt.value || '')}</span></li>`;
+          }).join('')}</ul>`;
+        };
+
+        const formatCheckoutDisplayItem = (commerce, item, currencyCode) => {
+          if (typeof commerce?.formatLineItemForDisplay === 'function') {
+            return commerce.formatLineItemForDisplay(item, currencyCode);
+          }
+          return {
+            id: String(item?.id || item?.title || item?.name || 'item'),
+            name: String(item?.title || item?.product_title || item?.name || 'Item'),
+            price: Number(item?.unit_price || item?.price || 0),
+            quantity: Math.max(1, Number(item?.quantity || 1)),
+            previewStyle: '',
+            options: Array.isArray(item?.options) ? item.options : []
+          };
+        };
+
         const runMedusaCheckout = commerce => {
           const itemsContainer = document.querySelector('[data-checkout-items]');
           const subtotalEl = document.querySelector('[data-checkout-subtotal]');
@@ -760,109 +844,14 @@
             }
 
             itemsContainer.innerHTML = items.map(item => {
+              const displayItem = formatCheckoutDisplayItem(commerce, item, cart.currency_code);
               const lineImage = getCheckoutItemImage(item);
-              const previewStyle = lineImage
-                ? `background-image: url('${lineImage.replace(/'/g, '%27')}');`
-                : fallbackPreview;
-              const lineTotal = (item.unit_price || 0) * (item.quantity || 0);
-              const title = item.title || item.product_title || 'Item';
-              const metadata = item.metadata || {};
-              const metadataLabel = cleanVariantLabel(
-                metadata.variant_label ||
-                  metadata.color_label ||
-                  metadata.selected_color ||
-                  metadata.selectedColor ||
-                  ''
-              );
-              const variantTitle = item.variant_title && item.variant_title !== 'Default' ? item.variant_title : '';
-              const variantLabel = metadataLabel || deriveVariantLabel(variantTitle, title);
-              const swatchStyleRaw =
-                metadata.variant_style ||
-                metadata.color_style ||
-                metadata.selected_color_style ||
-                metadata.selectedColorStyle ||
-                '';
-              const swatchGlyph =
-                metadata.variant_glyph ||
-                metadata.color_glyph ||
-                metadata.selected_color_glyph ||
-                metadata.selectedColorGlyph ||
-                '';
-              const swatchStyle = (swatchStyleRaw && swatchStyleRaw.trim())
-                ? swatchStyleRaw.trim()
-                : (variantLabel ? 'background:#e2e8f0;' : '');
-              const isTextSwatch = /[A-Za-z]/.test(swatchGlyph || '');
-              const colorMarkup = variantLabel
-                ? `<div class="checkout-item-color">
-                    <span class="checkout-item-swatch${isTextSwatch ? ' is-text' : ''}" style="${escapeHtml(swatchStyle.replace(/\"/g, '&quot;'))};">${escapeHtml(swatchGlyph)}</span>
-                    <span class="checkout-item-color-value">${escapeHtml(variantLabel)}</span>
-                  </div>`
-                : '';
-              const designOptions = [];
-              const designColorLabel = metadata.design_color_label || metadata.designColorLabel || '';
-              const designColorStyle = metadata.design_color_style || metadata.designColorStyle || '';
-              const designColorGlyph = metadata.design_color_glyph || metadata.designColorGlyph || '';
-              const designAccessoryLabel = metadata.design_accessory_label || metadata.designAccessoryLabel || '';
-              const designAccessoryStyle = metadata.design_accessory_style || metadata.designAccessoryStyle || '';
-              const designAccessoryGlyph = metadata.design_accessory_glyph || metadata.designAccessoryGlyph || '';
-              const designWrapLabel = metadata.design_wrap_label || metadata.designWrapLabel || '';
-              const designNotes = metadata.design_notes || metadata.designNotes || '';
-              const designAttachmentName = metadata.design_attachment_name || metadata.designAttachmentName || '';
-              const designAttachmentData =
-                metadata.design_attachment_url ||
-                metadata.designAttachmentUrl ||
-                metadata.design_attachment_data ||
-                metadata.designAttachmentData ||
-                '';
-              if (designColorLabel) {
-                designOptions.push({
-                  label: 'Color',
-                  value: designColorLabel,
-                  swatchStyle: designColorStyle,
-                  swatchGlyph: designColorGlyph
-                });
-              }
-              if (designAccessoryLabel) {
-                designOptions.push({
-                  label: 'Accessory',
-                  value: designAccessoryLabel,
-                  swatchStyle: designAccessoryStyle,
-                  swatchGlyph: designAccessoryGlyph
-                });
-              }
-              if (designWrapLabel) {
-                designOptions.push({ label: 'Wrap', value: designWrapLabel });
-              }
-              if (designNotes) {
-                designOptions.push({ label: 'Notes', value: designNotes });
-              }
-              if (designAttachmentName) {
-                designOptions.push({ label: 'Attachment', value: designAttachmentName, attachmentData: designAttachmentData });
-              }
-              const designMarkup = designOptions.length
-                ? `<ul class="checkout-item-options">${designOptions.map(opt => {
-                    const normalizedLabel = (opt.label || '').toLowerCase();
-                    const isColor = normalizedLabel === 'color';
-                    const isAccessory = normalizedLabel === 'accessory';
-                    const isAttachment = normalizedLabel === 'attachment';
-                    const swatchGlyph = opt.swatchGlyph || '';
-                    const isTextSwatch = /[A-Za-z]/.test(swatchGlyph);
-                    const baseSwatchStyle = opt.swatchStyle && opt.swatchStyle.trim()
-                      ? opt.swatchStyle.trim()
-                      : (isAccessory ? 'background:#d8b4fe;' : 'background:#e2e8f0;');
-                    const swatch = baseSwatchStyle && !isAttachment
-                      ? `<span class="checkout-item-swatch${isTextSwatch ? ' is-text' : ''}" style="${escapeHtml(baseSwatchStyle.replace(/\"/g, '&quot;'))};">${escapeHtml(swatchGlyph)}</span>`
-                      : '';
-                    if (isAttachment) {
-                      const badge = opt.attachmentData ? ' (attached)' : '';
-                      const viewLink = opt.attachmentData
-                        ? `<a href="${escapeHtml(String(opt.attachmentData).replace(/\"/g, '&quot;'))}" target="_blank" rel="noopener" class="checkout-attachment-link">View</a>`
-                        : '';
-                      return `<li><span class="label">${escapeHtml(opt.label)}:</span> <span class="value">${escapeHtml(opt.value || '')}${badge}</span> ${viewLink}</li>`;
-                    }
-                    return `<li><span class="label">${escapeHtml(opt.label)}:</span> ${swatch} <span class="value">${escapeHtml(opt.value || '')}</span></li>`;
-                  }).join('')}</ul>`
-                : '';
+              const previewStyle = displayItem?.previewStyle?.trim()
+                ? displayItem.previewStyle.trim()
+                : (lineImage ? `background-image: url('${lineImage.replace(/'/g, '%27')}');` : fallbackPreview);
+              const lineTotal = (displayItem?.price || 0) * (displayItem?.quantity || 0);
+              const title = displayItem?.name || item.title || item.product_title || 'Item';
+              const optionsMarkup = renderCheckoutOptionsMarkup(commerce, displayItem?.options || []);
               return `
                 <article class="cart-item" data-checkout-item="${escapeHtml(item.id)}">
                   <button type="button" class="checkout-remove" data-checkout-remove="${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(title)}">×</button>
@@ -873,8 +862,7 @@
                       <div class="checkout-item-meta">
                         <span class="checkout-item-quantity">Quantity <span>${item.quantity}</span></span>
                       </div>
-                      ${colorMarkup}
-                      ${designMarkup}
+                      ${optionsMarkup}
                     </div>
                   </div>
                   <div class="checkout-line-total">${formatMoney(lineTotal, cart.currency_code)}</div>
@@ -1495,37 +1483,11 @@
             const previewStyle = item.previewStyle && item.previewStyle.trim() ? item.previewStyle : fallbackPreview;
             const safePreview = previewStyle.replace(/"/g, '&quot;');
             const lineTotal = item.price * item.quantity;
-            const optionsMarkup = item.options && item.options.length
-              ? `<ul class="checkout-item-options">${item.options.map(opt => {
-                  const swatchGlyph = opt.swatchGlyph || '';
-                  const normalizedLabel = (opt.label || '').toLowerCase();
-                  const isColor = normalizedLabel === 'color';
-                  const isAccessory = normalizedLabel === 'accessory';
-                  const isAttachment = normalizedLabel === 'attachment';
-                  const baseSwatchStyle = (opt.swatchStyle || '').trim();
-                  const hasSwatch = !!baseSwatchStyle;
-                  const swatch = hasSwatch
-                    ? `<span class="checkout-swatch" style="${escapeHtml(baseSwatchStyle.replace(/\"/g, '&quot;'))}; width:1rem; height:1rem; border-radius:9999px; display:inline-flex; align-items:center; justify-content:center; border:1px solid rgba(15,23,42,0.25); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6); margin-left:0.3rem; vertical-align:middle; transform: translateY(-1px);">${escapeHtml(swatchGlyph)}</span>`
-                    : '';
-                  if (isColor) {
-                    return `<li><span class="label">Color:</span>${swatch} <span class="value">${escapeHtml(opt.value || '')}</span></li>`;
-                  }
-                  if (isAccessory) {
-                    return `<li><span class="label">Accessory:</span>${swatch} <span class="value">${escapeHtml(opt.value || '')}</span></li>`;
-                  }
-                  if (isAttachment) {
-                    const badge = opt.attachmentData ? ' (attached)' : '';
-                    const viewLink = opt.attachmentData
-                      ? `<a href="${escapeHtml(opt.attachmentData.replace(/\"/g, '&quot;'))}" target="_blank" rel="noopener">View</a>`
-                      : '';
-                    return `<li><span class="label">Attachment:</span> <span class="value">${escapeHtml(opt.value || 'Attached file')}${badge} ${viewLink}</span></li>`;
-                  }
-                  return `<li><span class="label">${escapeHtml(opt.label)}:</span> <span class="value">${escapeHtml(opt.value)}</span>${swatch}</li>`;
-                }).join('')}</ul>`
-              : '';
-            const notesMarkup = item.notes
-              ? `<div class="checkout-item-notes"><span class="label">Notes:</span> <span class="value">${escapeHtml(item.notes)}</span></div>`
-              : '';
+            const optionRows = Array.isArray(item.options) ? [...item.options] : [];
+            if (item.notes) {
+              optionRows.push({ label: 'Notes', value: item.notes });
+            }
+            const optionsMarkup = renderCheckoutOptionsMarkup(commerce, optionRows);
             return `
             <article class="cart-item" data-checkout-item="${escapeHtml(item.id)}">
               <button type="button" class="checkout-remove" data-checkout-remove="${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(item.name)}">×</button>
@@ -1537,7 +1499,6 @@
                     <span class="checkout-item-quantity">Quantity <span>${item.quantity}</span></span>
                   </div>
                   ${optionsMarkup}
-                  ${notesMarkup}
                 </div>
               </div>
               <div class="checkout-line-total">${formatCurrency(lineTotal)}</div>

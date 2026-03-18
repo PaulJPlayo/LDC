@@ -2381,17 +2381,16 @@
       metadata.design_attachment_key ||
       metadata.designAttachmentKey ||
       '';
-    const hasDesign =
-      Boolean(designColorLabel || designAccessoryLabel || designWrapLabel || designNotes || designAttachmentName);
+    const hasDesignColorOverride = Boolean(String(designColorLabel || '').trim());
     const options = [];
-    if (optionLabel && !hasDesign) {
+    if (optionLabel && !hasDesignColorOverride) {
       options.push({
         label: metadataType === 'accessory' ? 'Accessory' : 'Color',
         value: optionLabel,
         swatchStyle: metadataStyle,
         swatchGlyph: metadataGlyph
       });
-    } else if (candidateVariant && candidateVariant !== displayTitle) {
+    } else if (candidateVariant && candidateVariant !== displayTitle && !hasDesignColorOverride) {
       options.push({ label: 'Variant', value: candidateVariant });
     }
     if (designColorLabel) {
@@ -2433,6 +2432,42 @@
       quantity: Math.max(1, Number(item.quantity || 1)),
       previewStyle,
       options
+    };
+  };
+
+  const normalizeDisplayOption = option => {
+    if (!option || (!option.label && !option.value)) return null;
+    const label = String(option.label ?? '').trim();
+    const value = String(option.value ?? '').trim();
+    const normalizedLabel = label.toLowerCase();
+    const kind =
+      normalizedLabel === 'color'
+        ? 'color'
+        : normalizedLabel === 'accessory'
+          ? 'accessory'
+          : normalizedLabel === 'attachment'
+            ? 'attachment'
+            : 'text';
+    const showSwatch = kind === 'color' || kind === 'accessory';
+    const swatchGlyph = typeof option.swatchGlyph === 'string' ? option.swatchGlyph : '';
+    const isTextSwatch = /[A-Za-z]/.test(swatchGlyph);
+    const swatchStyle = showSwatch
+      ? ((typeof option.swatchStyle === 'string' && option.swatchStyle.trim())
+          ? option.swatchStyle.trim()
+          : (kind === 'accessory' ? 'background:#d8b4fe;' : 'background:#e2e8f0;'))
+      : '';
+    return {
+      ...option,
+      label,
+      value,
+      normalizedLabel,
+      kind,
+      showSwatch,
+      swatchGlyph,
+      swatchStyle,
+      isTextSwatch,
+      attachmentData: typeof option.attachmentData === 'string' ? option.attachmentData : '',
+      attachmentKey: typeof option.attachmentKey === 'string' ? option.attachmentKey : ''
     };
   };
 
@@ -2988,7 +3023,9 @@
     getCurrencyCode,
     getCurrencyDivisor,
     formatMoneyFromMinor,
-    getLineItemDisplayImage
+    getLineItemDisplayImage,
+    formatLineItemForDisplay: formatLegacyItem,
+    normalizeDisplayOption
   };
 
   const initStorefront = () => {
