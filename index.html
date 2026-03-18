@@ -6198,6 +6198,9 @@
           designBasePrice = resolvedBasePrice;
           lastPrice = { amount: resolvedBasePrice };
           selectedColorPrice = null;
+          updateDesignTotal();
+        } else {
+          updateDesignTotal();
         }
       };
 
@@ -6451,10 +6454,84 @@
         });
       };
 
+      const getDesignSelectionRoot = () =>
+        document.getElementById('section-customization') ||
+        document.querySelector('.design-feature') ||
+        document;
+      const formatDesignSelectionLabel = raw => {
+        const cleanedLabel = normalizeSwatchLabel(raw);
+        if (!cleanedLabel) return '';
+        return cleanedLabel.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1));
+      };
+      const syncDesignSelectionTarget = (target, { style = '', glyph = '', label = '', placeholder = '', selected = false } = {}) => {
+        if (!target) return;
+        const swatchNode = target.querySelector('.design-selection-swatch');
+        const labelNode = target.querySelector('.design-selection-label');
+        if (swatchNode) {
+          if (selected && style) {
+            swatchNode.setAttribute('style', style);
+            swatchNode.textContent = glyph;
+          } else {
+            swatchNode.removeAttribute('style');
+            swatchNode.textContent = '';
+          }
+        }
+        if (labelNode) {
+          labelNode.textContent = selected ? (label || placeholder) : placeholder;
+        }
+        target.classList.toggle('has-selection', Boolean(selected));
+      };
+      const applyColorSelectionState = (swatch, target, placeholder = 'Color selected') => {
+        if (!swatch || !target) return;
+        const style = swatch.getAttribute('style') || '';
+        const glyph = (swatch.textContent || '').trim();
+        const label = formatDesignSelectionLabel(swatch.getAttribute('aria-label') || placeholder);
+        syncDesignSelectionTarget(target, { style, glyph, label, placeholder, selected: true });
+        activateSwatchVisual(swatch);
+        syncMobileSelectorToActiveSwatch('color');
+        selectedColorLabel = label;
+        selectedColorStyle = style;
+        selectedColorGlyph = glyph;
+        const priceAttr = swatch.getAttribute('data-price');
+        const parsedPrice = priceAttr != null && priceAttr !== '' ? parseFloat(priceAttr) : NaN;
+        selectedColorPrice = Number.isFinite(parsedPrice) ? parsedPrice : null;
+        const variantId = swatch.getAttribute('data-variant-id') || '';
+        selectedDesignVariantId = variantId || selectedDesignBaseVariantId || selectedDesignVariantId;
+        updateColorPreview(style, label, glyph);
+        const imageSrc = swatch.getAttribute('data-image-src');
+        if (imageSrc) {
+          lastImageState = {
+            src: imageSrc,
+            alt: swatch.getAttribute('data-image-alt') || label || 'Custom design preview'
+          };
+          showImagePreview();
+        }
+        updateDesignTotal();
+      };
+      const clearColorSelectionState = (target, placeholder = 'Select a color') => {
+        if (!target) return;
+        syncDesignSelectionTarget(target, { placeholder, selected: false });
+        document.querySelectorAll('[data-design-colors-source] .swatch.is-active').forEach(el => {
+          el.classList.remove('is-active');
+        });
+        selectedColorLabel = '';
+        selectedColorStyle = '';
+        selectedColorGlyph = '';
+        selectedColorPrice = null;
+        selectedDesignVariantId = selectedDesignBaseVariantId || '';
+        updateColorPreview('', '');
+        renderMobileSelector('color');
+        updateDesignTotal();
+      };
+      window.LDCGetDesignSelectionRoot = getDesignSelectionRoot;
+      window.LDCApplyColorSelectionState = applyColorSelectionState;
+      window.LDCClearColorSelectionState = clearColorSelectionState;
+
       const initDesignSelections = () => {
-        const colorTarget = document.querySelector('[data-selected-color]');
-        const accessoryTarget = document.querySelector('[data-selected-accessory]');
-        const wrapTarget = document.querySelector('[data-selected-wrap]');
+        const designSelectionRoot = getDesignSelectionRoot();
+        const colorTarget = designSelectionRoot.querySelector('[data-selected-color]');
+        const accessoryTarget = designSelectionRoot.querySelector('[data-selected-accessory]');
+        const wrapTarget = designSelectionRoot.querySelector('[data-selected-wrap]');
         if (!colorTarget && !accessoryTarget && !wrapTarget) return;
 
         const cleanLabel = raw => {
@@ -6503,24 +6580,7 @@
             updateAccessoryPreview(style, label, text, selectedAccessoryImageSrc, selectedAccessoryImageAlt);
             updateDesignTotal();
           } else if (target === colorTarget) {
-            selectedColorLabel = label;
-            selectedColorStyle = style;
-            selectedColorGlyph = text;
-            const priceAttr = swatch.getAttribute('data-price');
-            const parsedPrice = priceAttr != null && priceAttr !== '' ? parseFloat(priceAttr) : NaN;
-            selectedColorPrice = Number.isFinite(parsedPrice) ? parsedPrice : null;
-            const variantId = swatch.getAttribute('data-variant-id') || '';
-            selectedDesignVariantId = variantId || selectedDesignBaseVariantId || selectedDesignVariantId;
-            updateColorPreview(style, label, text);
-            const imageSrc = swatch.getAttribute('data-image-src');
-            if (imageSrc) {
-              lastImageState = {
-                src: imageSrc,
-                alt: swatch.getAttribute('data-image-alt') || label || 'Custom design preview'
-              };
-              showImagePreview();
-            }
-            updateDesignTotal();
+            applyColorSelectionState(swatch, target, placeholder);
           }
         };
 
@@ -6546,20 +6606,13 @@
             updateAccessoryPreview('', '');
             renderMobileSelector('accessory');
           } else if (target === colorTarget) {
-            selectedColorLabel = '';
-            selectedColorStyle = '';
-            selectedColorGlyph = '';
-            selectedColorPrice = null;
-            selectedDesignVariantId = selectedDesignBaseVariantId || '';
-            updateColorPreview('', '');
-            renderMobileSelector('color');
-            updateDesignTotal();
+            clearColorSelectionState(target, placeholder);
           }
         };
 
         const bindSwatches = (selector, target, placeholder) => {
           if (!target) return;
-          document.querySelectorAll(selector).forEach(swatch => {
+          designSelectionRoot.querySelectorAll(selector).forEach(swatch => {
             if (swatch.dataset.selectionInit) return;
             swatch.dataset.selectionInit = 'true';
             swatch.setAttribute('role', 'button');
@@ -6659,7 +6712,7 @@
         renderAllMobileSelectors();
 
         const bindClear = (buttonSelector, target, placeholder, onClear) => {
-          const button = document.querySelector(buttonSelector);
+          const button = designSelectionRoot.querySelector(buttonSelector);
           if (!button || button.dataset.designClearInit) return;
           button.dataset.designClearInit = 'true';
           button.addEventListener('click', () => {
@@ -7010,12 +7063,17 @@
 
       // Safety net: rebind homepage design swatches so the selection bubbles always update.
       (() => {
-        const colorTarget = document.querySelector('[data-selected-color]');
-        const accessoryTarget = document.querySelector('[data-selected-accessory]');
+        const designSection = window.LDCGetDesignSelectionRoot?.() || document;
+        const colorTarget = designSection.querySelector('[data-selected-color]');
+        const accessoryTarget = designSection.querySelector('[data-selected-accessory]');
         if (!colorTarget && !accessoryTarget) return;
 
         const applySelection = (target, swatch, placeholder) => {
           if (!target || !swatch) return;
+          if (target === colorTarget) {
+            window.LDCApplyColorSelectionState?.(swatch, target, placeholder);
+            return;
+          }
           const swatchNode = target.querySelector('.design-selection-swatch');
           const labelNode = target.querySelector('.design-selection-label');
           const rawLabel = swatch.getAttribute('aria-label') || placeholder;
@@ -7074,7 +7132,7 @@
 
         const bind = (selector, target, placeholder) => {
           if (!target) return;
-          document.querySelectorAll(selector).forEach(swatch => {
+          designSection.querySelectorAll(selector).forEach(swatch => {
             if (swatch.dataset.homeSelectionInit) return;
             swatch.dataset.homeSelectionInit = 'true';
             swatch.addEventListener('mousedown', event => {
@@ -7122,6 +7180,10 @@
 
         const applySelection = (target, swatch, placeholder) => {
           if (!target || !swatch) return;
+          if (target === colorTarget) {
+            window.LDCApplyColorSelectionState?.(swatch, target, placeholder);
+            return;
+          }
           const swatchNode = target.querySelector('.design-selection-swatch');
           const labelNode = target.querySelector('.design-selection-label');
           const rawLabel = swatch.getAttribute('aria-label') || placeholder;
@@ -7176,8 +7238,7 @@
             }
             if (typeof updateDesignTotal === 'function') updateDesignTotal();
           }
-        }
-      };
+        };
 
         const clearTarget = (target, placeholder) => {
           if (!target) return;
@@ -7201,14 +7262,7 @@
             updateAccessoryPreview('', '');
             renderMobileSelector('accessory');
           } else if (target === colorTarget) {
-            selectedColorLabel = '';
-            selectedColorStyle = '';
-            selectedColorGlyph = '';
-            selectedColorPrice = null;
-            selectedDesignVariantId = selectedDesignBaseVariantId || '';
-            updateColorPreview('', '');
-            if (typeof updateDesignTotal === 'function') updateDesignTotal();
-            renderMobileSelector('color');
+            window.LDCClearColorSelectionState?.(target, placeholder);
           }
         };
 
