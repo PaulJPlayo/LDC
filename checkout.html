@@ -843,12 +843,17 @@
               return;
             }
 
-            itemsContainer.innerHTML = items.map(item => {
-              const displayItem = formatCheckoutDisplayItem(commerce, item, cart.currency_code);
+            const displayItems = items.map(item => ({
+              item,
+              displayItem: formatCheckoutDisplayItem(commerce, item, cart.currency_code)
+            }));
+
+            itemsContainer.innerHTML = displayItems.map(({ item, displayItem }) => {
               const lineImage = getCheckoutItemImage(item);
               const previewStyle = displayItem?.previewStyle?.trim()
                 ? displayItem.previewStyle.trim()
                 : (lineImage ? `background-image: url('${lineImage.replace(/'/g, '%27')}');` : fallbackPreview);
+              const safePreviewStyle = escapeHtml(previewStyle);
               const lineTotal = (displayItem?.price || 0) * (displayItem?.quantity || 0);
               const title = displayItem?.name || item.title || item.product_title || 'Item';
               const optionsMarkup = renderCheckoutOptionsMarkup(commerce, displayItem?.options || []);
@@ -856,7 +861,7 @@
                 <article class="cart-item" data-checkout-item="${escapeHtml(item.id)}">
                   <button type="button" class="checkout-remove" data-checkout-remove="${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(title)}">×</button>
                   <div class="cart-item-main">
-                    <div class="cart-item-preview" style="${previewStyle}"></div>
+                    <div class="cart-item-preview" style="${safePreviewStyle}"></div>
                     <div class="cart-item-info">
                       <div class="cart-item-name">${escapeHtml(title)}</div>
                       <div class="checkout-item-meta">
@@ -871,11 +876,17 @@
             }).join('');
 
             const itemCount = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
-            if (subtotalEl) subtotalEl.textContent = formatMoney(cart.subtotal, cart.currency_code);
+            const displaySubtotal = displayItems.reduce(
+              (sum, entry) => sum + ((entry.displayItem?.price || 0) * (entry.displayItem?.quantity || 0)),
+              0
+            );
+            const shippingAmount = Number(cart.shipping_total || 0);
+            const displayTotal = displaySubtotal + (Number.isFinite(shippingAmount) ? shippingAmount : 0);
+            if (subtotalEl) subtotalEl.textContent = formatMoney(displaySubtotal, cart.currency_code);
             if (shippingEl) {
               shippingEl.textContent = formatShippingTotalDisplay(cart.shipping_total, cart.currency_code);
             }
-            if (totalEl) totalEl.textContent = formatMoney(cart.total ?? cart.subtotal, cart.currency_code);
+            if (totalEl) totalEl.textContent = formatMoney(displayTotal, cart.currency_code);
             if (countEl) countEl.textContent = `${itemCount} ${itemCount === 1 ? 'item' : 'items'}`;
             updateActionState();
 
