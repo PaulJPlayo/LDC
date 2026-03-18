@@ -566,11 +566,11 @@
       }
       .design-preview-artwork {
         display: block;
-        width: auto;
-        height: auto;
-        max-width: calc(100% - 0.7rem);
-        max-height: calc(100% - 0.7rem);
-        object-fit: contain;
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        max-height: none;
+        object-fit: cover;
         object-position: center;
         pointer-events: none;
         position: relative;
@@ -5471,7 +5471,7 @@
         const swatches = getDesignSourceSwatches(config.track);
         if (!swatches.length) return;
         const sourceSwatch = swatches[clampMobileSelectorIndex(config, config.index)];
-        sourceSwatch?.click();
+        sourceSwatch?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
       };
       const bindMobileSelector = key => {
         const config = mobileDesignSelectors[key];
