@@ -189,6 +189,17 @@
         color: rgba(255, 255, 255, 0.9);
         font-size: 0.9rem;
       }
+      .checkout-item-options li {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        flex-wrap: wrap;
+      }
+      .checkout-item-options li.is-attachment {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.15rem;
+      }
       .checkout-item-color {
         display: flex;
         align-items: center;
@@ -220,6 +231,21 @@
         letter-spacing: 0.05em;
         text-transform: uppercase;
         margin-right: 0.35rem;
+      }
+      .checkout-item-options .value {
+        word-break: break-word;
+      }
+      .checkout-attachment-body {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+      }
+      .checkout-attachment-link {
+        color: #ffffff;
+        font-weight: 700;
+        text-decoration: underline;
+        text-underline-offset: 0.16em;
       }
       .checkout-item-notes {
         margin-top: 0.35rem;
@@ -607,14 +633,13 @@
           if (!normalizedOptions.length) return '';
           return `<ul class="checkout-item-options">${normalizedOptions.map(opt => {
             const swatch = opt.showSwatch && opt.swatchStyle
-              ? `<span class="checkout-item-swatch${opt.isTextSwatch ? ' is-text' : ''}" style="${escapeCheckoutHtml(opt.swatchStyle.replace(/\"/g, '&quot;'))};">${escapeCheckoutHtml(opt.swatchGlyph || '')}</span>`
+              ? `<span class="checkout-item-swatch${opt.isTextSwatch ? ' is-text' : ''}" style="${opt.swatchStyle.replace(/\"/g, '&quot;')};">${escapeCheckoutHtml(opt.swatchGlyph || '')}</span>`
               : '';
             if (opt.kind === 'attachment') {
-              const badge = opt.attachmentData ? ' (attached)' : '';
               const viewLink = opt.attachmentData
                 ? `<a href="${escapeCheckoutHtml(String(opt.attachmentData).replace(/\"/g, '&quot;'))}" target="_blank" rel="noopener" class="checkout-attachment-link">View</a>`
                 : '';
-              return `<li><span class="label">Attachment:</span> <span class="value">${escapeCheckoutHtml(opt.value || 'Attached file')}${badge}</span> ${viewLink}</li>`;
+              return `<li class="is-attachment"><span class="label">Attachment:</span><span class="checkout-attachment-body"><span class="value">${escapeCheckoutHtml(opt.value || 'Attached file')}</span>${viewLink}</span></li>`;
             }
             return `<li><span class="label">${escapeCheckoutHtml(opt.label)}:</span>${swatch ? ` ${swatch}` : ''} <span class="value">${escapeCheckoutHtml(opt.value || '')}</span></li>`;
           }).join('')}</ul>`;
