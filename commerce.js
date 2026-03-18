@@ -685,21 +685,35 @@
     return first?.url || first?.src || '';
   };
 
+  const getLineItemMetadataPreviewUrl = metadata =>
+    metadata?.design_preview_url ||
+    metadata?.designPreviewUrl ||
+    metadata?.preview_url ||
+    metadata?.previewUrl ||
+    metadata?.preview_image ||
+    metadata?.previewImage ||
+    '';
+
+  const hasDesignLineItemMetadata = metadata =>
+    metadata?.design_mode === 'custom' ||
+    metadata?.design_total_price != null ||
+    metadata?.designTotalPrice != null ||
+    metadata?.design_base_price != null ||
+    metadata?.designBasePrice != null ||
+    metadata?.design_addon_price != null ||
+    metadata?.designAddonPrice != null;
+
   const getLineItemDisplayImage = item => {
     if (!item || typeof item !== 'object') return '';
     const metadata = normalizeMetadata(item.metadata);
+    const metadataPreview = getLineItemMetadataPreviewUrl(metadata);
+    if (hasDesignLineItemMetadata(metadata) && metadataPreview) {
+      return resolveAssetUrl(metadataPreview);
+    }
     const variantThumbnail = item?.variant?.thumbnail || '';
     if (variantThumbnail) {
       return resolveAssetUrl(variantThumbnail);
     }
-    const metadataPreview =
-      metadata?.design_preview_url ||
-      metadata?.designPreviewUrl ||
-      metadata?.preview_url ||
-      metadata?.previewUrl ||
-      metadata?.preview_image ||
-      metadata?.previewImage ||
-      '';
     if (metadataPreview) {
       return resolveAssetUrl(metadataPreview);
     }
@@ -2278,6 +2292,22 @@
       ? `background-color: #ffffff; background-image: url("${src}"); background-size: cover; background-position: center; background-repeat: no-repeat;`
       : '';
 
+  const getLineItemDisplayPreviewStyle = item => {
+    if (!item || typeof item !== 'object') return '';
+    const metadata = normalizeMetadata(item.metadata);
+    const displayImage = getLineItemDisplayImage(item);
+    if (displayImage) {
+      return buildPreviewStyle(displayImage);
+    }
+    return (
+      metadata?.design_preview_style ||
+      metadata?.designPreviewStyle ||
+      metadata?.preview_style ||
+      metadata?.previewStyle ||
+      ''
+    );
+  };
+
   const resolveDesignPricing = ({ basePrice = 0, addonPrice = 0, totalPrice = null } = {}) => {
     const normalizedBasePrice = Number(basePrice);
     const normalizedAddonPrice = Number(addonPrice);
@@ -2361,27 +2391,8 @@
     const displayTitle =
       productTitle || lineTitle || variantTitleFromItem || variantTitle || 'Item';
     const metadata = item.metadata || {};
-    const previewUrl =
-      metadata.design_preview_url ||
-      metadata.designPreviewUrl ||
-      metadata.preview_url ||
-      metadata.previewUrl ||
-      metadata.preview_image ||
-      metadata.previewImage ||
-      '';
-    const previewStyle =
-      (previewUrl ? buildPreviewStyle(previewUrl) : '') ||
-      (metadata.design_preview_style || metadata.designPreviewStyle || '') ||
-      (item.thumbnail ? buildPreviewStyle(item.thumbnail) : '') ||
-      (metadata.preview_style || metadata.previewStyle || '');
-    const hasDesignPricing =
-      metadata.design_mode === 'custom' ||
-      metadata.design_total_price != null ||
-      metadata.designTotalPrice != null ||
-      metadata.design_base_price != null ||
-      metadata.designBasePrice != null ||
-      metadata.design_addon_price != null ||
-      metadata.designAddonPrice != null;
+    const previewStyle = getLineItemDisplayPreviewStyle(item);
+    const hasDesignPricing = hasDesignLineItemMetadata(metadata);
     const designPricing = resolveDesignPricing({
       basePrice:
         metadata.design_base_price ??

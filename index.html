@@ -2170,11 +2170,12 @@
         margin-top: 2rem;
       }
       .cart-item {
+        position: relative;
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
         gap: 0.75rem;
-        padding: 1rem;
+        padding: 1rem 2.75rem 1rem 1rem;
         border: 1px solid rgba(255, 255, 255, 0.18);
         border-radius: 1rem;
         background: rgba(255, 255, 255, 0.12);
@@ -2200,6 +2201,7 @@
         display: flex;
         flex-direction: column;
         gap: 0.45rem;
+        min-width: 0;
       }
       .cart-item-name {
         font-weight: 700;
@@ -2229,8 +2231,29 @@
         align-items: center;
         gap: 0.25rem;
       }
+      .cart-item-option.is-attachment {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.15rem;
+      }
       .cart-item-option .label {
         font-weight: 600;
+      }
+      .cart-item-option .value {
+        word-break: break-word;
+      }
+      .cart-attachment-body {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+      }
+      .cart-attachment-link {
+        color: var(--tile-cream-text);
+        font-weight: 700;
+        text-decoration: underline;
+        text-underline-offset: 0.16em;
       }
       .cart-item-swatch {
         width: 1.25rem !important;
@@ -2294,17 +2317,28 @@
         background: rgba(255, 255, 255, 0.3);
       }
       .cart-remove-btn {
+        position: absolute;
+        top: 0.6rem;
+        right: 0.6rem;
         border: none;
-        background: transparent;
+        background: rgba(255, 255, 255, 0.18);
         color: var(--tile-cream-text);
-        font-size: 1.25rem;
+        width: 1.75rem;
+        height: 1.75rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        font-weight: 700;
         line-height: 1;
-        padding: 0.25rem;
         border-radius: 999px;
+        box-shadow: 0 8px 16px rgba(15, 23, 42, 0.25);
+        transition: transform 140ms ease, background 140ms ease, box-shadow 140ms ease;
       }
       .cart-remove-btn:hover {
-        background: rgba(255, 255, 255, 0.22);
+        background: rgba(255, 255, 255, 0.3);
         color: var(--tile-cream-text);
+        transform: translateY(-1px);
       }
       .cart-footer {
         padding: 1.5rem;
@@ -4211,9 +4245,8 @@
                   ? `<span class="cart-item-swatch${opt.isTextSwatch ? ' is-text' : ''}" style="${opt.swatchStyle.replace(/"/g, '&quot;')};">${opt.swatchGlyph || ''}</span>`
                   : '';
                 if (opt.kind === 'attachment') {
-                  const badge = opt.attachmentData ? ' (attached)' : '';
                   const viewLink = opt.attachmentData ? `<a href="${opt.attachmentData.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="cart-attachment-link">View</a>` : '';
-                  return `<span class="cart-item-option"><span class="label">Attachment:</span> <span class="value">${opt.value || 'Attached file'}${badge}</span> ${viewLink}</span>`;
+                  return `<span class="cart-item-option is-attachment"><span class="label">Attachment:</span><span class="cart-attachment-body"><span class="value">${opt.value || 'Attached file'}</span>${viewLink}</span></span>`;
                 }
                 return `<span class="cart-item-option"><span class="label">${opt.label}:</span>${swatch ? `${swatch} ` : ' '}<span class="value">${opt.value}</span></span>`;
               }).join('')}</div>`
