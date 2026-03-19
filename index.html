@@ -2216,38 +2216,49 @@
         text-transform: uppercase;
         color: var(--tile-cream-text);
       }
+      .cart-item-description {
+        font-size: 0.72rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: rgba(255, 247, 237, 0.7);
+        line-height: 1.45;
+      }
       .cart-item-options {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        gap: 0.35rem;
+        gap: 0.3rem;
         font-size: 0.75rem;
         letter-spacing: 0.14em;
         text-transform: uppercase;
         color: var(--tile-cream-text);
+        width: 100%;
       }
       .cart-item-option {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-      }
-      .cart-item-option.is-attachment {
         display: flex;
-        flex-direction: column;
+        flex-wrap: wrap;
         align-items: flex-start;
-        gap: 0.15rem;
+        column-gap: 0.35rem;
+        row-gap: 0.16rem;
+        width: 100%;
       }
       .cart-item-option .label {
         font-weight: 600;
+        flex: 0 0 auto;
       }
-      .cart-item-option .value {
-        word-break: break-word;
-      }
+      .cart-item-option-body,
       .cart-attachment-body {
         display: inline-flex;
         align-items: center;
-        gap: 0.45rem;
+        gap: 0.4rem;
         flex-wrap: wrap;
+        min-width: 0;
+        flex: 1 1 12rem;
+      }
+      .cart-item-option .value {
+        min-width: 0;
+        word-break: break-word;
+        overflow-wrap: anywhere;
       }
       .cart-attachment-link {
         color: var(--tile-cream-text);
@@ -4238,6 +4249,9 @@
           const previewStyle = (item.previewStyle && item.previewStyle.trim()) ? item.previewStyle : fallbackPreview;
           const safePreviewStyle = previewStyle.replace(/"/g, '&quot;');
           const isAccessoryOnly = item.accessoryOnly || /straw toppers/i.test(item.name || '');
+          const descriptionMarkup = item.description
+            ? `<div class="cart-item-description">${item.description}</div>`
+            : '';
           const options = getCartDisplayOptions(item).filter(opt => !(isAccessoryOnly && opt.kind === 'color'));
           const optionsMarkup = options.length
             ? `<div class="cart-item-options">${options.map(opt => {
@@ -4246,9 +4260,9 @@
                   : '';
                 if (opt.kind === 'attachment') {
                   const viewLink = opt.attachmentData ? `<a href="${opt.attachmentData.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="cart-attachment-link">View</a>` : '';
-                  return `<span class="cart-item-option is-attachment"><span class="label">Attachment:</span><span class="cart-attachment-body"><span class="value">${opt.value || 'Attached file'}</span>${viewLink}</span></span>`;
+                  return `<span class="cart-item-option is-attachment"><span class="label">Attachment:</span><span class="cart-item-option-body cart-attachment-body"><span class="value">${opt.value || 'Attached file'}</span>${viewLink}</span></span>`;
                 }
-                return `<span class="cart-item-option"><span class="label">${opt.label}:</span>${swatch ? `${swatch} ` : ' '}<span class="value">${opt.value}</span></span>`;
+                return `<span class="cart-item-option"><span class="label">${opt.label}:</span><span class="cart-item-option-body">${swatch}<span class="value">${opt.value}</span></span></span>`;
               }).join('')}</div>`
             : '';
           return `
@@ -4257,6 +4271,7 @@
               <div class="cart-item-preview" style="${safePreviewStyle}"></div>
               <div class="cart-item-info">
                 <div class="cart-item-name">${item.name}</div>
+                ${descriptionMarkup}
                 <div class="cart-item-price">${formatCurrency(item.price)}</div>
                 ${optionsMarkup}
                 <div class="cart-item-quantity">
@@ -4368,6 +4383,7 @@
       const normalizeProduct = product => {
         if (!product) return null;
         const name = String(product.name ?? '').trim() || 'Product';
+        const description = String(product.description ?? product.subtitle ?? '').trim();
         const accessoryOnly = Boolean(product.accessoryOnly) || /straw toppers/i.test(name);
         const price = Number(product.price ?? 0);
         const id = product.id ? String(product.id) : `${name}|${price}`;
@@ -4385,7 +4401,7 @@
               .filter(opt => opt.label || opt.value)
           : [];
         const notes = typeof product.notes === 'string' ? product.notes : '';
-        return { id, name, price, quantity, previewStyle, options, notes, accessoryOnly };
+        return { id, name, description, price, quantity, previewStyle, options, notes, accessoryOnly };
       };
 
       const cartApi = {
@@ -4428,6 +4444,7 @@
           const existing = cartState.items.find(item => item.id === product.id);
           if (existing) {
             existing.name = product.name;
+            existing.description = product.description || existing.description;
             existing.price = product.price;
             existing.quantity = Math.max(1, existing.quantity + Math.max(1, product.quantity || 1));
             existing.previewStyle = product.previewStyle || existing.previewStyle;
@@ -5174,6 +5191,7 @@
       let selectedColorGlyph = '';
       let selectedWrapLabel = '';
       let selectedDesignName = '';
+      let selectedDesignDescription = '';
       let selectedDesignVariantId = '';
       let selectedDesignBaseVariantId = '';
       let selectedDesignProductKey = '';
@@ -5800,6 +5818,7 @@
       const clearDesignImageSelection = () => {
         lastImageState = null;
         selectedDesignName = '';
+        selectedDesignDescription = '';
         designBasePrice = 0;
         lastPrice = { amount: 0 };
         selectedColorPrice = null;
@@ -6096,6 +6115,7 @@
               alt: parsed.alt || 'Custom design preview',
               price: typeof parsed.price === 'number' ? parsed.price : undefined,
               name: typeof parsed.name === 'string' ? parsed.name : undefined,
+              description: typeof parsed.description === 'string' ? parsed.description : undefined,
               swatches: swatches.length ? swatches : undefined,
               productKey: parsed.productKey || '',
               productHandle: parsed.productHandle || '',
@@ -6119,6 +6139,7 @@
         if (selection.name) {
           selectedDesignName = selection.name;
         }
+        selectedDesignDescription = selection.description || '';
         if (selection.variantId) {
           selectedDesignVariantId = selection.variantId;
           selectedDesignBaseVariantId = selection.variantId;
@@ -6219,6 +6240,7 @@
 
         if (!stored) return;
         if (stored.name) selectedDesignName = stored.name;
+        selectedDesignDescription = stored.description || '';
         if (selectedDesignProductKeyValue) selectedDesignProductKey = selectedDesignProductKeyValue;
         if (stored.productHandle) selectedDesignProductHandle = stored.productHandle;
         if (stored.productId) selectedDesignProductId = stored.productId;
@@ -6399,6 +6421,24 @@
         return { card, key, handle, id };
       };
 
+      const extractDesignSelectionDescription = card => {
+        if (!card) return '';
+        const direct =
+          card.querySelector('[data-product-description]') ||
+          card.querySelector('.product-description') ||
+          card.querySelector('.product-details') ||
+          card.querySelector('.tile-description') ||
+          card.querySelector('.arrival-meta') ||
+          null;
+        const directText = direct?.textContent?.trim();
+        if (directText) return directText;
+        const meta = card.querySelector('.product-meta');
+        const metaText = (meta?.querySelector('span') || meta)?.textContent?.trim();
+        if (metaText) return metaText;
+        const candidates = Array.from(card.querySelectorAll('div.text-xs.text-slate-600'));
+        return candidates.find(el => !el.closest('.rating'))?.textContent?.trim() || '';
+      };
+
       const wireDesignButtons = () => {
         const extractPrice = card => {
           if (!card) return null;
@@ -6431,6 +6471,11 @@
             if (nameNode) {
               selection.name = nameNode.textContent.trim();
               selectedDesignName = selection.name;
+            }
+            const description = extractDesignSelectionDescription(card);
+            selectedDesignDescription = description || '';
+            if (description) {
+              selection.description = description;
             }
             if (key) selection.productKey = key;
             if (handle) selection.productHandle = handle;
@@ -6827,6 +6872,7 @@
         return {
           id: idOverride || `design-${Date.now()}`,
           name: cartName,
+          description: selectedDesignDescription || '',
           price: pricing.totalPrice,
           quantity: 1,
           previewStyle,
@@ -6866,6 +6912,9 @@
         try {
           storedSelection = JSON.parse(localStorage.getItem(DESIGN_SELECTION_KEY) || 'null');
         } catch {}
+        const designDescription =
+          selectedDesignDescription ||
+          (typeof storedSelection?.description === 'string' ? storedSelection.description.trim() : '');
         const metadata = {
           design_mode: 'custom',
           design_preview_url: previewSrc || undefined,
@@ -6876,6 +6925,8 @@
           design_product_key: selectedDesignProductKey || storedSelection?.productKey || undefined,
           design_product_handle: selectedDesignProductHandle || storedSelection?.productHandle || undefined,
           design_product_id: selectedDesignProductId || storedSelection?.productId || undefined,
+          design_product_description: designDescription || undefined,
+          product_description: designDescription || undefined,
           design_variant_id: variantIdOverride || selectedDesignVariantId || storedSelection?.variantId || undefined,
           design_base_price: pricing.basePrice || undefined,
           design_addon_price: pricing.addonPrice || undefined,
