@@ -161,13 +161,6 @@
         text-transform: uppercase;
         color: #ffffff;
       }
-      .checkout-item-description {
-        font-size: 0.76rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        line-height: 1.45;
-        color: rgba(255, 255, 255, 0.68);
-      }
       .checkout-item-meta {
         display: flex;
         flex-wrap: wrap;
@@ -242,6 +235,12 @@
         gap: 0.4rem;
         flex-wrap: wrap;
         min-width: 0;
+      }
+      .checkout-item-options li.is-icon-row .checkout-item-option-body {
+        flex: 0 1 auto;
+      }
+      .checkout-item-options li.is-text-row .checkout-item-option-body,
+      .checkout-item-options li.is-attachment .checkout-item-option-body {
         flex: 1 1 12rem;
       }
       .checkout-item-options .value {
@@ -634,12 +633,26 @@
           };
         };
 
+        const getCheckoutDisplayRows = item => {
+          const rows = Array.isArray(item?.options) ? [...item.options] : [];
+          if (item?.description) {
+            rows.unshift({ label: 'Description', value: item.description });
+          }
+          if (item?.notes) {
+            rows.push({ label: 'Notes', value: item.notes });
+          }
+          return rows;
+        };
+
         const renderCheckoutOptionsMarkup = (commerce, options) => {
           const normalizedOptions = Array.isArray(options)
             ? options.map(option => normalizeCheckoutDisplayOption(commerce, option)).filter(Boolean)
             : [];
           if (!normalizedOptions.length) return '';
           return `<ul class="checkout-item-options">${normalizedOptions.map(opt => {
+            const rowClass = opt.kind === 'attachment'
+              ? 'is-attachment'
+              : (opt.kind === 'color' || opt.kind === 'accessory' ? 'is-icon-row' : 'is-text-row');
             const swatch = opt.showSwatch && opt.swatchStyle
               ? `<span class="checkout-item-swatch${opt.isTextSwatch ? ' is-text' : ''}" style="${opt.swatchStyle.replace(/\"/g, '&quot;')};">${escapeCheckoutHtml(opt.swatchGlyph || '')}</span>`
               : '';
@@ -647,9 +660,9 @@
               const viewLink = opt.attachmentData
                 ? `<a href="${escapeCheckoutHtml(String(opt.attachmentData).replace(/\"/g, '&quot;'))}" target="_blank" rel="noopener" class="checkout-attachment-link">View</a>`
                 : '';
-              return `<li class="is-attachment"><span class="label">Attachment:</span><span class="checkout-item-option-body checkout-attachment-body"><span class="value">${escapeCheckoutHtml(opt.value || 'Attached file')}</span>${viewLink}</span></li>`;
+              return `<li class="${rowClass}"><span class="label">Attachment:</span><span class="checkout-item-option-body checkout-attachment-body"><span class="value">${escapeCheckoutHtml(opt.value || 'Attached file')}</span>${viewLink}</span></li>`;
             }
-            return `<li><span class="label">${escapeCheckoutHtml(opt.label)}:</span><span class="checkout-item-option-body">${swatch}<span class="value">${escapeCheckoutHtml(opt.value || '')}</span></span></li>`;
+            return `<li class="${rowClass}"><span class="label">${escapeCheckoutHtml(opt.label)}:</span><span class="checkout-item-option-body">${swatch}<span class="value">${escapeCheckoutHtml(opt.value || '')}</span></span></li>`;
           }).join('')}</ul>`;
         };
 
@@ -890,10 +903,7 @@
               const safePreviewStyle = escapeHtml(previewStyle);
               const lineTotal = (displayItem?.price || 0) * (displayItem?.quantity || 0);
               const title = displayItem?.name || item.title || item.product_title || 'Item';
-              const descriptionMarkup = displayItem?.description
-                ? `<div class="checkout-item-description">${escapeHtml(displayItem.description)}</div>`
-                : '';
-              const optionsMarkup = renderCheckoutOptionsMarkup(commerce, displayItem?.options || []);
+              const optionsMarkup = renderCheckoutOptionsMarkup(commerce, getCheckoutDisplayRows(displayItem));
               return `
                 <article class="cart-item" data-checkout-item="${escapeHtml(item.id)}">
                   <button type="button" class="checkout-remove" data-checkout-remove="${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(title)}">×</button>
@@ -901,7 +911,6 @@
                     <div class="cart-item-preview" style="${safePreviewStyle}"></div>
                     <div class="cart-item-info">
                       <div class="cart-item-name">${escapeHtml(title)}</div>
-                      ${descriptionMarkup}
                       <div class="checkout-item-meta">
                         <span class="checkout-item-quantity">Quantity <span>${item.quantity}</span></span>
                       </div>
@@ -1535,14 +1544,7 @@
             const previewStyle = item.previewStyle && item.previewStyle.trim() ? item.previewStyle : fallbackPreview;
             const safePreview = previewStyle.replace(/"/g, '&quot;');
             const lineTotal = item.price * item.quantity;
-            const descriptionMarkup = item.description
-              ? `<div class="checkout-item-description">${escapeHtml(item.description)}</div>`
-              : '';
-            const optionRows = Array.isArray(item.options) ? [...item.options] : [];
-            if (item.notes) {
-              optionRows.push({ label: 'Notes', value: item.notes });
-            }
-            const optionsMarkup = renderCheckoutOptionsMarkup(commerce, optionRows);
+            const optionsMarkup = renderCheckoutOptionsMarkup(commerce, getCheckoutDisplayRows(item));
             return `
             <article class="cart-item" data-checkout-item="${escapeHtml(item.id)}">
               <button type="button" class="checkout-remove" data-checkout-remove="${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(item.name)}">×</button>
@@ -1550,7 +1552,6 @@
                 <div class="cart-item-preview" style="${safePreview}"></div>
                 <div class="cart-item-info">
                   <div class="cart-item-name">${escapeHtml(item.name)}</div>
-                  ${descriptionMarkup}
                   <div class="checkout-item-meta">
                     <span class="checkout-item-quantity">Quantity <span>${item.quantity}</span></span>
                   </div>
