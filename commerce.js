@@ -2407,6 +2407,18 @@
     if (description) {
       metadata.product_description = description;
     }
+    const selectedColorLabel = cleanVariantLabel(card?.dataset?.selectedColor || '');
+    if (selectedColorLabel) {
+      metadata.selected_color_label = selectedColorLabel;
+      metadata.selected_color_style = card?.dataset?.selectedColorStyle || '';
+      metadata.selected_color_glyph = card?.dataset?.selectedColorGlyph || '';
+    }
+    const selectedAccessoryLabel = cleanVariantLabel(card?.dataset?.selectedAccessory || '');
+    if (selectedAccessoryLabel) {
+      metadata.selected_accessory_label = selectedAccessoryLabel;
+      metadata.selected_accessory_style = card?.dataset?.selectedAccessoryStyle || '';
+      metadata.selected_accessory_glyph = card?.dataset?.selectedAccessoryGlyph || '';
+    }
     if (!metadata.preview_url) {
       const src = extractImageFromCard(card);
       if (src) {
@@ -2488,6 +2500,30 @@
       }
     }
     const optionLabel = metadataLabel || derivedLabel;
+    const standardColorLabel =
+      metadata.selected_color_label ||
+      metadata.selectedColorLabel ||
+      '';
+    const standardColorStyle =
+      metadata.selected_color_style ||
+      metadata.selectedColorStyle ||
+      '';
+    const standardColorGlyph =
+      metadata.selected_color_glyph ||
+      metadata.selectedColorGlyph ||
+      '';
+    const standardAccessoryLabel =
+      metadata.selected_accessory_label ||
+      metadata.selectedAccessoryLabel ||
+      '';
+    const standardAccessoryStyle =
+      metadata.selected_accessory_style ||
+      metadata.selectedAccessoryStyle ||
+      '';
+    const standardAccessoryGlyph =
+      metadata.selected_accessory_glyph ||
+      metadata.selectedAccessoryGlyph ||
+      '';
     const designColorLabel =
       metadata.design_color_label ||
       metadata.designColorLabel ||
@@ -2543,8 +2579,13 @@
       metadata.designAttachmentKey ||
       '';
     const hasDesignColorOverride = Boolean(String(designColorLabel || '').trim());
+    const hasStandardColorOverride = Boolean(String(standardColorLabel || '').trim());
+    const hasStandardAccessoryOverride = Boolean(String(standardAccessoryLabel || '').trim());
     const options = [];
-    if (optionLabel && !hasDesignColorOverride) {
+    const optionDuplicatesExplicit =
+      (metadataType === 'accessory' && hasStandardAccessoryOverride) ||
+      (metadataType !== 'accessory' && hasStandardColorOverride);
+    if (optionLabel && !hasDesignColorOverride && !optionDuplicatesExplicit) {
       options.push({
         label: metadataType === 'accessory' ? 'Accessory' : 'Color',
         value: optionLabel,
@@ -2553,6 +2594,22 @@
       });
     } else if (candidateVariant && candidateVariant !== displayTitle && !hasDesignColorOverride) {
       options.push({ label: 'Variant', value: candidateVariant });
+    }
+    if (standardColorLabel) {
+      options.push({
+        label: 'Color',
+        value: standardColorLabel,
+        swatchStyle: standardColorStyle,
+        swatchGlyph: standardColorGlyph
+      });
+    }
+    if (standardAccessoryLabel) {
+      options.push({
+        label: 'Accessory',
+        value: standardAccessoryLabel,
+        swatchStyle: standardAccessoryStyle,
+        swatchGlyph: standardAccessoryGlyph
+      });
     }
     if (designColorLabel) {
       options.push({

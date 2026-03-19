@@ -2216,13 +2216,6 @@
         text-transform: uppercase;
         color: var(--tile-cream-text);
       }
-      .cart-item-description {
-        font-size: 0.72rem;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: rgba(255, 247, 237, 0.7);
-        line-height: 1.45;
-      }
       .cart-item-options {
         display: flex;
         flex-direction: column;
@@ -2253,6 +2246,12 @@
         gap: 0.4rem;
         flex-wrap: wrap;
         min-width: 0;
+      }
+      .cart-item-option.is-icon-row .cart-item-option-body {
+        flex: 0 1 auto;
+      }
+      .cart-item-option.is-text-row .cart-item-option-body,
+      .cart-item-option.is-attachment .cart-item-option-body {
         flex: 1 1 12rem;
       }
       .cart-item-option .value {
@@ -4135,6 +4134,7 @@
                 .map(item => ({
                   id: String(item.id ?? ''),
                   name: String(item.name ?? 'Item'),
+                  description: String(item.description ?? item.subtitle ?? '').trim(),
                   price: Number(item.price ?? 0),
                   quantity: Math.max(1, Number(item.quantity ?? 1)),
                   previewStyle: typeof item.previewStyle === 'string' ? item.previewStyle.trim() : '',
@@ -4226,6 +4226,9 @@
         const options = Array.isArray(item?.options)
           ? item.options.filter(opt => opt && (opt.label || opt.value))
           : [];
+        if (item?.description) {
+          options.unshift({ label: 'Description', value: item.description });
+        }
         if (item?.notes) {
           options.push({ label: 'Notes', value: item.notes });
         }
@@ -4249,20 +4252,23 @@
           const previewStyle = (item.previewStyle && item.previewStyle.trim()) ? item.previewStyle : fallbackPreview;
           const safePreviewStyle = previewStyle.replace(/"/g, '&quot;');
           const isAccessoryOnly = item.accessoryOnly || /straw toppers/i.test(item.name || '');
-          const descriptionMarkup = item.description
-            ? `<div class="cart-item-description">${item.description}</div>`
-            : '';
           const options = getCartDisplayOptions(item).filter(opt => !(isAccessoryOnly && opt.kind === 'color'));
           const optionsMarkup = options.length
             ? `<div class="cart-item-options">${options.map(opt => {
                 const swatch = opt.showSwatch && opt.swatchStyle
                   ? `<span class="cart-item-swatch${opt.isTextSwatch ? ' is-text' : ''}" style="${opt.swatchStyle.replace(/"/g, '&quot;')};">${opt.swatchGlyph || ''}</span>`
                   : '';
+                const rowClass =
+                  opt.kind === 'attachment'
+                    ? 'cart-item-option is-attachment'
+                    : opt.kind === 'color' || opt.kind === 'accessory'
+                      ? 'cart-item-option is-icon-row'
+                      : 'cart-item-option is-text-row';
                 if (opt.kind === 'attachment') {
                   const viewLink = opt.attachmentData ? `<a href="${opt.attachmentData.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="cart-attachment-link">View</a>` : '';
-                  return `<span class="cart-item-option is-attachment"><span class="label">Attachment:</span><span class="cart-item-option-body cart-attachment-body"><span class="value">${opt.value || 'Attached file'}</span>${viewLink}</span></span>`;
+                  return `<span class="${rowClass}"><span class="label">Attachment:</span><span class="cart-item-option-body cart-attachment-body"><span class="value">${opt.value || 'Attached file'}</span>${viewLink}</span></span>`;
                 }
-                return `<span class="cart-item-option"><span class="label">${opt.label}:</span><span class="cart-item-option-body">${swatch}<span class="value">${opt.value}</span></span></span>`;
+                return `<span class="${rowClass}"><span class="label">${opt.label}:</span><span class="cart-item-option-body">${swatch}<span class="value">${opt.value}</span></span></span>`;
               }).join('')}</div>`
             : '';
           return `
@@ -4271,7 +4277,6 @@
               <div class="cart-item-preview" style="${safePreviewStyle}"></div>
               <div class="cart-item-info">
                 <div class="cart-item-name">${item.name}</div>
-                ${descriptionMarkup}
                 <div class="cart-item-price">${formatCurrency(item.price)}</div>
                 ${optionsMarkup}
                 <div class="cart-item-quantity">
@@ -4503,6 +4508,24 @@
         return background;
       };
 
+      const getCardDescription = card => {
+        if (!card) return '';
+        const direct =
+          card.querySelector('[data-product-description]') ||
+          card.querySelector('.product-description') ||
+          card.querySelector('.product-details') ||
+          card.querySelector('.tile-description') ||
+          card.querySelector('.arrival-meta') ||
+          null;
+        const directText = direct?.textContent?.trim();
+        if (directText) return directText;
+        const meta = card.querySelector('.product-meta');
+        const metaText = (meta?.querySelector('span') || meta)?.textContent?.trim();
+        if (metaText) return metaText;
+        const candidates = Array.from(card.querySelectorAll('div.text-xs.text-slate-600'));
+        return candidates.find(el => !el.closest('.rating'))?.textContent?.trim() || '';
+      };
+
       const getProductDetails = button => {
         const card = button.closest('.group, .product-card');
         if (!card) return null;
@@ -4604,8 +4627,9 @@
         if (accessoryLabel) idParts.push(`accessory:${accessoryLabel}`);
         const id = idParts.join('|');
         const previewStyle = getCardPreviewStyle(card);
+        const description = getCardDescription(card);
 
-        return { id, name: titleText, price, quantity: 1, previewStyle, options, accessoryOnly };
+        return { id, name: titleText, description, price, quantity: 1, previewStyle, options, accessoryOnly };
       };
 
       const FAVORITES_STORAGE_KEY = 'ldc:favorites';
