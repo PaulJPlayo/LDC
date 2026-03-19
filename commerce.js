@@ -2578,6 +2578,19 @@
       metadata.design_attachment_key ||
       metadata.designAttachmentKey ||
       '';
+    const isDesignSubmitted =
+      item?.isDesignSubmitted === true ||
+      Boolean(
+        designColorLabel ||
+        designAccessoryLabel ||
+        designWrapLabel ||
+        designNotes ||
+        designAttachmentName ||
+        metadata.design_total_price ||
+        metadata.designTotalPrice
+      ) ||
+      /^design-/i.test(String(item?.id || '')) ||
+      /custom design/i.test(String(displayTitle || ''));
     const hasDesignColorOverride = Boolean(String(designColorLabel || '').trim());
     const hasStandardColorOverride = Boolean(String(standardColorLabel || '').trim());
     const hasStandardAccessoryOverride = Boolean(String(standardAccessoryLabel || '').trim());
@@ -2650,8 +2663,54 @@
       quantity: Math.max(1, Number(item.quantity || 1)),
       previewStyle,
       description,
-      options
+      options,
+      isDesignSubmitted
     };
+  };
+
+  const isDesignSubmittedLineItem = item => {
+    if (!item) return false;
+    if (item.isDesignSubmitted === true) return true;
+    const metadata = item.metadata || item.metadata_json || {};
+    return Boolean(
+      metadata.design_color_label ||
+      metadata.designColorLabel ||
+      metadata.design_accessory_label ||
+      metadata.designAccessoryLabel ||
+      metadata.design_wrap_label ||
+      metadata.designWrapLabel ||
+      metadata.design_notes ||
+      metadata.designNotes ||
+      metadata.design_attachment_name ||
+      metadata.designAttachmentName ||
+      metadata.design_total_price ||
+      metadata.designTotalPrice
+    ) ||
+      /^design-/i.test(String(item.id || '')) ||
+      /custom design/i.test(String(item.title || item.product_title || item.name || ''));
+  };
+
+  const decorateLineItemDisplayRows = (item, rows) => {
+    if (!Array.isArray(rows)) return [];
+    const isDesignSubmitted = isDesignSubmittedLineItem(item);
+    return rows.map(row => {
+      if (!row || (!row.label && !row.value)) return row;
+      if (row.layout) return row;
+      const normalizedLabel = String(row.label || '').trim().toLowerCase();
+      if (!isDesignSubmitted) return row;
+      if (normalizedLabel === 'notes' || normalizedLabel === 'attachment') {
+        return { ...row, layout: 'stacked' };
+      }
+      if (
+        normalizedLabel === 'description' ||
+        normalizedLabel === 'color' ||
+        normalizedLabel === 'accessory' ||
+        normalizedLabel === 'wrap'
+      ) {
+        return { ...row, layout: 'inline' };
+      }
+      return row;
+    });
   };
 
   const normalizeDisplayOption = option => {
@@ -3244,6 +3303,8 @@
     formatMoneyFromMinor,
     getLineItemDisplayImage,
     formatLineItemForDisplay: formatLegacyItem,
+    isDesignSubmittedLineItem,
+    decorateLineItemDisplayRows,
     normalizeDisplayOption,
     resolveDesignPricing,
     resolveVariantDisplayData
