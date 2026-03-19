@@ -239,9 +239,18 @@
       .checkout-item-options li.is-icon-row .checkout-item-option-body {
         flex: 0 1 auto;
       }
-      .checkout-item-options li.is-text-row .checkout-item-option-body,
-      .checkout-item-options li.is-attachment .checkout-item-option-body {
+      .checkout-item-options li.is-inline-row .checkout-item-option-body {
+        flex: 0 1 auto;
+      }
+      .checkout-item-options li.is-text-row .checkout-item-option-body {
         flex: 1 1 12rem;
+      }
+      .checkout-item-options li.is-stacked-row .checkout-item-option-body,
+      .checkout-item-options li.is-attachment .checkout-item-option-body {
+        flex: 1 0 100%;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.16rem;
       }
       .checkout-item-options .value {
         min-width: 0;
@@ -633,6 +642,44 @@
           };
         };
 
+        const isDesignSubmittedCheckoutItem = item => {
+          if (typeof commerce?.isDesignSubmittedLineItem === 'function') {
+            return commerce.isDesignSubmittedLineItem(item);
+          }
+          return (
+            item?.isDesignSubmitted === true ||
+            /^design-/i.test(String(item?.id || '')) ||
+            /custom design/i.test(String(item?.title || item?.product_title || item?.name || ''))
+          );
+        };
+
+        const decorateCheckoutDisplayRows = (commerce, item, rows) => {
+          if (typeof commerce?.decorateLineItemDisplayRows === 'function') {
+            return commerce.decorateLineItemDisplayRows(item, rows);
+          }
+          const isDesignSubmitted = isDesignSubmittedCheckoutItem(item);
+          return Array.isArray(rows)
+            ? rows.map(row => {
+                if (!row || (!row.label && !row.value)) return row;
+                if (row.layout) return row;
+                const normalizedLabel = String(row.label || '').trim().toLowerCase();
+                if (!isDesignSubmitted) return row;
+                if (normalizedLabel === 'notes' || normalizedLabel === 'attachment') {
+                  return { ...row, layout: 'stacked' };
+                }
+                if (
+                  normalizedLabel === 'description' ||
+                  normalizedLabel === 'color' ||
+                  normalizedLabel === 'accessory' ||
+                  normalizedLabel === 'wrap'
+                ) {
+                  return { ...row, layout: 'inline' };
+                }
+                return row;
+              })
+            : [];
+        };
+
         const getCheckoutDisplayRows = item => {
           const rows = Array.isArray(item?.options) ? [...item.options] : [];
           if (item?.description) {
@@ -641,7 +688,7 @@
           if (item?.notes) {
             rows.push({ label: 'Notes', value: item.notes });
           }
-          return rows;
+          return decorateCheckoutDisplayRows(commerce, item, rows);
         };
 
         const renderCheckoutOptionsMarkup = (commerce, options) => {
@@ -650,9 +697,27 @@
             : [];
           if (!normalizedOptions.length) return '';
           return `<ul class="checkout-item-options">${normalizedOptions.map(opt => {
-            const rowClass = opt.kind === 'attachment'
-              ? 'is-attachment'
-              : (opt.kind === 'color' || opt.kind === 'accessory' ? 'is-icon-row' : 'is-text-row');
+            const rowClass = (() => {
+              const classes = [];
+              if (opt.kind === 'attachment') {
+                classes.push('is-attachment', 'is-stacked-row');
+                return classes.join(' ');
+              }
+              if (opt.kind === 'color' || opt.kind === 'accessory') {
+                classes.push('is-icon-row');
+              }
+              const layout = String(opt.layout || '').trim().toLowerCase();
+              if (layout === 'stacked') {
+                classes.push('is-stacked-row');
+              } else if (layout === 'inline') {
+                classes.push('is-inline-row');
+              } else if (opt.kind === 'color' || opt.kind === 'accessory') {
+                classes.push('is-inline-row');
+              } else {
+                classes.push('is-text-row');
+              }
+              return classes.join(' ');
+            })();
             const swatch = opt.showSwatch && opt.swatchStyle
               ? `<span class="checkout-item-swatch${opt.isTextSwatch ? ' is-text' : ''}" style="${opt.swatchStyle.replace(/\"/g, '&quot;')};">${escapeCheckoutHtml(opt.swatchGlyph || '')}</span>`
               : '';
@@ -674,6 +739,7 @@
             id: String(item?.id || item?.title || item?.name || 'item'),
             name: String(item?.title || item?.product_title || item?.name || 'Item'),
             description: String(item?.description || item?.subtitle || ''),
+            isDesignSubmitted: isDesignSubmittedCheckoutItem(item),
             price: Number(item?.unit_price || item?.price || 0),
             quantity: Math.max(1, Number(item?.quantity || 1)),
             previewStyle: '',
@@ -1409,6 +1475,10 @@
               id: String(designItem.id),
               name: String(designItem.name ?? 'Custom Design'),
               description: String(designItem.description ?? designItem.subtitle ?? '').trim(),
+              isDesignSubmitted:
+                designItem.isDesignSubmitted === true ||
+                /^design-/i.test(String(designItem.id ?? '')) ||
+                /custom design/i.test(String(designItem.name ?? '')),
               price: Number(designItem.price ?? 0) || 0,
               quantity: Math.max(1, Number(designItem.quantity ?? 1) || 1),
               previewStyle: typeof designItem.previewStyle === 'string' ? designItem.previewStyle.trim() : '',
@@ -1436,6 +1506,10 @@
                       id: String(item.id ?? ''),
                       name: String(item.name ?? 'Item'),
                       description: String(item.description ?? item.subtitle ?? '').trim(),
+                      isDesignSubmitted:
+                        item.isDesignSubmitted === true ||
+                        /^design-/i.test(String(item.id ?? '')) ||
+                        /custom design/i.test(String(item.name ?? '')),
                       price: Number(item.price ?? 0) || 0,
                       quantity: Math.max(1, Number(item.quantity ?? 1) || 1),
                       previewStyle: typeof item.previewStyle === 'string' ? item.previewStyle.trim() : '',
@@ -1494,6 +1568,10 @@
                 id: String(item.id ?? ''),
                 name: String(item.name ?? 'Item'),
                 description: String(item.description ?? item.subtitle ?? '').trim(),
+                isDesignSubmitted:
+                  item.isDesignSubmitted === true ||
+                  /^design-/i.test(String(item.id ?? '')) ||
+                  /custom design/i.test(String(item.name ?? '')),
                 price: Number(item.price ?? 0) || 0,
                 quantity: Math.max(1, Number(item.quantity ?? 1) || 1),
                 previewStyle: typeof item.previewStyle === 'string' ? item.previewStyle.trim() : '',

@@ -2250,9 +2250,18 @@
       .cart-item-option.is-icon-row .cart-item-option-body {
         flex: 0 1 auto;
       }
-      .cart-item-option.is-text-row .cart-item-option-body,
-      .cart-item-option.is-attachment .cart-item-option-body {
+      .cart-item-option.is-inline-row .cart-item-option-body {
+        flex: 0 1 auto;
+      }
+      .cart-item-option.is-text-row .cart-item-option-body {
         flex: 1 1 12rem;
+      }
+      .cart-item-option.is-stacked-row .cart-item-option-body,
+      .cart-item-option.is-attachment .cart-item-option-body {
+        flex: 1 0 100%;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.16rem;
       }
       .cart-item-option .value {
         min-width: 0;
@@ -4135,6 +4144,10 @@
                   id: String(item.id ?? ''),
                   name: String(item.name ?? 'Item'),
                   description: String(item.description ?? item.subtitle ?? '').trim(),
+                  isDesignSubmitted:
+                    item.isDesignSubmitted === true ||
+                    /^design-/i.test(String(item.id ?? '')) ||
+                    /custom design/i.test(String(item.name ?? '')),
                   price: Number(item.price ?? 0),
                   quantity: Math.max(1, Number(item.quantity ?? 1)),
                   previewStyle: typeof item.previewStyle === 'string' ? item.previewStyle.trim() : '',
@@ -4145,7 +4158,8 @@
                           label: String(opt?.label ?? '').trim(),
                           value: String(opt?.value ?? '').trim(),
                           swatchStyle: typeof opt?.swatchStyle === 'string' ? opt.swatchStyle.trim() : '',
-                          swatchGlyph: typeof opt?.swatchGlyph === 'string' ? opt.swatchGlyph : ''
+                          swatchGlyph: typeof opt?.swatchGlyph === 'string' ? opt.swatchGlyph : '',
+                          attachmentData: typeof opt?.attachmentData === 'string' ? opt.attachmentData : ''
                         }))
                         .filter(opt => opt.label || opt.value)
                     : [],
@@ -4222,6 +4236,44 @@
         };
       };
 
+      const isDesignSubmittedCartItem = item => {
+        if (typeof window.LDCCommerce?.isDesignSubmittedLineItem === 'function') {
+          return window.LDCCommerce.isDesignSubmittedLineItem(item);
+        }
+        return (
+          item?.isDesignSubmitted === true ||
+          /^design-/i.test(String(item?.id || '')) ||
+          /custom design/i.test(String(item?.name || ''))
+        );
+      };
+
+      const decorateCartDisplayRows = (item, rows) => {
+        if (typeof window.LDCCommerce?.decorateLineItemDisplayRows === 'function') {
+          return window.LDCCommerce.decorateLineItemDisplayRows(item, rows);
+        }
+        const isDesignSubmitted = isDesignSubmittedCartItem(item);
+        return Array.isArray(rows)
+          ? rows.map(row => {
+              if (!row || (!row.label && !row.value)) return row;
+              if (row.layout) return row;
+              const normalizedLabel = String(row.label || '').trim().toLowerCase();
+              if (!isDesignSubmitted) return row;
+              if (normalizedLabel === 'notes' || normalizedLabel === 'attachment') {
+                return { ...row, layout: 'stacked' };
+              }
+              if (
+                normalizedLabel === 'description' ||
+                normalizedLabel === 'color' ||
+                normalizedLabel === 'accessory' ||
+                normalizedLabel === 'wrap'
+              ) {
+                return { ...row, layout: 'inline' };
+              }
+              return row;
+            })
+          : [];
+      };
+
       const getCartDisplayOptions = item => {
         const options = Array.isArray(item?.options)
           ? item.options.filter(opt => opt && (opt.label || opt.value))
@@ -4232,7 +4284,7 @@
         if (item?.notes) {
           options.push({ label: 'Notes', value: item.notes });
         }
-        return options.map(normalizeCartDisplayOption).filter(Boolean);
+        return decorateCartDisplayRows(item, options).map(normalizeCartDisplayOption).filter(Boolean);
       };
 
       const renderCart = () => {
@@ -4258,12 +4310,27 @@
                 const swatch = opt.showSwatch && opt.swatchStyle
                   ? `<span class="cart-item-swatch${opt.isTextSwatch ? ' is-text' : ''}" style="${opt.swatchStyle.replace(/"/g, '&quot;')};">${opt.swatchGlyph || ''}</span>`
                   : '';
-                const rowClass =
-                  opt.kind === 'attachment'
-                    ? 'cart-item-option is-attachment'
-                    : opt.kind === 'color' || opt.kind === 'accessory'
-                      ? 'cart-item-option is-icon-row'
-                      : 'cart-item-option is-text-row';
+                const rowClass = (() => {
+                  const classes = ['cart-item-option'];
+                  if (opt.kind === 'attachment') {
+                    classes.push('is-attachment', 'is-stacked-row');
+                    return classes.join(' ');
+                  }
+                  if (opt.kind === 'color' || opt.kind === 'accessory') {
+                    classes.push('is-icon-row');
+                  }
+                  const layout = String(opt.layout || '').trim().toLowerCase();
+                  if (layout === 'stacked') {
+                    classes.push('is-stacked-row');
+                  } else if (layout === 'inline') {
+                    classes.push('is-inline-row');
+                  } else if (opt.kind === 'color' || opt.kind === 'accessory') {
+                    classes.push('is-inline-row');
+                  } else {
+                    classes.push('is-text-row');
+                  }
+                  return classes.join(' ');
+                })();
                 if (opt.kind === 'attachment') {
                   const viewLink = opt.attachmentData ? `<a href="${opt.attachmentData.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="cart-attachment-link">View</a>` : '';
                   return `<span class="${rowClass}"><span class="label">Attachment:</span><span class="cart-item-option-body cart-attachment-body"><span class="value">${opt.value || 'Attached file'}</span>${viewLink}</span></span>`;
@@ -6897,6 +6964,7 @@
           id: idOverride || `design-${Date.now()}`,
           name: cartName,
           description: selectedDesignDescription || '',
+          isDesignSubmitted: true,
           price: pricing.totalPrice,
           quantity: 1,
           previewStyle,
