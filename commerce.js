@@ -2308,6 +2308,30 @@
     );
   };
 
+  const getLineItemDisplayDescription = item => {
+    if (!item || typeof item !== 'object') return '';
+    const metadata = normalizeMetadata(item.metadata);
+    const candidates = [
+      metadata?.design_product_description,
+      metadata?.designProductDescription,
+      metadata?.product_description,
+      metadata?.productDescription,
+      item?.product_description,
+      item?.productDescription,
+      item?.product?.description,
+      item?.product?.subtitle,
+      item?.variant?.product?.description,
+      item?.variant?.product?.subtitle,
+      item?.description,
+      item?.subtitle
+    ];
+    return (
+      candidates
+        .map(value => (value == null ? '' : String(value).trim()))
+        .find(Boolean) || ''
+    );
+  };
+
   const resolveDesignPricing = ({ basePrice = 0, addonPrice = 0, totalPrice = null } = {}) => {
     const normalizedBasePrice = Number(basePrice);
     const normalizedAddonPrice = Number(addonPrice);
@@ -2345,8 +2369,27 @@
     return '';
   };
 
+  const extractDescriptionFromCard = card => {
+    if (!card) return '';
+    const direct =
+      card.querySelector('[data-product-description]') ||
+      card.querySelector('.product-description') ||
+      card.querySelector('.product-details') ||
+      card.querySelector('.tile-description') ||
+      card.querySelector('.arrival-meta') ||
+      null;
+    const directText = direct?.textContent?.trim();
+    if (directText) return directText;
+    const meta = card.querySelector('.product-meta');
+    const metaText = (meta?.querySelector('span') || meta)?.textContent?.trim();
+    if (metaText) return metaText;
+    const candidates = Array.from(card.querySelectorAll('div.text-xs.text-slate-600'));
+    return candidates.find(el => !el.closest('.rating'))?.textContent?.trim() || '';
+  };
+
   const buildLineItemMetadata = button => {
     const metadata = {};
+    const card = button?.closest('.product-card, .group, .attire-form, .attire-layout');
     const sourceId = button?.dataset?.designSource || button?.getAttribute('data-design-source');
     if (sourceId) {
       const sourceImage = document.getElementById(sourceId);
@@ -2360,8 +2403,11 @@
       metadata.variant_glyph = swatchData.glyph || '';
       metadata.variant_type = swatchData.type || 'color';
     }
+    const description = extractDescriptionFromCard(card);
+    if (description) {
+      metadata.product_description = description;
+    }
     if (!metadata.preview_url) {
-      const card = button?.closest('.product-card, .group, .attire-form, .attire-layout');
       const src = extractImageFromCard(card);
       if (src) {
         metadata.preview_url = src;
@@ -2392,6 +2438,7 @@
       productTitle || lineTitle || variantTitleFromItem || variantTitle || 'Item';
     const metadata = item.metadata || {};
     const previewStyle = getLineItemDisplayPreviewStyle(item);
+    const description = getLineItemDisplayDescription(item);
     const hasDesignPricing = hasDesignLineItemMetadata(metadata);
     const designPricing = resolveDesignPricing({
       basePrice:
@@ -2545,6 +2592,7 @@
       currency_code: resolvedCurrency,
       quantity: Math.max(1, Number(item.quantity || 1)),
       previewStyle,
+      description,
       options
     };
   };

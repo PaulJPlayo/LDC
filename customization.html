@@ -1798,6 +1798,7 @@
         let selectedColorGlyph = '';
         let selectedWrapLabel = '';
         let selectedDesignName = '';
+        let selectedDesignDescription = '';
         let selectedDesignVariantId = '';
         let selectedDesignBaseVariantId = '';
         let selectedDesignProductKey = '';
@@ -2404,6 +2405,7 @@
         const clearDesignImageSelection = () => {
           lastImageState = null;
           selectedDesignName = '';
+          selectedDesignDescription = '';
           designBasePrice = 0;
           lastPrice = { amount: 0 };
           selectedColorPrice = null;
@@ -2702,6 +2704,7 @@
                 if (parsed.name) {
                   selectedDesignName = parsed.name;
                 }
+                selectedDesignDescription = parsed.description || '';
                 if (parsed.variantId) {
                   selectedDesignVariantId = parsed.variantId;
                   selectedDesignBaseVariantId = parsed.variantId;
@@ -3162,6 +3165,7 @@
           return {
             id: idOverride || `design-${Date.now()}`,
             name: cartName,
+            description: selectedDesignDescription || '',
             price: pricing.totalPrice,
             quantity: 1,
             previewStyle,
@@ -3197,6 +3201,13 @@
           const notesEl = document.getElementById('design-notes-customization');
           const resolvedAttachment = attachment || (await readDesignAttachment());
           const pricing = getDesignPricingContext();
+          let storedSelection = null;
+          try {
+            storedSelection = JSON.parse(localStorage.getItem(DESIGN_SELECTION_KEY) || 'null');
+          } catch {}
+          const designDescription =
+            selectedDesignDescription ||
+            (typeof storedSelection?.description === 'string' ? storedSelection.description.trim() : '');
           const metadata = {
             design_mode: 'custom',
             design_preview_url: previewSrc || undefined,
@@ -3207,6 +3218,8 @@
             design_product_key: selectedDesignProductKey || undefined,
             design_product_handle: selectedDesignProductHandle || undefined,
             design_product_id: selectedDesignProductId || undefined,
+            design_product_description: designDescription || undefined,
+            product_description: designDescription || undefined,
             design_variant_id: variantIdOverride || selectedDesignVariantId || undefined,
             design_base_price: pricing.basePrice || undefined,
             design_addon_price: pricing.addonPrice || undefined,

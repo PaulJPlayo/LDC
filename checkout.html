@@ -161,6 +161,13 @@
         text-transform: uppercase;
         color: #ffffff;
       }
+      .checkout-item-description {
+        font-size: 0.76rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        line-height: 1.45;
+        color: rgba(255, 255, 255, 0.68);
+      }
       .checkout-item-meta {
         display: flex;
         flex-wrap: wrap;
@@ -191,14 +198,10 @@
       }
       .checkout-item-options li {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 0.35rem;
         flex-wrap: wrap;
-      }
-      .checkout-item-options li.is-attachment {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 0.15rem;
+        width: 100%;
       }
       .checkout-item-color {
         display: flex;
@@ -230,16 +233,21 @@
         font-weight: 700;
         letter-spacing: 0.05em;
         text-transform: uppercase;
-        margin-right: 0.35rem;
+        flex: 0 0 auto;
       }
-      .checkout-item-options .value {
-        word-break: break-word;
-      }
+      .checkout-item-option-body,
       .checkout-attachment-body {
         display: inline-flex;
         align-items: center;
-        gap: 0.45rem;
+        gap: 0.4rem;
         flex-wrap: wrap;
+        min-width: 0;
+        flex: 1 1 12rem;
+      }
+      .checkout-item-options .value {
+        min-width: 0;
+        word-break: break-word;
+        overflow-wrap: anywhere;
       }
       .checkout-attachment-link {
         color: #ffffff;
@@ -639,9 +647,9 @@
               const viewLink = opt.attachmentData
                 ? `<a href="${escapeCheckoutHtml(String(opt.attachmentData).replace(/\"/g, '&quot;'))}" target="_blank" rel="noopener" class="checkout-attachment-link">View</a>`
                 : '';
-              return `<li class="is-attachment"><span class="label">Attachment:</span><span class="checkout-attachment-body"><span class="value">${escapeCheckoutHtml(opt.value || 'Attached file')}</span>${viewLink}</span></li>`;
+              return `<li class="is-attachment"><span class="label">Attachment:</span><span class="checkout-item-option-body checkout-attachment-body"><span class="value">${escapeCheckoutHtml(opt.value || 'Attached file')}</span>${viewLink}</span></li>`;
             }
-            return `<li><span class="label">${escapeCheckoutHtml(opt.label)}:</span>${swatch ? ` ${swatch}` : ''} <span class="value">${escapeCheckoutHtml(opt.value || '')}</span></li>`;
+            return `<li><span class="label">${escapeCheckoutHtml(opt.label)}:</span><span class="checkout-item-option-body">${swatch}<span class="value">${escapeCheckoutHtml(opt.value || '')}</span></span></li>`;
           }).join('')}</ul>`;
         };
 
@@ -652,6 +660,7 @@
           return {
             id: String(item?.id || item?.title || item?.name || 'item'),
             name: String(item?.title || item?.product_title || item?.name || 'Item'),
+            description: String(item?.description || item?.subtitle || ''),
             price: Number(item?.unit_price || item?.price || 0),
             quantity: Math.max(1, Number(item?.quantity || 1)),
             previewStyle: '',
@@ -881,6 +890,9 @@
               const safePreviewStyle = escapeHtml(previewStyle);
               const lineTotal = (displayItem?.price || 0) * (displayItem?.quantity || 0);
               const title = displayItem?.name || item.title || item.product_title || 'Item';
+              const descriptionMarkup = displayItem?.description
+                ? `<div class="checkout-item-description">${escapeHtml(displayItem.description)}</div>`
+                : '';
               const optionsMarkup = renderCheckoutOptionsMarkup(commerce, displayItem?.options || []);
               return `
                 <article class="cart-item" data-checkout-item="${escapeHtml(item.id)}">
@@ -889,6 +901,7 @@
                     <div class="cart-item-preview" style="${safePreviewStyle}"></div>
                     <div class="cart-item-info">
                       <div class="cart-item-name">${escapeHtml(title)}</div>
+                      ${descriptionMarkup}
                       <div class="checkout-item-meta">
                         <span class="checkout-item-quantity">Quantity <span>${item.quantity}</span></span>
                       </div>
@@ -1386,6 +1399,7 @@
             designItem = {
               id: String(designItem.id),
               name: String(designItem.name ?? 'Custom Design'),
+              description: String(designItem.description ?? designItem.subtitle ?? '').trim(),
               price: Number(designItem.price ?? 0) || 0,
               quantity: Math.max(1, Number(designItem.quantity ?? 1) || 1),
               previewStyle: typeof designItem.previewStyle === 'string' ? designItem.previewStyle.trim() : '',
@@ -1412,6 +1426,7 @@
                     .map(item => ({
                       id: String(item.id ?? ''),
                       name: String(item.name ?? 'Item'),
+                      description: String(item.description ?? item.subtitle ?? '').trim(),
                       price: Number(item.price ?? 0) || 0,
                       quantity: Math.max(1, Number(item.quantity ?? 1) || 1),
                       previewStyle: typeof item.previewStyle === 'string' ? item.previewStyle.trim() : '',
@@ -1469,6 +1484,7 @@
               .map(item => ({
                 id: String(item.id ?? ''),
                 name: String(item.name ?? 'Item'),
+                description: String(item.description ?? item.subtitle ?? '').trim(),
                 price: Number(item.price ?? 0) || 0,
                 quantity: Math.max(1, Number(item.quantity ?? 1) || 1),
                 previewStyle: typeof item.previewStyle === 'string' ? item.previewStyle.trim() : '',
@@ -1519,6 +1535,9 @@
             const previewStyle = item.previewStyle && item.previewStyle.trim() ? item.previewStyle : fallbackPreview;
             const safePreview = previewStyle.replace(/"/g, '&quot;');
             const lineTotal = item.price * item.quantity;
+            const descriptionMarkup = item.description
+              ? `<div class="checkout-item-description">${escapeHtml(item.description)}</div>`
+              : '';
             const optionRows = Array.isArray(item.options) ? [...item.options] : [];
             if (item.notes) {
               optionRows.push({ label: 'Notes', value: item.notes });
@@ -1531,6 +1550,7 @@
                 <div class="cart-item-preview" style="${safePreview}"></div>
                 <div class="cart-item-info">
                   <div class="cart-item-name">${escapeHtml(item.name)}</div>
+                  ${descriptionMarkup}
                   <div class="checkout-item-meta">
                     <span class="checkout-item-quantity">Quantity <span>${item.quantity}</span></span>
                   </div>
