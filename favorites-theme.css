@@ -162,7 +162,7 @@ body.favorites-theme-page {
   min-width: 0;
 }
 
-.favorites-item-name {
+.ldc-favorites-drawer .favorites-item-name {
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -171,8 +171,13 @@ body.favorites-theme-page {
   word-break: break-word;
 }
 
-.favorites-item-name:hover {
-  text-decoration: underline;
+.ldc-favorites-drawer .favorites-item-name:hover,
+.ldc-favorites-drawer .favorites-item-name:focus,
+.ldc-favorites-drawer .favorites-item-name:focus-visible,
+.ldc-favorites-drawer .favorites-item-name:active,
+.ldc-favorites-drawer .favorites-item-name:visited {
+  color: var(--favorites-text-primary);
+  text-decoration: none;
 }
 
 .favorites-item-variant {
@@ -204,7 +209,7 @@ body.favorites-theme-page {
   padding-left: 0.5rem;
 }
 
-.favorites-move-btn {
+.ldc-favorites-drawer .favorites-move-btn {
   border: none;
   border-radius: 999px;
   width: 2.2rem;
@@ -212,17 +217,20 @@ body.favorites-theme-page {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--favorites-dark-btn);
-  color: #ffffff;
+  background: linear-gradient(135deg, #E0B0FF 0%, #B678F5 100%);
+  color: var(--mauve-text, #EAD7FF) !important;
   cursor: pointer;
   flex-shrink: 0;
+  box-shadow: 0 10px 20px rgba(153, 40, 177, 0.2);
+  transition: transform 200ms ease, box-shadow 200ms ease;
 }
 
-.favorites-move-btn:hover {
-  background: var(--favorites-dark-btn-hover);
+.ldc-favorites-drawer .favorites-move-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(153, 40, 177, 0.28);
 }
 
-.favorites-move-btn:disabled {
+.ldc-favorites-drawer .favorites-move-btn:disabled {
   opacity: 0.6;
   cursor: progress;
 }
@@ -392,10 +400,14 @@ body.favorites-theme-page {
 }
 
 .ldc-favorites-drawer .favorites-close-btn:focus-visible,
-.ldc-favorites-drawer .favorites-move-btn:focus-visible,
 .ldc-favorites-drawer .favorites-remove-btn:focus-visible,
 .ldc-favorites-drawer .favorites-cta:focus-visible {
   outline: 2px solid rgba(255, 255, 255, 0.95);
+  outline-offset: 2px;
+}
+
+.ldc-favorites-drawer .favorites-move-btn:focus-visible {
+  outline: 2px solid #F7EEFF;
   outline-offset: 2px;
 }
 
