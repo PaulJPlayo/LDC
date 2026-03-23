@@ -692,7 +692,16 @@
         };
 
         const getCheckoutDisplayRows = item => {
-          const rows = Array.isArray(item?.options) ? [...item.options] : [];
+          const rows = Array.isArray(item?.options)
+            ? item.options.filter(row =>
+                row &&
+                (row.label || row.value) &&
+                String(row.label || '').trim().toLowerCase() !== 'variant'
+              )
+            : [];
+          if (item?.description) {
+            rows.unshift({ label: 'Description', value: item.description });
+          }
           if (item?.notes) {
             rows.push({ label: 'Notes', value: item.notes });
           }

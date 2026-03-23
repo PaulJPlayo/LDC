@@ -4296,8 +4296,15 @@
 
       const getCartDisplayOptions = item => {
         const options = Array.isArray(item?.options)
-          ? item.options.filter(opt => opt && (opt.label || opt.value))
+          ? item.options.filter(opt =>
+              opt &&
+              (opt.label || opt.value) &&
+              String(opt.label || '').trim().toLowerCase() !== 'variant'
+            )
           : [];
+        if (item?.description) {
+          options.unshift({ label: 'Description', value: item.description });
+        }
         if (item?.notes) {
           options.push({ label: 'Notes', value: item.notes });
         }
