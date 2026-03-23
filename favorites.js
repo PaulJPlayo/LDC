@@ -1334,6 +1334,98 @@
       .join(' | ');
   }
 
+  function normalizeFavoriteDetailRow(rawRow) {
+    if (!rawRow) return null;
+    var label = cleanLabel(rawRow.label);
+    var value = toText(rawRow.value);
+    if (!label || !value) return null;
+    var normalizedLabel = label.toLowerCase();
+    var kind =
+      normalizedLabel === 'color'
+        ? 'color'
+        : normalizedLabel === 'accessory'
+          ? 'accessory'
+          : 'text';
+    var swatchStyle = toText(rawRow.swatch_style || rawRow.swatchStyle);
+    var swatchGlyph = toText(rawRow.swatch_glyph || rawRow.swatchGlyph);
+    if ((kind === 'color' || kind === 'accessory') && !swatchStyle) {
+      swatchStyle = kind === 'accessory' ? 'background:#d8b4fe;' : 'background:#e2e8f0;';
+    }
+    return {
+      label: label,
+      value: value,
+      kind: kind,
+      swatch_style: swatchStyle,
+      swatch_glyph: swatchGlyph,
+      isTextSwatch: /[A-Za-z]/.test(swatchGlyph)
+    };
+  }
+
+  function getFavoriteDetailRows(item) {
+    var rows = [];
+    var description = toText(item && (item.short_description || item.description));
+    if (description) {
+      rows.push({ label: 'Description', value: description });
+    }
+
+    var selectedOptions = Array.isArray(item && item.selected_options) ? item.selected_options : [];
+    selectedOptions.forEach(function eachOption(option) {
+      var normalized = normalizeFavoriteDetailRow(option);
+      if (normalized) rows.push(normalized);
+    });
+
+    if (!selectedOptions.length) {
+      var variantText = toText(item && (item.options_summary || item.variant_title));
+      if (variantText) {
+        rows.push({ label: 'Variant', value: variantText });
+      }
+    }
+
+    return rows
+      .map(function mapRow(row) {
+        return row && row.kind ? row : normalizeFavoriteDetailRow(row);
+      })
+      .filter(Boolean);
+  }
+
+  function renderFavoriteDetailsMarkup(item) {
+    var rows = getFavoriteDetailRows(item);
+    if (!rows.length) return '';
+    return [
+      '<ul class="favorites-item-details">',
+      rows.map(function mapRow(row) {
+        var rowClasses = ['favorites-item-detail'];
+        if (row.kind === 'color' || row.kind === 'accessory') {
+          rowClasses.push('is-icon-row', 'is-inline-row');
+        } else {
+          rowClasses.push('is-text-row');
+        }
+        var swatch = '';
+        if (row.kind === 'color' || row.kind === 'accessory') {
+          swatch = [
+            '<span class="favorites-item-swatch',
+            row.isTextSwatch ? ' is-text' : '',
+            '" style="',
+            escapeHtml(row.swatch_style),
+            '">',
+            escapeHtml(row.swatch_glyph),
+            '</span>'
+          ].join('');
+        }
+        return [
+          '<li class="', rowClasses.join(' '), '">',
+          '<span class="label">', escapeHtml(row.label), '</span>',
+          '<span class="favorites-item-detail-body">',
+          swatch,
+          '<span class="value">', escapeHtml(row.value), '</span>',
+          '</span>',
+          '</li>'
+        ].join('');
+      }).join(''),
+      '</ul>'
+    ].join('');
+  }
+
   function getPreviewForItem(item) {
     var image = toText(item.preview_image || item.image_url);
     var style = toText(item.preview_style);
@@ -1354,8 +1446,6 @@
     var markup = items.map(function mapItem(item) {
       var id = escapeHtml(item.id);
       var title = escapeHtml(item.title || 'Favorite');
-      var variantInfo = escapeHtml(renderOptionsSummary(item) || item.variant_title || '');
-      var description = escapeHtml(item.short_description || item.description || '');
       var price = escapeHtml(formatPrice(item.price, item.currency_code));
       var image = getPreviewForItem(item);
       var imageHtml = image
@@ -1365,23 +1455,25 @@
       var titleContent = productUrl
         ? '<a class="favorites-item-name" href="' + escapeHtml(productUrl) + '">' + title + '</a>'
         : '<div class="favorites-item-name">' + title + '</div>';
+      var detailsMarkup = renderFavoriteDetailsMarkup(item);
       return [
         '<article class="favorites-item" data-favorite-id="', id, '">',
         '  <div class="favorites-item-main">',
         '    <div class="favorites-item-preview">', imageHtml, '</div>',
         '    <div class="favorites-item-info">',
         '      ', titleContent,
-        variantInfo ? '      <div class="favorites-item-variant">' + variantInfo + '</div>' : '',
-        description ? '      <div class="favorites-item-description">' + description + '</div>' : '',
-        '      <div class="favorites-item-price">', price, '</div>',
+        '      <div class="favorites-item-summary-row">',
+        '        <div class="favorites-item-price">', price, '</div>',
+        '        <div class="favorites-item-actions">',
+        '          <button type="button" class="favorites-move-btn" data-favorite-add-cart aria-label="Move ', title, ' to cart">',
+        '            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>',
+        '          </button>',
+        '          <button type="button" class="favorites-remove-btn" data-favorite-remove aria-label="Remove ', title, '">×</button>',
+        '        </div>',
+        '      </div>',
         '    </div>',
         '  </div>',
-        '  <div class="favorites-item-actions">',
-        '    <button type="button" class="favorites-move-btn" data-favorite-add-cart aria-label="Move ', title, ' to cart">',
-        '      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>',
-        '    </button>',
-        '    <button type="button" class="favorites-remove-btn" data-favorite-remove aria-label="Remove ', title, '">×</button>',
-        '  </div>',
+        detailsMarkup ? '  ' + detailsMarkup : '',
         '</article>'
       ].join('');
     }).join('');
@@ -1699,6 +1791,8 @@
   }
 
   syncUi();
+  api.getFavoriteDetailRows = getFavoriteDetailRows;
+  api.renderFavoriteDetailsMarkup = renderFavoriteDetailsMarkup;
   attachListeners();
 
   global.ldcFavoritesUI = {
