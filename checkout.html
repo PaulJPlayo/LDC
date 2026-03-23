@@ -125,8 +125,9 @@
       .cart-item {
         position: relative;
         display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
         gap: 0.75rem;
         padding: 1rem 2.75rem 1rem 1rem;
         border: 1px solid rgba(255, 255, 255, 0.18);
@@ -135,10 +136,11 @@
         box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
       }
       .cart-item-main {
-        display: flex;
-        gap: 0.85rem;
+        display: grid;
+        grid-template-columns: 3.1rem minmax(0, 1fr);
+        column-gap: 0.85rem;
         align-items: flex-start;
-        flex: 1 1 auto;
+        width: 100%;
       }
       .cart-item-preview {
         width: 3.1rem;
@@ -154,6 +156,8 @@
         display: flex;
         flex-direction: column;
         gap: 0.45rem;
+        min-width: 0;
+        width: 100%;
       }
       .cart-item-name {
         font-weight: 700;
@@ -161,13 +165,18 @@
         text-transform: uppercase;
         color: #ffffff;
       }
-      .checkout-item-meta {
+      .checkout-item-summary-row {
         display: flex;
-        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
         gap: 0.75rem;
-        align-items: baseline;
+        flex-wrap: wrap;
+        width: 100%;
       }
       .checkout-item-quantity {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.35rem;
         font-size: 0.85rem;
         font-weight: 600;
         letter-spacing: 0.14em;
@@ -182,18 +191,19 @@
       .checkout-item-options {
         list-style: none;
         padding: 0;
-        margin: 0.25rem 0 0;
+        margin: 0;
         display: flex;
         flex-direction: column;
-        gap: 0.1rem;
+        gap: 0.35rem;
         color: rgba(255, 255, 255, 0.9);
         font-size: 0.9rem;
+        width: 100%;
       }
       .checkout-item-options li {
-        display: flex;
+        display: grid;
+        grid-template-columns: minmax(5.75rem, max-content) minmax(0, 1fr);
         align-items: flex-start;
-        gap: 0.35rem;
-        flex-wrap: wrap;
+        column-gap: 0.75rem;
         width: 100%;
       }
       .checkout-item-color {
@@ -226,34 +236,34 @@
         font-weight: 700;
         letter-spacing: 0.05em;
         text-transform: uppercase;
-        flex: 0 0 auto;
       }
       .checkout-item-option-body,
       .checkout-attachment-body {
-        display: inline-flex;
-        align-items: center;
+        display: flex;
+        align-items: flex-start;
         gap: 0.4rem;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         min-width: 0;
+        width: 100%;
       }
       .checkout-item-options li.is-icon-row .checkout-item-option-body {
-        flex: 0 1 auto;
+        flex: 1 1 auto;
       }
       .checkout-item-options li.is-inline-row .checkout-item-option-body {
-        flex: 0 1 auto;
+        flex: 1 1 auto;
       }
       .checkout-item-options li.is-text-row .checkout-item-option-body {
         flex: 1 1 12rem;
       }
       .checkout-item-options li.is-stacked-row .checkout-item-option-body,
       .checkout-item-options li.is-attachment .checkout-item-option-body {
-        flex: 1 0 100%;
-        flex-direction: column;
+        flex: 1 1 auto;
+        flex-direction: row;
         align-items: flex-start;
-        gap: 0.16rem;
       }
       .checkout-item-options .value {
         min-width: 0;
+        flex: 1 1 auto;
         word-break: break-word;
         overflow-wrap: anywhere;
       }
@@ -262,6 +272,8 @@
         font-weight: 700;
         text-decoration: underline;
         text-underline-offset: 0.16em;
+        flex: 0 0 auto;
+        white-space: nowrap;
       }
       .checkout-item-notes {
         margin-top: 0.35rem;
@@ -281,7 +293,6 @@
         letter-spacing: 0.18em;
         text-transform: uppercase;
         color: #ffffff;
-        align-self: center;
       }
       .checkout-summary {
         background: rgba(255, 255, 255, 0.12);
@@ -725,9 +736,9 @@
               const viewLink = opt.attachmentData
                 ? `<a href="${escapeCheckoutHtml(String(opt.attachmentData).replace(/\"/g, '&quot;'))}" target="_blank" rel="noopener" class="checkout-attachment-link">View</a>`
                 : '';
-              return `<li class="${rowClass}"><span class="label">Attachment:</span><span class="checkout-item-option-body checkout-attachment-body"><span class="value">${escapeCheckoutHtml(opt.value || 'Attached file')}</span>${viewLink}</span></li>`;
+              return `<li class="${rowClass}"><span class="label">Attachment</span><span class="checkout-item-option-body checkout-attachment-body"><span class="value">${escapeCheckoutHtml(opt.value || 'Attached file')}</span>${viewLink}</span></li>`;
             }
-            return `<li class="${rowClass}"><span class="label">${escapeCheckoutHtml(opt.label)}:</span><span class="checkout-item-option-body">${swatch}<span class="value">${escapeCheckoutHtml(opt.value || '')}</span></span></li>`;
+            return `<li class="${rowClass}"><span class="label">${escapeCheckoutHtml(opt.label)}</span><span class="checkout-item-option-body">${swatch}<span class="value">${escapeCheckoutHtml(opt.value || '')}</span></span></li>`;
           }).join('')}</ul>`;
         };
 
@@ -977,13 +988,13 @@
                     <div class="cart-item-preview" style="${safePreviewStyle}"></div>
                     <div class="cart-item-info">
                       <div class="cart-item-name">${escapeHtml(title)}</div>
-                      <div class="checkout-item-meta">
+                      <div class="checkout-item-summary-row">
                         <span class="checkout-item-quantity">Quantity <span>${item.quantity}</span></span>
+                        <div class="checkout-line-total">${formatMoney(lineTotal, cart.currency_code)}</div>
                       </div>
-                      ${optionsMarkup}
                     </div>
                   </div>
-                  <div class="checkout-line-total">${formatMoney(lineTotal, cart.currency_code)}</div>
+                  ${optionsMarkup}
                 </article>
               `;
             }).join('');
@@ -1630,13 +1641,13 @@
                 <div class="cart-item-preview" style="${safePreview}"></div>
                 <div class="cart-item-info">
                   <div class="cart-item-name">${escapeHtml(item.name)}</div>
-                  <div class="checkout-item-meta">
+                  <div class="checkout-item-summary-row">
                     <span class="checkout-item-quantity">Quantity <span>${item.quantity}</span></span>
+                    <div class="checkout-line-total">${formatCurrency(lineTotal)}</div>
                   </div>
-                  ${optionsMarkup}
                 </div>
               </div>
-              <div class="checkout-line-total">${formatCurrency(lineTotal)}</div>
+              ${optionsMarkup}
             </article>`;
           }).join('');
 
