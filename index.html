@@ -2569,13 +2569,22 @@
         gap: 0.4rem;
         min-width: 0;
       }
-      .favorites-item-name {
+      .favorites-panel .favorites-item-name {
         font-weight: 700;
         letter-spacing: 0.12em;
         text-transform: uppercase;
         color: var(--tile-cream-text) !important;
+        text-decoration: none;
         white-space: normal;
         overflow-wrap: anywhere;
+      }
+      .favorites-panel .favorites-item-name:hover,
+      .favorites-panel .favorites-item-name:focus,
+      .favorites-panel .favorites-item-name:focus-visible,
+      .favorites-panel .favorites-item-name:active,
+      .favorites-panel .favorites-item-name:visited {
+        color: var(--tile-cream-text) !important;
+        text-decoration: none;
       }
       .favorites-item-price {
         font-size: 0.85rem;
