@@ -1741,7 +1741,7 @@
           image: favorite.preview_image || favorite.image_url || '',
           previewStyle: favorite.preview_style || ''
         });
-        var metadata = context.source === 'favorites-page' && typeof api.buildCommerceMetadataFromFavorite === 'function'
+        var metadata = typeof api.buildCommerceMetadataFromFavorite === 'function'
           ? api.buildCommerceMetadataFromFavorite(favorite)
           : {};
 

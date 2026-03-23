@@ -2407,17 +2407,31 @@
     if (description) {
       metadata.product_description = description;
     }
-    const selectedColorLabel = cleanVariantLabel(card?.dataset?.selectedColor || '');
+    const selectedColorLabel = cleanVariantLabel(
+      card?.dataset?.selectedColor ||
+        (swatchData?.type === 'accessory' ? '' : swatchData?.label || '')
+    );
     if (selectedColorLabel) {
       metadata.selected_color_label = selectedColorLabel;
-      metadata.selected_color_style = card?.dataset?.selectedColorStyle || '';
-      metadata.selected_color_glyph = card?.dataset?.selectedColorGlyph || '';
+      metadata.selected_color_style =
+        card?.dataset?.selectedColorStyle ||
+        (swatchData?.type === 'accessory' ? '' : swatchData?.style || '');
+      metadata.selected_color_glyph =
+        card?.dataset?.selectedColorGlyph ||
+        (swatchData?.type === 'accessory' ? '' : swatchData?.glyph || '');
     }
-    const selectedAccessoryLabel = cleanVariantLabel(card?.dataset?.selectedAccessory || '');
+    const selectedAccessoryLabel = cleanVariantLabel(
+      card?.dataset?.selectedAccessory ||
+        (swatchData?.type === 'accessory' ? swatchData?.label || '' : '')
+    );
     if (selectedAccessoryLabel) {
       metadata.selected_accessory_label = selectedAccessoryLabel;
-      metadata.selected_accessory_style = card?.dataset?.selectedAccessoryStyle || '';
-      metadata.selected_accessory_glyph = card?.dataset?.selectedAccessoryGlyph || '';
+      metadata.selected_accessory_style =
+        card?.dataset?.selectedAccessoryStyle ||
+        (swatchData?.type === 'accessory' ? swatchData?.style || '' : '');
+      metadata.selected_accessory_glyph =
+        card?.dataset?.selectedAccessoryGlyph ||
+        (swatchData?.type === 'accessory' ? swatchData?.glyph || '' : '');
     }
     if (!metadata.preview_url) {
       const src = extractImageFromCard(card);
