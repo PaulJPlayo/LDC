@@ -852,6 +852,150 @@
     return Object.assign(base, patch);
   }
 
+  function normalizeFavoriteMetadataLabel(value) {
+    return toText(value)
+      .replace(/^\s*view\s+/i, '')
+      .replace(/\s+(swatch|option|accent)\s*$/i, '')
+      .trim();
+  }
+
+  function isDesignSubmittedFavorite(favorite) {
+    if (!favorite || typeof favorite !== 'object') return false;
+    if (/^design-/i.test(toText(favorite.id))) return true;
+    if (/custom design/i.test(toText(favorite.title || favorite.name))) return true;
+    var selectedOptions = Array.isArray(favorite.selected_options) ? favorite.selected_options : [];
+    return selectedOptions.some(function hasDesignOnlyRows(option) {
+      var label = normalizeFavoriteMetadataLabel(option && option.label).toLowerCase();
+      return label === 'wrap' || label === 'notes' || label === 'attachment';
+    });
+  }
+
+  function buildCommerceMetadataFromFavorite(favorite) {
+    if (!favorite || typeof favorite !== 'object') return {};
+
+    var metadata = {};
+    var isDesign = isDesignSubmittedFavorite(favorite);
+    var description = toText(favorite.short_description || favorite.description);
+    var previewImage = toText(favorite.preview_image || favorite.image_url);
+    var previewStyle = toText(favorite.preview_style);
+    var variantTitle = normalizeFavoriteMetadataLabel(favorite.variant_title || favorite.options_summary);
+    var hasPrice =
+      favorite.price !== null &&
+      favorite.price !== undefined &&
+      !(typeof favorite.price === 'string' && !toText(favorite.price));
+
+    if (description) {
+      metadata.product_description = description;
+      if (isDesign) {
+        metadata.design_product_description = description;
+      }
+    }
+
+    if (previewImage) {
+      metadata.preview_url = previewImage;
+      if (isDesign) {
+        metadata.design_preview_url = previewImage;
+      }
+    }
+
+    if (previewStyle) {
+      metadata.preview_style = previewStyle;
+      if (isDesign) {
+        metadata.design_preview_style = previewStyle;
+      }
+    }
+
+    if (isDesign) {
+      metadata.design_mode = 'custom';
+      if (hasPrice) {
+        metadata.design_total_price = toNumber(favorite.price);
+      }
+      if (toText(favorite.product_handle)) {
+        metadata.design_product_handle = toText(favorite.product_handle);
+      }
+      if (toText(favorite.product_id)) {
+        metadata.design_product_id = toText(favorite.product_id);
+      }
+      if (toText(favorite.variant_id)) {
+        metadata.design_variant_id = toText(favorite.variant_id);
+      }
+    }
+
+    var selectedOptions = Array.isArray(favorite.selected_options) ? favorite.selected_options : [];
+    selectedOptions.forEach(function eachOption(option) {
+      var label = normalizeFavoriteMetadataLabel(option && option.label).toLowerCase();
+      var value = toText(option && option.value);
+      var swatchStyle = toText(option && option.swatch_style);
+      var swatchGlyph = toText(option && option.swatch_glyph);
+      if (!label || !value) return;
+
+      if (isDesign) {
+        if (label === 'color') {
+          metadata.design_color_label = value;
+          if (swatchStyle) metadata.design_color_style = swatchStyle;
+          if (swatchGlyph) metadata.design_color_glyph = swatchGlyph;
+          return;
+        }
+        if (label === 'accessory') {
+          metadata.design_accessory_label = value;
+          if (swatchStyle) metadata.design_accessory_style = swatchStyle;
+          if (swatchGlyph) metadata.design_accessory_glyph = swatchGlyph;
+          return;
+        }
+        if (label === 'wrap') {
+          metadata.design_wrap_label = value;
+          return;
+        }
+        if (label === 'notes') {
+          metadata.design_notes = value;
+        }
+        return;
+      }
+
+      if (label === 'color') {
+        metadata.selected_color_label = value;
+        if (swatchStyle) metadata.selected_color_style = swatchStyle;
+        if (swatchGlyph) metadata.selected_color_glyph = swatchGlyph;
+        if (!metadata.variant_label) {
+          metadata.variant_label = value;
+          metadata.variant_type = 'color';
+          if (swatchStyle) metadata.variant_style = swatchStyle;
+          if (swatchGlyph) metadata.variant_glyph = swatchGlyph;
+        }
+        return;
+      }
+
+      if (label === 'accessory') {
+        metadata.selected_accessory_label = value;
+        if (swatchStyle) metadata.selected_accessory_style = swatchStyle;
+        if (swatchGlyph) metadata.selected_accessory_glyph = swatchGlyph;
+        if (!metadata.variant_label) {
+          metadata.variant_label = value;
+          metadata.variant_type = 'accessory';
+          if (swatchStyle) metadata.variant_style = swatchStyle;
+          if (swatchGlyph) metadata.variant_glyph = swatchGlyph;
+        }
+        return;
+      }
+
+      if (!metadata.variant_label) {
+        metadata.variant_label = value;
+      }
+    });
+
+    if (!isDesign && !metadata.variant_label && variantTitle) {
+      metadata.variant_label = variantTitle;
+    }
+
+    return Object.keys(metadata).reduce(function reduceMetadata(result, key) {
+      var value = metadata[key];
+      if (value === null || value === undefined) return result;
+      if (typeof value === 'string' && !toText(value)) return result;
+      result[key] = value;
+      return result;
+    }, {});
+  }
+
   function moveFavoriteToCart(id, context) {
     var favorite = getFavoriteById(id);
     if (!favorite) {
@@ -951,6 +1095,7 @@
     migrateFavoritesPayload: migratePayload,
     buildFavoriteKey: buildFavoriteKey,
     buildCartItemFromFavorite: buildCartItemFromFavorite,
+    buildCommerceMetadataFromFavorite: buildCommerceMetadataFromFavorite,
     setMoveToCartAdapter: setMoveToCartAdapter,
     moveFavoriteToCart: moveFavoriteToCart,
     reloadFromStorage: function reloadFromStorage() {
@@ -1562,6 +1707,9 @@
     var buildCartItem = payload && typeof payload.buildCartItem === 'function'
       ? payload.buildCartItem
       : function identity(overrides) { return Object.assign({}, favorite, overrides || {}); };
+    var context = payload && payload.context && typeof payload.context === 'object'
+      ? payload.context
+      : {};
     var commerce = global.LDCCommerce;
     if (commerce && commerce.enabled) {
       if (typeof commerce.addLineItem !== 'function') {
@@ -1593,8 +1741,11 @@
           image: favorite.preview_image || favorite.image_url || '',
           previewStyle: favorite.preview_style || ''
         });
+        var metadata = context.source === 'favorites-page' && typeof api.buildCommerceMetadataFromFavorite === 'function'
+          ? api.buildCommerceMetadataFromFavorite(favorite)
+          : {};
 
-        return Promise.resolve(commerce.addLineItem(variantId, 1))
+        return Promise.resolve(commerce.addLineItem(variantId, 1, metadata))
           .then(function onAdded() {
             var syncPromise = typeof commerce.syncBadges === 'function'
               ? Promise.resolve(commerce.syncBadges())

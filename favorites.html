@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   </head>
-  <body class="favorites-theme-page">
+  <body class="favorites-theme-page" data-medusa-enabled="true" data-medusa-backend="https://api.lovettsldc.com" data-medusa-publishable-key="pk_427f7900e23e30a0e18feaf0604aa9caaa9d0cb21571889081d2cb93fb13ffb0">
     <div class="favorites-shell">
       <main class="favorites-card" aria-labelledby="favorites-heading">
         <header class="favorites-header">
@@ -49,9 +49,11 @@
       </main>
     </div>
     <script src="favorites.js"></script>
+    <script src="commerce.js"></script>
     <script>
       (() => {
         const favoritesApi = window.ldcFavorites;
+        const checkoutHref = 'checkout.html';
         const favoritesItemsEl = document.querySelector('[data-favorites-items]');
         const favoritesActionsEl = document.querySelector('[data-favorites-actions]');
         const favoritesEmptyCTA = document.querySelector('[data-favorites-empty-cta]');
@@ -177,10 +179,10 @@
           moveBtn.setAttribute('disabled', 'true');
           setStatus('');
           const result = await favoritesApi.moveFavoriteToCart(id, { source: 'favorites-page' });
-          moveBtn.removeAttribute('disabled');
           if (result?.ok) {
-            setStatus('Item sent to cart');
+            window.location.href = checkoutHref;
           } else {
+            moveBtn.removeAttribute('disabled');
             setStatus(result?.user_message || 'Unable to move item to cart', true);
           }
         });
