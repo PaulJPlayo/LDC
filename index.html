@@ -2172,8 +2172,9 @@
       .cart-item {
         position: relative;
         display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
         gap: 0.75rem;
         padding: 1rem 2.75rem 1rem 1rem;
         border: 1px solid rgba(255, 255, 255, 0.18);
@@ -2182,10 +2183,11 @@
         box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
       }
       .cart-item-main {
-        display: flex;
-        gap: 0.85rem;
+        display: grid;
+        grid-template-columns: 3.1rem minmax(0, 1fr);
+        column-gap: 0.85rem;
         align-items: flex-start;
-        flex: 1 1 auto;
+        width: 100%;
       }
       .cart-item-preview {
         width: 3.1rem;
@@ -2202,6 +2204,14 @@
         flex-direction: column;
         gap: 0.45rem;
         min-width: 0;
+        width: 100%;
+      }
+      .cart-item-summary-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        flex-wrap: wrap;
       }
       .cart-item-name {
         font-weight: 700;
@@ -2219,8 +2229,8 @@
       .cart-item-options {
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
-        gap: 0.3rem;
+        align-items: stretch;
+        gap: 0.35rem;
         font-size: 0.75rem;
         letter-spacing: 0.14em;
         text-transform: uppercase;
@@ -2228,43 +2238,42 @@
         width: 100%;
       }
       .cart-item-option {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: flex-start;
-        column-gap: 0.35rem;
-        row-gap: 0.16rem;
+        display: grid;
+        grid-template-columns: minmax(5.75rem, max-content) minmax(0, 1fr);
+        column-gap: 0.75rem;
+        align-items: start;
         width: 100%;
       }
       .cart-item-option .label {
         font-weight: 600;
-        flex: 0 0 auto;
       }
       .cart-item-option-body,
       .cart-attachment-body {
-        display: inline-flex;
-        align-items: center;
+        display: flex;
+        align-items: flex-start;
         gap: 0.4rem;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         min-width: 0;
+        width: 100%;
       }
       .cart-item-option.is-icon-row .cart-item-option-body {
-        flex: 0 1 auto;
+        flex: 1 1 auto;
       }
       .cart-item-option.is-inline-row .cart-item-option-body {
-        flex: 0 1 auto;
+        flex: 1 1 auto;
       }
       .cart-item-option.is-text-row .cart-item-option-body {
         flex: 1 1 12rem;
       }
       .cart-item-option.is-stacked-row .cart-item-option-body,
       .cart-item-option.is-attachment .cart-item-option-body {
-        flex: 1 0 100%;
-        flex-direction: column;
+        flex: 1 1 auto;
+        flex-direction: row;
         align-items: flex-start;
-        gap: 0.16rem;
       }
       .cart-item-option .value {
         min-width: 0;
+        flex: 1 1 auto;
         word-break: break-word;
         overflow-wrap: anywhere;
       }
@@ -2273,6 +2282,8 @@
         font-weight: 700;
         text-decoration: underline;
         text-underline-offset: 0.16em;
+        flex: 0 0 auto;
+        white-space: nowrap;
       }
       .cart-item-swatch {
         width: 1.25rem !important;
@@ -2281,9 +2292,9 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        margin-left: 0.28rem;
+        margin-left: 0;
         vertical-align: middle;
-        transform: translateY(-1px);
+        transform: none;
         border: 1px solid rgba(15, 23, 42, 0.25);
         box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
         flex: 0 0 auto;
@@ -4333,9 +4344,9 @@
                 })();
                 if (opt.kind === 'attachment') {
                   const viewLink = opt.attachmentData ? `<a href="${opt.attachmentData.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="cart-attachment-link">View</a>` : '';
-                  return `<span class="${rowClass}"><span class="label">Attachment:</span><span class="cart-item-option-body cart-attachment-body"><span class="value">${opt.value || 'Attached file'}</span>${viewLink}</span></span>`;
+                  return `<span class="${rowClass}"><span class="label">Attachment</span><span class="cart-item-option-body cart-attachment-body"><span class="value">${opt.value || 'Attached file'}</span>${viewLink}</span></span>`;
                 }
-                return `<span class="${rowClass}"><span class="label">${opt.label}:</span><span class="cart-item-option-body">${swatch}<span class="value">${opt.value}</span></span></span>`;
+                return `<span class="${rowClass}"><span class="label">${opt.label}</span><span class="cart-item-option-body">${swatch}<span class="value">${opt.value}</span></span></span>`;
               }).join('')}</div>`
             : '';
           return `
@@ -4344,15 +4355,17 @@
               <div class="cart-item-preview" style="${safePreviewStyle}"></div>
               <div class="cart-item-info">
                 <div class="cart-item-name">${item.name}</div>
-                <div class="cart-item-price">${formatCurrency(item.price)}</div>
-                ${optionsMarkup}
-                <div class="cart-item-quantity">
-                  <button type="button" class="cart-qty-btn" data-cart-decrease aria-label="Decrease quantity">−</button>
-                  <span>${item.quantity}</span>
-                  <button type="button" class="cart-qty-btn" data-cart-increase aria-label="Increase quantity">+</button>
+                <div class="cart-item-summary-row">
+                  <div class="cart-item-price">${formatCurrency(item.price)}</div>
+                  <div class="cart-item-quantity">
+                    <button type="button" class="cart-qty-btn" data-cart-decrease aria-label="Decrease quantity">−</button>
+                    <span>${item.quantity}</span>
+                    <button type="button" class="cart-qty-btn" data-cart-increase aria-label="Increase quantity">+</button>
+                  </div>
                 </div>
               </div>
             </div>
+            ${optionsMarkup}
             <button type="button" class="cart-remove-btn" data-cart-remove aria-label="Remove ${item.name}">×</button>
           </div>`;
         }).join('');
