@@ -1303,6 +1303,13 @@
   function readSelectedOptions(card) {
     var options = [];
     var seen = {};
+    var swatches = Array.prototype.slice.call(card ? card.querySelectorAll('.swatch') : []);
+    var hasPrimarySwatches = swatches.some(function hasPrimary(swatch) {
+      return toText(swatch && swatch.dataset && swatch.dataset.swatchType).toLowerCase() !== 'accessory';
+    });
+    var hasAccessorySwatches = swatches.some(function hasAccessory(swatch) {
+      return toText(swatch && swatch.dataset && swatch.dataset.swatchType).toLowerCase() === 'accessory';
+    });
 
     var pushOption = function pushOption(rawLabel, rawValue, rawStyle, rawGlyph) {
       var value = cleanLabel(rawValue);
@@ -1332,8 +1339,12 @@
       pushOption(label, value, swatch.getAttribute('style'), swatch.textContent);
     });
 
-    pushOption('Color', card.dataset.selectedColorLabel || card.dataset.selectedColor, card.dataset.selectedColorStyle, card.dataset.selectedColorGlyph);
-    pushOption('Accessory', card.dataset.selectedAccessoryLabel || card.dataset.selectedAccessory, card.dataset.selectedAccessoryStyle, card.dataset.selectedAccessoryGlyph);
+    if (hasPrimarySwatches || !swatches.length) {
+      pushOption('Color', card.dataset.selectedColorLabel || card.dataset.selectedColor, card.dataset.selectedColorStyle, card.dataset.selectedColorGlyph);
+    }
+    if (hasAccessorySwatches) {
+      pushOption('Accessory', card.dataset.selectedAccessoryLabel || card.dataset.selectedAccessory, card.dataset.selectedAccessoryStyle, card.dataset.selectedAccessoryGlyph);
+    }
     pushOption('Wrap', card.dataset.selectedWrap, '', '');
     pushOption('Notes', card.dataset.selectedNotes, '', '');
 

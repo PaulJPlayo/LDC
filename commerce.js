@@ -1374,8 +1374,23 @@
     updateProductImage(card, defaultImage, product?.title || '', defaultLabel);
     updateAddToCartVariant(card, defaultVariant?.id || null);
     syncVariantBadge(card, product, sectionKey, defaultLabel, overrides);
-    card.dataset.selectedColor = defaultLabel;
-    card.dataset.selectedColorLabel = defaultLabel;
+    const defaultSwatch = card.querySelector('.swatch.is-active') || card.querySelector('.swatch');
+    if (defaultSwatch && defaultLabel) {
+      applySelectedSwatchState(card, {
+        label: defaultLabel,
+        style: defaultSwatch.getAttribute('style') || '',
+        glyph: (defaultSwatch.textContent || '').trim(),
+        type: defaultSwatch.dataset.swatchType || ''
+      });
+    } else if (defaultLabel) {
+      const defaultMeta = getVariantSwatchMeta(defaultVariant);
+      applySelectedSwatchState(card, {
+        label: defaultLabel,
+        style: defaultMeta?.style || '',
+        glyph: defaultMeta?.glyph || '',
+        type: defaultMeta?.type || ''
+      });
+    }
 
     return card;
   };
@@ -1764,6 +1779,79 @@
     };
   };
 
+  const cardHasAccessorySwatches = container =>
+    Boolean(
+      container &&
+      container.querySelector('.swatch[data-swatch-type="accessory"]')
+    );
+
+  const cardHasPrimarySwatches = container =>
+    Boolean(
+      container &&
+      Array.from(container.querySelectorAll('.swatch')).some(swatch => {
+        const type = String(swatch?.dataset?.swatchType || '').trim().toLowerCase();
+        return type !== 'accessory';
+      })
+    );
+
+  const clearSelectedSwatchState = (container, type) => {
+    if (!container) return;
+    const keys =
+      type === 'accessory'
+        ? ['selectedAccessory', 'selectedAccessoryLabel', 'selectedAccessoryStyle', 'selectedAccessoryGlyph']
+        : ['selectedColor', 'selectedColorLabel', 'selectedColorStyle', 'selectedColorGlyph'];
+    keys.forEach(key => {
+      delete container.dataset[key];
+      container.removeAttribute(
+        `data-${key.replace(/[A-Z]/g, match => `-${match.toLowerCase()}`)}`
+      );
+    });
+  };
+
+  const applySelectedSwatchState = (container, selection) => {
+    if (!container || !selection) return;
+    const label = cleanVariantLabel(selection.label || '');
+    if (!label) return;
+    const style = typeof selection.style === 'string' ? selection.style : '';
+    const glyph = typeof selection.glyph === 'string' ? selection.glyph : '';
+    const isAccessory = String(selection.type || '').trim().toLowerCase() === 'accessory';
+
+    if (isAccessory) {
+      container.dataset.selectedAccessory = label;
+      container.dataset.selectedAccessoryLabel = label;
+      if (style) {
+        container.dataset.selectedAccessoryStyle = style;
+      } else {
+        delete container.dataset.selectedAccessoryStyle;
+      }
+      if (glyph) {
+        container.dataset.selectedAccessoryGlyph = glyph;
+      } else {
+        delete container.dataset.selectedAccessoryGlyph;
+      }
+      if (!cardHasPrimarySwatches(container)) {
+        clearSelectedSwatchState(container, 'color');
+      }
+      return;
+    }
+
+    container.dataset.selectedColor = label;
+    container.dataset.selectedColorLabel = label;
+    if (style) {
+      container.dataset.selectedColorStyle = style;
+    } else {
+      delete container.dataset.selectedColorStyle;
+    }
+    if (glyph) {
+      container.dataset.selectedColorGlyph = glyph;
+    } else {
+      delete container.dataset.selectedColorGlyph;
+    }
+    if (!cardHasAccessorySwatches(container)) {
+      clearSelectedSwatchState(container, 'accessory');
+    }
+  };
+
   const deriveProductKey = button => {
     const container =
       button.closest('[data-product-key]') ||
@@ -1972,15 +2060,12 @@
     const entry = map?.products?.[key] || map?.products?.[slugify(key)] || null;
     const label = getSwatchLabel(swatch) || getSelectedVariantLabel(swatch);
     if (label) {
-      const isAccessory =
-        swatch.dataset.swatchType === 'accessory' || swatch.dataset.accessoryLabel;
-      if (isAccessory) {
-        container.dataset.selectedAccessory = label;
-        container.dataset.selectedAccessoryLabel = label;
-      } else {
-        container.dataset.selectedColor = label;
-        container.dataset.selectedColorLabel = label;
-      }
+      applySelectedSwatchState(container, {
+        label,
+        style: swatch.getAttribute('style') || '',
+        glyph: (swatch.textContent || '').trim(),
+        type: swatch.dataset.swatchType || (swatch.dataset.accessoryLabel ? 'accessory' : '')
+      });
     }
     let variantId = swatch.dataset.variantId || null;
     if (!variantId && label && entry) {
@@ -2407,9 +2492,17 @@
     if (description) {
       metadata.product_description = description;
     }
+    const hasAnySwatches = Boolean(card && card.querySelector('.swatch'));
+    const shouldWriteColorSelection =
+      cardHasPrimarySwatches(card) ||
+      (!hasAnySwatches && swatchData?.type !== 'accessory');
     const selectedColorLabel = cleanVariantLabel(
-      card?.dataset?.selectedColor ||
-        (swatchData?.type === 'accessory' ? '' : swatchData?.label || '')
+      shouldWriteColorSelection
+        ? (
+            card?.dataset?.selectedColor ||
+            (swatchData?.type === 'accessory' ? '' : swatchData?.label || '')
+          )
+        : ''
     );
     if (selectedColorLabel) {
       metadata.selected_color_label = selectedColorLabel;
@@ -2420,9 +2513,15 @@
         card?.dataset?.selectedColorGlyph ||
         (swatchData?.type === 'accessory' ? '' : swatchData?.glyph || '');
     }
+    const shouldWriteAccessorySelection =
+      cardHasAccessorySwatches(card) || swatchData?.type === 'accessory';
     const selectedAccessoryLabel = cleanVariantLabel(
-      card?.dataset?.selectedAccessory ||
-        (swatchData?.type === 'accessory' ? swatchData?.label || '' : '')
+      shouldWriteAccessorySelection
+        ? (
+            card?.dataset?.selectedAccessory ||
+            (swatchData?.type === 'accessory' ? swatchData?.label || '' : '')
+          )
+        : ''
     );
     if (selectedAccessoryLabel) {
       metadata.selected_accessory_label = selectedAccessoryLabel;
@@ -2608,6 +2707,10 @@
     const hasDesignColorOverride = Boolean(String(designColorLabel || '').trim());
     const hasStandardColorOverride = Boolean(String(standardColorLabel || '').trim());
     const hasStandardAccessoryOverride = Boolean(String(standardAccessoryLabel || '').trim());
+    const suppressFalseStandardColor =
+      metadataType === 'accessory' &&
+      hasStandardAccessoryOverride &&
+      hasStandardColorOverride;
     const options = [];
     const optionDuplicatesExplicit =
       (metadataType === 'accessory' && hasStandardAccessoryOverride) ||
@@ -2622,7 +2725,7 @@
     } else if (candidateVariant && candidateVariant !== displayTitle && !hasDesignColorOverride) {
       options.push({ label: 'Variant', value: candidateVariant });
     }
-    if (standardColorLabel) {
+    if (standardColorLabel && !suppressFalseStandardColor) {
       options.push({
         label: 'Color',
         value: standardColorLabel,
