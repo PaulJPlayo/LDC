@@ -13807,37 +13807,95 @@ const ResourceDetail = ({ resource }) => {
     [isOrderLike, record]
   );
 
-  const buildDesignSummary = (metadata = {}) => {
-    if (!metadata || typeof metadata !== 'object') return [];
+  const buildFulfillmentDetails = (item) => {
+    if (!item || typeof item !== 'object') return [];
+    const metadata = item?.metadata && typeof item.metadata === 'object' ? item.metadata : {};
+    const readText = (...candidates) =>
+      candidates
+        .map((value) => (value == null ? '' : String(value).trim()))
+        .find(Boolean) || '';
     const lines = [];
-    const colorLabel =
-      metadata.design_color_label ||
-      metadata.designColorLabel ||
-      '';
-    const accessoryLabel =
-      metadata.design_accessory_label ||
-      metadata.designAccessoryLabel ||
-      '';
-    const wrapLabel =
-      metadata.design_wrap_label ||
-      metadata.designWrapLabel ||
-      '';
-    const notes =
-      metadata.design_notes ||
-      metadata.designNotes ||
-      '';
-    const attachmentName =
-      metadata.design_attachment_name ||
-      metadata.designAttachmentName ||
-      '';
-    const attachmentUrl =
-      metadata.design_attachment_url ||
-      metadata.designAttachmentUrl ||
-      '';
-    const attachmentKey =
-      metadata.design_attachment_key ||
-      metadata.designAttachmentKey ||
-      '';
+    const baseTitle = readText(
+      item?.title,
+      item?.product_title,
+      item?.variant?.product?.title
+    );
+    const variantTitle = readText(
+      metadata?.variant_label,
+      metadata?.variantLabel,
+      item?.variant?.title,
+      item?.variant_title
+    );
+    const description = readText(
+      metadata?.design_product_description,
+      metadata?.designProductDescription,
+      metadata?.product_description,
+      metadata?.productDescription,
+      item?.product_description,
+      item?.productDescription,
+      item?.variant?.product?.description,
+      item?.variant?.product?.subtitle,
+      item?.description,
+      item?.subtitle
+    );
+    const colorLabel = readText(
+      metadata?.design_color_label,
+      metadata?.designColorLabel,
+      metadata?.design_color,
+      metadata?.designColor,
+      metadata?.selected_color_label,
+      metadata?.selectedColorLabel
+    );
+    const accessoryLabel = readText(
+      metadata?.design_accessory_label,
+      metadata?.designAccessoryLabel,
+      metadata?.design_accessory,
+      metadata?.designAccessory,
+      metadata?.selected_accessory_label,
+      metadata?.selectedAccessoryLabel
+    );
+    const wrapLabel = readText(
+      metadata?.design_wrap_label,
+      metadata?.designWrapLabel,
+      metadata?.design_wrap,
+      metadata?.designWrap
+    );
+    const notes = readText(
+      metadata?.design_notes,
+      metadata?.designNotes
+    );
+    const attachmentName = readText(
+      metadata?.design_attachment_name,
+      metadata?.designAttachmentName
+    );
+    const attachmentUrl = readText(
+      metadata?.design_attachment_url,
+      metadata?.designAttachmentUrl,
+      metadata?.design_attachment_data,
+      metadata?.designAttachmentData
+    );
+    const attachmentKey = readText(
+      metadata?.design_attachment_key,
+      metadata?.designAttachmentKey
+    );
+
+    if (description) lines.push({ label: 'Description', value: description });
+    const normalizedVariantTitle = (() => {
+      if (!variantTitle || variantTitle.toLowerCase() === 'default') return '';
+      if (!baseTitle) return variantTitle;
+      if (variantTitle === baseTitle) return '';
+      if (variantTitle.startsWith(`${baseTitle} - `)) {
+        return variantTitle.slice(baseTitle.length + 3).trim();
+      }
+      if (variantTitle.startsWith(`${baseTitle} · `)) {
+        return variantTitle.slice(baseTitle.length + 3).trim();
+      }
+      return variantTitle;
+    })();
+
+    if (normalizedVariantTitle) {
+      lines.push({ label: 'Variant', value: normalizedVariantTitle });
+    }
     if (colorLabel) lines.push({ label: 'Color', value: colorLabel });
     if (accessoryLabel) lines.push({ label: 'Accessory', value: accessoryLabel });
     if (wrapLabel) lines.push({ label: 'Wrap', value: wrapLabel });
@@ -13846,7 +13904,7 @@ const ResourceDetail = ({ resource }) => {
       lines.push({
         label: 'Attachment',
         value: attachmentName,
-        url: attachmentUrl,
+        url: attachmentUrl ? resolveMediaUrl(attachmentUrl) : '',
         key: attachmentKey
       });
     }
@@ -13864,7 +13922,6 @@ const ResourceDetail = ({ resource }) => {
       const quantity = getLineItemQuantity(item);
       const unitPrice = getLineItemUnitPrice(item);
       const total = getLineItemTotal(item);
-      const metadata = item?.metadata && typeof item.metadata === 'object' ? item.metadata : {};
       return {
         id: item?.id || item?.item_id || item?.detail?.id || `${record.id || 'item'}-${index}`,
         thumbnail: getLineItemThumbnail(item),
@@ -13874,7 +13931,7 @@ const ResourceDetail = ({ resource }) => {
         unit_price: unitPrice,
         total,
         currency_code: item?.currency_code || record.currency_code || orderCurrency,
-        design: buildDesignSummary(metadata)
+        fulfillment: buildFulfillmentDetails(item)
       };
     });
   }, [isOrder, record, orderCurrency]);
@@ -13886,14 +13943,20 @@ const ResourceDetail = ({ resource }) => {
       { key: 'sku', label: 'SKU' },
       { key: 'quantity', label: 'Qty' },
       {
-        key: 'design',
-        label: 'Design',
+        key: 'fulfillment',
+        label: 'Fulfillment',
         format: (value) =>
           Array.isArray(value) && value.length ? (
-            <div className="space-y-1 text-xs text-ldc-ink/70">
+            <div className="space-y-1.5 text-xs text-ldc-ink/70">
               {value.map((line, index) => (
-                <div key={`${line?.label || 'design'}-${index}`} className="flex flex-wrap items-center gap-2">
-                  <span>{line?.label ? `${line.label}: ${line.value}` : line?.value || '-'}</span>
+                <div
+                  key={`${line?.label || 'fulfillment'}-${index}`}
+                  className="flex flex-wrap items-center gap-2"
+                >
+                  <span className="font-semibold uppercase tracking-[0.16em] text-ldc-ink/55">
+                    {line?.label || 'Detail'}
+                  </span>
+                  <span>{line?.value || '-'}</span>
                   {line?.url ? (
                     <a
                       href={line.url}
