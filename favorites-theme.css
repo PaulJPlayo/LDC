@@ -520,6 +520,11 @@ body.favorites-theme-page {
     padding-right: 1rem;
   }
 
+  body.favorites-theme-page .favorites-item {
+    padding-top: 1rem;
+    padding-right: 3.5rem;
+  }
+
   .ldc-favorites-drawer .favorites-item {
     padding-top: 1rem;
     padding-right: 3.5rem;
