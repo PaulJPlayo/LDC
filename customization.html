@@ -1679,7 +1679,7 @@
     <script src="commerce.js" defer></script>
     <script src="assets/hls.min.js" defer></script>
     <script>
-      (() => {
+      (async () => {
         const DESIGN_SELECTION_KEY = 'ldcDesignSelection';
         const DESIGN_SELECTION_PENDING_KEY = 'ldcDesignSelectionPending';
         const DESIGN_SELECTION_PENDING_AT_KEY = 'ldcDesignSelectionPendingAt';
@@ -2693,7 +2693,12 @@
                   ? parsed.swatches.filter(item => item && (item.style || item.glyph || item.imageSrc))
                   : [];
                 if (storedSwatches.length) {
-                  setDesignColorSwatches(storedSwatches);
+                  const enrichedSwatches = await enrichDesignSwatches(storedSwatches, {
+                    productKey: parsed.productKey || '',
+                    productHandle: parsed.productHandle || '',
+                    productId: parsed.productId || ''
+                  });
+                  setDesignColorSwatches(enrichedSwatches.length ? enrichedSwatches : storedSwatches);
                 }
                 resetDesignSelections();
                 setDesignPreviewImage(parsed.src, parsed.alt);
@@ -2727,7 +2732,64 @@
             console.warn('Unable to load saved design selection', error);
           }
         };
-        void applyStoredDesignSelection();
+
+        const findStoredSelectionSwatch = (track, selection = {}, fallbackVariantId = '') => {
+          if (!track) return null;
+          const targetLabel = normalizeSwatchLabel(selection.label || '');
+          const targetStyle = sanitizeSwatchStyle(selection.style || '');
+          const targetGlyph = String(selection.glyph || '').trim();
+          const targetVariantId = String(selection.variantId || fallbackVariantId || '').trim();
+          return (
+            Array.from(track.querySelectorAll('.swatch')).find(swatch => {
+              const swatchVariantId = swatch.getAttribute('data-variant-id') || swatch.dataset.variantId || '';
+              if (targetVariantId && swatchVariantId && targetVariantId === swatchVariantId) {
+                return true;
+              }
+              const swatchLabel = normalizeSwatchLabel(
+                swatch.getAttribute('aria-label') ||
+                swatch.getAttribute('title') ||
+                ''
+              );
+              if (targetLabel && swatchLabel && targetLabel === swatchLabel) {
+                return true;
+              }
+              const swatchStyle = sanitizeSwatchStyle(swatch.getAttribute('style') || '');
+              const swatchGlyph = (swatch.textContent || '').trim();
+              return Boolean(
+                targetStyle &&
+                swatchStyle &&
+                targetStyle === swatchStyle &&
+                (!targetGlyph || targetGlyph === swatchGlyph)
+              );
+            }) || null
+          );
+        };
+
+        const applyPendingStoredDesignSelections = () => {
+          try {
+            const parsed = JSON.parse(localStorage.getItem(DESIGN_SELECTION_KEY) || 'null');
+            if (!parsed || typeof parsed !== 'object') return;
+            const colorSwatch = findStoredSelectionSwatch(designColorTrack, {
+              label: parsed.selectedColorLabel || '',
+              style: parsed.selectedColorStyle || '',
+              glyph: parsed.selectedColorGlyph || '',
+              variantId: parsed.variantId || ''
+            }, parsed.variantId || '');
+            if (colorSwatch) {
+              colorSwatch.click();
+            }
+            const accessorySwatch = findStoredSelectionSwatch(designAccessoryTrack, {
+              label: parsed.selectedAccessoryLabel || '',
+              style: parsed.selectedAccessoryStyle || '',
+              glyph: parsed.selectedAccessoryGlyph || ''
+            });
+            if (accessorySwatch) {
+              accessorySwatch.click();
+            }
+          } catch (error) {
+            console.warn('Unable to apply saved design selections', error);
+          }
+        };
 
         const initSwatchSliders = () => {
           document.querySelectorAll('[data-swatch-slider]').forEach(slider => {
@@ -3319,10 +3381,12 @@
         }
 
         bindUploadLabels();
+        await applyStoredDesignSelection();
         initSwatchSliders();
         initDesignSelections();
         initMobilePreviewSelectors();
         initBasePrice();
+        applyPendingStoredDesignSelections();
         updateDesignTotal();
       })();
     </script>

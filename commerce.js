@@ -29,6 +29,9 @@
   const LEGACY_CART_KEY = 'ldc:cart';
   const CART_AUDIT_STORAGE_KEY = 'LDC_CART_ADD_FAILS';
   const CART_AUDIT_LIMIT = 200;
+  const DESIGN_SELECTION_KEY = 'ldcDesignSelection';
+  const DESIGN_SELECTION_PENDING_KEY = 'ldcDesignSelectionPending';
+  const DESIGN_SELECTION_PENDING_AT_KEY = 'ldcDesignSelectionPendingAt';
   const DEFAULT_LOCALE = 'en-US';
   const CART_DISPLAY_MONEY_FIELDS = [
     'subtotal',
@@ -1265,6 +1268,7 @@
       button.dataset.productKey = product?.handle || product?.id || '';
       button.dataset.productHandle = product?.handle || '';
       button.dataset.productId = product?.id || '';
+      button.setAttribute('href', shouldRouteTileDesignToCustomization(button) ? 'customization.html' : '#section-customization');
     });
 
     const variants = getSortedVariants(product);
@@ -1850,6 +1854,207 @@
     if (!cardHasAccessorySwatches(container)) {
       clearSelectedSwatchState(container, 'accessory');
     }
+  };
+
+  const shouldRouteTileDesignToCustomization = button =>
+    button?.closest('[data-design-launch="customization"]') instanceof Element;
+
+  const resolveDesignSourceImage = button => {
+    const sourceId = button?.dataset?.designSource || button?.getAttribute('data-design-source');
+    if (sourceId) {
+      const direct = document.getElementById(sourceId);
+      if (direct) return direct;
+    }
+    const card = getVariantContainer(button) || button?.closest('.product-card') || button?.closest('.group');
+    if (!card) return null;
+    return (
+      card.querySelector('[data-product-image]') ||
+      card.querySelector('.tile-mauve img') ||
+      card.querySelector('.product-media img') ||
+      card.querySelector('img')
+    );
+  };
+
+  const resolveDesignButtonContext = button => {
+    const card = getVariantContainer(button) || button?.closest('.product-card') || button?.closest('.group');
+    const fallbackButton =
+      card?.querySelector('[data-product-key]') ||
+      card?.querySelector('[data-add-to-cart]') ||
+      null;
+    const key =
+      button?.dataset?.productKey ||
+      card?.dataset?.productKey ||
+      fallbackButton?.dataset?.productKey ||
+      deriveProductKey(button) ||
+      '';
+    let handle =
+      button?.dataset?.productHandle ||
+      card?.dataset?.productHandle ||
+      fallbackButton?.dataset?.productHandle ||
+      '';
+    const id =
+      button?.dataset?.productId ||
+      card?.dataset?.productId ||
+      fallbackButton?.dataset?.productId ||
+      '';
+    if (!handle && key) handle = key;
+    return { card, key, handle, id };
+  };
+
+  const readDesignTitleFromCard = card =>
+    card?.querySelector('[data-product-title], .product-title, .tile-title, h1, h2, h3')
+      ?.textContent
+      ?.trim() || '';
+
+  const readDesignPriceFromCard = card => {
+    const priceEl =
+      card?.querySelector('[data-product-price]') ||
+      card?.querySelector('[data-price-value]') ||
+      card?.querySelector('.product-price') ||
+      card?.querySelector('.price-line') ||
+      card?.querySelector('.ldc-tile-price') ||
+      null;
+    const match = String(priceEl?.textContent || '')
+      .replace(/[, ]/g, '')
+      .match(/(\d+(?:\.\d{1,2})?)/);
+    if (!match) return undefined;
+    const value = parseFloat(match[1]);
+    return Number.isFinite(value) ? value : undefined;
+  };
+
+  const readDesignSwatchData = swatch => {
+    if (!swatch) return null;
+    const type = String(swatch.dataset.swatchType || '').trim().toLowerCase();
+    if (type === 'accessory') return null;
+    const label = cleanVariantLabel(
+      swatch.dataset.variantLabel ||
+      swatch.dataset.colorLabel ||
+      swatch.getAttribute('aria-label') ||
+      swatch.getAttribute('data-image-alt') ||
+      swatch.getAttribute('title') ||
+      ''
+    );
+    if (!label || isDefaultVariantLabel(label)) return null;
+    const rawPrice = swatch.getAttribute('data-price');
+    const parsedPrice = rawPrice != null && rawPrice !== '' ? parseFloat(rawPrice) : NaN;
+    return {
+      style: sanitizeSwatchStyle(swatch.getAttribute('style') || ''),
+      label,
+      glyph: (swatch.textContent || '').trim(),
+      imageSrc: resolveAssetUrl(
+        swatch.getAttribute('data-image-src') ||
+        swatch.dataset.variantImage ||
+        ''
+      ),
+      imageAlt: swatch.getAttribute('data-image-alt') || '',
+      variantId: swatch.getAttribute('data-variant-id') || swatch.dataset.variantId || '',
+      price: Number.isFinite(parsedPrice) ? parsedPrice : undefined
+    };
+  };
+
+  const readDesignSwatchesFromCard = card =>
+    Array.from(card?.querySelectorAll('.swatch') || [])
+      .map(readDesignSwatchData)
+      .filter(Boolean);
+
+  const enrichDesignLaunchSwatches = async (swatches, refs = {}) => {
+    const items = Array.isArray(swatches) ? swatches.filter(Boolean) : [];
+    if (!items.length) return [];
+    return Promise.all(items.map(async item => {
+      if (item.variantId && typeof item.price === 'number' && item.imageSrc) {
+        return item;
+      }
+      try {
+        const resolved = await resolveVariantDisplayData({
+          productKey: refs.productKey || '',
+          productHandle: refs.productHandle || '',
+          productId: refs.productId || '',
+          label: item.label,
+          variantId: item.variantId || ''
+        });
+        return {
+          ...item,
+          variantId: item.variantId || resolved?.variantId || '',
+          price: typeof item.price === 'number'
+            ? item.price
+            : (Number.isFinite(Number(resolved?.price)) ? Number(resolved.price) : undefined),
+          imageSrc: item.imageSrc || resolved?.image || ''
+        };
+      } catch (error) {
+        console.warn('Unable to enrich category design swatch data', error);
+        return item;
+      }
+    }));
+  };
+
+  const persistDesignSelection = selection => {
+    if (!selection?.src) return;
+    try {
+      localStorage.setItem(DESIGN_SELECTION_KEY, JSON.stringify(selection));
+      localStorage.setItem(DESIGN_SELECTION_PENDING_KEY, 'true');
+      localStorage.setItem(DESIGN_SELECTION_PENDING_AT_KEY, String(Date.now()));
+    } catch (error) {
+      console.warn('Unable to persist design selection', error);
+    }
+  };
+
+  const buildCustomizationDesignSelection = async button => {
+    const sourceImage = resolveDesignSourceImage(button);
+    const sourceSrc =
+      sourceImage?.getAttribute('src') ||
+      sourceImage?.getAttribute('data-src') ||
+      sourceImage?.currentSrc ||
+      '';
+    if (!sourceSrc) return null;
+
+    const { card, key, handle, id } = resolveDesignButtonContext(button);
+    const selection = {
+      src: resolveAssetUrl(sourceSrc),
+      alt: sourceImage?.getAttribute('alt') || 'Custom design preview'
+    };
+    const title = readDesignTitleFromCard(card);
+    const description = extractDescriptionFromCard(card);
+    const price = readDesignPriceFromCard(card);
+    if (title) selection.name = title;
+    if (description) selection.description = description;
+    if (Number.isFinite(price)) selection.price = price;
+    if (key) selection.productKey = key;
+    if (handle) selection.productHandle = handle;
+    if (id) selection.productId = id;
+
+    const variantId = await resolveVariantId(button);
+    if (variantId) selection.variantId = variantId;
+
+    const selectedSwatch = getSelectedVariantSwatch(button);
+    if (selectedSwatch?.label) {
+      if (selectedSwatch.type === 'accessory') {
+        selection.selectedAccessoryLabel = selectedSwatch.label;
+        selection.selectedAccessoryStyle = selectedSwatch.style || '';
+        selection.selectedAccessoryGlyph = selectedSwatch.glyph || '';
+      } else {
+        selection.selectedColorLabel = selectedSwatch.label;
+        selection.selectedColorStyle = selectedSwatch.style || '';
+        selection.selectedColorGlyph = selectedSwatch.glyph || '';
+      }
+    }
+
+    const swatches = await enrichDesignLaunchSwatches(readDesignSwatchesFromCard(card), {
+      productKey: key,
+      productHandle: handle,
+      productId: id
+    });
+    if (swatches.length) {
+      selection.swatches = swatches;
+    }
+
+    return selection;
+  };
+
+  const launchTileDesignToCustomization = async button => {
+    const selection = await buildCustomizationDesignSelection(button);
+    if (!selection) return;
+    persistDesignSelection(selection);
+    global.location.href = 'customization.html';
   };
 
   const deriveProductKey = button => {
@@ -3366,6 +3571,16 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     handleAddToCart(button);
+  }, true);
+
+  document.addEventListener('click', event => {
+    const button = event.target.closest('[data-tile-design-action]');
+    if (!button || !shouldRouteTileDesignToCustomization(button)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    launchTileDesignToCustomization(button).catch(error => {
+      console.warn('Unable to launch customization from tile action', error);
+    });
   }, true);
 
   document.addEventListener('click', event => {
