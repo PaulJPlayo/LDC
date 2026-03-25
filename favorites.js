@@ -1223,7 +1223,8 @@
       '.ldc-favorites-drawer .favorites-panel{position:absolute;top:0;right:0;height:100%;width:min(28rem,94vw);display:flex;flex-direction:column;transform:translateX(108%);transition:transform 210ms ease;}',
       '.ldc-favorites-drawer.is-open .favorites-panel{transform:translateX(0);}',
       '.ldc-favorites-drawer .favorites-body{flex:1 1 auto;overflow:auto;}',
-      '.tile-action-favorite.is-active{background:rgba(244,114,182,.18)!important;color:#e11d48!important;border-color:rgba(225,29,72,.45)!important;}'
+      '.tile-action-favorite.is-active,.tile-action-favorite.favorites-active,.ldc-home-tile .tile-action-favorite.is-active,.ldc-home-tile .tile-action-favorite.favorites-active{background:rgba(244,114,182,.18)!important;color:#e11d48!important;border-color:rgba(225,29,72,.45)!important;box-shadow:0 12px 28px rgba(255,92,168,.25)!important;}',
+      '.tile-action-favorite.is-active svg,.tile-action-favorite.favorites-active svg,.ldc-home-tile .tile-action-favorite.is-active svg,.ldc-home-tile .tile-action-favorite.favorites-active svg{color:currentColor!important;fill:currentColor!important;}'
     ].join('');
     document.head.appendChild(style);
   }
@@ -1428,6 +1429,7 @@
   function setHeartState(button, isActive) {
     if (!button) return;
     button.classList.toggle('is-active', Boolean(isActive));
+    button.classList.toggle('favorites-active', Boolean(isActive));
     button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     button.setAttribute('aria-label', isActive ? 'Remove from favorites' : 'Add to favorites');
   }
