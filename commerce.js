@@ -1238,7 +1238,7 @@
     });
   };
 
-  const buildDynamicCard = (template, product, sectionKey, mapEntry = null) => {
+  const buildDynamicCard = (template, product, sectionKey, mapEntry = null, designLaunch = '') => {
     const card = template.cloneNode(true);
     if (card?.removeAttribute) {
       card.removeAttribute('id');
@@ -1268,7 +1268,12 @@
       button.dataset.productKey = product?.handle || product?.id || '';
       button.dataset.productHandle = product?.handle || '';
       button.dataset.productId = product?.id || '';
-      button.setAttribute('href', shouldRouteTileDesignToCustomization(button) ? 'customization.html' : '#section-customization');
+      button.setAttribute(
+        'href',
+        String(designLaunch || '').trim().toLowerCase() === 'customization'
+          ? 'customization.html'
+          : '#section-customization'
+      );
     });
 
     const variants = getSortedVariants(product);
@@ -1567,7 +1572,13 @@
             productMap?.products?.[productHandle] ||
             productMap?.products?.[productKey] ||
             null;
-          const card = buildDynamicCard(template, product, filters.sectionKey, mapEntry);
+          const card = buildDynamicCard(
+            template,
+            product,
+            filters.sectionKey,
+            mapEntry,
+            container.dataset.designLaunch || ''
+          );
           fragment.appendChild(card);
         });
         container.appendChild(fragment);
@@ -2054,7 +2065,7 @@
     const selection = await buildCustomizationDesignSelection(button);
     if (!selection) return;
     persistDesignSelection(selection);
-    global.location.href = 'customization.html';
+    window.location.href = 'customization.html';
   };
 
   const deriveProductKey = button => {
