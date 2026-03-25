@@ -1823,12 +1823,35 @@
         const getProductDetails = trigger => {
           const card = trigger.closest('.product-card');
           if (!card) return null;
-          const accessoryOnly = card.dataset.accessoryOnly === 'true';
           const title = card.querySelector('.product-title, .tile-title')?.textContent?.trim() || 'Custom Design';
           const priceText = card.querySelector('.product-price, .price-line')?.textContent || '';
           const price = Number(priceText.replace(/[^0-9.]/g, '')) || 0;
           const image = card.querySelector('img')?.getAttribute('src') || '';
           const previewStyle = buildPreviewStyle(image);
+          const getSwatchLabel = swatch =>
+            (swatch?.dataset.swatchLabel ||
+              swatch?.dataset.colorLabel ||
+              swatch?.dataset.accessoryLabel ||
+              swatch?.getAttribute('aria-label') ||
+              swatch?.getAttribute('title') ||
+              swatch?.getAttribute('data-image-alt') ||
+              swatch?.textContent ||
+              '')
+              .trim();
+          const findActiveSwatch = swatches =>
+            swatches.find(swatch => swatch.classList.contains('is-active')) ||
+            swatches.find(swatch => swatch.getAttribute('aria-pressed') === 'true') ||
+            swatches[0] ||
+            null;
+          const primarySwatches = Array.from(card.querySelectorAll('.swatch')).filter(
+            swatch => String(swatch?.dataset?.swatchType || '').trim().toLowerCase() !== 'accessory'
+          );
+          const accessorySwatches = Array.from(card.querySelectorAll('.swatch')).filter(
+            swatch => String(swatch?.dataset?.swatchType || '').trim().toLowerCase() === 'accessory'
+          );
+          const activePrimarySwatch = findActiveSwatch(primarySwatches);
+          const activeAccessorySwatch = findActiveSwatch(accessorySwatches);
+          const accessoryOnly = card.dataset.accessoryOnly === 'true' && !primarySwatches.length;
 
           const activeSwatch = card.querySelector('.swatch.is-active');
           const activeSwatchType = (activeSwatch?.getAttribute('data-swatch-type') || '').toLowerCase();
@@ -1841,17 +1864,15 @@
           const activeSwatchStyle = activeSwatch?.getAttribute('style') || '';
           const activeSwatchGlyph = (activeSwatch?.textContent || '').trim();
 
-          const fallbackColorSwatch = card.querySelector('[data-image-target][data-image-src]:not([data-swatch-type=\"accessory\"]), .swatch:not([data-swatch-type=\"accessory\"])');
+          const fallbackColorSwatch =
+            activePrimarySwatch ||
+            card.querySelector('[data-image-target][data-image-src]:not([data-swatch-type=\"accessory\"]), .swatch:not([data-swatch-type=\"accessory\"])');
           let colorLabel = accessoryOnly ? '' : (card.dataset.selectedColorLabel || '');
           if (!accessoryOnly && !colorLabel && activeSwatchType !== 'accessory' && activeSwatchLabel) {
             colorLabel = activeSwatchLabel;
           }
           if (!accessoryOnly && !colorLabel && fallbackColorSwatch) {
-            colorLabel =
-              fallbackColorSwatch.getAttribute('aria-label') ||
-              fallbackColorSwatch.getAttribute('title') ||
-              fallbackColorSwatch.getAttribute('data-image-alt') ||
-              '';
+            colorLabel = getSwatchLabel(fallbackColorSwatch);
           }
           let colorStyle = accessoryOnly ? '' : (card.dataset.selectedColorStyle || '');
           if (!accessoryOnly && !colorStyle && activeSwatchType !== 'accessory' && activeSwatchStyle) {
@@ -1860,19 +1881,19 @@
           if (!accessoryOnly && !colorStyle && fallbackColorSwatch) {
             colorStyle = fallbackColorSwatch.getAttribute('style') || '';
           }
-          const colorGlyph = accessoryOnly ? '' : (card.dataset.selectedColorGlyph || '');
+          const colorGlyph =
+            accessoryOnly
+              ? ''
+              : (card.dataset.selectedColorGlyph || (activePrimarySwatch?.textContent || '').trim());
 
-          const fallbackAccessorySwatch = card.querySelector('[data-swatch-type=\"accessory\"]');
+          const fallbackAccessorySwatch =
+            activeAccessorySwatch || card.querySelector('[data-swatch-type=\"accessory\"]');
           let accessoryLabel = card.dataset.selectedAccessory || '';
           if (!accessoryLabel && activeSwatchType === 'accessory' && activeSwatchLabel) {
             accessoryLabel = activeSwatchLabel;
           }
           if (!accessoryLabel && fallbackAccessorySwatch) {
-            accessoryLabel =
-              fallbackAccessorySwatch.getAttribute('data-accessory-label') ||
-              fallbackAccessorySwatch.getAttribute('aria-label') ||
-              fallbackAccessorySwatch.getAttribute('title') ||
-              '';
+            accessoryLabel = getSwatchLabel(fallbackAccessorySwatch);
           }
           let accessoryStyle = card.dataset.selectedAccessoryStyle || '';
           if (!accessoryStyle && activeSwatchType === 'accessory' && activeSwatchStyle) {

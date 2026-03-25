@@ -4659,7 +4659,31 @@
           }
         }
 
-        const accessoryOnly = card.dataset.accessoryOnly === 'true';
+        const getSwatchLabel = swatch =>
+          cleanLabel(
+            swatch?.dataset.swatchLabel ||
+              swatch?.dataset.colorLabel ||
+              swatch?.dataset.accessoryLabel ||
+              swatch?.getAttribute('aria-label') ||
+              swatch?.getAttribute('title') ||
+              swatch?.dataset.imageAlt ||
+              swatch?.textContent ||
+              ''
+          );
+        const findActiveSwatch = swatches =>
+          swatches.find(swatch => swatch.classList.contains('is-active')) ||
+          swatches.find(swatch => swatch.getAttribute('aria-pressed') === 'true') ||
+          swatches[0] ||
+          null;
+        const primarySwatches = Array.from(card.querySelectorAll('.swatch')).filter(
+          swatch => String(swatch?.dataset?.swatchType || '').trim().toLowerCase() !== 'accessory'
+        );
+        const accessorySwatches = Array.from(card.querySelectorAll('.swatch')).filter(
+          swatch => String(swatch?.dataset?.swatchType || '').trim().toLowerCase() === 'accessory'
+        );
+        const activePrimarySwatch = findActiveSwatch(primarySwatches);
+        const activeAccessorySwatch = findActiveSwatch(accessorySwatches);
+        const accessoryOnly = card.dataset.accessoryOnly === 'true' && !primarySwatches.length;
         const activeSwatch = card.querySelector('.swatch.is-active');
         const activeSwatchType = (activeSwatch?.dataset.swatchType || '').toLowerCase();
         const activeSwatchLabel =
@@ -4680,18 +4704,25 @@
           }
         }
         if (!colorLabel && !accessoryOnly) {
+          colorLabel = getSwatchLabel(activePrimarySwatch);
+        }
+        if (!colorLabel && !accessoryOnly) {
           const activeImage = card.querySelector('.tile-mauve img, .product-media img, img');
-          const alt = activeImage?.getAttribute('alt') || '';
-          colorLabel = alt;
+          colorLabel = activeImage?.getAttribute('alt') || '';
         }
         let colorStyle = accessoryOnly ? '' : (card.dataset.selectedColorStyle || '');
         if (!colorStyle && !accessoryOnly) {
-          const swatchEl = card.querySelector('[data-image-target][data-image-src]:not([data-swatch-type="accessory"]), .swatch:not([data-swatch-type="accessory"])');
+          const swatchEl =
+            activePrimarySwatch ||
+            card.querySelector('[data-image-target][data-image-src]:not([data-swatch-type="accessory"]), .swatch:not([data-swatch-type="accessory"])');
           if (swatchEl) {
             colorStyle = swatchEl.getAttribute('style') || '';
           }
         }
-        const colorGlyph = accessoryOnly ? '' : (card.dataset.selectedColorGlyph || '');
+        const colorGlyph =
+          accessoryOnly
+            ? ''
+            : (card.dataset.selectedColorGlyph || (activePrimarySwatch?.textContent || '').trim());
         let accessoryLabel = card.dataset.selectedAccessory || '';
         if (accessoryLabel) {
           accessoryLabel = cleanLabel(accessoryLabel);
@@ -4699,21 +4730,43 @@
         if (!accessoryLabel && activeSwatchType === 'accessory' && activeSwatchLabel) {
           accessoryLabel = cleanLabel(activeSwatchLabel);
         }
+        if (!accessoryLabel && activeAccessorySwatch) {
+          accessoryLabel = getSwatchLabel(activeAccessorySwatch);
+        }
         let accessoryStyle = card.dataset.selectedAccessoryStyle || '';
         if (!accessoryStyle) {
-          const accessorySwatch = card.querySelector('[data-swatch-type="accessory"]');
+          const accessorySwatch =
+            activeAccessorySwatch || card.querySelector('[data-swatch-type="accessory"]');
           if (accessorySwatch) {
             accessoryStyle = accessorySwatch.getAttribute('style') || '';
           }
         }
-        const accessoryGlyph = card.dataset.selectedAccessoryGlyph || (activeSwatchType === 'accessory' ? activeSwatchGlyph : '');
+        const accessoryGlyph =
+          card.dataset.selectedAccessoryGlyph ||
+          (activeSwatchType === 'accessory'
+            ? activeSwatchGlyph
+            : (activeAccessorySwatch?.textContent || '').trim());
         if (!accessoryStyle && activeSwatchType === 'accessory' && activeSwatchStyle) {
           accessoryStyle = activeSwatchStyle;
         }
 
         const options = [];
-        if (colorLabel && !accessoryOnly) options.push({ label: 'Color', value: colorLabel, swatchStyle: colorStyle, swatchGlyph: colorGlyph });
-        if (accessoryLabel) options.push({ label: 'Accessory', value: accessoryLabel, swatchStyle: accessoryStyle, swatchGlyph: accessoryGlyph });
+        if (colorLabel && !accessoryOnly) {
+          options.push({
+            label: 'Color',
+            value: colorLabel,
+            swatchStyle: colorStyle,
+            swatchGlyph: colorGlyph
+          });
+        }
+        if (accessoryLabel) {
+          options.push({
+            label: 'Accessory',
+            value: accessoryLabel,
+            swatchStyle: accessoryStyle,
+            swatchGlyph: accessoryGlyph
+          });
+        }
 
         const idParts = [titleText, price];
         if (colorLabel && !accessoryOnly) idParts.push(`color:${colorLabel}`);

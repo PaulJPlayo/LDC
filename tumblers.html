@@ -1869,18 +1869,45 @@
           const price = Number(priceText.replace(/[^0-9.]/g, '')) || 0;
           const image = card.querySelector('img')?.getAttribute('src') || '';
           const previewStyle = buildPreviewStyle(image);
+          const getSwatchLabel = swatch =>
+            (swatch?.dataset.swatchLabel ||
+              swatch?.dataset.colorLabel ||
+              swatch?.dataset.accessoryLabel ||
+              swatch?.getAttribute('aria-label') ||
+              swatch?.getAttribute('title') ||
+              swatch?.textContent ||
+              '')
+              .trim();
+          const findActiveSwatch = swatches =>
+            swatches.find(swatch => swatch.classList.contains('is-active')) ||
+            swatches.find(swatch => swatch.getAttribute('aria-pressed') === 'true') ||
+            swatches[0] ||
+            null;
+          const primarySwatches = Array.from(card.querySelectorAll('.swatch')).filter(
+            swatch => String(swatch?.dataset?.swatchType || '').trim().toLowerCase() !== 'accessory'
+          );
+          const accessorySwatches = Array.from(card.querySelectorAll('.swatch')).filter(
+            swatch => String(swatch?.dataset?.swatchType || '').trim().toLowerCase() === 'accessory'
+          );
+          const activePrimarySwatch = findActiveSwatch(primarySwatches);
+          const activeAccessorySwatch = findActiveSwatch(accessorySwatches);
 
-          const fallbackSwatch = card.querySelector('[data-image-target][data-image-src]');
-          const colorLabel = card.dataset.selectedColorLabel || fallbackSwatch?.getAttribute('aria-label') || '';
+          const fallbackSwatch =
+            activePrimarySwatch || card.querySelector('[data-image-target][data-image-src]');
+          const colorLabel = card.dataset.selectedColorLabel || getSwatchLabel(fallbackSwatch) || '';
           const colorStyle = card.dataset.selectedColorStyle || fallbackSwatch?.getAttribute('style') || '';
+          const colorGlyph = card.dataset.selectedColorGlyph || (activePrimarySwatch?.textContent || '').trim();
+          const accessoryLabel = card.dataset.selectedAccessory || getSwatchLabel(activeAccessorySwatch) || '';
+          const accessoryStyle = card.dataset.selectedAccessoryStyle || activeAccessorySwatch?.getAttribute('style') || '';
+          const accessoryGlyph = card.dataset.selectedAccessoryGlyph || (activeAccessorySwatch?.textContent || '').trim();
 
           const options = [];
-          if (colorLabel) options.push({ label: 'Color', value: colorLabel, swatchStyle: colorStyle });
-          if (card.dataset.selectedAccessory) options.push({ label: 'Accessory', value: card.dataset.selectedAccessory });
+          if (colorLabel) options.push({ label: 'Color', value: colorLabel, swatchStyle: colorStyle, swatchGlyph: colorGlyph });
+          if (accessoryLabel) options.push({ label: 'Accessory', value: accessoryLabel, swatchStyle: accessoryStyle, swatchGlyph: accessoryGlyph });
           if (card.dataset.selectedWrap) options.push({ label: 'Wrap', value: card.dataset.selectedWrap });
           if (card.dataset.selectedNotes) options.push({ label: 'Notes', value: card.dataset.selectedNotes });
 
-          const baseId = `${title}-${colorLabel || 'default'}-${price}`;
+          const baseId = `${title}-${colorLabel || 'default'}-${accessoryLabel || 'no-accessory'}-${price}`;
 
           return {
             id: `${baseId}-${Date.now()}`,

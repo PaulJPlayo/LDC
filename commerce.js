@@ -1383,13 +1383,17 @@
     updateProductImage(card, defaultImage, product?.title || '', defaultLabel);
     updateAddToCartVariant(card, defaultVariant?.id || null);
     syncVariantBadge(card, product, sectionKey, defaultLabel, overrides);
-    const defaultSwatch = card.querySelector('.swatch.is-active') || card.querySelector('.swatch');
-    if (defaultSwatch && defaultLabel) {
-      applySelectedSwatchState(card, {
-        label: defaultLabel,
-        style: defaultSwatch.getAttribute('style') || '',
-        glyph: (defaultSwatch.textContent || '').trim(),
-        type: defaultSwatch.dataset.swatchType || ''
+    const defaultSelections = Array.from(card.querySelectorAll('[data-swatch-track]'))
+      .map(track => track.querySelector('.swatch.is-active') || track.querySelector('.swatch'))
+      .filter(Boolean);
+    if (defaultSelections.length) {
+      defaultSelections.forEach(swatch => {
+        applySelectedSwatchState(card, {
+          label: getSwatchLabel(swatch) || defaultLabel,
+          style: swatch.getAttribute('style') || '',
+          glyph: (swatch.textContent || '').trim(),
+          type: swatch.dataset.swatchType || ''
+        });
       });
     } else if (defaultLabel) {
       const defaultMeta = getVariantSwatchMeta(defaultVariant);
@@ -1791,6 +1795,43 @@
       style,
       glyph,
       type
+    };
+  };
+
+  const getSelectedSwatchForKind = (container, kind) => {
+    if (!container) return null;
+    const normalizedKind =
+      String(kind || '').trim().toLowerCase() === 'accessory' ? 'accessory' : 'color';
+    const tracks = Array.from(container.querySelectorAll('[data-swatch-track]'));
+    const trackMatch = tracks.find(track => {
+      const sliderKind = String(
+        track.closest('[data-swatch-slider]')?.dataset?.swatchKind || ''
+      )
+        .trim()
+        .toLowerCase();
+      return normalizedKind === 'accessory'
+        ? sliderKind === 'accessory'
+        : sliderKind !== 'accessory';
+    });
+    const swatches = Array.from((trackMatch || container).querySelectorAll('.swatch')).filter(
+      swatch => {
+        const swatchType = String(swatch?.dataset?.swatchType || '').trim().toLowerCase();
+        return normalizedKind === 'accessory' ? swatchType === 'accessory' : swatchType !== 'accessory';
+      }
+    );
+    const swatch =
+      swatches.find(el => el.classList.contains('is-active')) ||
+      swatches.find(el => el.getAttribute('aria-pressed') === 'true') ||
+      swatches[0] ||
+      null;
+    if (!swatch) return null;
+    const label = cleanVariantLabel(getSwatchLabel(swatch));
+    if (!label) return null;
+    return {
+      label,
+      style: swatch.getAttribute('style') || '',
+      glyph: (swatch.textContent || '').trim(),
+      type: normalizedKind
     };
   };
 
@@ -2698,11 +2739,19 @@
       if (src) metadata.preview_url = src;
     }
     const swatchData = getSelectedVariantSwatch(button);
-    if (swatchData?.label) {
-      metadata.variant_label = swatchData.label;
-      metadata.variant_style = swatchData.style || '';
-      metadata.variant_glyph = swatchData.glyph || '';
-      metadata.variant_type = swatchData.type || 'color';
+    const selectedPrimarySwatch = getSelectedSwatchForKind(card, 'color');
+    const selectedAccessorySwatch = getSelectedSwatchForKind(card, 'accessory');
+    const hasPrimarySwatchTrack = cardHasPrimarySwatches(card);
+    const hasAccessorySwatchTrack = cardHasAccessorySwatches(card);
+    const preferredVariantSwatch =
+      (hasPrimarySwatchTrack && (selectedPrimarySwatch || (swatchData?.type !== 'accessory' ? swatchData : null))) ||
+      (hasAccessorySwatchTrack && (selectedAccessorySwatch || swatchData)) ||
+      swatchData;
+    if (preferredVariantSwatch?.label) {
+      metadata.variant_label = preferredVariantSwatch.label;
+      metadata.variant_style = preferredVariantSwatch.style || '';
+      metadata.variant_glyph = preferredVariantSwatch.glyph || '';
+      metadata.variant_type = preferredVariantSwatch.type || 'color';
     }
     const description = extractDescriptionFromCard(card);
     if (description) {
@@ -2710,12 +2759,13 @@
     }
     const hasAnySwatches = Boolean(card && card.querySelector('.swatch'));
     const shouldWriteColorSelection =
-      cardHasPrimarySwatches(card) ||
+      hasPrimarySwatchTrack ||
       (!hasAnySwatches && swatchData?.type !== 'accessory');
     const selectedColorLabel = cleanVariantLabel(
       shouldWriteColorSelection
         ? (
             card?.dataset?.selectedColor ||
+            selectedPrimarySwatch?.label ||
             (swatchData?.type === 'accessory' ? '' : swatchData?.label || '')
           )
         : ''
@@ -2724,17 +2774,20 @@
       metadata.selected_color_label = selectedColorLabel;
       metadata.selected_color_style =
         card?.dataset?.selectedColorStyle ||
+        selectedPrimarySwatch?.style ||
         (swatchData?.type === 'accessory' ? '' : swatchData?.style || '');
       metadata.selected_color_glyph =
         card?.dataset?.selectedColorGlyph ||
+        selectedPrimarySwatch?.glyph ||
         (swatchData?.type === 'accessory' ? '' : swatchData?.glyph || '');
     }
     const shouldWriteAccessorySelection =
-      cardHasAccessorySwatches(card) || swatchData?.type === 'accessory';
+      hasAccessorySwatchTrack || swatchData?.type === 'accessory';
     const selectedAccessoryLabel = cleanVariantLabel(
       shouldWriteAccessorySelection
         ? (
             card?.dataset?.selectedAccessory ||
+            selectedAccessorySwatch?.label ||
             (swatchData?.type === 'accessory' ? swatchData?.label || '' : '')
           )
         : ''
@@ -2743,9 +2796,11 @@
       metadata.selected_accessory_label = selectedAccessoryLabel;
       metadata.selected_accessory_style =
         card?.dataset?.selectedAccessoryStyle ||
+        selectedAccessorySwatch?.style ||
         (swatchData?.type === 'accessory' ? swatchData?.style || '' : '');
       metadata.selected_accessory_glyph =
         card?.dataset?.selectedAccessoryGlyph ||
+        selectedAccessorySwatch?.glyph ||
         (swatchData?.type === 'accessory' ? swatchData?.glyph || '' : '');
     }
     if (!metadata.preview_url) {
