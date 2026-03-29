@@ -1499,9 +1499,8 @@
         if (footerYear) footerYear.textContent = new Date().getFullYear();
 
         const CART_STORAGE_KEY = 'ldc:cart';
-        const FAVORITES_STORAGE_KEY = 'ldc:favorites';
-        const usingSharedFavorites = Boolean(window.ldcFavorites && window.ldcFavorites.__sharedStore);
-        const sharedFavoritesApi = usingSharedFavorites ? window.ldcFavorites : null;
+        const sharedFavoritesApi =
+          window.ldcFavorites && window.ldcFavorites.__sharedStore ? window.ldcFavorites : null;
         const cartDrawer = document.querySelector('[data-cart-drawer]');
         const cartOverlay = document.querySelector('[data-cart-overlay]');
         const cartPanel = document.querySelector('[data-cart-panel]');
@@ -1509,11 +1508,6 @@
         const cartTotalEl = document.querySelector('[data-cart-total]');
         const checkoutBtn = document.querySelector('[data-cart-checkout]');
         const resetBtn = document.querySelector('[data-cart-reset]');
-        const favoritesDrawer = document.querySelector('[data-favorites-drawer]');
-        const favoritesOverlay = document.querySelector('[data-favorites-overlay]');
-        const favoritesPanel = document.querySelector('[data-favorites-panel]');
-        const favoritesItemsEl = document.querySelector('[data-favorites-items]');
-        const favoritesCta = document.querySelector('[data-favorites-cta]');
         const cartCountEl = document.querySelector('[data-cart-count]');
         const favoritesCountEl = document.querySelector('[data-favorites-count]');
         const favoritesOpeners = document.querySelectorAll('[data-favorites-open]');
@@ -1549,40 +1543,8 @@
         cartState.items = (cartState.items || []).map(normalizeCartItem).filter(Boolean);
         const formatCurrency = amount => `$${(amount || 0).toFixed(2)}`;
 
-        const loadFavoritesState = () => {
-          try {
-            return JSON.parse(localStorage.getItem(FAVORITES_STORAGE_KEY)) || { items: [] };
-          } catch {
-            return { items: [] };
-          }
-        };
-        const normalizeFavorite = item => {
-          if (!item) return null;
-          const name = item.name || item.title || 'Favorite';
-          let image = item.image || item.previewImage || '';
-          const previewStyle = item.previewStyle || buildPreviewStyle(image) || '';
-          if (!image && previewStyle) {
-            image = extractImageFromStyle(previewStyle);
-          }
-          const options = Array.isArray(item.options)
-            ? item.options.map(opt => ({
-                label: String(opt?.label ?? '').trim(),
-                value: String(opt?.value ?? '').trim(),
-                swatchStyle: typeof opt?.swatchStyle === 'string' ? opt.swatchStyle.trim() : '',
-                swatchGlyph: typeof opt?.swatchGlyph === 'string' ? opt.swatchGlyph : ''
-              }))
-            : [];
-          return { ...item, name, title: item.title || name, image, previewImage: image, previewStyle, options };
-        };
-        let favoritesState = loadFavoritesState();
-        favoritesState.items = (favoritesState.items || []).map(normalizeFavorite).filter(Boolean);
-
         const saveCart = () => {
           localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartState));
-        };
-        const saveFavorites = () => {
-          if (usingSharedFavorites) return;
-          localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favoritesState));
         };
         const activateSwatchVisual = swatch => {
           if (!swatch) return;
@@ -1603,12 +1565,9 @@
             }
           });
         };
-        saveFavorites();
         const syncBadges = () => {
           const cartCount = cartState.items?.length || 0;
-          const favCount = usingSharedFavorites && sharedFavoritesApi
-            ? sharedFavoritesApi.getFavorites().length
-            : (favoritesState.items?.length || 0);
+          const favCount = sharedFavoritesApi?.getFavorites().length || 0;
           if (cartCountEl) {
             cartCountEl.textContent = cartCount > 0 ? cartCount : '';
             cartCountEl.hidden = cartCount === 0;
@@ -1760,108 +1719,6 @@
           });
         });
 
-        const openFavorites = () => {
-          favoritesDrawer?.classList.add('is-open');
-          favoritesOverlay?.classList.add('is-open');
-          document.body.classList.add('favorites-open');
-          favoritesPanel?.removeAttribute('aria-hidden');
-          favoritesPanel?.focus({ preventScroll: true });
-        };
-        const closeFavorites = () => {
-          favoritesDrawer?.classList.remove('is-open');
-          favoritesOverlay?.classList.remove('is-open');
-          document.body.classList.remove('favorites-open');
-          favoritesPanel?.setAttribute('aria-hidden', 'true');
-        };
-
-        const renderFavorites = () => {
-          if (usingSharedFavorites) return;
-          if (!favoritesItemsEl) return;
-          const items = favoritesState.items || [];
-          if (!items.length) {
-            favoritesItemsEl.innerHTML = '<div class="favorites-empty">No favorites yet.</div>';
-            syncBadges();
-            return;
-          }
-          favoritesItemsEl.innerHTML = '';
-          items.forEach(item => {
-            const row = document.createElement('div');
-            row.className = 'favorite-item';
-            const thumbStyle = item.previewStyle || buildPreviewStyle(item.image || '') || '';
-            if (!item.previewStyle && thumbStyle) {
-              item.previewStyle = thumbStyle;
-              saveFavorites();
-            }
-            const imgTag = item.image ? `<img src="${item.image}" alt="${item.title || item.name || 'Favorite'}" />` : '';
-            const preview = `<div class="favorite-thumb" style="${thumbStyle}">${imgTag}</div>`;
-            row.innerHTML = `
-              ${preview}
-              <div>
-                <div class="favorite-title">${item.name || item.title || 'Favorite'}</div>
-                <div class="favorite-meta">${formatCurrency(item.price || 0)}</div>
-                <div class="favorite-actions">
-                  <button type="button" class="favorites-btn favorite-cart-btn" data-fav-add-cart="${item.id}">Add to Cart</button>
-                  <button type="button" class="favorites-btn" data-fav-remove="${item.id}">Remove</button>
-                </div>
-              </div>
-            `;
-            favoritesItemsEl.appendChild(row);
-          });
-          favoritesItemsEl.querySelectorAll('[data-fav-add-cart]').forEach(btn => {
-            btn.addEventListener('click', () => {
-              const id = btn.getAttribute('data-fav-add-cart');
-              const item = (favoritesState.items || []).find(entry => entry.id === id);
-              if (item) {
-                const qty = Math.max(1, Number(item.quantity || 1));
-                addProduct({ ...item, quantity: qty });
-              }
-            });
-          });
-          favoritesItemsEl.querySelectorAll('[data-fav-remove]').forEach(btn => {
-            btn.addEventListener('click', () => {
-              const id = btn.getAttribute('data-fav-remove');
-              favoritesState.items = (favoritesState.items || []).filter(entry => entry.id !== id);
-              saveFavorites();
-              renderFavorites();
-            });
-          });
-          syncBadges();
-        };
-
-        const toggleFavorite = product => {
-          if (!product) return;
-          const favId = product.favoriteId || product.id;
-          const normalized = { ...product, id: favId };
-          const exists = (favoritesState.items || []).some(item => item.id === favId);
-          if (exists) {
-            favoritesState.items = favoritesState.items.filter(item => item.id !== favId);
-          } else {
-            favoritesState.items = [...(favoritesState.items || []), normalized];
-          }
-          saveFavorites();
-          renderFavorites();
-          if (!exists) openFavorites();
-        };
-
-        if (!usingSharedFavorites) {
-          favoritesOverlay?.addEventListener('click', closeFavorites);
-          document.querySelectorAll('[data-favorites-close]').forEach(btn =>
-            btn.addEventListener('click', closeFavorites)
-          );
-          document.querySelectorAll('[data-favorites-open]').forEach(btn =>
-            btn.addEventListener('click', event => {
-              event.preventDefault();
-              openFavorites();
-            })
-          );
-          window.addEventListener('keydown', event => {
-            if (event.key === 'Escape') {
-              closeFavorites();
-            }
-          });
-          favoritesCta?.addEventListener('click', closeFavorites);
-        }
-
         const getProductDetails = trigger => {
           const card = trigger.closest('.product-card');
           if (!card) return null;
@@ -1931,18 +1788,6 @@
             if (product) addProduct(product);
           });
         });
-
-        if (!usingSharedFavorites) {
-          document.querySelectorAll('.tile-action-favorite').forEach(button => {
-            if (button.dataset.favInit) return;
-            button.dataset.favInit = 'true';
-            button.addEventListener('click', () => {
-              const product = getProductDetails(button);
-              if (!product) return;
-              toggleFavorite(product);
-            });
-          });
-        }
 
         const initSwatchSliders = () => {
           document.querySelectorAll('[data-swatch-slider]').forEach(slider => {
@@ -2156,7 +2001,6 @@
         initSwatchSliders();
         wireProductSwatches();
         renderCart();
-        renderFavorites();
         syncBadges();
       })();
     </script>
