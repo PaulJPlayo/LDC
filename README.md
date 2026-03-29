@@ -1,6 +1,6 @@
 # LDC
 
-LDC is a multi-part ecommerce platform, not a placeholder landing page scaffold. This repository contains the public storefront at the repo root, a separate custom Admin Studio in `admin-ui/`, and a separate Medusa backend in `medusa-backend/`.
+LDC is a multi-part ecommerce platform. This repository contains the public storefront at the repo root, a separate custom Admin Studio in `admin-ui/`, and a separate Medusa backend in `medusa-backend/`.
 
 The current phase is late-stage parity, QA, and release-hardening. Favor targeted fixes, verification, and shared-runtime improvements over broad feature work.
 
