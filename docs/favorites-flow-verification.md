@@ -40,7 +40,7 @@
 - Performed hardening cleanup on legacy inline pages (`index.html`, `cups.html`, `accessories.html`, `tumblers.html`).
 - Disabled obsolete inline favorites listeners when shared store is active to prevent duplicated favorites mutations.
 - Kept legacy fallback logic only for non-shared fallback mode.
-- Follow-up cleanup retired the remaining guarded inline favorites fallback path from `cups.html`; retained fallback pages are now `index.html`, `accessories.html`, and `tumblers.html`.
+- Follow-up cleanup retired the remaining guarded inline favorites fallback paths from `cups.html` and `accessories.html`; retained fallback pages are now `index.html` and `tumblers.html`.
 
 ### Drawer/Page theme alignment update
 - Added a shared visual theme layer in `favorites-theme.css` and moved `favorites.html` to consume that shared stylesheet.
@@ -55,7 +55,7 @@
   - `favorites.html`
 
 ## Known limitations
-- Legacy inline favorites fallback code still exists on some static pages (`index.html`, `accessories.html`, `tumblers.html`) for non-shared fallback mode; it is now gated and inactive when shared store is present.
+- Legacy inline favorites fallback code still exists on some static pages (`index.html`, `tumblers.html`) for non-shared fallback mode; it is now gated and inactive when shared store is present.
 - Automated browser-level regression coverage is not present in-repo; verification remains manual.
 - Final checkout completion remains intentionally out of scope.
 
@@ -66,7 +66,7 @@
   - page-local drawer-item favorites mutation handlers
   - retired by guard condition `if (!usingSharedFavorites) { ... }` on legacy pages
 - Retained intentionally:
-  - fallback local favorites logic for resilience if shared module fails to initialize on the remaining legacy static pages (`index.html`, `accessories.html`, `tumblers.html`)
+  - fallback local favorites logic for resilience if shared module fails to initialize on the remaining legacy static pages (`index.html`, `tumblers.html`)
   - rationale: defensive compatibility path without affecting shared canonical flow
 
 ## Recommended manual QA checklist
