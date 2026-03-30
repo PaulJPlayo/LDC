@@ -33,6 +33,7 @@
   const DESIGN_SELECTION_PENDING_KEY = 'ldcDesignSelectionPending';
   const DESIGN_SELECTION_PENDING_AT_KEY = 'ldcDesignSelectionPendingAt';
   const DEFAULT_LOCALE = 'en-US';
+  const LINE_ITEM_DISPLAY_ORDER_KEY = 'storefront_display_order';
   const CART_DISPLAY_MONEY_FIELDS = [
     'subtotal',
     'total',
@@ -395,6 +396,16 @@
     return null;
   };
 
+  const parseTimestampLikeValue = value => {
+    const numeric = parseNumeric(value);
+    if (numeric != null) return numeric;
+    if (typeof value === 'string' && value.trim()) {
+      const parsed = Date.parse(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+    return null;
+  };
+
   const sortVariantsByRank = variants => {
     if (!Array.isArray(variants)) return [];
     const withIndex = variants.map((variant, index) => {
@@ -640,6 +651,49 @@
     return normalized;
   };
 
+  const getLineItemDisplayOrderMetadata = item => {
+    const metadata = normalizeMetadata(item?.metadata);
+    return (
+      metadata?.[LINE_ITEM_DISPLAY_ORDER_KEY] ??
+      metadata?.storefrontDisplayOrder ??
+      metadata?.ldc_display_order ??
+      metadata?.ldcDisplayOrder ??
+      null
+    );
+  };
+
+  const getLineItemDisplayOrderValue = (item, fallbackIndex = 0) => {
+    const markerValue = parseTimestampLikeValue(getLineItemDisplayOrderMetadata(item));
+    const createdAtValue = parseTimestampLikeValue(item?.created_at || item?.createdAt);
+    const resolvedValue = markerValue != null ? markerValue : createdAtValue;
+    if (resolvedValue != null) {
+      return { bucket: 0, value: resolvedValue, fallbackIndex };
+    }
+    return { bucket: 1, value: Number(fallbackIndex) || 0, fallbackIndex };
+  };
+
+  const getOrderedCartItems = cartOrItems => {
+    const items = Array.isArray(cartOrItems)
+      ? cartOrItems
+      : (Array.isArray(cartOrItems?.items) ? cartOrItems.items : []);
+    return items
+      .map((item, index) => ({
+        item,
+        index,
+        order: getLineItemDisplayOrderValue(item, index)
+      }))
+      .sort((left, right) => {
+        if (left.order.bucket !== right.order.bucket) {
+          return left.order.bucket - right.order.bucket;
+        }
+        if (left.order.value !== right.order.value) {
+          return left.order.value - right.order.value;
+        }
+        return left.index - right.index;
+      })
+      .map(entry => entry.item);
+  };
+
   const normalizeCartForDisplay = cart => {
     if (!cart || typeof cart !== 'object') return cart;
     const currencyCode = getCurrencyCode(cart);
@@ -649,7 +703,7 @@
       currencyCode
     );
     if (Array.isArray(cart.items)) {
-      normalizedCart.items = cart.items.map(item =>
+      normalizedCart.items = getOrderedCartItems(cart).map(item =>
         normalizeEntryMoneyFields(item, LINE_ITEM_DISPLAY_MONEY_FIELDS, currencyCode)
       );
     }
@@ -2580,6 +2634,63 @@
 
   const normalizeCart = data => data?.cart || data;
 
+  const withDisplayOrderMarker = (metadata, orderValue) => {
+    const normalized = normalizeMetadata(metadata);
+    if (orderValue == null) return normalized;
+    return {
+      ...normalized,
+      [LINE_ITEM_DISPLAY_ORDER_KEY]: String(orderValue)
+    };
+  };
+
+  const ensureNewLineItemsHaveDisplayOrder = async (previousCart, nextCart) => {
+    const cartId = toText(nextCart?.id);
+    const nextItems = Array.isArray(nextCart?.items) ? nextCart.items : [];
+    if (!cartId || !nextItems.length) return nextCart;
+
+    const previousIds = new Set(
+      (Array.isArray(previousCart?.items) ? previousCart.items : [])
+        .map(item => toText(item?.id))
+        .filter(Boolean)
+    );
+    const newlyCreatedItems = nextItems.filter(item => {
+      const itemId = toText(item?.id);
+      return itemId && !previousIds.has(itemId);
+    });
+    if (!newlyCreatedItems.length) return nextCart;
+
+    let workingCart = nextCart;
+    let nextOrderValue = Date.now();
+
+    for (const item of newlyCreatedItems) {
+      const itemId = toText(item?.id);
+      if (!itemId) continue;
+      if (parseTimestampLikeValue(getLineItemDisplayOrderMetadata(item)) != null) {
+        continue;
+      }
+      const metadata = withDisplayOrderMarker(item?.metadata, nextOrderValue);
+      nextOrderValue += 1;
+      try {
+        const data = await request(`/store/carts/${cartId}/line-items/${itemId}`, {
+          method: 'POST',
+          body: {
+            quantity: Math.max(1, Number(item?.quantity || 1)),
+            metadata
+          }
+        });
+        workingCart = normalizeCart(data);
+      } catch (error) {
+        console.warn('[commerce] Unable to persist line-item display order marker', {
+          cart_id: cartId,
+          line_item_id: itemId,
+          error: error?.message || String(error)
+        });
+      }
+    }
+
+    return workingCart;
+  };
+
   const getCart = async id => {
     if (!id) return null;
     try {
@@ -3140,7 +3251,7 @@
   const syncLegacyCart = cart => {
     const currencyCode = getCurrencyCode(cart);
     const items = Array.isArray(cart?.items)
-      ? cart.items.map(item => formatLegacyItem(item, currencyCode)).filter(Boolean)
+      ? getOrderedCartItems(cart).map(item => formatLegacyItem(item, currencyCode)).filter(Boolean)
       : [];
     const payload = { items, currency_code: currencyCode };
     try {
@@ -3180,7 +3291,8 @@
         metadata: metadata
       }
     });
-    return normalizeCart(data);
+    const nextCart = normalizeCart(data);
+    return ensureNewLineItemsHaveDisplayOrder(cart, nextCart);
   };
 
   const removeLineItem = async lineItemId => {
@@ -4461,6 +4573,7 @@
     getCurrencyCode,
     getCurrencyDivisor,
     formatMoneyFromMinor,
+    getOrderedCartItems,
     getLineItemDisplayImage,
     formatLineItemForDisplay: formatLegacyItem,
     isDesignSubmittedLineItem,
