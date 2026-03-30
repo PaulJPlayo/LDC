@@ -2644,17 +2644,21 @@
   };
 
   const ensureNewLineItemsHaveDisplayOrder = async (previousCart, nextCart) => {
-    const cartId = toText(nextCart?.id);
+    const readCartItemId = value => {
+      if (value == null) return '';
+      return String(value).trim();
+    };
+    const cartId = readCartItemId(nextCart?.id);
     const nextItems = Array.isArray(nextCart?.items) ? nextCart.items : [];
     if (!cartId || !nextItems.length) return nextCart;
 
     const previousIds = new Set(
       (Array.isArray(previousCart?.items) ? previousCart.items : [])
-        .map(item => toText(item?.id))
+        .map(item => readCartItemId(item?.id))
         .filter(Boolean)
     );
     const newlyCreatedItems = nextItems.filter(item => {
-      const itemId = toText(item?.id);
+      const itemId = readCartItemId(item?.id);
       return itemId && !previousIds.has(itemId);
     });
     if (!newlyCreatedItems.length) return nextCart;
@@ -2663,7 +2667,7 @@
     let nextOrderValue = Date.now();
 
     for (const item of newlyCreatedItems) {
-      const itemId = toText(item?.id);
+      const itemId = readCartItemId(item?.id);
       if (!itemId) continue;
       if (parseTimestampLikeValue(getLineItemDisplayOrderMetadata(item)) != null) {
         continue;
