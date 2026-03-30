@@ -491,7 +491,7 @@
     <div class="checkout-shell">
       <main class="checkout-card" aria-labelledby="checkout-heading">
         <header class="checkout-header">
-          <a class="checkout-back" href="index.html">
+          <a class="checkout-back" href="index.html" data-continue-shopping-target>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
               <path d="M15 18l-6-6 6-6" />
             </svg>
@@ -1412,26 +1412,6 @@
           };
           return map[char] || char;
         });
-
-        // Make "Continue Shopping" return to the previous page (fallback to home).
-        const backLink = document.querySelector('.checkout-back');
-        if (backLink) {
-          backLink.addEventListener('click', event => {
-            event.preventDefault();
-            const fallbackUrl = 'index.html';
-            const referrer = document.referrer && !document.referrer.includes('checkout.html') ? document.referrer : '';
-            if (window.history.length > 1) {
-              history.back();
-              setTimeout(() => {
-                if (window.location.pathname.endsWith('checkout.html')) {
-                  window.location.href = referrer || fallbackUrl;
-                }
-              }, 300);
-            } else {
-              window.location.href = referrer || fallbackUrl;
-            }
-          });
-        }
 
         const loadCartState = () => {
           const params = new URLSearchParams(window.location.search);

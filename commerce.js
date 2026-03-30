@@ -32,6 +32,7 @@
   const DESIGN_SELECTION_KEY = 'ldcDesignSelection';
   const DESIGN_SELECTION_PENDING_KEY = 'ldcDesignSelectionPending';
   const DESIGN_SELECTION_PENDING_AT_KEY = 'ldcDesignSelectionPendingAt';
+  const CONTINUE_SHOPPING_RETURN_URL_KEY = 'ldc:continue-shopping:return-url';
   const DEFAULT_LOCALE = 'en-US';
   const LINE_ITEM_DISPLAY_ORDER_KEY = 'storefront_display_order';
   const CART_DISPLAY_MONEY_FIELDS = [
@@ -3374,6 +3375,96 @@
     return normalized || '/';
   };
 
+  const CONTINUE_SHOPPING_BROWSE_PATHS = new Set([
+    '/',
+    '/customization',
+    '/tumblers',
+    '/cups',
+    '/accessories',
+    '/sale',
+    '/under-25',
+    '/last-chance'
+  ]);
+  const CONTINUE_SHOPPING_EXCLUDED_PATHS = new Set([
+    '/favorites',
+    '/checkout'
+  ]);
+
+  const getContinueShoppingStorage = () => {
+    try {
+      const storage = window.sessionStorage;
+      const probeKey = '__ldc_continue_shopping_probe__';
+      storage.setItem(probeKey, '1');
+      storage.removeItem(probeKey);
+      return storage;
+    } catch {
+      return null;
+    }
+  };
+
+  const isContinueShoppingBrowsePath = pathname =>
+    CONTINUE_SHOPPING_BROWSE_PATHS.has(normalizeStorefrontPath(pathname));
+
+  const isContinueShoppingExcludedPath = pathname =>
+    CONTINUE_SHOPPING_EXCLUDED_PATHS.has(normalizeStorefrontPath(pathname));
+
+  const buildContinueShoppingRelativeTarget = locationLike => {
+    const pathname = normalizeStorefrontPath(locationLike?.pathname || '/');
+    const search = String(locationLike?.search || '');
+    const hash = String(locationLike?.hash || '');
+    return `${pathname}${search}${hash}` || '/';
+  };
+
+  const sanitizeContinueShoppingTarget = rawValue => {
+    const raw = String(rawValue || '').trim();
+    if (!raw) return '';
+    try {
+      const parsed = new URL(raw, window.location.origin);
+      if (parsed.origin !== window.location.origin) return '';
+      const pathname = normalizeStorefrontPath(parsed.pathname);
+      if (!isContinueShoppingBrowsePath(pathname) || isContinueShoppingExcludedPath(pathname)) {
+        return '';
+      }
+      return `${pathname}${parsed.search || ''}${parsed.hash || ''}`;
+    } catch {
+      return '';
+    }
+  };
+
+  const captureContinueShoppingBrowseTarget = locationLike => {
+    const pathname = normalizeStorefrontPath(locationLike?.pathname || window.location.pathname);
+    if (!isContinueShoppingBrowsePath(pathname) || isContinueShoppingExcludedPath(pathname)) {
+      return '';
+    }
+    const storage = getContinueShoppingStorage();
+    if (!storage) return '';
+    const nextTarget = sanitizeContinueShoppingTarget(
+      buildContinueShoppingRelativeTarget(locationLike || window.location)
+    );
+    if (!nextTarget) return '';
+    try {
+      storage.setItem(CONTINUE_SHOPPING_RETURN_URL_KEY, nextTarget);
+      return nextTarget;
+    } catch {
+      return '';
+    }
+  };
+
+  const resolveContinueShoppingTarget = () => {
+    const storage = getContinueShoppingStorage();
+    const storedTarget = storage ? storage.getItem(CONTINUE_SHOPPING_RETURN_URL_KEY) : '';
+    return sanitizeContinueShoppingTarget(storedTarget) || '/';
+  };
+
+  const applyContinueShoppingTargets = root => {
+    const scope = root && typeof root.querySelectorAll === 'function' ? root : document;
+    const target = resolveContinueShoppingTarget();
+    scope.querySelectorAll('[data-continue-shopping-target]').forEach(link => {
+      link.setAttribute('href', target);
+    });
+    return target;
+  };
+
   const isCategoryMiniCartParityPage = () => {
     const pathname = normalizeStorefrontPath(window.location.pathname);
     if (CATEGORY_MINI_CART_PATHS.has(pathname)) return true;
@@ -4583,16 +4674,26 @@
     isDesignSubmittedLineItem,
     decorateLineItemDisplayRows,
     normalizeDisplayOption,
+    captureContinueShoppingBrowseTarget,
+    resolveContinueShoppingTarget,
+    applyContinueShoppingTargets,
     resolveDesignPricing,
     resolveVariantDisplayData
   };
 
   const initStorefront = () => {
+    captureContinueShoppingBrowseTarget(window.location);
+    applyContinueShoppingTargets(document);
     syncBadges();
     hydrateProductCards();
     renderDynamicGrids();
     installCategoryMiniCartParity();
   };
+
+  window.addEventListener('hashchange', () => {
+    captureContinueShoppingBrowseTarget(window.location);
+    applyContinueShoppingTargets(document);
+  });
 
   window.addEventListener('ldc:products:rendered', installCategoryMiniCartParity);
   window.addEventListener('load', installCategoryMiniCartParity, { once: true });
