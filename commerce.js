@@ -4180,6 +4180,25 @@
       renderCategoryMiniCart();
     }, true);
 
+    cartOverlay?.addEventListener('click', closeCartDrawer);
+    document.querySelectorAll('[data-cart-close]').forEach(trigger => {
+      trigger.addEventListener('click', event => {
+        event.preventDefault();
+        closeCartDrawer();
+      });
+    });
+    document.querySelectorAll('[data-open-cart],[data-cart-open]').forEach(trigger => {
+      trigger.addEventListener('click', event => {
+        event.preventDefault();
+        openCartDrawer();
+      });
+    });
+    window.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && cartDrawer.classList.contains('is-open')) {
+        closeCartDrawer();
+      }
+    });
+
     document.addEventListener('click', event => {
       const addButton = event.target.closest('[data-add-to-cart]');
       if (!addButton) return;
