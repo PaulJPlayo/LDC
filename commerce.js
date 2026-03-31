@@ -3365,7 +3365,7 @@
     return updateLineItemQuantity(lineItemId, nextQty);
   };
 
-  const CATEGORY_MINI_CART_PATHS = new Set(['/tumblers', '/cups', '/accessories']);
+  const CATEGORY_MINI_CART_PATHS = new Set(['/tumblers', '/cups', '/accessories', '/sale']);
 
   const normalizeStorefrontPath = pathname => {
     const raw = String(pathname || '/').trim() || '/';
