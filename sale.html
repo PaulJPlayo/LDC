@@ -29,52 +29,655 @@
         display: flex;
         flex-direction: column;
       }
-      header {
+      .top-bar {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(15, 23, 42, 0.72);
+        backdrop-filter: blur(14px);
         position: sticky;
         top: 0;
-        z-index: 20;
-        backdrop-filter: blur(16px);
-        background: rgba(255, 248, 235, 0.92);
-        border-bottom: 1px solid rgba(249, 115, 22, 0.16);
+        z-index: 50;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
       }
-      .header-inner {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        height: 64px;
-      }
-      .brand-mark {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-      }
-      .brand-mark img {
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
-        object-fit: cover;
-      }
-      .home-link {
+      .nav-link {
+        position: relative;
         display: inline-flex;
         align-items: center;
         gap: 0.4rem;
-        padding: 0.55rem 1.1rem;
+        padding: 0.35rem 0.75rem;
         border-radius: 999px;
-        border: 1px solid rgba(249, 115, 22, 0.3);
-        background: rgba(255, 255, 255, 0.85);
-        font-size: 0.75rem;
-        letter-spacing: 0.16em;
         text-transform: uppercase;
-        transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+        font-size: 0.7rem;
+        letter-spacing: 0.18em;
+        color: rgba(255, 255, 255, 0.76);
+        transition: background-color 180ms ease, color 180ms ease;
       }
-      .home-link:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 14px 30px rgba(249, 115, 22, 0.25);
+      .nav-link:hover {
+        background: rgba(255, 255, 255, 0.14);
+        color: #ffffff;
+      }
+      .nav-link.is-active {
+        background: linear-gradient(135deg, #FF7EC8 0%, #FF417E 100%);
+        color: #2d0f33;
+      }
+      .nav-break {
+        display: none;
+      }
+      .nav-label-full {
+        display: inline;
+      }
+      .nav-label-short {
+        display: none;
+      }
+      @media (max-width: 767px) {
+        .nav-break {
+          flex-basis: 100%;
+          height: 0;
+          display: block;
+        }
+        .nav-label-full {
+          display: none;
+        }
+        .nav-label-short {
+          display: inline;
+        }
+        .top-bar nav {
+          width: 100%;
+          justify-content: space-between;
+          row-gap: 0.4rem;
+          column-gap: 0;
+        }
+        .nav-icon-cluster {
+          display: flex;
+          flex-basis: 100%;
+          width: 100%;
+          justify-content: space-evenly;
+          margin-top: 0.6rem;
+          padding: 0 1rem;
+        }
+      }
+      .nav-icon-cluster {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .nav-icon-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+        transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+      }
+      .nav-icon-link:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.25);
+      }
+      .nav-icon-link svg {
+        width: 1rem;
+        height: 1rem;
+      }
+      .icon-badge {
+        position: absolute;
+        top: -0.4rem;
+        right: -0.25rem;
+        min-width: 1.25rem;
+        height: 1.25rem;
+        padding: 0 0.35rem;
+        border-radius: 9999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.68rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #FF7EC8 0%, #FF417E 100%);
+        color: #fff;
+        box-shadow: 0 6px 12px rgba(255, 65, 126, 0.32);
+      }
+      body.support-open,
+      body.favorites-open,
+      body.cart-open {
+        overflow: hidden;
+      }
+      .support-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 90;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        background: rgba(15, 23, 42, 0.55);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 220ms ease;
+      }
+      .support-overlay.is-open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .support-card {
+        position: relative;
+        width: min(420px, 100%);
+        border-radius: 1.75rem;
+        overflow: hidden;
+        background: linear-gradient(135deg, #E0B0FF 0%, #B678F5 100%);
+        box-shadow: 0 30px 60px rgba(79, 70, 229, 0.3);
+        color: #ffffff;
+      }
+      .support-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(17, 24, 39, 0.25);
+        pointer-events: none;
+      }
+      .support-card-content {
+        position: relative;
+        padding: 2.5rem 2.5rem 2.75rem;
+        display: grid;
+        gap: 1.75rem;
+      }
+      .support-close-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        border: none;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 180ms ease, transform 180ms ease;
+        z-index: 1;
+      }
+      .support-close-btn:hover {
+        background: rgba(255, 255, 255, 0.22);
+        transform: translateY(-1px);
+      }
+      .cart-drawer {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        pointer-events: none;
+      }
+      .cart-drawer.is-open {
+        pointer-events: auto;
+      }
+      .cart-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        opacity: 0;
+        transition: opacity 240ms ease;
+      }
+      .cart-drawer.is-open .cart-overlay {
+        opacity: 1;
+      }
+      .cart-panel {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 100%;
+        width: min(384px, 92vw);
+        background: linear-gradient(135deg, #E0B0FF 0%, #B678F5 100%);
+        color: #fff7e6;
+        display: flex;
+        flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+        box-shadow: -12px 0 32px rgba(15, 23, 42, 0.25);
+      }
+      .cart-drawer.is-open .cart-panel {
+        transform: translateX(0);
+      }
+      .cart-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+      .cart-title {
+        font-family: inherit;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #fff7e6;
+      }
+      .cart-close-btn {
+        border: none;
+        background: transparent;
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff7e6;
+        transition: background-color 200ms ease;
+      }
+      .cart-close-btn:hover {
+        background-color: rgba(255, 255, 255, 0.18);
+        color: #fff7e6;
+      }
+      .cart-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .cart-empty {
+        text-align: center;
+        color: #fff7e6;
+        font-size: 0.95rem;
+        margin-top: 2rem;
+      }
+      .cart-item {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+      }
+      .cart-item-thumb {
+        width: 3.1rem;
+        height: 3.1rem;
+        border-radius: 0.9rem;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-color: #fff;
+        overflow: hidden;
+        flex-shrink: 0;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28), 0 6px 16px rgba(15, 23, 42, 0.25);
+      }
+      .cart-item-thumb img {
+        width: 3.1rem;
+        height: 3.1rem;
+        border-radius: 0.9rem;
+        object-fit: cover;
+        background: #fff;
+      }
+      .cart-item-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        flex: 1 1 auto;
+      }
+      .cart-item-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+      }
+      .cart-item-title {
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #fff7e6;
+      }
+      .cart-item-options {
+        display: grid;
+        gap: 0.4rem;
+        color: #fff7e6;
+        font-size: 0.9rem;
+      }
+      .cart-item-options .swatch,
+      .cart-item-options .swatch-pill {
+        width: 1.25rem !important;
+        height: 1.25rem !important;
+        border-radius: 50% !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        aspect-ratio: 1 / 1;
+        overflow: hidden;
+      }
+      .cart-item-options .swatch.is-text,
+      .cart-item-options .swatch-pill.is-text {
+        width: auto !important;
+        min-width: 2.75rem;
+        height: auto !important;
+        padding: 0.15rem 0.45rem;
+        border-radius: 999px !important;
+        aspect-ratio: auto;
+        overflow: visible;
+        line-height: 1;
+      }
+      .cart-option {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+      .cart-option-label {
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        color: #fff7e6;
+      }
+      .cart-option-value {
+        color: #fff7e6;
+        font-weight: 600;
+      }
+      .cart-item-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+      }
+      .cart-item-qty {
+        font-size: 0.82rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #fff7e6;
+      }
+      .cart-item-price {
+        font-weight: 700;
+        color: #fff7e6;
+      }
+      .cart-item-remove {
+        border: none;
+        background: transparent;
+        color: #fff7e6;
+        border-radius: 999px;
+        width: 1.9rem;
+        height: 1.9rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+      .cart-footer {
+        padding: 1.25rem 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .cart-summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #fff7e6;
+        font-weight: 600;
+      }
+      .checkout-btn {
+        border: none;
+        border-radius: 999px;
+        height: 2.75rem;
+        background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+        color: #fff7e6;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 160ms ease, box-shadow 160ms ease;
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+      }
+      .cart-reset-btn {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.08) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        color: #fff7e6;
+      }
+      .checkout-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(168, 85, 247, 0.25);
+      }
+      .cart-reset-btn:hover {
+        box-shadow: 0 10px 18px rgba(226, 232, 240, 0.25);
+      }
+      .checkout-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+      }
+      .favorites-drawer {
+        position: fixed;
+        inset: 0;
+        z-index: 55;
+        pointer-events: none;
+      }
+      .favorites-drawer.is-open {
+        pointer-events: auto;
+      }
+      .favorites-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        opacity: 0;
+        transition: opacity 240ms ease;
+      }
+      .favorites-drawer.is-open .favorites-overlay {
+        opacity: 1;
+      }
+      .favorites-panel {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 100%;
+        width: min(360px, 92vw);
+        background: linear-gradient(135deg, #ff9aed 0%, #ff5ca8 100%);
+        color: #fff7e6;
+        display: flex;
+        flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+        box-shadow: -12px 0 32px rgba(15, 23, 42, 0.25);
+      }
+      .favorites-drawer.is-open .favorites-panel {
+        transform: translateX(0);
+      }
+      .favorites-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+      .favorites-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      .favorites-close-btn {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff7e6;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .favorites-body {
+        padding: 1rem 1.25rem;
+        flex: 1 1 auto;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .favorites-empty {
+        padding: 2rem 1.25rem;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.1);
+        text-align: center;
+        font-weight: 600;
+        color: #fff7e6;
+      }
+      .favorite-item {
+        display: grid;
+        grid-template-columns: 72px 1fr;
+        gap: 0.75rem;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        padding: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(8px);
+      }
+      .favorite-thumb {
+        width: 72px;
+        height: 72px;
+        border-radius: 12px;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-color: #fff;
+        overflow: hidden;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28), 0 6px 16px rgba(15, 23, 42, 0.25);
+      }
+      .favorite-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 12px;
+        background: #fff;
+      }
+      .favorite-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        margin: 0 0 0.25rem;
+      }
+      .favorite-meta {
+        font-size: 0.85rem;
+        color: #fff7e6;
+      }
+      .favorite-actions {
+        margin-top: 0.5rem;
+        display: flex;
+        gap: 0.5rem;
+      }
+      .favorite-actions .favorites-btn {
+        flex: 1 1 0;
+        width: auto;
+      }
+      .favorite-cart-btn {
+        background: linear-gradient(135deg, #22d3ee 0%, #3b82f6 100%);
+        color: #fff7e6;
+        box-shadow: 0 12px 22px rgba(34, 211, 238, 0.25);
+      }
+      .favorite-cart-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 24px rgba(34, 211, 238, 0.3);
+        background: linear-gradient(135deg, #38bdf8 0%, #60a5fa 100%);
+      }
+      .favorites-btn {
+        border: none;
+        border-radius: 12px;
+        height: 2.75rem;
+        background: rgba(255, 255, 255, 0.14);
+        color: #fff7e6;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+      }
+      .favorites-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(255, 92, 168, 0.25);
+        background: rgba(255, 255, 255, 0.18);
+      }
+      .support-eyebrow {
+        font-size: 0.7rem;
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+        font-weight: 600;
+        opacity: 0.85;
+        text-align: center;
+      }
+      .support-title {
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: clamp(2rem, 5vw, 2.75rem);
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        margin: 0;
+        text-align: center;
+      }
+      .support-subtitle {
+        margin: 0;
+        text-align: center;
+        font-size: 0.95rem;
+        opacity: 0.85;
+        line-height: 1.6;
+      }
+      .support-form {
+        display: grid;
+        gap: 1rem;
+      }
+      .support-field {
+        display: grid;
+        gap: 0.35rem;
+        font-size: 0.8rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .support-input,
+      textarea.support-input {
+        width: 100%;
+        border-radius: 0.9rem;
+        border: none;
+        padding: 0.85rem 1rem;
+        background: rgba(255, 255, 255, 0.95);
+        color: #1f0f24;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24);
+        font: inherit;
+      }
+      .support-input:focus,
+      textarea.support-input:focus {
+        outline: 2px solid rgba(153, 40, 177, 0.65);
+        outline-offset: 2px;
+      }
+      .support-footer {
+        text-align: center;
+        font-size: 0.85rem;
+        opacity: 0.9;
+      }
+      .support-footer a {
+        text-decoration: underline;
+      }
+      .support-submit {
+        border: none;
+        border-radius: 999px;
+        padding: 0.95rem 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.22em;
+        font-weight: 600;
         background: linear-gradient(135deg, #ffd166 0%, #f97316 100%);
         color: #1f0f24;
+        transition: transform 180ms ease, box-shadow 180ms ease;
+        font: inherit;
+      }
+      .support-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 32px rgba(249, 115, 22, 0.28);
       }
       .hero {
         padding: clamp(4rem, 9vw, 6rem) 0 clamp(3rem, 7vw, 5rem);
@@ -277,16 +880,49 @@
   </head>
   <body data-medusa-enabled="true" data-medusa-backend="https://api.lovettsldc.com" data-medusa-publishable-key="pk_427f7900e23e30a0e18feaf0604aa9caaa9d0cb21571889081d2cb93fb13ffb0">
     <div class="page-shell">
-      <header>
-        <div class="container header-inner">
-          <a href="index.html" class="brand-mark">
-            <img src="assets/LDC%20LOGOS%20Black.png" alt="LDC logo" />
-            <span>Lovett's Designs & Crafts</span>
-          </a>
-          <a href="index.html#top" class="home-link">
-            <span aria-hidden="true">←</span>
-            Back Home
-          </a>
+      <header class="top-bar">
+        <div class="container mx-auto px-5 lg:px-12 py-5 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          <div class="flex items-center gap-4">
+            <img src="assets/LDC%20LOGOS%20Black.png" alt="Lovett's Designs and Crafts logo" class="w-12 h-12 rounded object-contain bg-white" />
+            <div>
+              <p class="text-xs uppercase tracking-[0.35em] text-white/80">Lovett's Designs and Crafts</p>
+              <p class="text-sm text-white/60 mt-1">Hand-crafted tumblers, cups, accessories &amp; more</p>
+            </div>
+          </div>
+          <nav class="flex items-center gap-2 flex-wrap">
+            <span class="nav-link is-active">
+              <span class="nav-label-full">Deals for the Steal</span>
+              <span class="nav-label-short">Deals</span>
+            </span>
+            <a class="nav-link" href="under-25.html">
+              <span class="nav-label-full">Under $25 Items</span>
+              <span class="nav-label-short">Under $25</span>
+            </a>
+            <a class="nav-link" href="last-chance.html">
+              <span class="nav-label-full">Last Chance - Seasonal</span>
+              <span class="nav-label-short">Last Chance</span>
+            </a>
+            <span class="nav-break" aria-hidden="true"></span>
+            <div class="nav-icon-cluster">
+              <a class="relative inline-flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 icon-button cart-btn" href="#" aria-label="Favorites" data-favorites-open>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                  <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+                </svg>
+                <span class="icon-badge" data-favorites-count hidden></span>
+              </a>
+              <a class="relative inline-flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 icon-button cart-btn" href="#" aria-label="Cart" data-open-cart data-cart-open>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                  <path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" />
+                </svg>
+                <span class="icon-badge" data-cart-count hidden></span>
+              </a>
+              <a class="relative inline-flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 icon-button cart-btn" href="#" aria-label="Contact" data-support-open>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                  <path d="M2.25 5.25A2.25 2.25 0 0 1 4.5 3h15a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 19.5 21h-15A2.25 2.25 0 0 1 2.25 18.75zm2.039-.75 7.211 5.74 7.211-5.74zM19.5 8.384l-6.401 5.096a1.5 1.5 0 0 1-1.198.27 1.5 1.5 0 0 1-.64-.27L4.86 8.384V18h14.64z" />
+                </svg>
+              </a>
+            </div>
+          </nav>
         </div>
       </header>
 
@@ -357,10 +993,147 @@
         </section>
       </main>
 
+      <div class="favorites-drawer" data-favorites-drawer>
+        <div class="favorites-overlay" data-favorites-overlay></div>
+        <aside class="favorites-panel" data-favorites-panel role="dialog" aria-modal="true" aria-label="Favorites list">
+          <div class="favorites-header">
+            <h2 class="favorites-title">Your Favorites</h2>
+            <button type="button" class="favorites-close-btn" data-favorites-close aria-label="Close favorites">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="favorites-body" data-favorites-items>
+            <div class="favorites-empty">No favorites yet.</div>
+          </div>
+          <div class="favorites-footer">
+            <button type="button" class="favorites-btn" data-favorites-cta>Favorites</button>
+          </div>
+        </aside>
+      </div>
+
+      <div class="cart-drawer" data-cart-drawer>
+        <div class="cart-overlay" data-cart-overlay></div>
+        <aside class="cart-panel" data-cart-panel role="dialog" aria-modal="true" aria-label="Shopping cart">
+          <div class="cart-header">
+            <h2 class="cart-title">Your Cart</h2>
+            <button type="button" class="cart-close-btn" data-cart-close aria-label="Close cart">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="cart-body" data-cart-items>
+            <div class="cart-empty">Your cart is empty.</div>
+          </div>
+          <div class="cart-footer">
+            <div class="cart-summary">
+              <span>Subtotal</span>
+              <span data-cart-total>$0.00</span>
+            </div>
+            <button type="button" class="checkout-btn cart-reset-btn" data-cart-reset>Reset Cart</button>
+            <button type="button" class="checkout-btn" data-cart-checkout>Proceed to Checkout</button>
+          </div>
+        </aside>
+      </div>
+
       <footer>
         Lovett's Designs &amp; Crafts · Savings crafted with love
       </footer>
     </div>
+
+    <div class="support-overlay" data-support-overlay aria-hidden="true">
+      <div class="support-card" data-support-card role="dialog" aria-modal="true" aria-labelledby="supportTitle">
+        <button type="button" class="support-close-btn" data-support-close aria-label="Close support">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        <div class="support-card-content">
+          <p class="support-eyebrow">Need a hand?</p>
+          <h2 class="support-title" id="supportTitle">Lovett's Support</h2>
+          <p class="support-subtitle">Send us a message and our customer care team will reply within 1 business day.</p>
+          <form class="support-form" data-support-form>
+            <label class="support-field" for="supportName">
+              <span>Your name</span>
+              <input type="text" id="supportName" class="support-input" placeholder="Your name" autocomplete="name" required />
+            </label>
+            <label class="support-field" for="supportEmail">
+              <span>Email</span>
+              <input type="email" id="supportEmail" class="support-input" placeholder="you@example.com" autocomplete="email" required />
+            </label>
+            <label class="support-field" for="supportOrder">
+              <span>Order # (optional)</span>
+              <input type="text" id="supportOrder" class="support-input" placeholder="#LDC12345" />
+            </label>
+            <label class="support-field" for="supportTopic">
+              <span>Topic</span>
+              <select id="supportTopic" class="support-input" required>
+                <option value="">Choose one</option>
+                <option value="order">Order status</option>
+                <option value="custom">Custom request</option>
+                <option value="bulk">Bulk inquiry</option>
+                <option value="other">Something else</option>
+              </select>
+            </label>
+            <label class="support-field" for="supportMessage">
+              <span>Message</span>
+              <textarea id="supportMessage" class="support-input" rows="4" placeholder="How can we help?" required></textarea>
+            </label>
+            <button type="submit" class="support-submit" data-support-submit>Send Message</button>
+          </form>
+          <div class="support-footer">
+            Prefer email? <a href="mailto:lovettsdandc@gmail.com">lovettsdandc@gmail.com</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (() => {
+        const supportOverlay = document.querySelector('[data-support-overlay]');
+        if (!supportOverlay) return;
+        const supportOpeners = document.querySelectorAll('[data-support-open]');
+        const supportClosers = supportOverlay.querySelectorAll('[data-support-close]');
+        const supportForm = supportOverlay.querySelector('[data-support-form]');
+        const supportName = document.getElementById('supportName');
+        const setSupportState = isOpen => {
+          supportOverlay.classList.toggle('is-open', isOpen);
+          supportOverlay.setAttribute('aria-hidden', String(!isOpen));
+          document.body.classList.toggle('support-open', isOpen);
+          if (isOpen && supportName) {
+            requestAnimationFrame(() => supportName.focus());
+          }
+        };
+        const closeSupport = () => setSupportState(false);
+        const openSupport = () => setSupportState(true);
+        supportOpeners.forEach(trigger => {
+          trigger.addEventListener('click', event => {
+            event.preventDefault();
+            openSupport();
+          });
+        });
+        supportClosers.forEach(trigger => {
+          trigger.addEventListener('click', event => {
+            event.preventDefault();
+            closeSupport();
+          });
+        });
+        supportOverlay.addEventListener('click', event => {
+          if (event.target === supportOverlay) {
+            closeSupport();
+          }
+        });
+        document.addEventListener('keydown', event => {
+          if (event.key === 'Escape' && supportOverlay.classList.contains('is-open')) {
+            closeSupport();
+          }
+        });
+        supportForm?.addEventListener('submit', event => {
+          event.preventDefault();
+          closeSupport();
+        });
+      })();
+    </script>
     <script src="favorites.js" defer></script>
     <script src="commerce.js" defer></script>
   </body>
