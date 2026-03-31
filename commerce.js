@@ -3611,6 +3611,7 @@
     if (!isCategoryMiniCartParityPage()) return;
     const cartDrawer = document.querySelector('[data-cart-drawer]');
     if (!cartDrawer || cartDrawer.dataset.homeParityInstalled === 'true') return;
+    const cartOverlay = cartDrawer.querySelector('[data-cart-overlay]');
     const cartPanel = cartDrawer.querySelector('[data-cart-panel]');
     const cartItemsEl = cartDrawer.querySelector('[data-cart-items]');
     const cartTotalEl = cartDrawer.querySelector('[data-cart-total]');
