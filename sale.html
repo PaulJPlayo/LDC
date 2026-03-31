@@ -10,16 +10,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     
     <style>
-      :root {
-        color-scheme: light;
-      }
       body {
         margin: 0;
         min-height: 100vh;
         display: flex;
         flex-direction: column;
-        background: radial-gradient(circle at top left, rgba(255, 209, 102, 0.45), transparent 55%), radial-gradient(circle at bottom right, rgba(249, 115, 22, 0.32), transparent 60%), linear-gradient(135deg, #fff7eb 0%, #fde3c7 45%, #fffaf0 100%);
-        color: #1f0f24;
+        background: radial-gradient(circle at top left, rgba(255, 185, 220, 0.35), transparent 55%), radial-gradient(circle at bottom right, rgba(224, 176, 255, 0.35), transparent 60%), linear-gradient(135deg, #130720 0%, #26123a 100%);
+        color: #ffffff;
       }
       a {
         color: inherit;
@@ -28,6 +25,11 @@
         flex: 1 1 auto;
         display: flex;
         flex-direction: column;
+      }
+      main {
+        flex: 1 1 auto;
+        background: radial-gradient(circle at top left, rgba(255, 209, 102, 0.45), transparent 55%), radial-gradient(circle at bottom right, rgba(249, 115, 22, 0.32), transparent 60%), linear-gradient(135deg, #fff7eb 0%, #fde3c7 45%, #fffaf0 100%);
+        color: #1f0f24;
       }
       .top-bar {
         border-bottom: 1px solid rgba(255, 255, 255, 0.12);
@@ -99,6 +101,30 @@
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
+      }
+      .top-bar .icon-button {
+        border: none;
+        background: linear-gradient(135deg, #E0B0FF 0%, #B678F5 100%);
+        color: #ffffff;
+        border-radius: 999px;
+        box-shadow: 0 10px 20px rgba(153, 40, 177, 0.2);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      }
+      .top-bar .icon-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 28px rgba(153, 40, 177, 0.28);
+      }
+      .top-bar .icon-button svg {
+        width: 1.1rem;
+        height: 1.1rem;
+      }
+      .top-bar .icon-button.favorites-active {
+        color: #ff5ca8;
+        box-shadow: 0 12px 28px rgba(255, 92, 168, 0.25);
+      }
+      .top-bar .icon-button.favorites-active svg {
+        color: #ff5ca8;
+        fill: currentColor;
       }
       .nav-icon-link {
         display: inline-flex;
@@ -867,14 +893,14 @@
         transform: translateY(-3px);
         box-shadow: 0 18px 36px rgba(239, 68, 68, 0.25);
       }
-      footer {
+      .footer {
         margin-top: auto;
         padding: 2rem 0;
-        text-align: center;
-        font-size: 0.75rem;
-        letter-spacing: 0.12em;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.8rem;
+        letter-spacing: 0.18em;
         text-transform: uppercase;
-        color: rgba(31, 15, 36, 0.6);
       }
     </style>
   </head>
@@ -1038,8 +1064,10 @@
         </aside>
       </div>
 
-      <footer>
-        Lovett's Designs &amp; Crafts · Savings crafted with love
+      <footer class="footer">
+        <div class="container mx-auto px-5 lg:px-12 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <span>Lovett's Designs &amp; Crafts · Savings crafted with love</span>
+        </div>
       </footer>
     </div>
 
