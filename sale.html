@@ -71,15 +71,13 @@
         display: none;
       }
       @media (min-width: 768px) {
-        .top-bar nav {
-          column-gap: 0.125rem;
+        .sale-family-nav {
+          column-gap: 0.375rem;
         }
-        .nav-link {
-          padding: 0.35rem 0.45rem;
-          letter-spacing: 0.12em;
-        }
-        .nav-icon-cluster {
-          gap: 0.3rem;
+        .sale-family-nav .sale-family-nav-link {
+          padding-inline: 0.5rem;
+          font-size: 0.68rem;
+          letter-spacing: 0.11em;
         }
       }
       @media (max-width: 767px) {
@@ -927,17 +925,17 @@
               <p class="text-sm text-white/60 mt-1">Hand-crafted tumblers, cups, accessories &amp; more</p>
             </div>
           </div>
-          <nav class="flex items-center gap-2 flex-wrap">
+          <nav class="sale-family-nav flex items-center gap-2 flex-wrap">
             <a class="nav-link" href="index.html">Home</a>
-            <span class="nav-link is-active">
+            <span class="nav-link is-active sale-family-nav-link">
               <span class="nav-label-full">Deals for the Steal</span>
               <span class="nav-label-short">Deals</span>
             </span>
-            <a class="nav-link" href="under-25.html">
+            <a class="nav-link sale-family-nav-link" href="under-25.html">
               <span class="nav-label-full">Under $25 Items</span>
               <span class="nav-label-short">Under $25</span>
             </a>
-            <a class="nav-link" href="last-chance.html">
+            <a class="nav-link sale-family-nav-link" href="last-chance.html">
               <span class="nav-label-full">Last Chance - Seasonal</span>
               <span class="nav-label-short">Last Chance</span>
             </a>
