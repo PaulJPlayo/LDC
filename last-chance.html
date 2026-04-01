@@ -70,6 +70,16 @@
       .nav-label-short {
         display: none;
       }
+      @media (min-width: 768px) {
+        .sale-family-nav {
+          column-gap: 0.375rem;
+        }
+        .sale-family-nav .sale-family-nav-link {
+          padding-inline: 0.5rem;
+          font-size: 0.68rem;
+          letter-spacing: 0.11em;
+        }
+      }
       @media (max-width: 767px) {
         .nav-break {
           flex-basis: 100%;
@@ -915,19 +925,21 @@
               <p class="text-sm text-white/60 mt-1">Hand-crafted tumblers, cups, accessories &amp; more</p>
             </div>
           </div>
-          <nav class="flex items-center gap-2 flex-wrap">
-            <a class="nav-link" href="sale.html">
+          <nav class="sale-family-nav flex items-center gap-2 flex-wrap">
+            <a class="nav-link" href="index.html">Home</a>
+            <a class="nav-link sale-family-nav-link" href="sale.html">
               <span class="nav-label-full">Deals for the Steal</span>
               <span class="nav-label-short">Deals</span>
             </a>
-            <a class="nav-link" href="under-25.html">
+            <a class="nav-link sale-family-nav-link" href="under-25.html">
               <span class="nav-label-full">Under $25 Items</span>
               <span class="nav-label-short">Under $25</span>
             </a>
-            <span class="nav-link is-active">
+            <span class="nav-link is-active sale-family-nav-link">
               <span class="nav-label-full">Last Chance - Seasonal</span>
               <span class="nav-label-short">Last Chance</span>
             </span>
+            <a class="nav-link" href="account.html">Account</a>
             <span class="nav-break" aria-hidden="true"></span>
             <div class="nav-icon-cluster">
               <a class="relative inline-flex items-center justify-center w-8 h-8 lg:w-10 lg:h-10 icon-button cart-btn" href="#" aria-label="Favorites" data-favorites-open>
