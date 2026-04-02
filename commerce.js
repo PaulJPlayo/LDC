@@ -3365,7 +3365,7 @@
     return updateLineItemQuantity(lineItemId, nextQty);
   };
 
-  const CATEGORY_MINI_CART_PATHS = new Set(['/tumblers', '/cups', '/accessories', '/sale', '/under-25', '/last-chance', '/new-arrivals']);
+  const CATEGORY_MINI_CART_PATHS = new Set(['/tumblers', '/cups', '/accessories', '/sale', '/under-25', '/last-chance', '/new-arrivals', '/best-sellers', '/restock']);
 
   const normalizeStorefrontPath = pathname => {
     const raw = String(pathname || '/').trim() || '/';
