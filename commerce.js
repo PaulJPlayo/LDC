@@ -3383,7 +3383,10 @@
     '/accessories',
     '/sale',
     '/under-25',
-    '/last-chance'
+    '/last-chance',
+    '/new-arrivals',
+    '/best-sellers',
+    '/restock'
   ]);
   const CONTINUE_SHOPPING_EXCLUDED_PATHS = new Set([
     '/favorites',
