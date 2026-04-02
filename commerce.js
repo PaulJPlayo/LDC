@@ -33,6 +33,7 @@
   const DESIGN_SELECTION_PENDING_KEY = 'ldcDesignSelectionPending';
   const DESIGN_SELECTION_PENDING_AT_KEY = 'ldcDesignSelectionPendingAt';
   const CONTINUE_SHOPPING_RETURN_URL_KEY = 'ldc:continue-shopping:return-url';
+  const ACCOUNT_CONTINUE_SHOPPING_RETURN_URL_KEY = 'ldc:account:return-url';
   const DEFAULT_LOCALE = 'en-US';
   const LINE_ITEM_DISPLAY_ORDER_KEY = 'storefront_display_order';
   const CART_DISPLAY_MONEY_FIELDS = [
@@ -3392,6 +3393,26 @@
     '/favorites',
     '/checkout'
   ]);
+  const ACCOUNT_CONTINUE_SHOPPING_ALLOWED_PATHS = new Set([
+    '/',
+    '/customization',
+    '/tumblers',
+    '/cups',
+    '/accessories',
+    '/attire',
+    '/doormats',
+    '/sale',
+    '/under-25',
+    '/last-chance',
+    '/new-arrivals',
+    '/best-sellers',
+    '/restock',
+    '/favorites',
+    '/checkout'
+  ]);
+  const ACCOUNT_CONTINUE_SHOPPING_EXCLUDED_PATHS = new Set([
+    '/account'
+  ]);
 
   const getContinueShoppingStorage = () => {
     try {
@@ -3418,20 +3439,28 @@
     return `${pathname}${search}${hash}` || '/';
   };
 
-  const sanitizeContinueShoppingTarget = rawValue => {
+  const sanitizeStorefrontReturnTarget = (rawValue, allowedPaths, excludedPaths) => {
     const raw = String(rawValue || '').trim();
     if (!raw) return '';
     try {
       const parsed = new URL(raw, window.location.origin);
       if (parsed.origin !== window.location.origin) return '';
       const pathname = normalizeStorefrontPath(parsed.pathname);
-      if (!isContinueShoppingBrowsePath(pathname) || isContinueShoppingExcludedPath(pathname)) {
+      if (!allowedPaths?.has(pathname) || excludedPaths?.has(pathname)) {
         return '';
       }
       return `${pathname}${parsed.search || ''}${parsed.hash || ''}`;
     } catch {
       return '';
     }
+  };
+
+  const sanitizeContinueShoppingTarget = rawValue => {
+    return sanitizeStorefrontReturnTarget(
+      rawValue,
+      CONTINUE_SHOPPING_BROWSE_PATHS,
+      CONTINUE_SHOPPING_EXCLUDED_PATHS
+    );
   };
 
   const captureContinueShoppingBrowseTarget = locationLike => {
@@ -3463,6 +3492,56 @@
     const scope = root && typeof root.querySelectorAll === 'function' ? root : document;
     const target = resolveContinueShoppingTarget();
     scope.querySelectorAll('[data-continue-shopping-target]').forEach(link => {
+      link.setAttribute('href', target);
+    });
+    return target;
+  };
+
+  const isAccountContinueShoppingAllowedPath = pathname =>
+    ACCOUNT_CONTINUE_SHOPPING_ALLOWED_PATHS.has(normalizeStorefrontPath(pathname));
+
+  const isAccountContinueShoppingExcludedPath = pathname =>
+    ACCOUNT_CONTINUE_SHOPPING_EXCLUDED_PATHS.has(normalizeStorefrontPath(pathname));
+
+  const sanitizeAccountContinueShoppingTarget = rawValue =>
+    sanitizeStorefrontReturnTarget(
+      rawValue,
+      ACCOUNT_CONTINUE_SHOPPING_ALLOWED_PATHS,
+      ACCOUNT_CONTINUE_SHOPPING_EXCLUDED_PATHS
+    );
+
+  const captureAccountContinueShoppingTarget = locationLike => {
+    const pathname = normalizeStorefrontPath(locationLike?.pathname || window.location.pathname);
+    if (
+      !isAccountContinueShoppingAllowedPath(pathname) ||
+      isAccountContinueShoppingExcludedPath(pathname)
+    ) {
+      return '';
+    }
+    const storage = getContinueShoppingStorage();
+    if (!storage) return '';
+    const nextTarget = sanitizeAccountContinueShoppingTarget(
+      buildContinueShoppingRelativeTarget(locationLike || window.location)
+    );
+    if (!nextTarget) return '';
+    try {
+      storage.setItem(ACCOUNT_CONTINUE_SHOPPING_RETURN_URL_KEY, nextTarget);
+      return nextTarget;
+    } catch {
+      return '';
+    }
+  };
+
+  const resolveAccountContinueShoppingTarget = () => {
+    const storage = getContinueShoppingStorage();
+    const storedTarget = storage ? storage.getItem(ACCOUNT_CONTINUE_SHOPPING_RETURN_URL_KEY) : '';
+    return sanitizeAccountContinueShoppingTarget(storedTarget) || '/';
+  };
+
+  const applyAccountContinueShoppingTargets = root => {
+    const scope = root && typeof root.querySelectorAll === 'function' ? root : document;
+    const target = resolveAccountContinueShoppingTarget();
+    scope.querySelectorAll('[data-account-continue-shopping-target]').forEach(link => {
       link.setAttribute('href', target);
     });
     return target;
@@ -4700,13 +4779,18 @@
     captureContinueShoppingBrowseTarget,
     resolveContinueShoppingTarget,
     applyContinueShoppingTargets,
+    captureAccountContinueShoppingTarget,
+    resolveAccountContinueShoppingTarget,
+    applyAccountContinueShoppingTargets,
     resolveDesignPricing,
     resolveVariantDisplayData
   };
 
   const initStorefront = () => {
     captureContinueShoppingBrowseTarget(window.location);
+    captureAccountContinueShoppingTarget(window.location);
     applyContinueShoppingTargets(document);
+    applyAccountContinueShoppingTargets(document);
     syncBadges();
     hydrateProductCards();
     renderDynamicGrids();
@@ -4715,7 +4799,9 @@
 
   window.addEventListener('hashchange', () => {
     captureContinueShoppingBrowseTarget(window.location);
+    captureAccountContinueShoppingTarget(window.location);
     applyContinueShoppingTargets(document);
+    applyAccountContinueShoppingTargets(document);
   });
 
   window.addEventListener('ldc:products:rendered', installCategoryMiniCartParity);
