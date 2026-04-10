@@ -1487,6 +1487,31 @@
       .header-menu-collapsible.is-open .header-menu-toggle-link svg {
         transform: rotate(180deg);
       }
+      .header-menu-split-row {
+        cursor: default;
+      }
+      .header-menu-title-link {
+        flex: 1;
+        color: inherit !important;
+        text-decoration: none !important;
+      }
+      .header-menu-submenu-toggle {
+        border: none;
+        background: none;
+        padding: 0;
+        margin: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: inherit !important;
+        cursor: pointer;
+      }
+      .header-menu-title-link:focus-visible,
+      .header-menu-submenu-toggle:focus-visible {
+        outline: 2px solid rgba(182, 120, 245, 0.45);
+        outline-offset: 2px;
+        border-radius: 0.25rem;
+      }
       /* Give swatch sliders a consistent 4-slot footprint */
       .swatch-slider[data-visible="4"] .swatch-slider-window {
         min-width: calc((1.25rem * 4) + (0.5rem * 3));
@@ -2757,11 +2782,13 @@
                 <div class="header-menu-panel dropdown-panel transform" id="headerMenuPanel" data-menu-panel hidden>
                   <div class="space-y-3 text-sm text-slate-700">
                     <div class="header-menu-collapsible" data-menu-collapsible>
-                      <button type="button" class="header-menu-toggle-link tile-title" data-menu-collapsible-toggle="shop">
-                        <span>Shop</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/></svg>
-                      </button>
-                      <div class="header-menu-submenu space-y-1" data-menu-submenu="shop" hidden>
+                      <div class="header-menu-toggle-link header-menu-split-row tile-title">
+                        <a href="tumblers.html" class="header-menu-title-link">Shop</a>
+                        <button type="button" class="header-menu-submenu-toggle" data-menu-collapsible-toggle="shop" aria-expanded="false" aria-controls="headerMenuSubmenuShop" aria-label="Toggle Shop submenu">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                      </div>
+                      <div class="header-menu-submenu space-y-1" id="headerMenuSubmenuShop" data-menu-submenu="shop" hidden>
                         <a href="tumblers.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Tumblers</a>
                         <a href="cups.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Cups &amp; Mugs</a>
                         <a href="accessories.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Accessories</a>
@@ -2800,7 +2827,7 @@
             </div>
             <nav class="primary-nav flex flex-wrap items-center justify-center gap-4 text-xs sm:gap-6 sm:text-sm lg:gap-8">
               <div class="group relative">
-                <a href="#section-1" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Shop</a>
+                <a href="tumblers.html" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Shop</a>
                 <div class="invisible opacity-0 translate-y-1 origin-top scale-95 hover:visible hover:opacity-100 hover:translate-y-0 hover:scale-100 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:scale-100 transition ease-out duration-700 absolute left-1/2 -translate-x-1/2 top-full mt-0 w-56 rounded-2xl border border-slate-200 bg-white shadow-xl dropdown-panel transform">
                   <div class="p-2 space-y-2">
                     <a href="tumblers.html" class="block px-3 py-2 rounded hover:bg-white">Tumblers</a>
@@ -3977,11 +4004,23 @@
       menuLinks?.forEach(link => {
         link.addEventListener('click', () => closeMenu());
       });
+      const getMenuFocusable = () => {
+        if (!menuPanel) return [];
+        return Array.from(menuPanel.querySelectorAll('a, button')).filter(element => {
+          if (element.disabled) return false;
+          return element.offsetParent !== null;
+        });
+      };
       const closeAllSubmenus = () => {
         submenuPanels?.forEach(panel => {
           panel.setAttribute('hidden', '');
           const group = panel.closest('[data-menu-collapsible]');
+          const id = panel.getAttribute('data-menu-submenu');
+          const toggle = id ? menuPanel?.querySelector(`[data-menu-collapsible-toggle="${id}"]`) : null;
           group?.classList.remove('is-open');
+          if (toggle?.hasAttribute('aria-expanded')) {
+            toggle.setAttribute('aria-expanded', 'false');
+          }
         });
       };
       const closeMenu = () => {
@@ -4001,6 +4040,9 @@
           if (!isOpen) {
             panel.removeAttribute('hidden');
             group?.classList.add('is-open');
+            if (toggle.hasAttribute('aria-expanded')) {
+              toggle.setAttribute('aria-expanded', 'true');
+            }
           }
         });
       });
@@ -4029,7 +4071,7 @@
             event.preventDefault();
           }
         } else if (event.key === 'Tab' && menuIsOpen && menuPanel && !menuPanel.hidden) {
-          const focusable = menuLinks ? Array.from(menuLinks) : [];
+          const focusable = getMenuFocusable();
           if (!focusable.length) return;
           const first = focusable[0];
           const last = focusable[focusable.length - 1];
