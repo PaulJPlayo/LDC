@@ -2797,11 +2797,13 @@
                       </div>
                     </div>
                     <div class="header-menu-collapsible" data-menu-collapsible>
-                      <button type="button" class="header-menu-toggle-link tile-title" data-menu-collapsible-toggle="trending">
-                        <span>Trending</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/></svg>
-                      </button>
-                      <div class="header-menu-submenu space-y-1" data-menu-submenu="trending" hidden>
+                      <div class="header-menu-toggle-link header-menu-split-row tile-title">
+                        <a href="new-arrivals.html" class="header-menu-title-link">Trending</a>
+                        <button type="button" class="header-menu-submenu-toggle" data-menu-collapsible-toggle="trending" aria-expanded="false" aria-controls="headerMenuSubmenuTrending" aria-label="Toggle Trending submenu">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                      </div>
+                      <div class="header-menu-submenu space-y-1" id="headerMenuSubmenuTrending" data-menu-submenu="trending" hidden>
                         <a href="new-arrivals.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">New Arrivals</a>
                         <a href="best-sellers.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Best Sellers</a>
                         <a href="restock.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Restock</a>
@@ -2811,11 +2813,13 @@
                       <a href="customization.html" class="header-menu-toggle-link tile-title no-underline">Design</a>
                     </div>
                     <div class="header-menu-collapsible" data-menu-collapsible>
-                      <button type="button" class="header-menu-toggle-link tile-title" data-menu-collapsible-toggle="sale">
-                        <span>Sale</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/></svg>
-                      </button>
-                      <div class="header-menu-submenu space-y-1" data-menu-submenu="sale" hidden>
+                      <div class="header-menu-toggle-link header-menu-split-row tile-title">
+                        <a href="sale.html" class="header-menu-title-link">Sale</a>
+                        <button type="button" class="header-menu-submenu-toggle" data-menu-collapsible-toggle="sale" aria-expanded="false" aria-controls="headerMenuSubmenuSale" aria-label="Toggle Sale submenu">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                      </div>
+                      <div class="header-menu-submenu space-y-1" id="headerMenuSubmenuSale" data-menu-submenu="sale" hidden>
                         <a href="sale.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Deals for the Steal</a>
                         <a href="under-25.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Under $25 Items</a>
                         <a href="last-chance.html" class="block px-3 py-2 rounded hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 no-underline">Last Chance - Seasonal</a>
@@ -2839,7 +2843,7 @@
                 </div>
               </div>
               <div class="group relative">
-                <a href="#section-2" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Trending</a>
+                <a href="new-arrivals.html" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Trending</a>
                 <div class="invisible opacity-0 translate-y-1 origin-top scale-95 hover:visible hover:opacity-100 hover:translate-y-0 hover:scale-100 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:scale-100 transition ease-out duration-700 absolute left-1/2 -translate-x-1/2 top-full mt-0 w-56 rounded-2xl border border-slate-200 bg-white shadow-xl dropdown-panel transform">
                   <div class="p-2 space-y-2">
                     <a href="new-arrivals.html" class="best-sellers-nav-inline">New Arrivals</a>
@@ -2850,7 +2854,7 @@
               </div>
               <a href="customization.html" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Design</a>
               <div class="group relative">
-                <a href="#" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Sale</a>
+                <a href="sale.html" class="inline-flex items-center tile-title hover:text-brand-700 focus:outline-none">Sale</a>
                 <div class="invisible opacity-0 translate-y-1 origin-top scale-95 hover:visible hover:opacity-100 hover:translate-y-0 hover:scale-100 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:scale-100 transition ease-out duration-700 absolute left-1/2 -translate-x-1/2 top-full mt-0 w-56 rounded-2xl border border-slate-200 bg-white shadow-xl dropdown-panel transform">
                   <div class="p-2 space-y-2">
                     <a href="sale.html" class="block px-3 py-2 rounded hover:bg-white">Deals for the Steal</a>
