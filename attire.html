@@ -2076,7 +2076,7 @@
             }
           };
 
-          const setHero = index => {
+          const setHero = (index, { shouldScroll = true } = {}) => {
             const total = thumbImages.length;
             if (!total) return;
             const normalized = ((index % total) + total) % total;
@@ -2090,10 +2090,12 @@
             thumbImages.forEach((img, idx) => {
               img.classList.toggle('is-active', idx === normalized);
             });
-            scrollHeroIntoView();
+            if (shouldScroll) {
+              scrollHeroIntoView();
+            }
           };
 
-          setHero(currentIndex);
+          setHero(currentIndex, { shouldScroll: false });
           thumbImages.forEach((img, index) => {
             img.addEventListener('click', () => setHero(index));
           });
