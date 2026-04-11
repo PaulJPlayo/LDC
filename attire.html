@@ -1732,6 +1732,38 @@
         };
 
         let cartState = loadState(CART_STORAGE_KEY);
+        const refreshCartState = nextState => {
+          const storedState = loadState(CART_STORAGE_KEY);
+          const source = nextState && typeof nextState === 'object' ? nextState : storedState;
+          cartState = {
+            ...storedState,
+            ...(source && typeof source === 'object' ? source : {}),
+            items: Array.isArray(source?.items)
+              ? source.items
+              : (Array.isArray(storedState?.items) ? storedState.items : [])
+          };
+          return cartState;
+        };
+        const isSharedCartParityActive = () => cartDrawer?.dataset.homeParityInstalled === 'true';
+        const getSharedCartUi = () => (
+          window.ldcCart && typeof window.ldcCart === 'object' ? window.ldcCart : null
+        );
+        const getSharedCartMethod = methodName => {
+          const sharedCart = getSharedCartUi();
+          const method = sharedCart && typeof sharedCart[methodName] === 'function'
+            ? sharedCart[methodName]
+            : null;
+          if (!method) return null;
+          if (
+            (methodName === 'open' && method === openCart) ||
+            (methodName === 'close' && method === closeCart) ||
+            (methodName === 'sync' && method === renderCart)
+          ) {
+            return null;
+          }
+          return method.bind(sharedCart);
+        };
+        refreshCartState(cartState);
         const getFavoriteItems = () => {
           const sharedFavorites = getSharedFavorites();
           if (sharedFavorites && typeof sharedFavorites.getFavorites === 'function') {
@@ -1781,8 +1813,9 @@
           return { basePrice, total, qty };
         };
 
-        const syncBadges = () => {
-          const cartCount = cartState.items?.length || 0;
+        const syncBadges = nextCartState => {
+          const resolvedCartState = refreshCartState(nextCartState);
+          const cartCount = resolvedCartState.items?.length || 0;
           const favCount = getFavoriteItems().length;
           if (cartCountEl) {
             cartCountEl.textContent = cartCount > 0 ? cartCount : '';
@@ -1794,6 +1827,7 @@
           }
         };
         const addCartItem = item => {
+          refreshCartState();
           cartState.items = [...(cartState.items || []), item];
           saveState(CART_STORAGE_KEY, cartState);
           renderCart();
@@ -1801,6 +1835,11 @@
         };
 
         const openCart = () => {
+          const sharedOpen = isSharedCartParityActive() ? getSharedCartMethod('open') : null;
+          if (sharedOpen) {
+            sharedOpen();
+            return;
+          }
           cartDrawer?.classList.add('is-open');
           cartOverlay?.classList.add('is-open');
           document.body.classList.add('cart-open');
@@ -1808,6 +1847,11 @@
           cartPanel?.focus({ preventScroll: true });
         };
         const closeCart = () => {
+          const sharedClose = isSharedCartParityActive() ? getSharedCartMethod('close') : null;
+          if (sharedClose) {
+            sharedClose();
+            return;
+          }
           cartDrawer?.classList.remove('is-open');
           cartOverlay?.classList.remove('is-open');
           document.body.classList.remove('cart-open');
@@ -1819,6 +1863,7 @@
         window.addEventListener('keydown', e => { if (e.key === 'Escape') closeCart(); });
         checkoutBtn?.addEventListener('click', () => { window.location.href = 'checkout.html'; });
         resetBtn?.addEventListener('click', () => {
+          if (isSharedCartParityActive()) return;
           const medusaCart = window.LDCCommerce;
           if (medusaCart?.resetCart) {
             medusaCart.resetCart();
@@ -1847,6 +1892,13 @@
 
         const renderCart = () => {
           if (!cartItemsEl) return;
+          const sharedSync = isSharedCartParityActive() ? getSharedCartMethod('sync') : null;
+          if (sharedSync) {
+            sharedSync();
+            syncBadges();
+            return;
+          }
+          refreshCartState();
           const items = cartState.items || [];
           if (!items.length) {
             cartItemsEl.innerHTML = '<div class="cart-empty">Your cart is empty.</div>';
@@ -2044,7 +2096,10 @@
             label: label || 'Option',
             value,
             swatchStyle: cleanText(option?.swatchStyle || option?.swatch_style),
-            swatchGlyph: cleanText(option?.swatchGlyph || option?.swatch_glyph)
+            swatchGlyph: cleanText(option?.swatchGlyph || option?.swatch_glyph),
+            attachmentData: cleanText(option?.attachmentData || option?.attachment_data),
+            attachmentKey: cleanText(option?.attachmentKey || option?.attachment_key),
+            layout: cleanText(option?.layout)
           };
         };
         const normalizeCartItem = rawItem => {
@@ -2059,8 +2114,10 @@
             name,
             title: cleanText(source.title) || name,
             price: Number(source.price || 0),
+            currency_code: cleanText(source.currency_code) || 'USD',
             quantity: Math.max(1, Number(source.quantity || 1)),
             image,
+            description: cleanText(source.description || source.short_description),
             previewStyle: cleanText(source.previewStyle || source.preview_style) || buildPreviewStyle(image),
             options: optionSource.map(normalizeCartOption).filter(Boolean)
           };
@@ -2082,8 +2139,10 @@
               title: payload.title,
               name: payload.title,
               price: payload.price,
+              currency_code: payload.currency_code,
               quantity: payload.quantity,
               image: payload.preview_image,
+              description: payload.description,
               preview_style: payload.preview_style,
               selected_options: payload.selected_options
             }));
@@ -2101,6 +2160,25 @@
         cartBridge.close = closeCart;
         cartBridge.sync = renderCart;
         window.ldcCart = cartBridge;
+        document.addEventListener('cart:set', event => {
+          syncBadges(event?.detail);
+          if (!isSharedCartParityActive()) {
+            renderCart();
+          }
+        });
+        document.addEventListener('cart:reset', () => {
+          syncBadges({ items: [], currency_code: 'USD' });
+          if (!isSharedCartParityActive()) {
+            renderCart();
+          }
+        });
+        window.addEventListener('storage', event => {
+          if (event?.key !== CART_STORAGE_KEY) return;
+          syncBadges();
+          if (!isSharedCartParityActive()) {
+            renderCart();
+          }
+        });
         getSharedFavorites()?.subscribe?.(() => {
           syncBadges();
         });

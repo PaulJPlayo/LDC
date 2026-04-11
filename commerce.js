@@ -3366,7 +3366,7 @@
     return updateLineItemQuantity(lineItemId, nextQty);
   };
 
-  const CATEGORY_MINI_CART_PATHS = new Set(['/tumblers', '/cups', '/accessories', '/sale', '/under-25', '/last-chance', '/new-arrivals', '/best-sellers', '/restock']);
+  const CATEGORY_MINI_CART_PATHS = new Set(['/tumblers', '/cups', '/accessories', '/attire', '/sale', '/under-25', '/last-chance', '/new-arrivals', '/best-sellers', '/restock']);
 
   const normalizeStorefrontPath = pathname => {
     const raw = String(pathname || '/').trim() || '/';
@@ -4189,6 +4189,33 @@
       renderCategoryMiniCart();
     };
 
+    const getLegacyCartItemById = itemId => {
+      const cartState = readLegacyCartState();
+      const items = Array.isArray(cartState.items) ? cartState.items : [];
+      return items.find(item => String(item?.id ?? '') === String(itemId || '')) || null;
+    };
+
+    const isMedusaBackedLegacyCartItem = item => {
+      if (!item || typeof item !== 'object') return false;
+      return Boolean(
+        item.unit_price != null ||
+        item.price_minor != null ||
+        item.metadata ||
+        item.variant_id ||
+        item.variant?.id ||
+        item.product_id ||
+        item.product?.id ||
+        item.variant_title ||
+        item.product_title
+      );
+    };
+
+    const shouldUseMedusaCartMutation = itemId => {
+      const legacyItem = getLegacyCartItemById(itemId);
+      if (!legacyItem) return true;
+      return isMedusaBackedLegacyCartItem(legacyItem);
+    };
+
     cartItemsEl.addEventListener('click', event => {
       const target = event.target.closest('[data-cart-remove], [data-cart-increase], [data-cart-decrease]');
       if (!target) return;
@@ -4199,7 +4226,7 @@
       event.stopPropagation();
 
       const medusaCart = window.LDCCommerce;
-      if (medusaCart?.enabled) {
+      if (medusaCart?.enabled && shouldUseMedusaCartMutation(itemId)) {
         if (target.matches('[data-cart-remove]')) {
           medusaCart.removeLineItem?.(itemId);
           return;
@@ -4253,7 +4280,15 @@
       event.preventDefault();
       event.stopPropagation();
       const medusaCart = window.LDCCommerce;
-      if (medusaCart?.enabled && typeof medusaCart.resetCart === 'function') {
+      const cartState = readLegacyCartState();
+      const items = Array.isArray(cartState.items) ? cartState.items : [];
+      const hasMedusaBackedItems = items.some(isMedusaBackedLegacyCartItem);
+      const hasLegacyOnlyItems = items.some(item => !isMedusaBackedLegacyCartItem(item));
+      if (hasLegacyOnlyItems) {
+        writeLegacyCartState({ items: [], currency_code: getCurrencyCode(cartState.currency_code || 'USD') });
+        renderCategoryMiniCart();
+      }
+      if (hasMedusaBackedItems && medusaCart?.enabled && typeof medusaCart.resetCart === 'function') {
         Promise.resolve(medusaCart.resetCart()).catch(error => {
           console.warn('Unable to reset category cart drawer', error);
         });
