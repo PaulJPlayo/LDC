@@ -1515,7 +1515,7 @@
                   <p class="support-upload-help">Optional: include an image or PDF for your custom attire.</p>
                 </div>
                 <div class="cta-row">
-                  <button class="cta-icon-btn" type="button" aria-label="Add to favorites" data-favorites-open>
+                  <button class="cta-icon-btn" type="button" aria-label="Add to favorites" data-attire-favorite>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                     </svg>
@@ -1643,6 +1643,7 @@
 
     </div>
 
+    <script src="favorites.js"></script>
     <script>
       const footerYear = document.getElementById('year');
       if (footerYear) footerYear.textContent = new Date().getFullYear();
@@ -1685,21 +1686,36 @@
         const cartItemsEl = document.querySelector('[data-cart-items]');
         const cartTotalEl = document.querySelector('[data-cart-total]');
         const cartCountEl = document.querySelector('[data-cart-count]');
-        const favoritesDrawer = document.querySelector('[data-favorites-drawer]');
-        const favoritesOverlay = document.querySelector('[data-favorites-overlay]');
-        const favoritesPanel = document.querySelector('[data-favorites-panel]');
-        const favoritesItemsEl = document.querySelector('[data-favorites-items]');
         const favoritesCountEl = document.querySelector('[data-favorites-count]');
-        const favoritesCta = document.querySelector('[data-favorites-cta]');
         const checkoutBtn = document.querySelector('[data-cart-checkout]');
         const resetBtn = document.querySelector('[data-cart-reset]');
         const styleEl = document.getElementById('attireStyle');
         const colorEl = document.getElementById('attireColor');
         const sizeEl = document.getElementById('attireSize');
         const qtyEl = form?.querySelector('input[type="number"]');
+        const attireFavoriteBtn = form?.querySelector('[data-attire-favorite]');
+        const heroEyebrowEl = form?.querySelector('.hero-eyebrow');
+        const heroHeadingEl = form?.querySelector('.hero-heading');
+        const leadCopyEl = form?.querySelector('.lead-copy');
         const attachmentInput = document.getElementById('attireUpload');
         const priceTotalEl = document.querySelector('[data-attire-price-total]');
         const priceMetaEl = document.querySelector('[data-attire-price-meta]');
+        const cleanText = value => String(value ?? '').trim();
+        const getSharedFavorites = () => (
+          window.ldcFavorites && window.ldcFavorites.__sharedStore ? window.ldcFavorites : null
+        );
+        const getSharedFavoritesUi = () => (
+          window.ldcFavoritesUI && typeof window.ldcFavoritesUI === 'object' ? window.ldcFavoritesUI : null
+        );
+        const colorSwatchStyles = {
+          black: 'background:#111827;',
+          white: 'background:#ffffff; box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.8);',
+          tan: 'background:#d6b99a;',
+          green: 'background:#166534;',
+          red: 'background:#dc2626;',
+          grey: 'background:#9ca3af;'
+        };
+        const getColorSwatchStyle = value => colorSwatchStyles[cleanText(value).toLowerCase()] || '';
         const bindUploadLabels = () => {
           document.querySelectorAll('.support-upload-input').forEach(input => {
             if (input.dataset.uploadInit) return;
@@ -1716,7 +1732,13 @@
         };
 
         let cartState = loadState(CART_STORAGE_KEY);
-        let favoritesState = loadState(FAVORITES_STORAGE_KEY);
+        const getFavoriteItems = () => {
+          const sharedFavorites = getSharedFavorites();
+          if (sharedFavorites && typeof sharedFavorites.getFavorites === 'function') {
+            return sharedFavorites.getFavorites();
+          }
+          return loadState(FAVORITES_STORAGE_KEY).items || [];
+        };
 
         const formatCurrency = amt => `$${(amt || 0).toFixed(2)}`;
         const getSizeBucket = size => {
@@ -1761,7 +1783,7 @@
 
         const syncBadges = () => {
           const cartCount = cartState.items?.length || 0;
-          const favCount = favoritesState.items?.length || 0;
+          const favCount = getFavoriteItems().length;
           if (cartCountEl) {
             cartCountEl.textContent = cartCount > 0 ? cartCount : '';
             cartCountEl.hidden = cartCount === 0;
@@ -1770,6 +1792,12 @@
             favoritesCountEl.textContent = favCount > 0 ? favCount : '';
             favoritesCountEl.hidden = favCount === 0;
           }
+        };
+        const addCartItem = item => {
+          cartState.items = [...(cartState.items || []), item];
+          saveState(CART_STORAGE_KEY, cartState);
+          renderCart();
+          return item;
         };
 
         const openCart = () => {
@@ -1916,87 +1944,6 @@
           syncBadges();
         };
 
-        const renderFavorites = () => {
-          if (!favoritesItemsEl) return;
-          const items = favoritesState.items || [];
-          if (!items.length) {
-            favoritesItemsEl.innerHTML = '<div class="favorites-empty">No favorites yet.</div>';
-            syncBadges();
-            return;
-          }
-          favoritesItemsEl.innerHTML = '';
-          items.forEach(item => {
-            const row = document.createElement('div');
-            row.className = 'favorite-item';
-            const thumbStyle = item.previewStyle || (item.image ? `background-image:url('${item.image}'); background-size:cover; background-position:center;` : '');
-            const safeThumbStyle = thumbStyle ? thumbStyle.replace(/"/g, '&quot;') : '';
-            const isAccessoryOnly = item.accessoryOnly || /straw toppers/i.test(item.name || item.title || '');
-            const opts = Array.isArray(item.options) ? item.options : [];
-            const filteredOpts = isAccessoryOnly
-              ? opts.filter(opt => (opt.label || '').toLowerCase() !== 'color')
-              : opts;
-            const colorOpt = filteredOpts.find(opt => (opt.label || '').toLowerCase() === 'color');
-            const accessoryOpt = filteredOpts.find(opt => (opt.label || '').toLowerCase() === 'accessory');
-            const swatch = buildSwatch(colorOpt || accessoryOpt || {});
-            row.innerHTML = `
-              <div class="favorite-thumb" style="${safeThumbStyle}">
-                ${item.image ? `<img src="${item.image}" alt="${item.name || 'Favorite'}" />` : ''}
-              </div>
-              <div>
-                <div class="favorite-title">${item.name || 'Favorite'}</div>
-                <div class="favorite-meta">${swatch}${colorOpt?.value || accessoryOpt?.value || ''}</div>
-                <div class="favorite-meta">${formatCurrency(item.price || 0)}</div>
-                <div class="favorite-actions">
-                  <button type="button" class="favorites-btn favorite-cart-btn" data-fav-add-cart="${item.id}">Add to Cart</button>
-                  <button type="button" class="favorites-btn" data-fav-remove="${item.id}">Remove</button>
-                </div>
-              </div>
-            `;
-            favoritesItemsEl.appendChild(row);
-          });
-          favoritesItemsEl.querySelectorAll('[data-fav-add-cart]').forEach(btn => {
-            btn.addEventListener('click', () => {
-              const id = btn.getAttribute('data-fav-add-cart');
-              const favItem = (favoritesState.items || []).find(it => it.id === id);
-              if (favItem) {
-                const qty = Math.max(1, Number(favItem.quantity || 1));
-                cartState.items = [...(cartState.items || []), { ...favItem, quantity: qty }];
-                saveState(CART_STORAGE_KEY, cartState);
-                renderCart();
-                openCart();
-              }
-            });
-          });
-          favoritesItemsEl.querySelectorAll('[data-fav-remove]').forEach(btn => {
-            btn.addEventListener('click', () => {
-              const id = btn.getAttribute('data-fav-remove');
-              favoritesState.items = (favoritesState.items || []).filter(it => it.id !== id);
-              saveState(FAVORITES_STORAGE_KEY, favoritesState);
-              renderFavorites();
-            });
-          });
-          syncBadges();
-        };
-
-        const openFavorites = () => {
-          favoritesDrawer?.classList.add('is-open');
-          favoritesOverlay?.classList.add('is-open');
-          document.body.classList.add('favorites-open');
-          favoritesPanel?.removeAttribute('aria-hidden');
-          favoritesPanel?.focus({ preventScroll: true });
-        };
-        const closeFavorites = () => {
-          favoritesDrawer?.classList.remove('is-open');
-          favoritesOverlay?.classList.remove('is-open');
-          document.body.classList.remove('favorites-open');
-          favoritesPanel?.setAttribute('aria-hidden', 'true');
-        };
-        favoritesOverlay?.addEventListener('click', closeFavorites);
-        document.querySelectorAll('[data-favorites-close]').forEach(btn => btn.addEventListener('click', closeFavorites));
-        document.querySelectorAll('[data-favorites-open]').forEach(btn => btn.addEventListener('click', e => { e.preventDefault(); openFavorites(); }));
-        window.addEventListener('keydown', e => { if (e.key === 'Escape') closeFavorites(); });
-        favoritesCta?.addEventListener('click', closeFavorites);
-
         const readAttachment = () => {
           return new Promise(resolve => {
             const file = attachmentInput?.files?.[0];
@@ -2022,9 +1969,12 @@
           };
           const notesEl = form?.querySelector('textarea');
           const push = (label, value, extra = {}) => { if (value) options.push({ label, value, ...extra }); };
-          push('Style', val(styleEl));
-          push('Color', val(colorEl));
-          push('Size', val(sizeEl));
+          const styleValue = val(styleEl);
+          const colorValue = val(colorEl);
+          const sizeValue = val(sizeEl);
+          push('Style', styleValue);
+          push('Color', colorValue, { swatchStyle: getColorSwatchStyle(colorValue) });
+          push('Size', sizeValue);
           push('Notes', notesEl?.value?.trim() || '');
           const attachment = await readAttachment();
           if (attachment?.name) {
@@ -2033,40 +1983,133 @@
           }
           return options;
         };
-
-        const addProduct = async isFavorite => {
+        const buildOptionsSummary = options => options
+          .map(opt => {
+            const label = cleanText(opt?.label);
+            const value = cleanText(opt?.value);
+            if (!value) return '';
+            return label ? `${label}: ${value}` : value;
+          })
+          .filter(Boolean)
+          .join(' | ');
+        const buildFavoritePayload = async () => {
           const heroImg = document.querySelector('.attire-hero-image img');
           const priceCalc = updatePriceBubble();
           const qty = priceCalc?.qty ?? Math.max(1, Number(qtyEl?.value || 1));
           const unitPrice = priceCalc?.basePrice ?? getBasePrice(styleEl?.value || '', sizeEl?.value || '');
           const options = await buildOptions();
-          const item = {
-            id: `law-attire-${Date.now()}`,
-            name: 'L.A.W. Attire',
+          const imageSrc = cleanText(heroImg?.currentSrc || heroImg?.getAttribute('src'));
+          const routePath = cleanText(window.location.pathname) || '/attire';
+          const title = cleanText(heroEyebrowEl?.textContent) || 'L.A.W. Attire';
+          const optionSummary = buildOptionsSummary(options);
+          const variantTitle = options
+            .filter(opt => {
+              const label = cleanText(opt?.label).toLowerCase();
+              return label !== 'notes' && label !== 'attachment';
+            })
+            .map(opt => cleanText(opt?.value))
+            .filter(Boolean)
+            .join(' | ');
+          const shortDescription = cleanText(heroHeadingEl?.textContent) ||
+            cleanText(leadCopyEl?.textContent) ||
+            'Custom Sweat Suits & Tees';
+          const payload = {
+            product_handle: cleanText(form?.querySelector('[data-add-to-cart]')?.dataset.productKey) || 'attire-custom',
+            product_url: routePath,
+            title,
+            variant_title: variantTitle,
+            short_description: shortDescription,
+            description: shortDescription,
             price: unitPrice,
-            quantity: qty,
-            image: heroImg?.getAttribute('src') || '',
-            previewStyle: heroImg ? `background-image:url('${heroImg.src}'); background-size:cover; background-position:center;` : '',
-            options
+            currency_code: 'USD',
+            preview_image: imageSrc,
+            image_url: imageSrc,
+            preview_style: imageSrc ? buildPreviewStyle(imageSrc) : '',
+            selected_options: options,
+            options_summary: optionSummary,
+            source_path: routePath,
+            quantity: qty
           };
+          const sharedFavorites = getSharedFavorites();
+          if (sharedFavorites && typeof sharedFavorites.buildFavoriteKey === 'function') {
+            payload.favorite_key = sharedFavorites.buildFavoriteKey(payload);
+          }
+          return payload;
+        };
+        const normalizeCartOption = option => {
+          const label = cleanText(option?.label);
+          const value = cleanText(option?.value);
+          if (!label && !value) return null;
+          return {
+            label: label || 'Option',
+            value,
+            swatchStyle: cleanText(option?.swatchStyle || option?.swatch_style),
+            swatchGlyph: cleanText(option?.swatchGlyph || option?.swatch_glyph)
+          };
+        };
+        const normalizeCartItem = rawItem => {
+          const source = rawItem && typeof rawItem === 'object' ? rawItem : {};
+          const name = cleanText(source.name || source.title) || 'L.A.W. Attire';
+          const image = cleanText(source.image || source.preview_image || source.image_url);
+          const optionSource = Array.isArray(source.options)
+            ? source.options
+            : (Array.isArray(source.selected_options) ? source.selected_options : []);
+          return {
+            id: cleanText(source.id || source.variant_id) || `attire-cart-${Date.now()}`,
+            name,
+            title: cleanText(source.title) || name,
+            price: Number(source.price || 0),
+            quantity: Math.max(1, Number(source.quantity || 1)),
+            image,
+            previewStyle: cleanText(source.previewStyle || source.preview_style) || buildPreviewStyle(image),
+            options: optionSource.map(normalizeCartOption).filter(Boolean)
+          };
+        };
+
+        const addProduct = async isFavorite => {
           if (isFavorite) {
-            favoritesState.items = [...(favoritesState.items || []), { ...item }];
-            saveState(FAVORITES_STORAGE_KEY, favoritesState);
-            renderFavorites();
-            openFavorites();
+            const sharedFavorites = getSharedFavorites();
+            if (!sharedFavorites || typeof sharedFavorites.addFavorite !== 'function') return null;
+            const payload = await buildFavoritePayload();
+            const added = sharedFavorites.addFavorite(payload, { source_path: payload.source_path });
+            syncBadges();
+            getSharedFavoritesUi()?.openDrawer?.(attireFavoriteBtn || document.activeElement || null);
+            return added;
           } else {
-            cartState.items = [...(cartState.items || []), item];
-            saveState(CART_STORAGE_KEY, cartState);
-            renderCart();
+            const payload = await buildFavoritePayload();
+            addCartItem(normalizeCartItem({
+              id: `law-attire-cart-${Date.now()}`,
+              title: payload.title,
+              name: payload.title,
+              price: payload.price,
+              quantity: payload.quantity,
+              image: payload.preview_image,
+              preview_style: payload.preview_style,
+              selected_options: payload.selected_options
+            }));
             openCart();
+            return true;
           }
         };
+        const cartBridge = window.ldcCart && typeof window.ldcCart === 'object' ? window.ldcCart : {};
+        cartBridge.addProduct = cartItem => {
+          const normalizedItem = normalizeCartItem(cartItem);
+          addCartItem(normalizedItem);
+          return normalizedItem;
+        };
+        cartBridge.open = openCart;
+        cartBridge.close = closeCart;
+        cartBridge.sync = renderCart;
+        window.ldcCart = cartBridge;
+        getSharedFavorites()?.subscribe?.(() => {
+          syncBadges();
+        });
 
         form?.querySelector('[data-add-to-cart]')?.addEventListener('click', async e => {
           e.preventDefault();
           await addProduct(false);
         });
-        form?.querySelector('[data-favorites-open]')?.addEventListener('click', async e => {
+        attireFavoriteBtn?.addEventListener('click', async e => {
           e.preventDefault();
           await addProduct(true);
         });
@@ -2133,7 +2176,6 @@
         bindUploadLabels();
         updatePriceBubble();
         renderCart();
-        renderFavorites();
         syncBadges();
       })();
 
