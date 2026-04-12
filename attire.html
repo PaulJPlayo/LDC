@@ -1520,7 +1520,7 @@
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                     </svg>
                   </button>
-                  <button class="cta-button" data-add-to-cart data-product-key="attire-custom">Add to Cart</button>
+                  <button class="cta-button" type="button" data-add-to-cart data-product-key="attire-custom">Add to Cart</button>
                   <div class="design-price-wrapper attire-price-wrapper" aria-live="polite" role="status">
                     <div class="design-price-bubble attire-price-bubble" data-attire-price-bubble>
                       <span class="design-price-value" data-attire-price-total>$0.00</span>
@@ -1693,7 +1693,8 @@
         const colorEl = document.getElementById('attireColor');
         const sizeEl = document.getElementById('attireSize');
         const qtyEl = form?.querySelector('input[type="number"]');
-        const attireFavoriteBtn = form?.querySelector('[data-attire-favorite]');
+        const getAttireFavoriteBtn = () => form?.querySelector('[data-attire-favorite]');
+        const getAttireAddToCartBtn = () => form?.querySelector('[data-add-to-cart]');
         const heroEyebrowEl = form?.querySelector('.hero-eyebrow');
         const heroHeadingEl = form?.querySelector('.hero-heading');
         const leadCopyEl = form?.querySelector('.lead-copy');
@@ -1716,6 +1717,60 @@
           grey: 'background:#9ca3af;'
         };
         const getColorSwatchStyle = value => colorSwatchStyles[cleanText(value).toLowerCase()] || '';
+        const favoriteCtaIcon = `
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+          </svg>
+        `.trim();
+        const createFavoriteCtaButton = () => {
+          const button = document.createElement('button');
+          button.className = 'cta-icon-btn';
+          button.type = 'button';
+          button.setAttribute('aria-label', 'Add to favorites');
+          button.setAttribute('data-attire-favorite', '');
+          button.innerHTML = favoriteCtaIcon;
+          return button;
+        };
+        const createAddToCartCtaButton = () => {
+          const button = document.createElement('button');
+          button.className = 'cta-button';
+          button.type = 'button';
+          button.setAttribute('data-add-to-cart', '');
+          button.setAttribute('data-product-key', 'attire-custom');
+          button.textContent = 'Add to Cart';
+          return button;
+        };
+        const ensureAttireCtaButtons = () => {
+          const ctaRow = form?.querySelector('.cta-row');
+          if (!ctaRow) return { favoriteButton: null, addToCartButton: null };
+          const priceWrapper = ctaRow.querySelector('.design-price-wrapper');
+          let favoriteButton = ctaRow.querySelector('[data-attire-favorite]');
+          let addToCartButton = ctaRow.querySelector('[data-add-to-cart]');
+          if (!favoriteButton) {
+            favoriteButton = createFavoriteCtaButton();
+            ctaRow.insertBefore(favoriteButton, ctaRow.firstChild || priceWrapper || null);
+          }
+          if (!addToCartButton) {
+            addToCartButton = createAddToCartCtaButton();
+            ctaRow.insertBefore(addToCartButton, priceWrapper || null);
+          }
+          if (favoriteButton.nextElementSibling !== addToCartButton) {
+            ctaRow.insertBefore(favoriteButton, addToCartButton);
+          }
+          if (priceWrapper && addToCartButton.nextElementSibling !== priceWrapper) {
+            ctaRow.insertBefore(addToCartButton, priceWrapper);
+          }
+          return { favoriteButton, addToCartButton };
+        };
+        const observeAttireCtaButtons = () => {
+          const ctaRow = form?.querySelector('.cta-row');
+          if (!ctaRow || ctaRow.dataset.ctaObserverInit === 'true') return;
+          ctaRow.dataset.ctaObserverInit = 'true';
+          const observer = new MutationObserver(() => {
+            ensureAttireCtaButtons();
+          });
+          observer.observe(ctaRow, { childList: true });
+        };
         const bindUploadLabels = () => {
           document.querySelectorAll('.support-upload-input').forEach(input => {
             if (input.dataset.uploadInit) return;
@@ -2066,7 +2121,7 @@
             cleanText(leadCopyEl?.textContent) ||
             'Custom Sweat Suits & Tees';
           const payload = {
-            product_handle: cleanText(form?.querySelector('[data-add-to-cart]')?.dataset.productKey) || 'attire-custom',
+            product_handle: cleanText(getAttireAddToCartBtn()?.dataset.productKey) || 'attire-custom',
             product_url: routePath,
             title,
             variant_title: variantTitle,
@@ -2130,7 +2185,7 @@
             const payload = await buildFavoritePayload();
             const added = sharedFavorites.addFavorite(payload, { source_path: payload.source_path });
             syncBadges();
-            getSharedFavoritesUi()?.openDrawer?.(attireFavoriteBtn || document.activeElement || null);
+            getSharedFavoritesUi()?.openDrawer?.(getAttireFavoriteBtn() || document.activeElement || null);
             return added;
           } else {
             const payload = await buildFavoritePayload();
@@ -2183,14 +2238,20 @@
           syncBadges();
         });
 
-        form?.querySelector('[data-add-to-cart]')?.addEventListener('click', async e => {
-          e.preventDefault();
-          await addProduct(false);
-        });
-        attireFavoriteBtn?.addEventListener('click', async e => {
-          e.preventDefault();
-          await addProduct(true);
-        });
+        ensureAttireCtaButtons();
+        observeAttireCtaButtons();
+        window.addEventListener('click', event => {
+          const addToCartButton = event.target.closest('.attire-form [data-add-to-cart]');
+          const favoriteButton = event.target.closest('.attire-form [data-attire-favorite]');
+          if (!addToCartButton && !favoriteButton) return;
+          if (!form?.contains(addToCartButton || favoriteButton)) return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          const task = favoriteButton ? addProduct(true) : addProduct(false);
+          task.catch(error => {
+            console.warn('Unable to complete attire CTA action', error);
+          });
+        }, true);
         styleEl?.addEventListener('change', updatePriceBubble);
         sizeEl?.addEventListener('change', updatePriceBubble);
         qtyEl?.addEventListener('input', updatePriceBubble);
