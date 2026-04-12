@@ -206,7 +206,10 @@ const buildAddressPayload = (draft) => {
 
 const getLineItemTitle = (item) => {
   if (!item) return 'Item';
+  const metadata = item?.metadata && typeof item.metadata === 'object' ? item.metadata : {};
   const baseTitle =
+    metadata?.design_product_title ||
+    metadata?.designProductTitle ||
     item.title ||
     item.product_title ||
     item.variant?.product?.title ||
@@ -1007,6 +1010,7 @@ const resolveUploadedFileUrl = async (uploaded) => {
 const resolveMediaUrl = (value) => {
   const url = String(value || '').trim();
   if (!url) return '';
+  if (/^data:/i.test(url)) return url;
   if (/^https?:\/\//i.test(url)) return normalizeBackendUrl(url);
   if (url.startsWith('//')) return `https:${url}`;
   if (url.startsWith('/')) return `${MEDIA_BASE}${url}`;
@@ -13846,6 +13850,18 @@ const ResourceDetail = ({ resource }) => {
       metadata?.selected_color_label,
       metadata?.selectedColorLabel
     );
+    const styleLabel = readText(
+      metadata?.design_style_label,
+      metadata?.designStyleLabel,
+      metadata?.design_style,
+      metadata?.designStyle
+    );
+    const sizeLabel = readText(
+      metadata?.design_size_label,
+      metadata?.designSizeLabel,
+      metadata?.design_size,
+      metadata?.designSize
+    );
     const accessoryLabel = readText(
       metadata?.design_accessory_label,
       metadata?.designAccessoryLabel,
@@ -13896,7 +13912,9 @@ const ResourceDetail = ({ resource }) => {
     if (normalizedVariantTitle) {
       lines.push({ label: 'Variant', value: normalizedVariantTitle });
     }
+    if (styleLabel) lines.push({ label: 'Style', value: styleLabel });
     if (colorLabel) lines.push({ label: 'Color', value: colorLabel });
+    if (sizeLabel) lines.push({ label: 'Size', value: sizeLabel });
     if (accessoryLabel) lines.push({ label: 'Accessory', value: accessoryLabel });
     if (wrapLabel) lines.push({ label: 'Wrap', value: wrapLabel });
     if (notes) lines.push({ label: 'Notes', value: notes });

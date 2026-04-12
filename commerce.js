@@ -2933,12 +2933,109 @@
     return metadata;
   };
 
+  const getLegacyCartOptionByLabel = (item, targetLabel) => {
+    if (!item || typeof item !== 'object') return null;
+    const normalizedTarget = String(targetLabel || '').trim().toLowerCase();
+    if (!normalizedTarget) return null;
+    const optionSource = Array.isArray(item.options)
+      ? item.options
+      : Array.isArray(item.selected_options)
+        ? item.selected_options
+        : [];
+    return optionSource.find(option => {
+      const label = String(option?.label || '').trim().toLowerCase();
+      return label === normalizedTarget;
+    }) || null;
+  };
+
+  const isAttireLegacyCartItem = item => {
+    if (!item || typeof item !== 'object') return false;
+    const productHandle = slugify(item.product_handle || item.productHandle || '');
+    if (productHandle === 'attire-custom') return true;
+    const productUrl = String(item.product_url || item.productUrl || item.source_path || '')
+      .trim()
+      .split('?')[0]
+      .split('#')[0]
+      .toLowerCase();
+    if (productUrl === '/attire' || productUrl === 'attire.html') return true;
+    const itemId = String(item.id || '').trim().toLowerCase();
+    if (itemId.startsWith('law-attire-cart-')) return true;
+    const title = String(item.title || item.name || '').trim().toLowerCase();
+    if (title === 'l.a.w. attire' || title === 'law attire') return true;
+    const hasStyle = Boolean(getLegacyCartOptionByLabel(item, 'style')?.value);
+    const hasColor = Boolean(getLegacyCartOptionByLabel(item, 'color')?.value);
+    const hasSize = Boolean(getLegacyCartOptionByLabel(item, 'size')?.value);
+    return hasStyle && hasColor && hasSize;
+  };
+
+  const stripAttachmentReferenceNote = value =>
+    String(value || '')
+      .replace(/\s*\(file reference\)\s*$/i, '')
+      .trim();
+
+  const buildAttireLineItemMetadataFromLegacyItem = (item, attachment = {}) => {
+    if (!item || typeof item !== 'object') return {};
+
+    const styleOpt = getLegacyCartOptionByLabel(item, 'style');
+    const colorOpt = getLegacyCartOptionByLabel(item, 'color');
+    const sizeOpt = getLegacyCartOptionByLabel(item, 'size');
+    const notesOpt = getLegacyCartOptionByLabel(item, 'notes');
+    const attachmentOpt = getLegacyCartOptionByLabel(item, 'attachment');
+    const previewImage = resolveAssetUrl(
+      item.image ||
+      item.preview_image ||
+      item.image_url ||
+      ''
+    );
+    const previewStyle =
+      item.previewStyle ||
+      item.preview_style ||
+      (previewImage ? buildPreviewStyle(previewImage) : '');
+    const designTitle = String(item.title || item.name || 'L.A.W. Attire').trim() || 'L.A.W. Attire';
+    const productHandle = String(item.product_handle || item.productHandle || 'attire-custom').trim() || 'attire-custom';
+    const metadata = {
+      design_mode: 'custom',
+      design_product_key: productHandle,
+      design_product_handle: productHandle,
+      design_product_title: designTitle,
+      design_product_description:
+        String(item.description || item.short_description || '').trim() || undefined,
+      product_description:
+        String(item.description || item.short_description || '').trim() || undefined,
+      design_preview_url: previewImage || undefined,
+      design_preview_style: previewStyle || undefined,
+      preview_url: previewImage || undefined,
+      preview_style: previewStyle || undefined,
+      design_total_price:
+        Number.isFinite(Number(item.price)) ? Number(item.price) : undefined,
+      design_style_label: String(styleOpt?.value || '').trim() || undefined,
+      design_color_label: String(colorOpt?.value || '').trim() || undefined,
+      design_color_style: String(colorOpt?.swatchStyle || colorOpt?.swatch_style || '').trim() || undefined,
+      design_color_glyph: String(colorOpt?.swatchGlyph || colorOpt?.swatch_glyph || '').trim() || undefined,
+      design_size_label: String(sizeOpt?.value || '').trim() || undefined,
+      design_notes: String(notesOpt?.value || '').trim() || undefined,
+      design_attachment_name:
+        stripAttachmentReferenceNote(attachment?.name || attachmentOpt?.value || '') || undefined,
+      design_attachment_url: String(attachment?.url || '').trim() || undefined,
+      design_attachment_key: String(attachment?.key || attachment?.id || '').trim() || undefined,
+      design_attachment_data:
+        !String(attachment?.url || attachment?.key || attachment?.id || '').trim()
+          ? String(attachment?.data || attachmentOpt?.attachmentData || attachmentOpt?.attachment_data || '').trim() || undefined
+          : undefined
+    };
+
+    return Object.fromEntries(
+      Object.entries(metadata).filter(([, value]) => value !== undefined && value !== '')
+    );
+  };
+
   const formatLegacyItem = (item, currencySource) => {
     if (!item) return null;
     const resolvedCurrency = getCurrencyCode(currencySource || item?.currency_code);
     const rawUnitPriceMinor = Number(item.unit_price || 0);
     const unitPriceMinor = Number.isFinite(rawUnitPriceMinor) ? rawUnitPriceMinor : 0;
     const unitPrice = toMajorUnits(unitPriceMinor, resolvedCurrency);
+    const metadata = normalizeMetadata(item.metadata);
     const productTitle =
       item.product_title || item.product?.title || item.productTitle || '';
     const lineTitle = item.title || '';
@@ -2947,9 +3044,14 @@
       item.variant?.title && item.variant.title !== 'Default'
         ? item.variant.title
         : '';
+    const metadataTitle =
+      metadata.design_product_title ||
+      metadata.designProductTitle ||
+      metadata.product_title_override ||
+      metadata.productTitleOverride ||
+      '';
     const displayTitle =
-      productTitle || lineTitle || variantTitleFromItem || variantTitle || 'Item';
-    const metadata = item.metadata || {};
+      metadataTitle || productTitle || lineTitle || variantTitleFromItem || variantTitle || 'Item';
     const previewStyle = getLineItemDisplayPreviewStyle(item);
     const description = getLineItemDisplayDescription(item);
     const hasDesignPricing = hasDesignLineItemMetadata(metadata);
@@ -3031,6 +3133,12 @@
       metadata.design_color ||
       metadata.designColor ||
       '';
+    const designStyleLabel =
+      metadata.design_style_label ||
+      metadata.designStyleLabel ||
+      metadata.design_style ||
+      metadata.designStyle ||
+      '';
     const designColorStyle =
       metadata.design_color_style ||
       metadata.designColorStyle ||
@@ -3061,6 +3169,12 @@
       metadata.design_wrap ||
       metadata.designWrap ||
       '';
+    const designSizeLabel =
+      metadata.design_size_label ||
+      metadata.designSizeLabel ||
+      metadata.design_size ||
+      metadata.designSize ||
+      '';
     const designNotes =
       metadata.design_notes ||
       metadata.designNotes ||
@@ -3083,6 +3197,8 @@
       item?.isDesignSubmitted === true ||
       Boolean(
         designColorLabel ||
+        designStyleLabel ||
+        designSizeLabel ||
         designAccessoryLabel ||
         designWrapLabel ||
         designNotes ||
@@ -3129,6 +3245,9 @@
         swatchGlyph: standardAccessoryGlyph
       });
     }
+    if (designStyleLabel) {
+      options.push({ label: 'Style', value: designStyleLabel });
+    }
     if (designColorLabel) {
       options.push({
         label: 'Color',
@@ -3136,6 +3255,9 @@
         swatchStyle: designColorStyle,
         swatchGlyph: designColorGlyph
       });
+    }
+    if (designSizeLabel) {
+      options.push({ label: 'Size', value: designSizeLabel });
     }
     if (designAccessoryLabel) {
       options.push({
@@ -3180,6 +3302,10 @@
     return Boolean(
       metadata.design_color_label ||
       metadata.designColorLabel ||
+      metadata.design_style_label ||
+      metadata.designStyleLabel ||
+      metadata.design_size_label ||
+      metadata.designSizeLabel ||
       metadata.design_accessory_label ||
       metadata.designAccessoryLabel ||
       metadata.design_wrap_label ||
@@ -4272,6 +4398,13 @@
       const cartState = readLegacyCartState();
       if (!Array.isArray(cartState.items) || !cartState.items.length) return;
       closeCartDrawer();
+      const hasLocalAttireItems = cartState.items.some(item =>
+        isAttireLegacyCartItem(item) && !isMedusaBackedLegacyCartItem(item)
+      );
+      if (hasLocalAttireItems) {
+        window.location.href = 'checkout.html';
+        return;
+      }
       const encodedCart = encodeLegacyCartState({ items: cartState.items });
       window.location.href = encodedCart ? `checkout.html?cart=${encodedCart}` : 'checkout.html';
     }, true);
@@ -4818,7 +4951,10 @@
     resolveAccountContinueShoppingTarget,
     applyAccountContinueShoppingTargets,
     resolveDesignPricing,
-    resolveVariantDisplayData
+    resolveVariantDisplayData,
+    isMedusaBackedLegacyCartItem,
+    isAttireLegacyCartItem,
+    buildAttireLineItemMetadataFromLegacyItem
   };
 
   const initStorefront = () => {

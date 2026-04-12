@@ -764,6 +764,244 @@
           };
         };
 
+        const CHECKOUT_LEGACY_CART_KEY = 'ldc:cart';
+        const checkoutStorage = (() => {
+          const tryStore = store => {
+            if (!store) return null;
+            const probeKey = '__ldc_checkout_probe__';
+            try {
+              store.setItem(probeKey, '1');
+              store.removeItem(probeKey);
+              return store;
+            } catch (error) {
+              return null;
+            }
+          };
+          return tryStore(window.localStorage) || tryStore(window.sessionStorage);
+        })();
+
+        const normalizeLegacyCheckoutOption = option => {
+          if (!option || (!option.label && !option.value)) return null;
+          return {
+            label: String(option.label ?? '').trim(),
+            value: String(option.value ?? '').trim(),
+            swatchStyle: typeof option.swatchStyle === 'string'
+              ? option.swatchStyle.trim()
+              : (typeof option.swatch_style === 'string' ? option.swatch_style.trim() : ''),
+            swatchGlyph: typeof option.swatchGlyph === 'string'
+              ? option.swatchGlyph
+              : (typeof option.swatch_glyph === 'string' ? option.swatch_glyph : ''),
+            attachmentData: typeof option.attachmentData === 'string'
+              ? option.attachmentData
+              : (typeof option.attachment_data === 'string' ? option.attachment_data : ''),
+            attachmentKey: typeof option.attachmentKey === 'string'
+              ? option.attachmentKey
+              : (typeof option.attachment_key === 'string' ? option.attachment_key : ''),
+            layout: typeof option.layout === 'string' ? option.layout : ''
+          };
+        };
+
+        const normalizeLegacyCheckoutItem = item => {
+          if (!item || typeof item !== 'object') return null;
+          const optionSource = Array.isArray(item.options)
+            ? item.options
+            : (Array.isArray(item.selected_options) ? item.selected_options : []);
+          return {
+            id: String(item.id ?? ''),
+            name: String(item.name ?? item.title ?? 'Item'),
+            title: String(item.title ?? item.name ?? 'Item'),
+            product_handle: String(item.product_handle ?? item.productHandle ?? '').trim(),
+            product_url: String(item.product_url ?? item.productUrl ?? item.source_path ?? '').trim(),
+            variant_title: String(item.variant_title ?? item.variantTitle ?? '').trim(),
+            description: String(item.description ?? item.short_description ?? item.subtitle ?? '').trim(),
+            price: Number(item.price ?? 0) || 0,
+            currency_code: String(item.currency_code ?? 'USD').trim() || 'USD',
+            quantity: Math.max(1, Number(item.quantity ?? 1) || 1),
+            image: String(item.image ?? item.preview_image ?? item.image_url ?? '').trim(),
+            previewStyle: typeof item.previewStyle === 'string'
+              ? item.previewStyle.trim()
+              : (typeof item.preview_style === 'string' ? item.preview_style.trim() : ''),
+            options: optionSource
+              .map(normalizeLegacyCheckoutOption)
+              .filter(option => option && (option.label || option.value)),
+            notes: typeof item.notes === 'string' ? item.notes.trim() : ''
+          };
+        };
+
+        const readLegacyCheckoutState = () => {
+          const params = new URLSearchParams(window.location.search);
+          const readCart = raw => {
+            try {
+              const parsed = JSON.parse(raw);
+              if (parsed && Array.isArray(parsed.items)) {
+                return {
+                  items: parsed.items
+                    .map(normalizeLegacyCheckoutItem)
+                    .filter(item => item && item.id && item.quantity > 0),
+                  currency_code: String(parsed.currency_code || 'USD').trim() || 'USD'
+                };
+              }
+            } catch (error) {
+              console.warn('Checkout: unable to parse cart payload.', error);
+            }
+            return null;
+          };
+
+          if (params.get('cart')) {
+            try {
+              const decoded = decodeURIComponent(params.get('cart'));
+              const parsed = readCart(decoded);
+              if (parsed) return parsed;
+            } catch (error) {
+              console.warn('Checkout: unable to decode cart param.', error);
+            }
+          }
+
+          const storageCandidates = [
+            checkoutStorage?.getItem(CHECKOUT_LEGACY_CART_KEY) || '',
+            window.sessionStorage?.getItem?.(CHECKOUT_LEGACY_CART_KEY) || ''
+          ];
+
+          for (const raw of storageCandidates) {
+            if (!raw) continue;
+            const parsed = readCart(raw);
+            if (parsed) return parsed;
+          }
+
+          return { items: [], currency_code: 'USD' };
+        };
+
+        const getLegacyCheckoutOption = (item, targetLabel) => {
+          const normalizedTarget = String(targetLabel || '').trim().toLowerCase();
+          return (Array.isArray(item?.options) ? item.options : []).find(option =>
+            String(option?.label || '').trim().toLowerCase() === normalizedTarget
+          ) || null;
+        };
+
+        const stripAttachmentReferenceNote = value =>
+          String(value || '')
+            .replace(/\s*\(file reference\)\s*$/i, '')
+            .trim();
+
+        const clearCheckoutCartParam = () => {
+          try {
+            const url = new URL(window.location.href);
+            if (!url.searchParams.has('cart')) return;
+            url.searchParams.delete('cart');
+            window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+          } catch (error) {
+            console.warn('Checkout: unable to clear cart handoff param.', error);
+          }
+        };
+
+        const uploadCheckoutAttachment = async (commerce, attachmentOption) => {
+          const attachmentData = String(
+            attachmentOption?.attachmentData ||
+            attachmentOption?.attachment_data ||
+            ''
+          ).trim();
+          const attachmentName = stripAttachmentReferenceNote(attachmentOption?.value || '');
+          if (!attachmentData || !attachmentData.startsWith('data:') || !commerce?.backendUrl) {
+            return {
+              name: attachmentName || 'Attachment',
+              url: '',
+              key: '',
+              data: attachmentData
+            };
+          }
+
+          const mimeMatch = attachmentData.match(/^data:([^;,]+)[;,]/i);
+          const contentType = mimeMatch?.[1] || 'application/octet-stream';
+          const publishableKey =
+            document.body?.dataset?.medusaPublishableKey ||
+            window.LDC_MEDUSA_PUBLISHABLE_KEY ||
+            '';
+
+          try {
+            const response = await fetch(`${String(commerce.backendUrl).replace(/\/$/, '')}/store/design-attachments`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(publishableKey ? { 'x-publishable-api-key': publishableKey } : {})
+              },
+              mode: 'cors',
+              credentials: 'omit',
+              body: JSON.stringify({
+                filename: attachmentName || 'attachment',
+                content_type: contentType,
+                data_url: attachmentData
+              })
+            });
+            if (!response.ok) {
+              throw new Error(`Attachment upload failed (${response.status})`);
+            }
+            const uploaded = await response.json();
+            return {
+              name: attachmentName || 'Attachment',
+              url: String(uploaded?.url || '').trim(),
+              key: String(uploaded?.key || uploaded?.id || '').trim(),
+              data: ''
+            };
+          } catch (error) {
+            console.warn('Checkout: unable to upload attire attachment, falling back to inline attachment data.', error);
+            return {
+              name: attachmentName || 'Attachment',
+              url: '',
+              key: '',
+              data: attachmentData
+            };
+          }
+        };
+
+        const resolveAttireCheckoutVariantId = async (commerce, item) => {
+          const directVariantId = String(item?.variant_id || item?.variantId || '').trim();
+          if (directVariantId) return directVariantId;
+          if (typeof commerce?.resolveVariantId !== 'function') return '';
+          const dummy = document.createElement('button');
+          dummy.dataset.productKey = item?.product_handle || 'attire-custom';
+          if (item?.product_handle) dummy.dataset.productHandle = item.product_handle;
+          return String(await commerce.resolveVariantId(dummy) || '').trim();
+        };
+
+        const reconcileLegacyAttireCheckoutItems = async commerce => {
+          if (!commerce?.enabled) return { converted: 0, skipped: 0 };
+          const legacyState = readLegacyCheckoutState();
+          const legacyItems = Array.isArray(legacyState.items) ? legacyState.items : [];
+          const convertibleItems = legacyItems.filter(item => {
+            const isAttire = typeof commerce.isAttireLegacyCartItem === 'function'
+              ? commerce.isAttireLegacyCartItem(item)
+              : false;
+            const isMedusaBacked = typeof commerce.isMedusaBackedLegacyCartItem === 'function'
+              ? commerce.isMedusaBackedLegacyCartItem(item)
+              : false;
+            return isAttire && !isMedusaBacked;
+          });
+          if (!convertibleItems.length) {
+            clearCheckoutCartParam();
+            return { converted: 0, skipped: legacyItems.length };
+          }
+          if (typeof commerce.buildAttireLineItemMetadataFromLegacyItem !== 'function') {
+            throw new Error('Attire metadata bridge is unavailable on checkout.');
+          }
+
+          for (const item of convertibleItems) {
+            const variantId = await resolveAttireCheckoutVariantId(commerce, item);
+            if (!variantId) {
+              throw new Error('Attire variant mapping is missing for checkout.');
+            }
+            const attachmentOption = getLegacyCheckoutOption(item, 'attachment');
+            const uploadedAttachment = attachmentOption
+              ? await uploadCheckoutAttachment(commerce, attachmentOption)
+              : null;
+            const metadata = commerce.buildAttireLineItemMetadataFromLegacyItem(item, uploadedAttachment || {});
+            await commerce.addLineItem(variantId, Math.max(1, Number(item.quantity || 1)), metadata);
+          }
+
+          await commerce.syncBadges();
+          clearCheckoutCartParam();
+          return { converted: convertibleItems.length, skipped: legacyItems.length - convertibleItems.length };
+        };
+
         const runMedusaCheckout = commerce => {
           const itemsContainer = document.querySelector('[data-checkout-items]');
           const subtotalEl = document.querySelector('[data-checkout-subtotal]');
@@ -1352,6 +1590,7 @@
 
           const init = async () => {
             try {
+              await reconcileLegacyAttireCheckoutItems(commerce);
               state.cart = await commerce.getOrCreateCart();
               await ensureRegion();
               hydrateForm(state.cart);
