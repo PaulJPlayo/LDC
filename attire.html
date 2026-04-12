@@ -2177,6 +2177,130 @@
             options: optionSource.map(normalizeCartOption).filter(Boolean)
           };
         };
+        const isAttireFavoriteRecord = favorite => {
+          const productHandle = cleanText(favorite?.product_handle).toLowerCase();
+          const productUrl = cleanText(favorite?.product_url || favorite?.source_path).split('?')[0].split('#')[0];
+          return productHandle === 'attire-custom' || productUrl === '/attire' || productUrl === 'attire.html';
+        };
+        const buildLocalCartItemFromFavorite = favorite => normalizeCartItem({
+          id: `law-attire-cart-${Date.now()}`,
+          title: cleanText(favorite?.title) || 'L.A.W. Attire',
+          name: cleanText(favorite?.title || favorite?.name) || 'L.A.W. Attire',
+          price: Number(favorite?.price || 0),
+          currency_code: cleanText(favorite?.currency_code) || 'USD',
+          quantity: Math.max(1, Number(favorite?.quantity || 1)),
+          image: cleanText(favorite?.preview_image || favorite?.image_url || favorite?.image),
+          description: cleanText(favorite?.description || favorite?.short_description),
+          preview_style: cleanText(favorite?.preview_style || favorite?.previewStyle),
+          selected_options: Array.isArray(favorite?.selected_options) ? favorite.selected_options : []
+        });
+        const moveFavoriteWithSharedPath = async (favorite, payload = {}) => {
+          const buildCartItem = typeof payload?.buildCartItem === 'function'
+            ? payload.buildCartItem
+            : (overrides = {}) => Object.assign({}, favorite, overrides);
+          const sharedFavoritesApi = payload?.api && typeof payload.api === 'object' ? payload.api : getSharedFavorites();
+          const commerce = window.LDCCommerce;
+          if (commerce?.enabled) {
+            if (typeof commerce.addLineItem !== 'function') {
+              return {
+                ok: false,
+                reason: 'commerce_add_unavailable',
+                user_message: 'Cart service is unavailable on this page.',
+                id: favorite?.id
+              };
+            }
+            let variantId = cleanText(
+              favorite?.variant_id ||
+              favorite?.variantId ||
+              favorite?.selected_variant_id ||
+              favorite?.selectedVariantId
+            );
+            if (!variantId && typeof commerce.resolveVariantIdForFavorite === 'function') {
+              try {
+                variantId = cleanText(await commerce.resolveVariantIdForFavorite(favorite));
+              } catch {
+                variantId = '';
+              }
+            }
+            if (!variantId) {
+              return {
+                ok: false,
+                reason: 'missing_variant_id',
+                user_message: 'Select this product again before moving it to cart.',
+                id: favorite?.id
+              };
+            }
+            favorite.variant_id = variantId;
+            const cartItem = buildCartItem({
+              id: variantId,
+              variant_id: variantId,
+              product_id: favorite?.product_id || '',
+              product_handle: favorite?.product_handle || '',
+              product_url: favorite?.product_url || '',
+              image: favorite?.preview_image || favorite?.image_url || '',
+              previewStyle: favorite?.preview_style || ''
+            });
+            const metadata = typeof sharedFavoritesApi?.buildCommerceMetadataFromFavorite === 'function'
+              ? sharedFavoritesApi.buildCommerceMetadataFromFavorite(favorite)
+              : {};
+            try {
+              await commerce.addLineItem(variantId, 1, metadata);
+              if (typeof commerce.syncBadges === 'function') {
+                await commerce.syncBadges();
+              }
+              window.ldcCart?.open?.();
+              return { ok: true, mode: 'medusa', variant_id: variantId, cart_item: cartItem };
+            } catch (error) {
+              return {
+                ok: false,
+                reason: 'medusa_add_failed',
+                user_message: 'Unable to move this favorite to cart right now.',
+                error: cleanText(error?.message),
+                id: favorite?.id
+              };
+            }
+          }
+          const cartItem = buildCartItem({
+            id: favorite?.variant_id || favorite?.id,
+            variant_id: favorite?.variant_id || '',
+            product_id: favorite?.product_id || '',
+            product_handle: favorite?.product_handle || '',
+            product_url: favorite?.product_url || '',
+            image: favorite?.preview_image || favorite?.image_url || '',
+            previewStyle: favorite?.preview_style || ''
+          });
+          if (window.ldcCart && typeof window.ldcCart.addProduct === 'function') {
+            window.ldcCart.addProduct(cartItem);
+            if (typeof window.ldcCart.open === 'function') {
+              window.ldcCart.open();
+            }
+            return { ok: true, mode: 'ldcCart', cart_item: cartItem };
+          }
+          return {
+            ok: false,
+            reason: 'no_cart_bridge',
+            user_message: 'Cart bridge is unavailable on this page.',
+            id: favorite?.id
+          };
+        };
+        let attireMoveToCartAdapterInstalled = false;
+        const installAttireMoveToCartAdapter = () => {
+          const sharedFavorites = getSharedFavorites();
+          if (!sharedFavorites || typeof sharedFavorites.setMoveToCartAdapter !== 'function' || attireMoveToCartAdapterInstalled) {
+            return false;
+          }
+          sharedFavorites.setMoveToCartAdapter(async (favorite, payload) => {
+            if (isAttireFavoriteRecord(favorite)) {
+              const cartItem = buildLocalCartItemFromFavorite(favorite);
+              addCartItem(cartItem);
+              openCart();
+              return { ok: true, mode: 'attire-local', cart_item: cartItem };
+            }
+            return moveFavoriteWithSharedPath(favorite, payload);
+          });
+          attireMoveToCartAdapterInstalled = true;
+          return true;
+        };
 
         const addProduct = async isFavorite => {
           if (isFavorite) {
@@ -2237,6 +2361,7 @@
         getSharedFavorites()?.subscribe?.(() => {
           syncBadges();
         });
+        installAttireMoveToCartAdapter();
 
         ensureAttireCtaButtons();
         observeAttireCtaButtons();
