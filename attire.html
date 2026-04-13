@@ -1699,8 +1699,8 @@
         const heroHeadingEl = form?.querySelector('.hero-heading');
         const leadCopyEl = form?.querySelector('.lead-copy');
         const attachmentInput = document.getElementById('attireUpload');
-        const priceTotalEl = document.querySelector('[data-attire-price-total]');
-        const priceMetaEl = document.querySelector('[data-attire-price-meta]');
+        const getPriceTotalEl = () => form?.querySelector('[data-attire-price-total]');
+        const getPriceMetaEl = () => form?.querySelector('[data-attire-price-meta]');
         const cleanText = value => String(value ?? '').trim();
         const getSharedFavorites = () => (
           window.ldcFavorites && window.ldcFavorites.__sharedStore ? window.ldcFavorites : null
@@ -1740,10 +1740,39 @@
           button.textContent = 'Add to Cart';
           return button;
         };
+        const createPriceWrapper = () => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'design-price-wrapper attire-price-wrapper';
+          wrapper.setAttribute('aria-live', 'polite');
+          wrapper.setAttribute('role', 'status');
+          const bubble = document.createElement('div');
+          bubble.className = 'design-price-bubble attire-price-bubble';
+          bubble.setAttribute('data-attire-price-bubble', '');
+          const total = document.createElement('span');
+          total.className = 'design-price-value';
+          total.setAttribute('data-attire-price-total', '');
+          total.textContent = '$0.00';
+          const meta = document.createElement('span');
+          meta.className = 'attire-price-meta';
+          meta.setAttribute('data-attire-price-meta', '');
+          meta.textContent = '$0.00 ea · Qty 1';
+          bubble.append(total, meta);
+          wrapper.appendChild(bubble);
+          return wrapper;
+        };
         const ensureAttireCtaButtons = () => {
           const ctaRow = form?.querySelector('.cta-row');
           if (!ctaRow) return { favoriteButton: null, addToCartButton: null };
-          const priceWrapper = ctaRow.querySelector('.design-price-wrapper');
+          Array.from(ctaRow.childNodes).forEach(node => {
+            if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+              node.remove();
+            }
+          });
+          let priceWrapper = ctaRow.querySelector('.design-price-wrapper');
+          if (!priceWrapper) {
+            priceWrapper = createPriceWrapper();
+            ctaRow.appendChild(priceWrapper);
+          }
           let favoriteButton = ctaRow.querySelector('[data-attire-favorite]');
           let addToCartButton = ctaRow.querySelector('[data-add-to-cart]');
           if (!favoriteButton) {
@@ -1768,6 +1797,7 @@
           ctaRow.dataset.ctaObserverInit = 'true';
           const observer = new MutationObserver(() => {
             ensureAttireCtaButtons();
+            updatePriceBubble();
           });
           observer.observe(ctaRow, { childList: true });
         };
@@ -1863,6 +1893,8 @@
           const size = sizeEl?.value || '';
           const basePrice = getBasePrice(style, size);
           const total = basePrice * qty;
+          const priceTotalEl = getPriceTotalEl();
+          const priceMetaEl = getPriceMetaEl();
           if (priceTotalEl) priceTotalEl.textContent = formatCurrency(total);
           if (priceMetaEl) priceMetaEl.textContent = `${formatCurrency(basePrice)} ea · Qty ${qty}`;
           return { basePrice, total, qty };

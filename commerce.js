@@ -3755,13 +3755,9 @@
 
   const normalizeLegacyCartItemForDrawer = (item, currencyCode = 'USD') => {
     if (!item) return null;
-    const sourceItem =
-      item?.unit_price != null ||
-      item?.metadata ||
-      item?.variant_title ||
-      item?.product_title
-        ? formatLegacyItem(item, currencyCode)
-        : item;
+    const sourceItem = isMedusaBackedLegacyCartItem(item)
+      ? formatLegacyItem(item, currencyCode)
+      : item;
     if (!sourceItem) return null;
     const name = String(sourceItem.name ?? sourceItem.title ?? 'Item').trim() || 'Item';
     const description = String(sourceItem.description ?? sourceItem.subtitle ?? '').trim();
