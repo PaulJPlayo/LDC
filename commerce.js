@@ -2977,9 +2977,7 @@
       item.variant_id ||
       item.variant?.id ||
       item.product_id ||
-      item.product?.id ||
-      item.variant_title ||
-      item.product_title
+      item.product?.id
     );
   };
 
