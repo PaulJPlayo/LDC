@@ -2968,6 +2968,21 @@
     return hasStyle && hasColor && hasSize;
   };
 
+  const isMedusaBackedLegacyCartItem = item => {
+    if (!item || typeof item !== 'object') return false;
+    return Boolean(
+      item.unit_price != null ||
+      item.price_minor != null ||
+      item.metadata ||
+      item.variant_id ||
+      item.variant?.id ||
+      item.product_id ||
+      item.product?.id ||
+      item.variant_title ||
+      item.product_title
+    );
+  };
+
   const stripAttachmentReferenceNote = value =>
     String(value || '')
       .replace(/\s*\(file reference\)\s*$/i, '')
@@ -4319,21 +4334,6 @@
       const cartState = readLegacyCartState();
       const items = Array.isArray(cartState.items) ? cartState.items : [];
       return items.find(item => String(item?.id ?? '') === String(itemId || '')) || null;
-    };
-
-    const isMedusaBackedLegacyCartItem = item => {
-      if (!item || typeof item !== 'object') return false;
-      return Boolean(
-        item.unit_price != null ||
-        item.price_minor != null ||
-        item.metadata ||
-        item.variant_id ||
-        item.variant?.id ||
-        item.product_id ||
-        item.product?.id ||
-        item.variant_title ||
-        item.product_title
-      );
     };
 
     const shouldUseMedusaCartMutation = itemId => {
