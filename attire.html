@@ -2175,6 +2175,30 @@
           }
           return payload;
         };
+        const ensureAttireActionStatus = () => {
+          if (!form) return null;
+          let node = form.querySelector('.attire-action-status');
+          if (node) return node;
+          const ctaRow = form.querySelector('.cta-row');
+          if (!ctaRow) return null;
+          node = document.createElement('div');
+          node.className = 'attire-action-status';
+          node.setAttribute('aria-live', 'polite');
+          node.hidden = true;
+          node.style.marginTop = '0.75rem';
+          node.style.fontSize = '0.875rem';
+          node.style.fontWeight = '600';
+          node.style.lineHeight = '1.4';
+          ctaRow.insertAdjacentElement('afterend', node);
+          return node;
+        };
+        const setAttireActionStatus = (message = '', tone = 'error') => {
+          const node = ensureAttireActionStatus();
+          if (!node) return;
+          node.textContent = message;
+          node.hidden = !message;
+          node.style.color = tone === 'success' ? '#5b21b6' : '#b91c1c';
+        };
         const normalizeCartOption = option => {
           const label = cleanText(option?.label);
           const value = cleanText(option?.value);
@@ -2217,21 +2241,115 @@
           const productUrl = cleanText(favorite?.product_url || favorite?.source_path).split('?')[0].split('#')[0];
           return productHandle === 'attire-custom' || productUrl === '/attire' || productUrl === 'attire.html';
         };
-        const buildLocalCartItemFromFavorite = favorite => normalizeCartItem({
-          id: `law-attire-cart-${Date.now()}`,
-          title: cleanText(favorite?.title) || 'L.A.W. Attire',
-          name: cleanText(favorite?.title || favorite?.name) || 'L.A.W. Attire',
-          product_handle: cleanText(favorite?.product_handle) || 'attire-custom',
-          product_url: cleanText(favorite?.product_url || favorite?.source_path) || '/attire',
-          variant_title: cleanText(favorite?.variant_title || favorite?.options_summary),
-          price: Number(favorite?.price || 0),
-          currency_code: cleanText(favorite?.currency_code) || 'USD',
-          quantity: Math.max(1, Number(favorite?.quantity || 1)),
-          image: cleanText(favorite?.preview_image || favorite?.image_url || favorite?.image),
-          description: cleanText(favorite?.description || favorite?.short_description),
-          preview_style: cleanText(favorite?.preview_style || favorite?.previewStyle),
-          selected_options: Array.isArray(favorite?.selected_options) ? favorite.selected_options : []
+        const buildAttireCartSource = source => normalizeCartItem({
+          id: cleanText(source?.id || source?.variant_id || source?.variantId),
+          title: cleanText(source?.title) || cleanText(source?.name) || 'L.A.W. Attire',
+          name: cleanText(source?.name || source?.title) || 'L.A.W. Attire',
+          product_handle: cleanText(source?.product_handle || source?.productHandle) || 'attire-custom',
+          product_url: cleanText(source?.product_url || source?.productUrl || source?.source_path) || '/attire',
+          variant_title: cleanText(source?.variant_title || source?.variantTitle || source?.options_summary),
+          price: Number(source?.price || 0),
+          currency_code: cleanText(source?.currency_code || source?.currencyCode) || 'USD',
+          quantity: Math.max(1, Number(source?.quantity || 1)),
+          image: cleanText(source?.preview_image || source?.image_url || source?.image),
+          description: cleanText(source?.description || source?.short_description),
+          preview_style: cleanText(source?.preview_style || source?.previewStyle),
+          selected_options: Array.isArray(source?.selected_options)
+            ? source.selected_options
+            : (Array.isArray(source?.options) ? source.options : [])
         });
+        const resolveAttireVariantId = async source => {
+          const commerce = window.LDCCommerce;
+          let variantId = cleanText(
+            source?.variant_id ||
+            source?.variantId ||
+            source?.selected_variant_id ||
+            source?.selectedVariantId
+          );
+          if (!variantId && typeof commerce?.resolveVariantIdForFavorite === 'function') {
+            try {
+              variantId = cleanText(await commerce.resolveVariantIdForFavorite(source));
+            } catch {
+              variantId = '';
+            }
+          }
+          if (!variantId && typeof commerce?.resolveVariantId === 'function') {
+            try {
+              variantId = cleanText(await commerce.resolveVariantId(getAttireAddToCartBtn()));
+            } catch {
+              variantId = '';
+            }
+          }
+          return variantId;
+        };
+        const addAttireItemWithSharedCart = async (source, config = {}) => {
+          const commerce = window.LDCCommerce;
+          if (!commerce?.enabled || typeof commerce.addLineItem !== 'function') {
+            return {
+              ok: false,
+              reason: 'commerce_add_unavailable',
+              user_message: config.userMessage || 'Cart service is unavailable on this page.',
+              id: source?.id
+            };
+          }
+          const cartItem = buildAttireCartSource(source);
+          const variantId = await resolveAttireVariantId({
+            ...source,
+            product_handle: cartItem.product_handle || 'attire-custom',
+            product_url: cartItem.product_url || '/attire',
+            variant_title: cartItem.variant_title || cleanText(source?.options_summary)
+          });
+          if (!variantId) {
+            return {
+              ok: false,
+              reason: 'missing_variant_id',
+              user_message:
+                config.missingVariantMessage ||
+                'Select this product again before adding it to cart.',
+              id: source?.id
+            };
+          }
+          if (typeof commerce.buildAttireLineItemMetadataFromLegacyItem !== 'function') {
+            return {
+              ok: false,
+              reason: 'attire_metadata_bridge_unavailable',
+              user_message: config.userMessage || 'Cart service is unavailable on this page.',
+              id: source?.id
+            };
+          }
+          const metadata = commerce.buildAttireLineItemMetadataFromLegacyItem({
+            ...cartItem,
+            id: variantId,
+            variant_id: variantId
+          });
+          try {
+            await commerce.addLineItem(
+              variantId,
+              Math.max(1, Number(cartItem.quantity || 1)),
+              metadata
+            );
+            if (typeof commerce.syncBadges === 'function') {
+              await commerce.syncBadges();
+            }
+            setAttireActionStatus('', 'success');
+            window.ldcCart?.open?.();
+            return {
+              ok: true,
+              mode: 'medusa',
+              variant_id: variantId,
+              cart_item: { ...cartItem, id: variantId, variant_id: variantId }
+            };
+          } catch (error) {
+            return {
+              ok: false,
+              reason: 'medusa_add_failed',
+              user_message:
+                config.userMessage || 'Unable to add this attire item to cart right now.',
+              error: cleanText(error?.message),
+              id: source?.id
+            };
+          }
+        };
         const moveFavoriteWithSharedPath = async (favorite, payload = {}) => {
           const buildCartItem = typeof payload?.buildCartItem === 'function'
             ? payload.buildCartItem
@@ -2329,10 +2447,14 @@
           }
           sharedFavorites.setMoveToCartAdapter(async (favorite, payload) => {
             if (isAttireFavoriteRecord(favorite)) {
-              const cartItem = buildLocalCartItemFromFavorite(favorite);
-              addCartItem(cartItem);
-              openCart();
-              return { ok: true, mode: 'attire-local', cart_item: cartItem };
+              const result = await addAttireItemWithSharedCart(favorite, {
+                userMessage: 'Unable to move this favorite to cart right now.',
+                missingVariantMessage: 'Select this attire option again before moving it to cart.'
+              });
+              if (!result.ok) {
+                setAttireActionStatus(result.user_message || 'Unable to move this favorite to cart right now.');
+              }
+              return result;
             }
             return moveFavoriteWithSharedPath(favorite, payload);
           });
@@ -2345,28 +2467,21 @@
             const sharedFavorites = getSharedFavorites();
             if (!sharedFavorites || typeof sharedFavorites.addFavorite !== 'function') return null;
             const payload = await buildFavoritePayload();
+            setAttireActionStatus('', 'success');
             const added = sharedFavorites.addFavorite(payload, { source_path: payload.source_path });
             syncBadges();
             getSharedFavoritesUi()?.openDrawer?.(getAttireFavoriteBtn() || document.activeElement || null);
             return added;
           } else {
             const payload = await buildFavoritePayload();
-            addCartItem(normalizeCartItem({
-              id: `law-attire-cart-${Date.now()}`,
-              title: payload.title,
-              name: payload.title,
-              product_handle: payload.product_handle,
-              product_url: payload.product_url,
-              variant_title: payload.variant_title,
-              price: payload.price,
-              currency_code: payload.currency_code,
-              quantity: payload.quantity,
-              image: payload.preview_image,
-              description: payload.description,
-              preview_style: payload.preview_style,
-              selected_options: payload.selected_options
-            }));
-            openCart();
+            const result = await addAttireItemWithSharedCart(payload, {
+              userMessage: 'Unable to add this attire item to cart right now.',
+              missingVariantMessage: 'Select this attire option again before adding it to cart.'
+            });
+            if (!result.ok) {
+              setAttireActionStatus(result.user_message || 'Unable to add this attire item to cart right now.');
+              return false;
+            }
             return true;
           }
         };
