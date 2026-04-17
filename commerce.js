@@ -2981,6 +2981,24 @@
     );
   };
 
+  const isFormattedLegacyCartDisplayRow = item => {
+    if (!item || typeof item !== 'object') return false;
+    const name = String(item.name ?? '').trim();
+    if (!name) return false;
+    const quantity = Number(item.quantity);
+    const hasQuantity = Number.isFinite(quantity) && quantity > 0;
+    const hasPrice =
+      Number.isFinite(Number(item.price)) ||
+      Number.isFinite(Number(item.price_minor));
+    const hasDisplaySignals =
+      typeof item.previewStyle === 'string' ||
+      typeof item.preview_style === 'string' ||
+      typeof item.description === 'string' ||
+      Array.isArray(item.options) ||
+      item.isDesignSubmitted === true;
+    return hasQuantity && hasPrice && hasDisplaySignals;
+  };
+
   const stripAttachmentReferenceNote = value =>
     String(value || '')
       .replace(/\s*\(file reference\)\s*$/i, '')
@@ -3755,29 +3773,79 @@
 
   const normalizeLegacyCartItemForDrawer = (item, currencyCode = 'USD') => {
     if (!item) return null;
-    const sourceItem = isMedusaBackedLegacyCartItem(item)
-      ? formatLegacyItem(item, currencyCode)
-      : item;
+    const sourceItem = isFormattedLegacyCartDisplayRow(item)
+      ? item
+      : (
+          isMedusaBackedLegacyCartItem(item)
+            ? formatLegacyItem(item, currencyCode)
+            : item
+        );
     if (!sourceItem) return null;
+    const resolvedCurrencyCode = getCurrencyCode(
+      sourceItem.currency_code || sourceItem.currencyCode || currencyCode || 'USD'
+    );
     const name = String(sourceItem.name ?? sourceItem.title ?? 'Item').trim() || 'Item';
     const description = String(sourceItem.description ?? sourceItem.subtitle ?? '').trim();
     const quantity = Math.max(1, Number(sourceItem.quantity ?? 1));
-    const resolvedPrice = Number(sourceItem.price ?? 0);
-    const price = Number.isFinite(resolvedPrice) ? resolvedPrice : 0;
+    const resolvedPriceMinor = Number(sourceItem.price_minor);
+    const resolvedPrice = Number(sourceItem.price);
+    const price = Number.isFinite(resolvedPrice)
+      ? resolvedPrice
+      : (
+          Number.isFinite(resolvedPriceMinor)
+            ? toMajorUnits(resolvedPriceMinor, resolvedCurrencyCode)
+            : 0
+        );
+    const priceMinor = Number.isFinite(resolvedPriceMinor)
+      ? resolvedPriceMinor
+      : Math.round(price * getCurrencyDivisor(resolvedCurrencyCode));
     const previewStyle = String(
       sourceItem.previewStyle ||
       sourceItem.preview_style ||
-      buildPreviewStyle(sourceItem.image || sourceItem.previewImage || '')
+      buildPreviewStyle(
+        sourceItem.image ||
+        sourceItem.previewImage ||
+        sourceItem.preview_image ||
+        ''
+      )
     ).trim();
     const options = Array.isArray(sourceItem.options)
       ? sourceItem.options
           .map(option => ({
             label: String(option?.label ?? '').trim(),
             value: String(option?.value ?? '').trim(),
-            swatchStyle: typeof option?.swatchStyle === 'string' ? option.swatchStyle.trim() : '',
-            swatchGlyph: typeof option?.swatchGlyph === 'string' ? option.swatchGlyph : '',
-            attachmentData: typeof option?.attachmentData === 'string' ? option.attachmentData : '',
-            attachmentKey: typeof option?.attachmentKey === 'string' ? option.attachmentKey : '',
+            swatchStyle:
+              typeof option?.swatchStyle === 'string'
+                ? option.swatchStyle.trim()
+                : (
+                    typeof option?.swatch_style === 'string'
+                      ? option.swatch_style.trim()
+                      : ''
+                  ),
+            swatchGlyph:
+              typeof option?.swatchGlyph === 'string'
+                ? option.swatchGlyph
+                : (
+                    typeof option?.swatch_glyph === 'string'
+                      ? option.swatch_glyph
+                      : ''
+                  ),
+            attachmentData:
+              typeof option?.attachmentData === 'string'
+                ? option.attachmentData
+                : (
+                    typeof option?.attachment_data === 'string'
+                      ? option.attachment_data
+                      : ''
+                  ),
+            attachmentKey:
+              typeof option?.attachmentKey === 'string'
+                ? option.attachmentKey
+                : (
+                    typeof option?.attachment_key === 'string'
+                      ? option.attachment_key
+                      : ''
+                  ),
             layout: typeof option?.layout === 'string' ? option.layout : ''
           }))
           .filter(option => option.label || option.value)
@@ -3785,8 +3853,11 @@
     return {
       id: String(sourceItem.id ?? `${name}|${price}`),
       name,
+      title: String(sourceItem.title ?? sourceItem.name ?? name).trim() || name,
       description,
       price,
+      price_minor: priceMinor,
+      currency_code: resolvedCurrencyCode,
       quantity,
       previewStyle,
       options,
