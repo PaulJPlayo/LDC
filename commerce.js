@@ -2970,7 +2970,9 @@
 
   const isMedusaBackedLegacyCartItem = item => {
     if (!item || typeof item !== 'object') return false;
+    const itemId = String(item.id || '').trim().toLowerCase();
     return Boolean(
+      itemId.startsWith('cali_') ||
       item.unit_price != null ||
       item.price_minor != null ||
       item.metadata ||
