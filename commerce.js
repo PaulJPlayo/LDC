@@ -4971,7 +4971,7 @@
       };
     }
 
-    if (/out of stock|not enough inventory|insufficient inventory|inventory item/.test(combined)) {
+    if (/out of stock|not enough inventory|insufficient inventory|insufficient_inventory|required inventory|inventory item/.test(combined)) {
       return {
         key: 'out_of_stock',
         userMessage: getCartEntryUserMessage('out_of_stock')
