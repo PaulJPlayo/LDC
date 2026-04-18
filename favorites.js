@@ -1134,6 +1134,10 @@
     cta: null
   };
 
+  function isObject(value) {
+    return !!value && Object.prototype.toString.call(value) === '[object Object]';
+  }
+
   function toText(value) {
     if (value === null || value === undefined) return '';
     return String(value).trim();
@@ -1675,14 +1679,23 @@
     if (!card) return Promise.resolve(favorite);
     var addButton = card.querySelector('[data-add-to-cart]');
     var commerce = global.LDCCommerce;
-    if (!addButton || !commerce || typeof commerce.resolveVariantId !== 'function') {
+    if (!addButton || !commerce) {
       return Promise.resolve(favorite);
     }
-    return Promise.resolve(commerce.resolveVariantId(addButton))
-      .then(function onResolved(variantId) {
+    var resolver = typeof commerce.resolveCartEntryForButton === 'function'
+      ? commerce.resolveCartEntryForButton(addButton)
+      : typeof commerce.resolveVariantId === 'function'
+        ? commerce.resolveVariantId(addButton)
+        : null;
+    if (!resolver) {
+      return Promise.resolve(favorite);
+    }
+    return Promise.resolve(resolver)
+      .then(function onResolved(result) {
+        var variantId = toText(isObject(result) ? result.variantId : result);
         if (toText(variantId)) {
-          favorite.variant_id = toText(variantId);
-          card.dataset.selectedVariantId = toText(variantId);
+          favorite.variant_id = variantId;
+          card.dataset.selectedVariantId = variantId;
         }
         return favorite;
       })
@@ -1691,28 +1704,43 @@
       });
   }
 
-  function resolveVariantIdForMove(favorite) {
-    var direct = toText(
-      favorite && (
-        favorite.variant_id ||
-        favorite.variantId ||
-        favorite.selected_variant_id ||
-        favorite.selectedVariantId
-      )
-    );
-    if (direct) return Promise.resolve(direct);
-
+  function resolveCartEntryForMove(favorite) {
     var commerce = global.LDCCommerce;
-    if (!commerce || typeof commerce.resolveVariantIdForFavorite !== 'function') {
-      return Promise.resolve('');
+    if (!commerce) {
+      return Promise.resolve({
+        variantId: toText(
+          favorite && (
+            favorite.variant_id ||
+            favorite.variantId ||
+            favorite.selected_variant_id ||
+            favorite.selectedVariantId
+          )
+        )
+      });
+    }
+
+    if (typeof commerce.resolveCartEntryForFavorite === 'function') {
+      return Promise.resolve(commerce.resolveCartEntryForFavorite(favorite))
+        .then(function onResolved(result) {
+          return isObject(result)
+            ? result
+            : { variantId: toText(result) };
+        })
+        .catch(function onError() {
+          return { variantId: '' };
+        });
+    }
+
+    if (typeof commerce.resolveVariantIdForFavorite !== 'function') {
+      return Promise.resolve({ variantId: '' });
     }
 
     return Promise.resolve(commerce.resolveVariantIdForFavorite(favorite))
       .then(function onResolved(variantId) {
-        return toText(variantId);
+        return { variantId: toText(variantId) };
       })
       .catch(function onError() {
-        return '';
+        return { variantId: '' };
       });
   }
 
@@ -1734,12 +1762,19 @@
         };
       }
 
-      return resolveVariantIdForMove(favorite).then(function onVariantResolved(variantId) {
+      return resolveCartEntryForMove(favorite).then(function onVariantResolved(resolution) {
+        var variantId = toText(resolution && resolution.variantId);
         if (!variantId) {
+          var resolvedReason = toText(resolution && resolution.reason) || 'missing_variant_id';
+          var resolvedMessage = toText(resolution && resolution.userMessage);
           return {
             ok: false,
-            reason: 'missing_variant_id',
-            user_message: 'Select this product again before moving it to cart.',
+            reason: resolvedReason,
+            user_message: resolvedMessage || (
+              resolvedReason === 'selection_required'
+                ? 'Select this product again before moving it to cart.'
+                : 'Unavailable'
+            ),
             id: favorite.id
           };
         }
@@ -1771,10 +1806,15 @@
             });
           })
           .catch(function onFailure(error) {
+            var classified = typeof commerce.classifyCartMutationError === 'function'
+              ? commerce.classifyCartMutationError(error)
+              : null;
+            var reason = toText(classified && classified.reason) || 'medusa_add_failed';
+            var userMessage = toText(classified && classified.userMessage) || 'Unable to move this favorite to cart right now.';
             return {
               ok: false,
-              reason: 'medusa_add_failed',
-              user_message: 'Unable to move this favorite to cart right now.',
+              reason: reason,
+              user_message: userMessage,
               error: toText(error && error.message),
               id: favorite.id
             };
@@ -1834,6 +1874,10 @@
             reason: result && result.reason,
             error: result && result.error
           });
+          var commerce = global.LDCCommerce;
+          if (result && result.user_message && commerce && typeof commerce.showStatusMessage === 'function') {
+            commerce.showStatusMessage(result.user_message, 'error');
+          }
         }
         try {
           document.dispatchEvent(new CustomEvent('ldc:favorites:move-to-cart', {

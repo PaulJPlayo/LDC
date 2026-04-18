@@ -2295,60 +2295,260 @@
     return keys;
   };
 
-  const resolveVariantIdForFavorite = async favorite => {
-    if (!favorite || typeof favorite !== 'object') return null;
+  const getCartEntryUserMessage = (reason, context = 'tile') => {
+    if (reason === 'selection_required') {
+      return context === 'favorite'
+        ? 'Select this product again before moving it to cart.'
+        : 'Please select an option before adding to cart.';
+    }
+    if (reason === 'unavailable') {
+      return 'Unavailable';
+    }
+    if (reason === 'out_of_stock') {
+      return 'Out of Stock';
+    }
+    return context === 'favorite'
+      ? 'Unable to move this favorite to cart right now.'
+      : 'Unable to add this item right now. Please try again.';
+  };
 
-    const directVariant = String(
+  const normalizeCartFailureReason = reason => {
+    const normalized = String(reason || '').trim().toLowerCase();
+    if (!normalized) return 'unknown_add_failure';
+    if (normalized === 'unavailable' || normalized.startsWith('unavailable_')) {
+      return 'unavailable';
+    }
+    if (normalized === 'out_of_stock') {
+      return 'out_of_stock';
+    }
+    if (normalized === 'selection_required') {
+      return 'selection_required';
+    }
+    return normalized;
+  };
+
+  const getLiveVariants = product =>
+    getSortedVariants(product).filter(variant => {
+      const id = String(variant?.id || '').trim();
+      return Boolean(id) && !variant?.deleted_at;
+    });
+
+  const resolveLiveProduct = async ({
+    productKey = '',
+    productHandle = '',
+    productId = '',
+    lookupKeys = []
+  } = {}) => {
+    const normalizedKey = String(productKey || '').trim();
+    const normalizedHandle = String(productHandle || '').trim();
+    const normalizedId = String(productId || '').trim();
+    const index = await loadProductIndex();
+    const byId = index?.byId;
+    const byHandle = index?.byHandle;
+    let product =
+      (normalizedId && byId?.get(normalizedId)) ||
+      (normalizedHandle && (
+        byHandle?.get(normalizedHandle) ||
+        byHandle?.get(slugify(normalizedHandle))
+      )) ||
+      (normalizedKey && (
+        byHandle?.get(normalizedKey) ||
+        byHandle?.get(slugify(normalizedKey))
+      )) ||
+      null;
+    if (!product && Array.isArray(lookupKeys)) {
+      for (const rawKey of lookupKeys) {
+        const key = slugify(rawKey || '');
+        if (!key) continue;
+        product = byHandle?.get(key) || null;
+        if (product) break;
+      }
+    }
+    return product || null;
+  };
+
+  const resolveLiveVariantChoice = (product, {
+    preferredVariantId = '',
+    labels = []
+  } = {}) => {
+    const variants = getLiveVariants(product);
+    const liveVariantCount = variants.length;
+    const directVariantId = String(preferredVariantId || '').trim();
+    if (directVariantId) {
+      const directMatch = variants.find(variant => String(variant?.id || '').trim() === directVariantId);
+      if (directMatch) {
+        return {
+          product,
+          variant: directMatch,
+          variantId: directMatch.id,
+          liveVariantCount,
+          source: 'live_direct'
+        };
+      }
+    }
+
+    const cleanedLabels = Array.from(new Set(
+      (Array.isArray(labels) ? labels : [labels])
+        .map(label => cleanVariantLabel(label || ''))
+        .filter(Boolean)
+    ));
+    for (const label of cleanedLabels) {
+      const labelKey = slugify(label);
+      const match = variants.find(variant => slugify(getVariantLabel(variant)) === labelKey);
+      if (match) {
+        return {
+          product,
+          variant: match,
+          variantId: match.id,
+          liveVariantCount,
+          source: 'live_label'
+        };
+      }
+    }
+
+    if (liveVariantCount === 1) {
+      return {
+        product,
+        variant: variants[0],
+        variantId: variants[0].id,
+        liveVariantCount,
+        source: 'live_single'
+      };
+    }
+
+    if (liveVariantCount > 1) {
+      return {
+        product,
+        variant: null,
+        variantId: null,
+        reason: 'selection_required',
+        liveVariantCount,
+        source: 'live_multiple',
+        userMessage: getCartEntryUserMessage('selection_required')
+      };
+    }
+
+    return {
+      product,
+      variant: null,
+      variantId: null,
+      reason: 'unavailable',
+      liveVariantCount: 0,
+      source: 'live_none',
+      userMessage: getCartEntryUserMessage('unavailable')
+    };
+  };
+
+  const resolveCartEntryForButton = async button => {
+    const container = getVariantContainer(button);
+    const explicitKey = button?.dataset?.productKey || button?.closest?.('[data-product-key]')?.dataset?.productKey || '';
+    const key = explicitKey || deriveProductKey(button) || '';
+    const productHandle =
+      button?.dataset?.productHandle || container?.dataset?.productHandle || '';
+    const productId =
+      button?.dataset?.productId || container?.dataset?.productId || '';
+    const selectedLabel = getSelectedVariantLabel(button);
+    const preferredVariantId = String(
+      button?.dataset?.variantId ||
+      button?.dataset?.medusaVariantId ||
+      container?.dataset?.selectedVariantId ||
+      ''
+    ).trim();
+    if (!key && !productHandle && !productId && !preferredVariantId) {
+      return {
+        variantId: null,
+        variant: null,
+        product: null,
+        liveVariantCount: 0,
+        reason: 'selection_required',
+        source: 'missing_lookup',
+        userMessage: getCartEntryUserMessage('selection_required')
+      };
+    }
+    const product = await resolveLiveProduct({
+      productKey: key,
+      productHandle,
+      productId
+    });
+    if (product) {
+      return resolveLiveVariantChoice(product, {
+        preferredVariantId,
+        labels: selectedLabel ? [selectedLabel] : []
+      });
+    }
+    return {
+      variantId: null,
+      variant: null,
+      product: null,
+      liveVariantCount: 0,
+      reason: 'unavailable',
+      source: 'missing_live_product',
+      userMessage: getCartEntryUserMessage('unavailable')
+    };
+  };
+
+  const resolveCartEntryForFavorite = async favorite => {
+    if (!favorite || typeof favorite !== 'object') {
+      return {
+        variantId: null,
+        variant: null,
+        product: null,
+        liveVariantCount: 0,
+        reason: 'selection_required',
+        source: 'favorite_missing',
+        userMessage: getCartEntryUserMessage('selection_required', 'favorite')
+      };
+    }
+
+    const preferredVariantId = String(
       favorite.variant_id ||
       favorite.variantId ||
       favorite.selected_variant_id ||
       favorite.selectedVariantId ||
       ''
     ).trim();
-    if (directVariant) return directVariant;
-
     const labels = getFavoriteVariantLabelCandidates(favorite);
     const lookupKeys = getFavoriteLookupKeys(favorite);
-    const [map, index] = await Promise.all([loadProductMap(), loadProductIndex()]);
-    const byId = index?.byId;
-    const byHandle = index?.byHandle;
-    let product = null;
-
-    const rawProductId = String(favorite.product_id || favorite.productId || '').trim();
-    if (rawProductId && byId?.has(rawProductId)) {
-      product = byId.get(rawProductId);
-    }
-
-    if (!product && byHandle && lookupKeys.length) {
-      for (const key of lookupKeys) {
-        if (!key) continue;
-        product = byHandle.get(key) || null;
-        if (product) break;
-      }
-    }
+    const product = await resolveLiveProduct({
+      productHandle: favorite.product_handle || favorite.productHandle || '',
+      productId: favorite.product_id || favorite.productId || '',
+      lookupKeys
+    });
 
     if (product) {
-      for (const label of labels) {
-        const resolved = resolveVariantFromProduct(product, label);
-        if (resolved) return resolved;
+      const resolved = resolveLiveVariantChoice(product, {
+        preferredVariantId,
+        labels
+      });
+      if (resolved.reason === 'selection_required') {
+        return {
+          ...resolved,
+          userMessage: getCartEntryUserMessage('selection_required', 'favorite')
+        };
       }
-      return resolveVariantFromProduct(product, null);
+      if (resolved.reason === 'unavailable') {
+        return {
+          ...resolved,
+          userMessage: getCartEntryUserMessage('unavailable', 'favorite')
+        };
+      }
+      return resolved;
     }
 
-    if (map?.products && lookupKeys.length) {
-      for (const key of lookupKeys) {
-        const entry = map.products[key];
-        if (!entry) continue;
-        for (const label of labels) {
-          const resolved = resolveVariantFromEntry(entry, label);
-          if (resolved) return resolved;
-        }
-        const fallback = entry?.variantId || entry?.variant_id || null;
-        if (fallback) return fallback;
-      }
-    }
+    return {
+      variantId: null,
+      variant: null,
+      product: null,
+      liveVariantCount: 0,
+      reason: 'unavailable',
+      source: 'favorite_missing_live_product',
+      userMessage: getCartEntryUserMessage('unavailable', 'favorite')
+    };
+  };
 
-    return null;
+  const resolveVariantIdForFavorite = async favorite => {
+    const resolved = await resolveCartEntryForFavorite(favorite);
+    return resolved?.variantId || null;
   };
 
   const updateCardPriceForSwatch = async swatch => {
@@ -2509,44 +2709,8 @@
   };
 
   const resolveVariantId = async button => {
-    const direct = button.dataset.variantId || button.dataset.medusaVariantId;
-    if (direct) return direct;
-
-    const container = getVariantContainer(button);
-    const selectedVariantId = container?.dataset?.selectedVariantId;
-    if (selectedVariantId) return selectedVariantId;
-
-    const explicitKey = button.dataset.productKey || button.closest('[data-product-key]')?.dataset.productKey;
-    const key = explicitKey || deriveProductKey(button);
-    const productHandle =
-      button.dataset.productHandle || container?.dataset?.productHandle || null;
-    const productId =
-      button.dataset.productId || container?.dataset?.productId || null;
-    if (!key && !productHandle && !productId) return null;
-
-    const selectedLabel = getSelectedVariantLabel(button);
-    if (productHandle || productId) {
-      const index = await loadProductIndex();
-      const product =
-        (productId && index?.byId?.get(productId)) ||
-        (productHandle && (index?.byHandle?.get(productHandle) || index?.byHandle?.get(slugify(productHandle)))) ||
-        null;
-      const resolved = resolveVariantFromProduct(product, selectedLabel);
-      if (resolved) return resolved;
-    }
-
-    if (!key) return null;
-
-    const map = await loadProductMap();
-    const entry = map?.products?.[key];
-    const mappedVariant =
-      selectedLabel ? resolveVariantFromEntry(entry, selectedLabel) : null;
-    const variantId =
-      mappedVariant || entry?.variantId || entry?.variant_id;
-    if (!variantId) {
-      console.warn(`[commerce] Missing variant ID for key: ${key}`);
-    }
-    return variantId || null;
+    const resolved = await resolveCartEntryForButton(button);
+    return resolved?.variantId || null;
   };
 
   const resolveProductAndEntry = async ({ productKey = '', productHandle = '', productId = '' } = {}) => {
@@ -4802,22 +4966,22 @@
       (/sales channel/.test(combined) && /stock location/.test(combined))
     ) {
       return {
-        key: 'unavailable_stock_location',
-        userMessage: 'This option is unavailable right now. Please choose another option.'
+        key: 'unavailable',
+        userMessage: getCartEntryUserMessage('unavailable')
       };
     }
 
     if (/out of stock|not enough inventory|insufficient inventory|inventory item/.test(combined)) {
       return {
         key: 'out_of_stock',
-        userMessage: 'This option is currently out of stock. Please choose another option.'
+        userMessage: getCartEntryUserMessage('out_of_stock')
       };
     }
 
     if (/do not exist|does not exist|not published|variant .* not found|invalid_data/.test(combined)) {
       return {
-        key: 'unavailable_variant',
-        userMessage: 'This option is unavailable right now. Please choose another option.'
+        key: 'unavailable',
+        userMessage: getCartEntryUserMessage('unavailable')
       };
     }
 
@@ -4838,6 +5002,19 @@
     return {
       key: 'unknown_add_failure',
       userMessage: 'Unable to add this item right now. Please try again.'
+    };
+  };
+
+  const classifyCartMutationError = error => {
+    const details = getAddToCartErrorDetails(error);
+    const classified = classifyAddToCartFailure(details);
+    return {
+      reason: normalizeCartFailureReason(classified.key),
+      userMessage: classified.userMessage,
+      status: details.status,
+      code: details.code || '',
+      message: details.message,
+      detail: details.detail
     };
   };
 
@@ -4887,22 +5064,29 @@
 
   const handleAddToCart = async button => {
     if (!button || button.disabled || button.getAttribute('aria-busy') === 'true') return;
-    const variantId = await resolveVariantId(button);
+    const resolution = await resolveCartEntryForButton(button);
+    const variantId = resolution?.variantId || null;
     const context = buildAddToCartContext(button, variantId);
     recordCartAddAttempt(context);
     if (!variantId) {
+      const failureReason = normalizeCartFailureReason(
+        resolution?.reason || 'selection_required'
+      );
+      const userMessage = resolution?.userMessage || getCartEntryUserMessage(failureReason);
       const failure = {
         ...context,
         reason: 'missing_variant_id',
-        failure_type: 'selection_required',
-        user_message: 'Please select an option before adding to cart.',
+        failure_type: failureReason,
+        user_message: userMessage,
         status: null,
-        error_message: 'Missing variant ID for add-to-cart.',
+        error_message: resolution?.reason
+          ? `Unable to resolve a live saleable variant: ${resolution.reason}`
+          : 'Missing variant ID for add-to-cart.',
         response_detail: ''
       };
       recordCartAddFailure(failure);
       console.error('[commerce][add-to-cart]', failure);
-      showCartToast('Please select an option before adding to cart.', 'error');
+      showCartToast(userMessage, 'error');
       return;
     }
     const quantity = context.quantity;
@@ -4914,18 +5098,17 @@
       await syncBadges();
       window.ldcCart?.open?.();
     } catch (error) {
-      const details = getAddToCartErrorDetails(error);
-      const classified = classifyAddToCartFailure(details);
+      const classified = classifyCartMutationError(error);
       const failure = {
         ...context,
         variant_id: variantId,
         reason: 'add_line_item_failed',
-        failure_type: classified.key,
+        failure_type: classified.reason,
         user_message: classified.userMessage,
-        error_code: details.code || '',
-        status: details.status,
-        error_message: details.message,
-        response_detail: details.detail
+        error_code: classified.code,
+        status: classified.status,
+        error_message: classified.message,
+        response_detail: classified.detail
       };
       recordCartAddFailure(failure);
       console.error('[commerce][add-to-cart]', failure);
@@ -4994,6 +5177,10 @@
     addLineItem,
     syncBadges,
     syncLegacyCart,
+    showStatusMessage: showCartToast,
+    classifyCartMutationError,
+    resolveCartEntryForButton,
+    resolveCartEntryForFavorite,
     resolveVariantId,
     resolveVariantIdForFavorite,
     removeLineItem,
