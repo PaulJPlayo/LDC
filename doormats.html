@@ -1454,11 +1454,10 @@
                   <button
                     class="cta-icon-btn"
                     type="button"
-                    aria-label="Favorites coming in Pilot B"
-                    title="Favorites coming in Pilot B"
-                    data-doormat-favorite-deferred
-                    disabled
-                    aria-disabled="true"
+                    aria-label="Add to favorites"
+                    title="Add to favorites"
+                    aria-pressed="false"
+                    data-doormat-favorite
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
@@ -1584,6 +1583,7 @@
 
     </div>
 
+    <script src="favorites.js"></script>
     <script>
       const footerYear = document.getElementById('year');
       if (footerYear) footerYear.textContent = new Date().getFullYear();
@@ -1641,6 +1641,7 @@
         const doormatProductKey = 'doormat-custom';
         const doormatHandle = 'doormat-custom';
         const doormatTitle = 'Custom Doormat';
+        const getDoormatFavoriteBtn = () => form?.querySelector('[data-doormat-favorite]');
         const getDoormatAddToCartBtn = () => form?.querySelector('[data-add-to-cart]');
         const getPriceTotalEl = () => form?.querySelector('[data-doormat-price-total]');
         const getPriceMetaEl = () => form?.querySelector('[data-doormat-price-meta]');
@@ -1667,11 +1668,10 @@
           const button = document.createElement('button');
           button.className = 'cta-icon-btn';
           button.type = 'button';
-          button.disabled = true;
-          button.setAttribute('aria-disabled', 'true');
-          button.setAttribute('aria-label', 'Favorites coming in Pilot B');
-          button.setAttribute('title', 'Favorites coming in Pilot B');
-          button.setAttribute('data-doormat-favorite-deferred', '');
+          button.setAttribute('aria-label', 'Add to favorites');
+          button.setAttribute('title', 'Add to favorites');
+          button.setAttribute('aria-pressed', 'false');
+          button.setAttribute('data-doormat-favorite', '');
           button.innerHTML = favoriteCtaIcon;
           return button;
         };
@@ -1712,7 +1712,8 @@
               node.remove();
             }
           });
-          let favoriteButton = ctaRow.querySelector('[data-doormat-favorite-deferred]');
+          ctaRow.querySelectorAll('[data-doormat-favorite-deferred]').forEach(node => node.remove());
+          let favoriteButton = ctaRow.querySelector('[data-doormat-favorite]');
           let addToCartButton = ctaRow.querySelector('[data-add-to-cart]');
           let priceWrapper = ctaRow.querySelector('.design-price-wrapper');
           if (!favoriteButton) {
@@ -1765,6 +1766,21 @@
         let commerceReadyPromise = null;
         let doormatProductPromise = null;
         let doormatSelectionSyncId = 0;
+        let doormatFavoritesBound = false;
+
+        const getSharedFavorites = () => (
+          window.ldcFavorites?.__sharedStore ? window.ldcFavorites : null
+        );
+        const getSharedFavoritesUi = () => (
+          window.ldcFavoritesUI && typeof window.ldcFavoritesUI.openDrawer === 'function'
+            ? window.ldcFavoritesUI
+            : null
+        );
+        const refreshFavoritesState = () => {
+          const sharedFavorites = getSharedFavorites();
+          favoritesState = sharedFavorites?.getSnapshot?.() || loadState(FAVORITES_STORAGE_KEY);
+          return favoritesState;
+        };
 
         const refreshCartState = nextState => {
           const storedState = loadState(CART_STORAGE_KEY);
@@ -1940,7 +1956,7 @@
         const syncBadges = nextCartState => {
           const resolvedCartState = refreshCartState(nextCartState);
           const cartCount = resolvedCartState.items?.length || 0;
-          const favCount = favoritesState.items?.length || 0;
+          const favCount = refreshFavoritesState().items?.length || 0;
           if (cartCountEl) {
             cartCountEl.textContent = cartCount > 0 ? cartCount : '';
             cartCountEl.hidden = cartCount === 0;
@@ -1964,6 +1980,11 @@
           document.body.classList.remove('cart-open');
           cartPanel?.setAttribute('aria-hidden', 'true');
         };
+        const cartBridge = window.ldcCart && typeof window.ldcCart === 'object' ? window.ldcCart : {};
+        cartBridge.open = openCart;
+        cartBridge.close = closeCart;
+        cartBridge.sync = () => renderCart();
+        window.ldcCart = cartBridge;
         cartOverlay?.addEventListener('click', closeCart);
         document.querySelectorAll('[data-cart-close]').forEach(btn => btn.addEventListener('click', closeCart));
         document.querySelectorAll('[data-cart-open],[data-open-cart]').forEach(btn => btn.addEventListener('click', e => { e.preventDefault(); openCart(); }));
@@ -2097,64 +2118,8 @@
         };
 
         const renderFavorites = () => {
-          if (!favoritesItemsEl) return;
-          const items = favoritesState.items || [];
-          if (!items.length) {
-            favoritesItemsEl.innerHTML = '<div class="favorites-empty">No favorites yet.</div>';
-            syncBadges();
-            return;
-          }
-          favoritesItemsEl.innerHTML = '';
-          items.forEach(item => {
-            const row = document.createElement('div');
-            row.className = 'favorite-item';
-            const thumbStyle = item.previewStyle || (item.image ? `background-image:url('${item.image}'); background-size:cover; background-position:center;` : '');
-            const safeThumbStyle = thumbStyle ? thumbStyle.replace(/"/g, '&quot;') : '';
-            const isAccessoryOnly = item.accessoryOnly || /straw toppers/i.test(item.name || item.title || '');
-            const opts = Array.isArray(item.options) ? item.options : [];
-            const filteredOpts = isAccessoryOnly
-              ? opts.filter(opt => (opt.label || '').toLowerCase() !== 'color')
-              : opts;
-            const colorOpt = filteredOpts.find(opt => (opt.label || '').toLowerCase() === 'color');
-            const accessoryOpt = filteredOpts.find(opt => (opt.label || '').toLowerCase() === 'accessory');
-            const swatch = buildSwatch(colorOpt || accessoryOpt || {});
-            row.innerHTML = `
-              <div class="favorite-thumb" style="${safeThumbStyle}">
-                ${item.image ? `<img src="${item.image}" alt="${item.name || 'Favorite'}" />` : ''}
-              </div>
-              <div>
-                <div class="favorite-title">${item.name || 'Favorite'}</div>
-                <div class="favorite-meta">${swatch}${colorOpt?.value || accessoryOpt?.value || ''}</div>
-                <div class="favorite-meta">${formatCurrency(item.price || 0)}</div>
-                <div class="favorite-actions">
-                  <button type="button" class="favorites-btn favorite-cart-btn" data-fav-add-cart="${item.id}">Add to Cart</button>
-                  <button type="button" class="favorites-btn" data-fav-remove="${item.id}">Remove</button>
-                </div>
-              </div>
-            `;
-            favoritesItemsEl.appendChild(row);
-          });
-          favoritesItemsEl.querySelectorAll('[data-fav-add-cart]').forEach(btn => {
-            btn.addEventListener('click', () => {
-              const id = btn.getAttribute('data-fav-add-cart');
-              const favItem = (favoritesState.items || []).find(it => it.id === id);
-              if (favItem) {
-                const qty = Math.max(1, Number(favItem.quantity || 1));
-                cartState.items = [...(cartState.items || []), { ...favItem, quantity: qty }];
-                saveState(CART_STORAGE_KEY, cartState);
-                renderCart();
-                openCart();
-              }
-            });
-          });
-          favoritesItemsEl.querySelectorAll('[data-fav-remove]').forEach(btn => {
-            btn.addEventListener('click', () => {
-              const id = btn.getAttribute('data-fav-remove');
-              favoritesState.items = (favoritesState.items || []).filter(it => it.id !== id);
-              saveState(FAVORITES_STORAGE_KEY, favoritesState);
-              renderFavorites();
-            });
-          });
+          refreshFavoritesState();
+          getSharedFavoritesUi()?.sync?.();
           syncBadges();
         };
 
@@ -2278,6 +2243,129 @@
             Object.entries(metadata).filter(([, value]) => value !== undefined && value !== '')
           );
         };
+        const ensureDoormatFavoriteSelection = async () => {
+          const selectionState = await syncDoormatSelectionState();
+          return selectionState || {
+            selection: getDoormatSelectionState(),
+            resolution: null
+          };
+        };
+        const buildDoormatFavoritePayload = async () => {
+          const { selection, resolution } = await ensureDoormatFavoriteSelection();
+          if (!resolution?.variantId) {
+            return {
+              payload: null,
+              resolution
+            };
+          }
+          const cartItem = await buildDoormatCartItem(resolution);
+          const options = Array.isArray(cartItem.options) ? cartItem.options.map(option => ({
+            label: cleanText(option?.label),
+            value: cleanText(option?.value),
+            swatchStyle: cleanText(option?.swatchStyle || option?.swatch_style),
+            swatchGlyph: cleanText(option?.swatchGlyph || option?.swatch_glyph),
+            attachmentData: cleanText(option?.attachmentData || option?.attachment_data),
+            attachmentKey: cleanText(option?.attachmentKey || option?.attachment_key),
+            layout: cleanText(option?.layout)
+          })).filter(option => option.label && option.value) : [];
+          options.push({
+            label: 'Quantity',
+            value: String(Math.max(1, Number(cartItem.quantity || selection?.qty || 1)))
+          });
+          const payload = {
+            product_key: doormatProductKey,
+            product_id: cleanText(resolution?.product?.id),
+            product_handle: doormatHandle,
+            product_url: '/doormats',
+            variant_id: cleanText(resolution?.variantId),
+            title: doormatTitle,
+            variant_title: cleanText(cartItem.variant_title),
+            short_description: cleanText(cartItem.description || getDoormatDescription()),
+            description: cleanText(cartItem.description || getDoormatDescription()),
+            price: Number(cartItem.price || 0),
+            currency_code: 'USD',
+            preview_image: cleanText(cartItem.image),
+            image_url: cleanText(cartItem.image),
+            preview_style: cleanText(cartItem.previewStyle),
+            selected_options: options,
+            source_path: '/doormats',
+            quantity: Math.max(1, Number(cartItem.quantity || 1))
+          };
+          const sharedFavorites = getSharedFavorites();
+          if (sharedFavorites && typeof sharedFavorites.buildFavoriteKey === 'function') {
+            payload.favorite_key = sharedFavorites.buildFavoriteKey(payload);
+          }
+          return {
+            payload,
+            resolution
+          };
+        };
+        const syncDoormatFavoriteButton = async () => {
+          const favoriteButton = getDoormatFavoriteBtn();
+          if (!favoriteButton) return false;
+          const sharedFavorites = getSharedFavorites();
+          if (!sharedFavorites) {
+            favoriteButton.classList.remove('is-active', 'favorites-active');
+            favoriteButton.setAttribute('aria-pressed', 'false');
+            favoriteButton.setAttribute('aria-label', 'Add to favorites');
+            favoriteButton.setAttribute('title', 'Add to favorites');
+            return false;
+          }
+          const { payload } = await buildDoormatFavoritePayload();
+          const matched = payload ? sharedFavorites.getFavoriteById(payload) : null;
+          const isActive = Boolean(matched);
+          favoriteButton.classList.toggle('is-active', isActive);
+          favoriteButton.classList.toggle('favorites-active', isActive);
+          favoriteButton.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+          favoriteButton.setAttribute('aria-label', isActive ? 'Saved to favorites' : 'Add to favorites');
+          favoriteButton.setAttribute('title', isActive ? 'Saved to favorites' : 'Add to favorites');
+          if (matched?.id) {
+            favoriteButton.dataset.favoriteId = matched.id;
+          } else {
+            delete favoriteButton.dataset.favoriteId;
+          }
+          return isActive;
+        };
+        const saveDoormatFavorite = async button => {
+          const sharedFavorites = getSharedFavorites();
+          const commerce = await waitForCommerce();
+          if (!sharedFavorites || typeof sharedFavorites.addFavorite !== 'function') {
+            const message = 'Favorites service is unavailable on this page.';
+            commerce?.showStatusMessage?.(message, 'error');
+            return {
+              ok: false,
+              reason: 'favorites_unavailable',
+              user_message: message
+            };
+          }
+          const { payload, resolution } = await buildDoormatFavoritePayload();
+          if (!payload || !resolution?.variantId) {
+            const message = cleanText(resolution?.userMessage) || 'Unavailable';
+            commerce?.showStatusMessage?.(message, 'error');
+            return {
+              ok: false,
+              reason: cleanText(resolution?.reason) || 'unavailable',
+              user_message: message
+            };
+          }
+          button?.setAttribute('aria-busy', 'true');
+          if (button) button.disabled = true;
+          try {
+            const saved = sharedFavorites.addFavorite(payload, { source_path: payload.source_path });
+            refreshFavoritesState();
+            renderFavorites();
+            await syncDoormatFavoriteButton();
+            getSharedFavoritesUi()?.openDrawer?.(button || document.activeElement || null);
+            return {
+              ok: true,
+              favorite: saved,
+              variant_id: resolution.variantId
+            };
+          } finally {
+            button?.removeAttribute('aria-busy');
+            if (button) button.disabled = false;
+          }
+        };
         const addDoormatToSharedCart = async button => {
           const commerce = await waitForCommerce();
           if (!commerce?.enabled || typeof commerce.addLineItem !== 'function') {
@@ -2344,19 +2432,32 @@
             console.warn('Unable to add doormat to shared cart', error);
           });
         }, true);
+        document.addEventListener('click', event => {
+          const button = event.target.closest('.attire-form [data-doormat-favorite]');
+          if (!button || !form?.contains(button)) return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          saveDoormatFavorite(button).catch(error => {
+            console.warn('Unable to save doormat favorite', error);
+          });
+        }, true);
         sizeEl?.addEventListener('change', () => {
           updatePriceBubble();
           syncDoormatSelectionState().catch(() => {});
+          syncDoormatFavoriteButton().catch(() => {});
         });
         colorEl?.addEventListener('change', () => {
           updatePriceBubble();
           syncDoormatSelectionState().catch(() => {});
+          syncDoormatFavoriteButton().catch(() => {});
         });
         qtyEl?.addEventListener('input', () => {
           updatePriceBubble();
+          syncDoormatFavoriteButton().catch(() => {});
         });
         qtyEl?.addEventListener('change', () => {
           updatePriceBubble();
+          syncDoormatFavoriteButton().catch(() => {});
         });
         document.addEventListener('cart:set', event => {
           refreshCartState(event?.detail);
@@ -2424,13 +2525,24 @@
         observeDoormatCtaShell();
         bindUploadLabels();
         refreshCartState(cartState);
+        refreshFavoritesState();
         updatePriceBubble();
         renderCart();
         renderFavorites();
         syncBadges();
+        const sharedFavorites = getSharedFavorites();
+        if (sharedFavorites && !doormatFavoritesBound) {
+          doormatFavoritesBound = true;
+          sharedFavorites.subscribe(() => {
+            refreshFavoritesState();
+            renderFavorites();
+            syncDoormatFavoriteButton().catch(() => {});
+          });
+        }
         waitForCommerce().then(commerce => {
           if (!commerce?.enabled) return;
           syncDoormatSelectionState().catch(() => {});
+          syncDoormatFavoriteButton().catch(() => {});
           commerce.syncBadges?.().catch?.(() => {});
         });
       })();

@@ -129,7 +129,10 @@
         label: 'Option',
         value: simple,
         swatch_style: '',
-        swatch_glyph: ''
+        swatch_glyph: '',
+        attachment_data: '',
+        attachment_key: '',
+        layout: ''
       };
     }
 
@@ -152,7 +155,10 @@
       label: label || 'Option',
       value: value,
       swatch_style: toText(rawOption.swatch_style || rawOption.swatchStyle),
-      swatch_glyph: toText(rawOption.swatch_glyph || rawOption.swatchGlyph)
+      swatch_glyph: toText(rawOption.swatch_glyph || rawOption.swatchGlyph),
+      attachment_data: toText(rawOption.attachment_data || rawOption.attachmentData),
+      attachment_key: toText(rawOption.attachment_key || rawOption.attachmentKey),
+      layout: toText(rawOption.layout)
     };
   }
 
@@ -336,7 +342,10 @@
       label: option.label,
       value: option.value,
       swatch_style: option.swatch_style,
-      swatch_glyph: option.swatch_glyph
+      swatch_glyph: option.swatch_glyph,
+      attachment_data: option.attachment_data,
+      attachment_key: option.attachment_key,
+      layout: option.layout
     };
   }
 
@@ -354,6 +363,7 @@
       short_description: item.short_description,
       description: item.description,
       price: item.price,
+      quantity: item.quantity,
       currency_code: item.currency_code,
       preview_image: item.preview_image,
       image_url: item.image_url,
@@ -411,6 +421,7 @@
       ),
       description: toText(source.description || source.desc || source.product_description),
       price: toNumber(source.price || source.unit_price || source.unitPrice || 0),
+      quantity: Math.max(1, toNumber(source.quantity || source.qty || 1) || 1),
       currency_code: toCurrencyCode(source.currency_code || source.currencyCode || (source.currency && source.currency.code)),
       preview_image: toText(
         source.preview_image || source.previewImage || source.image_url || source.imageUrl || source.image || source.thumbnail
@@ -484,6 +495,9 @@
 
     if (Number.isFinite(incoming.price)) {
       merged.price = incoming.price;
+    }
+    if (Number.isFinite(incoming.quantity)) {
+      merged.quantity = Math.max(1, incoming.quantity);
     }
 
     if (Array.isArray(incoming.selected_options) && incoming.selected_options.length) {
@@ -849,7 +863,7 @@
       name: source.title || 'Favorite',
       title: source.title || 'Favorite',
       price: Number(source.price || 0),
-      quantity: 1,
+      quantity: Math.max(1, Number(source.quantity || 1) || 1),
       image: source.preview_image || source.image_url || '',
       previewStyle: source.preview_style || '',
       options: Array.isArray(source.selected_options)
@@ -870,11 +884,29 @@
     if (!favorite || typeof favorite !== 'object') return false;
     if (/^design-/i.test(toText(favorite.id))) return true;
     if (/custom design/i.test(toText(favorite.title || favorite.name))) return true;
+    if (isDoormatFavoriteRecord(favorite)) return true;
     var selectedOptions = Array.isArray(favorite.selected_options) ? favorite.selected_options : [];
     return selectedOptions.some(function hasDesignOnlyRows(option) {
       var label = normalizeFavoriteMetadataLabel(option && option.label).toLowerCase();
       return label === 'wrap' || label === 'notes' || label === 'attachment';
     });
+  }
+
+  function isDoormatFavoriteRecord(favorite) {
+    if (!favorite || typeof favorite !== 'object') return false;
+    var productHandle = toText(favorite.product_handle || favorite.productHandle).toLowerCase();
+    if (productHandle === 'doormat-custom' || productHandle === 'doormats-custom') {
+      return true;
+    }
+    var productUrl = toText(
+      favorite.product_url ||
+      favorite.productUrl ||
+      favorite.source_path
+    )
+      .split('?')[0]
+      .split('#')[0]
+      .toLowerCase();
+    return productUrl === '/doormats' || productUrl === 'doormats.html';
   }
 
   function isAttireFavoriteRecord(favorite) {
@@ -958,11 +990,17 @@
       if (hasPrice) {
         metadata.design_total_price = toNumber(favorite.price);
       }
+      if (toText(favorite.product_key || favorite.productKey)) {
+        metadata.design_product_key = toText(favorite.product_key || favorite.productKey);
+      }
       if (toText(favorite.product_handle)) {
         metadata.design_product_handle = toText(favorite.product_handle);
       }
       if (toText(favorite.product_id)) {
         metadata.design_product_id = toText(favorite.product_id);
+      }
+      if (toText(favorite.title || favorite.name)) {
+        metadata.design_product_title = toText(favorite.title || favorite.name);
       }
       if (toText(favorite.variant_id)) {
         metadata.design_variant_id = toText(favorite.variant_id);
@@ -975,6 +1013,8 @@
       var value = toText(option && option.value);
       var swatchStyle = toText(option && option.swatch_style);
       var swatchGlyph = toText(option && option.swatch_glyph);
+      var attachmentData = toText(option && (option.attachment_data || option.attachmentData));
+      var attachmentKey = toText(option && (option.attachment_key || option.attachmentKey));
       if (!label || !value) return;
 
       if (isDesign) {
@@ -994,8 +1034,18 @@
           metadata.design_wrap_label = value;
           return;
         }
+        if (label === 'size') {
+          metadata.design_size_label = value;
+          return;
+        }
         if (label === 'notes') {
           metadata.design_notes = value;
+          return;
+        }
+        if (label === 'attachment') {
+          metadata.design_attachment_name = value.replace(/\s*\(file reference\)\s*$/i, '').trim();
+          if (attachmentData) metadata.design_attachment_data = attachmentData;
+          if (attachmentKey) metadata.design_attachment_key = attachmentKey;
         }
         return;
       }
@@ -1800,6 +1850,7 @@
       ? payload.context
       : {};
     var commerce = global.LDCCommerce;
+    var moveQuantity = Math.max(1, Number(favorite && favorite.quantity || 1) || 1);
     if (commerce && commerce.enabled) {
       if (typeof commerce.addLineItem !== 'function') {
         return {
@@ -1873,7 +1924,7 @@
             variant_title: toText(favorite.variant_title || favorite.options_summary),
             price: Number(favorite.price || 0),
             currency_code: toText(favorite.currency_code) || 'USD',
-            quantity: 1,
+            quantity: moveQuantity,
             image: toText(favorite.preview_image || favorite.image_url),
             description: toText(favorite.description || favorite.short_description),
             preview_style: toText(favorite.preview_style),
@@ -1886,7 +1937,7 @@
             : {};
         }
 
-        return Promise.resolve(commerce.addLineItem(variantId, 1, metadata))
+        return Promise.resolve(commerce.addLineItem(variantId, moveQuantity, metadata))
           .then(function onAdded() {
             var syncPromise = typeof commerce.syncBadges === 'function'
               ? Promise.resolve(commerce.syncBadges())
