@@ -870,6 +870,47 @@
     });
   }
 
+  function isAttireFavoriteRecord(favorite) {
+    if (!favorite || typeof favorite !== 'object') return false;
+    var productHandle = toText(favorite.product_handle || favorite.productHandle).toLowerCase();
+    if (productHandle === 'attire-custom' || productHandle === 'attire-shirts-custom') {
+      return true;
+    }
+    var productUrl = toText(
+      favorite.product_url ||
+      favorite.productUrl ||
+      favorite.source_path
+    )
+      .split('?')[0]
+      .split('#')[0]
+      .toLowerCase();
+    return productUrl === '/attire' || productUrl === 'attire.html';
+  }
+
+  function buildAttireCommerceMetadataFromFavorite(favorite, variantId, commerce) {
+    if (!favorite || !commerce || typeof commerce.buildAttireLineItemMetadataFromLegacyItem !== 'function') {
+      return null;
+    }
+    return commerce.buildAttireLineItemMetadataFromLegacyItem({
+      id: toText(variantId) || toText(favorite.variant_id) || favorite.id,
+      variant_id: toText(variantId) || toText(favorite.variant_id),
+      title: favorite.title || favorite.name || 'L.A.W. Attire',
+      name: favorite.name || favorite.title || 'L.A.W. Attire',
+      product_handle: toText(favorite.product_handle || favorite.productHandle) || 'attire-custom',
+      product_url: toText(favorite.product_url || favorite.productUrl || favorite.source_path) || '/attire',
+      variant_title: toText(favorite.variant_title || favorite.options_summary),
+      price: toNumber(favorite.price),
+      currency_code: toText(favorite.currency_code) || 'USD',
+      quantity: 1,
+      image: toText(favorite.preview_image || favorite.image_url),
+      description: toText(favorite.description || favorite.short_description),
+      preview_style: toText(favorite.preview_style),
+      selected_options: Array.isArray(favorite.selected_options)
+        ? favorite.selected_options.map(cloneOption)
+        : []
+    });
+  }
+
   function buildCommerceMetadataFromFavorite(favorite) {
     if (!favorite || typeof favorite !== 'object') return {};
 
@@ -1789,9 +1830,15 @@
           image: favorite.preview_image || favorite.image_url || '',
           previewStyle: favorite.preview_style || ''
         });
-        var metadata = typeof api.buildCommerceMetadataFromFavorite === 'function'
-          ? api.buildCommerceMetadataFromFavorite(favorite)
-          : {};
+        var metadata = null;
+        if (isAttireFavoriteRecord(favorite)) {
+          metadata = buildAttireCommerceMetadataFromFavorite(favorite, variantId, commerce);
+        }
+        if (!isObject(metadata)) {
+          metadata = typeof api.buildCommerceMetadataFromFavorite === 'function'
+            ? api.buildCommerceMetadataFromFavorite(favorite)
+            : {};
+        }
 
         return Promise.resolve(commerce.addLineItem(variantId, 1, metadata))
           .then(function onAdded() {

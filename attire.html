@@ -2258,29 +2258,84 @@
             ? source.selected_options
             : (Array.isArray(source?.options) ? source.options : [])
         });
-        const resolveAttireVariantId = async source => {
+        const normalizeAttireCartResolution = resolution => {
+          if (!resolution || typeof resolution !== 'object') {
+            return {
+              variantId: '',
+              reason: '',
+              userMessage: '',
+              source: ''
+            };
+          }
+          return {
+            variantId: cleanText(
+              resolution.variantId ||
+              resolution.variant_id
+            ),
+            reason: cleanText(resolution.reason),
+            userMessage: cleanText(
+              resolution.userMessage ||
+              resolution.user_message
+            ),
+            source: cleanText(resolution.source)
+          };
+        };
+        const resolveAttireCartEntry = async source => {
           const commerce = window.LDCCommerce;
-          let variantId = cleanText(
+          const directVariantId = cleanText(
             source?.variant_id ||
             source?.variantId ||
             source?.selected_variant_id ||
             source?.selectedVariantId
           );
-          if (!variantId && typeof commerce?.resolveVariantIdForFavorite === 'function') {
+          if (directVariantId) {
+            return {
+              variantId: directVariantId,
+              reason: '',
+              userMessage: '',
+              source: 'direct'
+            };
+          }
+          let resolution = null;
+          if (typeof commerce?.resolveCartEntryForFavorite === 'function') {
             try {
-              variantId = cleanText(await commerce.resolveVariantIdForFavorite(source));
+              resolution = normalizeAttireCartResolution(
+                await commerce.resolveCartEntryForFavorite(source)
+              );
             } catch {
-              variantId = '';
+              resolution = null;
             }
           }
-          if (!variantId && typeof commerce?.resolveVariantId === 'function') {
+          if (!resolution?.variantId && typeof commerce?.resolveCartEntryForButton === 'function') {
             try {
-              variantId = cleanText(await commerce.resolveVariantId(getAttireAddToCartBtn()));
+              resolution = normalizeAttireCartResolution(
+                await commerce.resolveCartEntryForButton(getAttireAddToCartBtn())
+              );
             } catch {
-              variantId = '';
+              resolution = resolution || null;
             }
           }
-          return variantId;
+          if (!resolution?.variantId && typeof commerce?.resolveVariantId === 'function') {
+            try {
+              const variantId = cleanText(await commerce.resolveVariantId(getAttireAddToCartBtn()));
+              if (variantId) {
+                return {
+                  variantId,
+                  reason: '',
+                  userMessage: '',
+                  source: 'legacy_button'
+                };
+              }
+            } catch {
+              // Keep the structured resolution if one already exists.
+            }
+          }
+          return resolution || {
+            variantId: '',
+            reason: '',
+            userMessage: '',
+            source: ''
+          };
         };
         const addAttireItemWithSharedCart = async (source, config = {}) => {
           const commerce = window.LDCCommerce;
@@ -2293,17 +2348,19 @@
             };
           }
           const cartItem = buildAttireCartSource(source);
-          const variantId = await resolveAttireVariantId({
+          const resolution = await resolveAttireCartEntry({
             ...source,
             product_handle: cartItem.product_handle || 'attire-custom',
             product_url: cartItem.product_url || '/attire',
             variant_title: cartItem.variant_title || cleanText(source?.options_summary)
           });
+          const variantId = cleanText(resolution?.variantId);
           if (!variantId) {
             return {
               ok: false,
-              reason: 'missing_variant_id',
+              reason: cleanText(resolution?.reason) || 'missing_variant_id',
               user_message:
+                cleanText(resolution?.userMessage) ||
                 config.missingVariantMessage ||
                 'Select this product again before adding it to cart.',
               id: source?.id

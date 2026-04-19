@@ -1019,12 +1019,25 @@
       productIndexPromise = loadStoreProducts().then(products => {
         const byHandle = new Map();
         const byId = new Map();
+        const byProductKey = new Map();
         (products || []).forEach(product => {
           const handle = product?.handle || product?.id;
           if (handle) byHandle.set(handle, product);
           if (product?.id) byId.set(product.id, product);
+          const rawProductKey =
+            product?.metadata?.product_key ||
+            product?.metadata?.productKey ||
+            '';
+          const normalizedProductKey = String(rawProductKey || '').trim();
+          const slugifiedProductKey = slugify(normalizedProductKey);
+          if (normalizedProductKey) {
+            byProductKey.set(normalizedProductKey, product);
+          }
+          if (slugifiedProductKey) {
+            byProductKey.set(slugifiedProductKey, product);
+          }
         });
-        return { products: products || [], byHandle, byId };
+        return { products: products || [], byHandle, byId, byProductKey };
       });
     }
     return productIndexPromise;
@@ -2345,11 +2358,16 @@
     const index = await loadProductIndex();
     const byId = index?.byId;
     const byHandle = index?.byHandle;
+    const byProductKey = index?.byProductKey;
     let product =
       (normalizedId && byId?.get(normalizedId)) ||
       (normalizedHandle && (
         byHandle?.get(normalizedHandle) ||
         byHandle?.get(slugify(normalizedHandle))
+      )) ||
+      (normalizedKey && (
+        byProductKey?.get(normalizedKey) ||
+        byProductKey?.get(slugify(normalizedKey))
       )) ||
       (normalizedKey && (
         byHandle?.get(normalizedKey) ||
@@ -2360,7 +2378,10 @@
       for (const rawKey of lookupKeys) {
         const key = slugify(rawKey || '');
         if (!key) continue;
-        product = byHandle?.get(key) || null;
+        product =
+          byHandle?.get(key) ||
+          byProductKey?.get(key) ||
+          null;
         if (product) break;
       }
     }
