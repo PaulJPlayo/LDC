@@ -1838,7 +1838,21 @@
           previewStyle: favorite.preview_style || ''
         });
         var metadata = null;
-        if (isAttireFavoriteRecord(favorite)) {
+        var attireProductHandle = toText(favorite.product_handle || favorite.productHandle).toLowerCase();
+        var attireProductUrl = toText(
+          favorite.product_url ||
+          favorite.productUrl ||
+          favorite.source_path
+        )
+          .split('?')[0]
+          .split('#')[0]
+          .toLowerCase();
+        var isAttireFavorite =
+          attireProductHandle === 'attire-custom' ||
+          attireProductHandle === 'attire-shirts-custom' ||
+          attireProductUrl === '/attire' ||
+          attireProductUrl === 'attire.html';
+        if (isAttireFavorite) {
           metadata = buildAttireCommerceMetadataFromFavorite(favorite, variantId, commerce);
         }
         if (!isObject(metadata)) {
