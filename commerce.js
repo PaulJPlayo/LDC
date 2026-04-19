@@ -2292,6 +2292,7 @@
       keys.push(normalized);
     };
 
+    push(favorite.product_key || favorite.productKey);
     push(favorite.product_handle || favorite.productHandle);
     push(favorite.product_id || favorite.productId);
     push(favorite.title || favorite.name);
@@ -2531,6 +2532,7 @@
     const labels = getFavoriteVariantLabelCandidates(favorite);
     const lookupKeys = getFavoriteLookupKeys(favorite);
     const product = await resolveLiveProduct({
+      productKey: favorite.product_key || favorite.productKey || '',
       productHandle: favorite.product_handle || favorite.productHandle || '',
       productId: favorite.product_id || favorite.productId || '',
       lookupKeys

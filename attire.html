@@ -2153,6 +2153,7 @@
             cleanText(leadCopyEl?.textContent) ||
             'Custom Sweat Suits & Tees';
           const payload = {
+            product_key: cleanText(getAttireAddToCartBtn()?.dataset.productKey) || 'attire-custom',
             product_handle: cleanText(getAttireAddToCartBtn()?.dataset.productKey) || 'attire-custom',
             product_url: routePath,
             title,
@@ -2245,6 +2246,7 @@
           id: cleanText(source?.id || source?.variant_id || source?.variantId),
           title: cleanText(source?.title) || cleanText(source?.name) || 'L.A.W. Attire',
           name: cleanText(source?.name || source?.title) || 'L.A.W. Attire',
+          product_key: cleanText(source?.product_key || source?.productKey) || 'attire-custom',
           product_handle: cleanText(source?.product_handle || source?.productHandle) || 'attire-custom',
           product_url: cleanText(source?.product_url || source?.productUrl || source?.source_path) || '/attire',
           variant_title: cleanText(source?.variant_title || source?.variantTitle || source?.options_summary),

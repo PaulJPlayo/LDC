@@ -344,6 +344,7 @@
     return {
       id: item.id,
       favorite_key: item.favorite_key,
+      product_key: item.product_key,
       product_id: item.product_id,
       product_handle: item.product_handle,
       product_url: item.product_url,
@@ -376,6 +377,11 @@
     var canonical = {
       id: '',
       favorite_key: '',
+      product_key: toText(
+        source.product_key ||
+          source.productKey ||
+          (source.metadata && (source.metadata.product_key || source.metadata.productKey))
+      ),
       product_id: toText(source.product_id || source.productId || (source.product && source.product.id)),
       product_handle: toText(
         source.product_handle ||
@@ -451,6 +457,7 @@
 
     var merged = cloneFavorite(current);
     var fields = [
+      'product_key',
       'product_id',
       'product_handle',
       'product_url',
