@@ -1853,6 +1853,16 @@
           attireProductUrl === '/attire' ||
           attireProductUrl === 'attire.html';
         if (isAttireFavorite && commerce && typeof commerce.buildAttireLineItemMetadataFromLegacyItem === 'function') {
+          var attireSelectedOptions = Array.isArray(favorite.selected_options)
+            ? favorite.selected_options.map(function mapAttireOption(option) {
+              return {
+                label: option && option.label,
+                value: option && option.value,
+                swatch_style: option && (option.swatch_style || option.swatchStyle),
+                swatch_glyph: option && (option.swatch_glyph || option.swatchGlyph)
+              };
+            })
+            : [];
           metadata = commerce.buildAttireLineItemMetadataFromLegacyItem({
             id: toText(variantId) || toText(favorite.variant_id) || favorite.id,
             variant_id: toText(variantId) || toText(favorite.variant_id),
@@ -1861,15 +1871,13 @@
             product_handle: toText(favorite.product_handle || favorite.productHandle) || 'attire-custom',
             product_url: toText(favorite.product_url || favorite.productUrl || favorite.source_path) || '/attire',
             variant_title: toText(favorite.variant_title || favorite.options_summary),
-            price: toNumber(favorite.price),
+            price: Number(favorite.price || 0),
             currency_code: toText(favorite.currency_code) || 'USD',
             quantity: 1,
             image: toText(favorite.preview_image || favorite.image_url),
             description: toText(favorite.description || favorite.short_description),
             preview_style: toText(favorite.preview_style),
-            selected_options: Array.isArray(favorite.selected_options)
-              ? favorite.selected_options.map(cloneOption)
-              : []
+            selected_options: attireSelectedOptions
           });
         }
         if (!isObject(metadata)) {
