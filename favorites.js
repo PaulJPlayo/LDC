@@ -1852,8 +1852,25 @@
           attireProductHandle === 'attire-shirts-custom' ||
           attireProductUrl === '/attire' ||
           attireProductUrl === 'attire.html';
-        if (isAttireFavorite) {
-          metadata = buildAttireCommerceMetadataFromFavorite(favorite, variantId, commerce);
+        if (isAttireFavorite && commerce && typeof commerce.buildAttireLineItemMetadataFromLegacyItem === 'function') {
+          metadata = commerce.buildAttireLineItemMetadataFromLegacyItem({
+            id: toText(variantId) || toText(favorite.variant_id) || favorite.id,
+            variant_id: toText(variantId) || toText(favorite.variant_id),
+            title: favorite.title || favorite.name || 'L.A.W. Attire',
+            name: favorite.name || favorite.title || 'L.A.W. Attire',
+            product_handle: toText(favorite.product_handle || favorite.productHandle) || 'attire-custom',
+            product_url: toText(favorite.product_url || favorite.productUrl || favorite.source_path) || '/attire',
+            variant_title: toText(favorite.variant_title || favorite.options_summary),
+            price: toNumber(favorite.price),
+            currency_code: toText(favorite.currency_code) || 'USD',
+            quantity: 1,
+            image: toText(favorite.preview_image || favorite.image_url),
+            description: toText(favorite.description || favorite.short_description),
+            preview_style: toText(favorite.preview_style),
+            selected_options: Array.isArray(favorite.selected_options)
+              ? favorite.selected_options.map(cloneOption)
+              : []
+          });
         }
         if (!isObject(metadata)) {
           metadata = typeof api.buildCommerceMetadataFromFavorite === 'function'
