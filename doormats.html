@@ -1451,7 +1451,15 @@
                   <p class="support-upload-help">Optional: include an image or PDF for your doormat design.</p>
                 </div>
                 <div class="cta-row">
-                  <button class="cta-icon-btn" type="button" aria-label="Add to favorites" data-favorites-open>
+                  <button
+                    class="cta-icon-btn"
+                    type="button"
+                    aria-label="Favorites coming in Pilot B"
+                    title="Favorites coming in Pilot B"
+                    data-doormat-favorite-deferred
+                    disabled
+                    aria-disabled="true"
+                  >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                     </svg>
@@ -1630,8 +1638,113 @@
         const colorEl = document.getElementById('doormatColor');
         const qtyEl = form?.querySelector('input[type="number"]');
         const attachmentInput = document.getElementById('doormatUpload');
-        const priceTotalEl = document.querySelector('[data-doormat-price-total]');
-        const priceMetaEl = document.querySelector('[data-doormat-price-meta]');
+        const doormatProductKey = 'doormat-custom';
+        const doormatHandle = 'doormat-custom';
+        const doormatTitle = 'Custom Doormat';
+        const getDoormatAddToCartBtn = () => form?.querySelector('[data-add-to-cart]');
+        const getPriceTotalEl = () => form?.querySelector('[data-doormat-price-total]');
+        const getPriceMetaEl = () => form?.querySelector('[data-doormat-price-meta]');
+        const cleanText = value => String(value ?? '').trim();
+        const normalizeLookupValue = value => cleanText(value)
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        const getDoormatVariantKey = (size, color) => `${normalizeLookupValue(size)}::${normalizeLookupValue(color)}`;
+        const fallbackDoormatPricing = new Map([
+          [getDoormatVariantKey('24x36 Black Framed Mat', 'Tan'), 60],
+          [getDoormatVariantKey('18x30 Unframed Mat', 'Tan'), 40]
+        ]);
+        const colorSwatchStyles = {
+          tan: 'background:#d2b48c;'
+        };
+        const getColorSwatchStyle = value => colorSwatchStyles[cleanText(value).toLowerCase()] || '';
+        const favoriteCtaIcon = `
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
+          </svg>
+        `.trim();
+        const createFavoriteCtaButton = () => {
+          const button = document.createElement('button');
+          button.className = 'cta-icon-btn';
+          button.type = 'button';
+          button.disabled = true;
+          button.setAttribute('aria-disabled', 'true');
+          button.setAttribute('aria-label', 'Favorites coming in Pilot B');
+          button.setAttribute('title', 'Favorites coming in Pilot B');
+          button.setAttribute('data-doormat-favorite-deferred', '');
+          button.innerHTML = favoriteCtaIcon;
+          return button;
+        };
+        const createAddToCartCtaButton = () => {
+          const button = document.createElement('button');
+          button.className = 'cta-button';
+          button.type = 'button';
+          button.setAttribute('data-add-to-cart', '');
+          button.setAttribute('data-product-key', doormatProductKey);
+          button.textContent = 'Add to Cart';
+          return button;
+        };
+        const createPriceWrapper = () => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'design-price-wrapper attire-price-wrapper';
+          wrapper.setAttribute('aria-live', 'polite');
+          wrapper.setAttribute('role', 'status');
+          const bubble = document.createElement('div');
+          bubble.className = 'design-price-bubble attire-price-bubble';
+          bubble.setAttribute('data-doormat-price-bubble', '');
+          const total = document.createElement('span');
+          total.className = 'design-price-value';
+          total.setAttribute('data-doormat-price-total', '');
+          total.textContent = '$0.00';
+          const meta = document.createElement('span');
+          meta.className = 'attire-price-meta';
+          meta.setAttribute('data-doormat-price-meta', '');
+          meta.textContent = '$0.00 ea · Qty 1';
+          bubble.append(total, meta);
+          wrapper.appendChild(bubble);
+          return wrapper;
+        };
+        const ensureDoormatCtaShell = () => {
+          const ctaRow = form?.querySelector('.cta-row');
+          if (!ctaRow) return { favoriteButton: null, addToCartButton: null, priceWrapper: null };
+          Array.from(ctaRow.childNodes).forEach(node => {
+            if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+              node.remove();
+            }
+          });
+          let favoriteButton = ctaRow.querySelector('[data-doormat-favorite-deferred]');
+          let addToCartButton = ctaRow.querySelector('[data-add-to-cart]');
+          let priceWrapper = ctaRow.querySelector('.design-price-wrapper');
+          if (!favoriteButton) {
+            favoriteButton = createFavoriteCtaButton();
+            ctaRow.appendChild(favoriteButton);
+          }
+          if (!addToCartButton) {
+            addToCartButton = createAddToCartCtaButton();
+            ctaRow.appendChild(addToCartButton);
+          }
+          if (!priceWrapper) {
+            priceWrapper = createPriceWrapper();
+            ctaRow.appendChild(priceWrapper);
+          }
+          if (favoriteButton.nextElementSibling !== addToCartButton) {
+            ctaRow.insertBefore(favoriteButton, addToCartButton);
+          }
+          if (priceWrapper && addToCartButton.nextElementSibling !== priceWrapper) {
+            ctaRow.insertBefore(addToCartButton, priceWrapper);
+          }
+          return { favoriteButton, addToCartButton, priceWrapper };
+        };
+        const observeDoormatCtaShell = () => {
+          const ctaRow = form?.querySelector('.cta-row');
+          if (!ctaRow || ctaRow.dataset.ctaObserverInit === 'true') return;
+          ctaRow.dataset.ctaObserverInit = 'true';
+          const observer = new MutationObserver(() => {
+            ensureDoormatCtaShell();
+            updatePriceBubble();
+          });
+          observer.observe(ctaRow, { childList: true });
+        };
         const bindUploadLabels = () => {
           document.querySelectorAll('.support-upload-input').forEach(input => {
             if (input.dataset.uploadInit) return;
@@ -1649,27 +1762,184 @@
 
         let cartState = loadState(CART_STORAGE_KEY);
         let favoritesState = loadState(FAVORITES_STORAGE_KEY);
+        let commerceReadyPromise = null;
+        let doormatProductPromise = null;
+        let doormatSelectionSyncId = 0;
+
+        const refreshCartState = nextState => {
+          const storedState = loadState(CART_STORAGE_KEY);
+          const source = nextState && typeof nextState === 'object' ? nextState : storedState;
+          cartState = {
+            ...storedState,
+            ...(source && typeof source === 'object' ? source : {}),
+            items: Array.isArray(source?.items)
+              ? source.items
+              : (Array.isArray(storedState?.items) ? storedState.items : [])
+          };
+          return cartState;
+        };
 
         const formatCurrency = amt => `$${(amt || 0).toFixed(2)}`;
-        const getBasePrice = size => {
-          const norm = (size || '').trim().toLowerCase();
+        const getBasePrice = (size, color = colorEl?.value || '') => {
+          const exact = fallbackDoormatPricing.get(getDoormatVariantKey(size, color));
+          if (typeof exact === 'number') return exact;
+          const norm = cleanText(size).toLowerCase();
           if (norm.includes('24x36')) return 60;
           if (norm.includes('18x30')) return 40;
           return 40;
         };
-        const updatePriceBubble = () => {
+        const getDoormatSelectionState = () => ({
+          size: cleanText(sizeEl?.value || sizeEl?.selectedOptions?.[0]?.textContent),
+          color: cleanText(colorEl?.value || colorEl?.selectedOptions?.[0]?.textContent),
+          qty: Math.max(1, Math.round(Number(qtyEl?.value || 1)))
+        });
+        const getDoormatDescription = () =>
+          cleanText(form?.querySelector('.hero-heading')?.textContent) || 'Custom Coir Doormats';
+        const waitForCommerce = (timeoutMs = 5000) => {
+          if (window.LDCCommerce?.enabled) {
+            return Promise.resolve(window.LDCCommerce);
+          }
+          if (!commerceReadyPromise) {
+            commerceReadyPromise = new Promise(resolve => {
+              const deadline = Date.now() + timeoutMs;
+              const poll = () => {
+                if (window.LDCCommerce?.enabled) {
+                  resolve(window.LDCCommerce);
+                  return;
+                }
+                if (Date.now() >= deadline) {
+                  resolve(null);
+                  return;
+                }
+                window.setTimeout(poll, 60);
+              };
+              poll();
+            });
+          }
+          return commerceReadyPromise;
+        };
+        const normalizeDoormatVariantOptions = variant => {
+          const options = {};
+          (Array.isArray(variant?.options) ? variant.options : []).forEach(option => {
+            const key = cleanText(option?.option?.title || option?.option_title).toLowerCase();
+            if (!key) return;
+            options[key] = cleanText(option?.value);
+          });
+          return options;
+        };
+        const loadDoormatProduct = async () => {
+          const commerce = await waitForCommerce();
+          if (!commerce?.enabled || typeof commerce.request !== 'function') return null;
+          if (!doormatProductPromise) {
+            const params = new URLSearchParams({
+              limit: '10',
+              handle: doormatHandle,
+              fields: '+metadata,*options,*variants,*variants.options,*variants.metadata'
+            });
+            doormatProductPromise = commerce
+              .request(`/store/products?${params.toString()}`)
+              .then(payload => payload?.products?.[0] || null)
+              .catch(() => null);
+          }
+          return doormatProductPromise;
+        };
+        const resolveDoormatVariant = async ({ size, color } = {}) => {
+          const product = await loadDoormatProduct();
+          if (!product) {
+            return {
+              product: null,
+              variant: null,
+              variantId: '',
+              unitPrice: getBasePrice(size, color),
+              image: '',
+              reason: 'unavailable',
+              userMessage: 'Unavailable'
+            };
+          }
+          const targetKey = getDoormatVariantKey(size, color);
+          const variants = Array.isArray(product.variants) ? product.variants : [];
+          const variant = variants.find(entry => {
+            const options = normalizeDoormatVariantOptions(entry);
+            return getDoormatVariantKey(options.size, options.color) === targetKey;
+          }) || null;
+          if (!variant?.id) {
+            return {
+              product,
+              variant: null,
+              variantId: '',
+              unitPrice: getBasePrice(size, color),
+              image: '',
+              reason: 'unavailable',
+              userMessage: 'Unavailable'
+            };
+          }
+          const commerce = await waitForCommerce();
+          let displayData = null;
+          if (typeof commerce?.resolveVariantDisplayData === 'function') {
+            try {
+              displayData = await commerce.resolveVariantDisplayData({
+                productKey: doormatProductKey,
+                productHandle: doormatHandle,
+                productId: product.id,
+                variantId: variant.id,
+                label: size
+              });
+            } catch {
+              displayData = null;
+            }
+          }
+          const resolvedPrice = Number(displayData?.price);
+          return {
+            product,
+            variant,
+            variantId: cleanText(variant.id),
+            unitPrice: Number.isFinite(resolvedPrice) ? resolvedPrice : getBasePrice(size, color),
+            image: cleanText(displayData?.image || variant?.metadata?.preview_image || variant?.thumbnail),
+            reason: '',
+            userMessage: ''
+          };
+        };
+        const applyResolvedDoormatVariant = resolution => {
+          const variantId = cleanText(resolution?.variantId);
+          const addButton = getDoormatAddToCartBtn();
+          if (addButton) {
+            if (variantId) addButton.dataset.variantId = variantId;
+            else delete addButton.dataset.variantId;
+          }
+          if (form) {
+            if (variantId) form.dataset.selectedVariantId = variantId;
+            else delete form.dataset.selectedVariantId;
+          }
+        };
+        const updatePriceBubble = (resolution = null) => {
           const qty = Math.max(1, Math.round(Number(qtyEl?.value || 1)));
           if (qtyEl) qtyEl.value = qty;
-          const size = sizeEl?.value || '';
-          const basePrice = getBasePrice(size);
+          const size = cleanText(sizeEl?.value || '');
+          const color = cleanText(colorEl?.value || '');
+          const resolvedUnitPrice = Number(resolution?.unitPrice);
+          const basePrice = Number.isFinite(resolvedUnitPrice)
+            ? resolvedUnitPrice
+            : getBasePrice(size, color);
           const total = basePrice * qty;
+          const priceTotalEl = getPriceTotalEl();
+          const priceMetaEl = getPriceMetaEl();
           if (priceTotalEl) priceTotalEl.textContent = formatCurrency(total);
           if (priceMetaEl) priceMetaEl.textContent = `${formatCurrency(basePrice)} ea · Qty ${qty}`;
-          return { basePrice, total, qty };
+          return { basePrice, total, qty, size, color };
+        };
+        const syncDoormatSelectionState = async () => {
+          const syncId = ++doormatSelectionSyncId;
+          const selection = getDoormatSelectionState();
+          const resolution = await resolveDoormatVariant(selection);
+          if (syncId !== doormatSelectionSyncId) return null;
+          applyResolvedDoormatVariant(resolution);
+          updatePriceBubble(resolution);
+          return { selection, resolution };
         };
 
-        const syncBadges = () => {
-          const cartCount = cartState.items?.length || 0;
+        const syncBadges = nextCartState => {
+          const resolvedCartState = refreshCartState(nextCartState);
+          const cartCount = resolvedCartState.items?.length || 0;
           const favCount = favoritesState.items?.length || 0;
           if (cartCountEl) {
             cartCountEl.textContent = cartCount > 0 ? cartCount : '';
@@ -1728,6 +1998,7 @@
 
         const renderCart = () => {
           if (!cartItemsEl) return;
+          refreshCartState();
           const items = cartState.items || [];
           if (!items.length) {
             cartItemsEl.innerHTML = '<div class="cart-empty">Your cart is empty.</div>';
@@ -1931,8 +2202,10 @@
           };
           const notesEl = form?.querySelector('textarea');
           const push = (label, value, extra = {}) => { if (value) options.push({ label, value, ...extra }); };
-          push('Size', val(sizeEl));
-          push('Color', val(colorEl));
+          const sizeValue = val(sizeEl);
+          const colorValue = val(colorEl);
+          push('Size', sizeValue);
+          push('Color', colorValue, { swatchStyle: getColorSwatchStyle(colorValue) });
           push('Notes', notesEl?.value?.trim() || '');
           const attachment = await readAttachment();
           if (attachment?.name) {
@@ -1941,46 +2214,158 @@
           }
           return options;
         };
-
-        const addProduct = async isFavorite => {
+        const stripAttachmentReferenceNote = value =>
+          cleanText(value).replace(/\s*\(file reference\)\s*$/i, '').trim();
+        const buildDoormatCartItem = async resolution => {
           const heroImg = document.querySelector('.attire-hero-image img');
-          const priceCalc = updatePriceBubble();
-          const qty = priceCalc?.qty ?? Math.max(1, Number(qtyEl?.value || 1));
-          const unitPrice = priceCalc?.basePrice ?? getBasePrice(sizeEl?.value || '');
+          const priceCalc = updatePriceBubble(resolution);
           const options = await buildOptions();
-          const item = {
-            id: `doormat-${Date.now()}`,
-            name: 'Custom Doormat',
-            price: unitPrice,
-            quantity: qty,
-            image: heroImg?.getAttribute('src') || '',
-            previewStyle: heroImg ? `background-image:url('${heroImg.src}'); background-size:cover; background-position:center;` : '',
+          const image = cleanText(
+            resolution?.image ||
+            heroImg?.currentSrc ||
+            heroImg?.getAttribute('src')
+          );
+          const previewStyle = image ? buildPreviewStyle(image) : '';
+          return {
+            id: cleanText(resolution?.variantId) || `doormat-cart-${Date.now()}`,
+            name: doormatTitle,
+            title: doormatTitle,
+            product_key: doormatProductKey,
+            product_handle: doormatHandle,
+            product_url: '/doormats',
+            variant_title: [priceCalc?.size, priceCalc?.color].filter(Boolean).join(' / '),
+            price: Number(priceCalc?.basePrice || 0),
+            currency_code: 'USD',
+            quantity: Math.max(1, Number(priceCalc?.qty || 1)),
+            image,
+            previewStyle,
+            description: getDoormatDescription(),
             options
           };
-          if (isFavorite) {
-            favoritesState.items = [...(favoritesState.items || []), { ...item }];
-            saveState(FAVORITES_STORAGE_KEY, favoritesState);
-            renderFavorites();
-            openFavorites();
-          } else {
-            cartState.items = [...(cartState.items || []), item];
-            saveState(CART_STORAGE_KEY, cartState);
-            renderCart();
+        };
+        const buildDoormatLineItemMetadata = cartItem => {
+          const findOption = label =>
+            (Array.isArray(cartItem?.options) ? cartItem.options : []).find(
+              option => cleanText(option?.label).toLowerCase() === label
+            ) || null;
+          const colorOpt = findOption('color');
+          const sizeOpt = findOption('size');
+          const notesOpt = findOption('notes');
+          const attachmentOpt = findOption('attachment');
+          const previewImage = cleanText(cartItem?.image);
+          const previewStyle = cleanText(cartItem?.previewStyle || buildPreviewStyle(previewImage));
+          const metadata = {
+            design_mode: 'custom',
+            design_product_key: doormatProductKey,
+            design_product_handle: doormatHandle,
+            design_product_title: doormatTitle,
+            design_product_description: cleanText(cartItem?.description || getDoormatDescription()) || undefined,
+            product_description: cleanText(cartItem?.description || getDoormatDescription()) || undefined,
+            design_preview_url: previewImage || undefined,
+            design_preview_style: previewStyle || undefined,
+            preview_url: previewImage || undefined,
+            preview_style: previewStyle || undefined,
+            design_total_price: Number.isFinite(Number(cartItem?.price)) ? Number(cartItem.price) : undefined,
+            design_color_label: cleanText(colorOpt?.value) || undefined,
+            design_color_style: cleanText(colorOpt?.swatchStyle || colorOpt?.swatch_style) || undefined,
+            design_color_glyph: cleanText(colorOpt?.swatchGlyph || colorOpt?.swatch_glyph) || undefined,
+            design_size_label: cleanText(sizeOpt?.value) || undefined,
+            design_notes: cleanText(notesOpt?.value) || undefined,
+            design_attachment_name: stripAttachmentReferenceNote(attachmentOpt?.value) || undefined,
+            design_attachment_data: cleanText(attachmentOpt?.attachmentData || attachmentOpt?.attachment_data) || undefined
+          };
+          return Object.fromEntries(
+            Object.entries(metadata).filter(([, value]) => value !== undefined && value !== '')
+          );
+        };
+        const addDoormatToSharedCart = async button => {
+          const commerce = await waitForCommerce();
+          if (!commerce?.enabled || typeof commerce.addLineItem !== 'function') {
+            const message = 'Cart service is unavailable on this page.';
+            commerce?.showStatusMessage?.(message, 'error');
+            return {
+              ok: false,
+              reason: 'commerce_add_unavailable',
+              user_message: message
+            };
+          }
+          const selection = getDoormatSelectionState();
+          const resolution = await resolveDoormatVariant(selection);
+          applyResolvedDoormatVariant(resolution);
+          if (!resolution?.variantId) {
+            const message = cleanText(resolution?.userMessage) || 'Unavailable';
+            commerce.showStatusMessage?.(message, 'error');
+            return {
+              ok: false,
+              reason: cleanText(resolution?.reason) || 'unavailable',
+              user_message: message
+            };
+          }
+          const cartItem = await buildDoormatCartItem(resolution);
+          const metadata = buildDoormatLineItemMetadata(cartItem);
+          button?.setAttribute('aria-busy', 'true');
+          if (button) button.disabled = true;
+          try {
+            await commerce.addLineItem(
+              resolution.variantId,
+              Math.max(1, Number(cartItem.quantity || 1)),
+              metadata
+            );
+            await commerce.syncBadges?.();
             openCart();
+            return {
+              ok: true,
+              variant_id: resolution.variantId,
+              cart_item: cartItem
+            };
+          } catch (error) {
+            const classified = typeof commerce.classifyCartMutationError === 'function'
+              ? commerce.classifyCartMutationError(error)
+              : null;
+            const message = cleanText(classified?.userMessage) || 'Unable to add this item right now. Please try again.';
+            commerce.showStatusMessage?.(message, 'error');
+            return {
+              ok: false,
+              reason: cleanText(classified?.reason) || 'medusa_add_failed',
+              user_message: message,
+              error: cleanText(error?.message)
+            };
+          } finally {
+            button?.removeAttribute('aria-busy');
+            if (button) button.disabled = false;
           }
         };
-
-        form?.querySelector('[data-add-to-cart]')?.addEventListener('click', async e => {
-          e.preventDefault();
-          await addProduct(false);
+        document.addEventListener('click', event => {
+          const button = event.target.closest('.attire-form [data-add-to-cart]');
+          if (!button || !form?.contains(button)) return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          addDoormatToSharedCart(button).catch(error => {
+            console.warn('Unable to add doormat to shared cart', error);
+          });
+        }, true);
+        sizeEl?.addEventListener('change', () => {
+          updatePriceBubble();
+          syncDoormatSelectionState().catch(() => {});
         });
-        form?.querySelector('[data-favorites-open]')?.addEventListener('click', async e => {
-          e.preventDefault();
-          await addProduct(true);
+        colorEl?.addEventListener('change', () => {
+          updatePriceBubble();
+          syncDoormatSelectionState().catch(() => {});
         });
-        sizeEl?.addEventListener('change', updatePriceBubble);
-        qtyEl?.addEventListener('input', updatePriceBubble);
-        qtyEl?.addEventListener('change', updatePriceBubble);
+        qtyEl?.addEventListener('input', () => {
+          updatePriceBubble();
+        });
+        qtyEl?.addEventListener('change', () => {
+          updatePriceBubble();
+        });
+        document.addEventListener('cart:set', event => {
+          refreshCartState(event?.detail);
+          renderCart();
+        });
+        document.addEventListener('cart:reset', () => {
+          refreshCartState({ items: [], currency_code: 'USD' });
+          renderCart();
+        });
 
         // Thumbnail gallery swap for attire hero image
         const heroImg = document.querySelector('.attire-hero-image img');
@@ -2035,11 +2420,19 @@
           });
         }
 
+        ensureDoormatCtaShell();
+        observeDoormatCtaShell();
         bindUploadLabels();
+        refreshCartState(cartState);
         updatePriceBubble();
         renderCart();
         renderFavorites();
         syncBadges();
+        waitForCommerce().then(commerce => {
+          if (!commerce?.enabled) return;
+          syncDoormatSelectionState().catch(() => {});
+          commerce.syncBadges?.().catch?.(() => {});
+        });
       })();
 
       (() => {
