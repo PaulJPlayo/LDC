@@ -865,7 +865,7 @@
       price: Number(source.price || 0),
       quantity: Math.max(1, Number(source.quantity || 1) || 1),
       image: source.preview_image || source.image_url || '',
-      previewStyle: source.preview_style || '',
+      previewStyle: buildFavoritePreviewStyle(source),
       options: Array.isArray(source.selected_options)
         ? source.selected_options.map(cloneOption)
         : []
@@ -957,7 +957,7 @@
     var isDesign = isDesignSubmittedFavorite(favorite);
     var description = toText(favorite.short_description || favorite.description);
     var previewImage = toText(favorite.preview_image || favorite.image_url);
-    var previewStyle = toText(favorite.preview_style);
+    var previewStyle = buildFavoritePreviewStyle(favorite);
     var variantTitle = normalizeFavoriteMetadataLabel(favorite.variant_title || favorite.options_summary);
     var hasPrice =
       favorite.price !== null &&
@@ -1621,6 +1621,51 @@
     };
   }
 
+  function findFavoriteOption(item, targetLabel) {
+    var normalizedTarget = cleanLabel(targetLabel).toLowerCase();
+    if (!normalizedTarget) return null;
+    var selectedOptions = Array.isArray(item && item.selected_options) ? item.selected_options : [];
+    return selectedOptions.find(function findOption(option) {
+      return cleanLabel(option && option.label).toLowerCase() === normalizedTarget;
+    }) || null;
+  }
+
+  function getDoormatPreviewFillStyle(item) {
+    if (!isDoormatFavoriteRecord(item)) return '';
+    var colorOption = findFavoriteOption(item, 'Color');
+    var swatchStyle = toText(
+      colorOption && (
+        colorOption.swatch_style ||
+        colorOption.swatchStyle
+      )
+    );
+    var match = swatchStyle.match(/background(?:-color)?\s*:\s*([^;]+)/i);
+    var fillColor = toText(match && match[1]) || '#d2b48c';
+    return fillColor ? 'background-color:' + fillColor + ';' : '';
+  }
+
+  function buildFavoritePreviewStyle(item) {
+    var image = getPreviewForItem(item);
+    var previewStyle = toText(item && item.preview_style);
+    var fillStyle = getDoormatPreviewFillStyle(item);
+    if (previewStyle && (!fillStyle || /background(?:-color)?\s*:/i.test(previewStyle))) {
+      return previewStyle;
+    }
+    if (previewStyle && fillStyle) {
+      return fillStyle + ' ' + previewStyle;
+    }
+    if (image) {
+      return [
+        fillStyle,
+        "background-image:url('" + image.replace(/'/g, "\\'") + "')",
+        'background-size:cover',
+        'background-position:center',
+        'background-repeat:no-repeat'
+      ].filter(Boolean).join('; ') + ';';
+    }
+    return fillStyle;
+  }
+
   function getFavoriteDetailRows(item) {
     var rows = [];
     var description = toText(item && (item.short_description || item.description));
@@ -1695,6 +1740,33 @@
     return image;
   }
 
+  function syncFavoritePreviewFrames(root) {
+    var scope = root && typeof root.querySelectorAll === 'function' ? root : document;
+    Array.prototype.slice.call(scope.querySelectorAll('[data-favorite-id]')).forEach(function eachCard(card) {
+      var id = toText(card.getAttribute('data-favorite-id'));
+      var preview = card.querySelector('.favorites-item-preview');
+      if (!id || !preview) return;
+      var item = api.getFavoriteById(id);
+      if (!item) return;
+      var previewStyle = buildFavoritePreviewStyle(item);
+      if (previewStyle) {
+        preview.setAttribute('style', previewStyle);
+      } else {
+        preview.removeAttribute('style');
+      }
+    });
+  }
+
+  var previewFrameSyncQueued = false;
+  function queueFavoritePreviewFrameSync() {
+    if (previewFrameSyncQueued) return;
+    previewFrameSyncQueued = true;
+    global.requestAnimationFrame(function syncPreviewFrames() {
+      previewFrameSyncQueued = false;
+      syncFavoritePreviewFrames(document);
+    });
+  }
+
   function renderDrawerItems() {
     if (!ui.itemsContainer) return;
     var items = api.getFavorites();
@@ -1708,6 +1780,7 @@
       var title = escapeHtml(item.title || 'Favorite');
       var price = escapeHtml(formatPrice(item.price, item.currency_code));
       var image = getPreviewForItem(item);
+      var previewFrameStyle = buildFavoritePreviewStyle(item);
       var imageHtml = image
         ? '<img src="' + escapeHtml(image) + '" alt="' + title + '" loading="lazy" />'
         : '';
@@ -1719,7 +1792,7 @@
       return [
         '<article class="favorites-item" data-favorite-id="', id, '">',
         '  <div class="favorites-item-main">',
-        '    <div class="favorites-item-preview">', imageHtml, '</div>',
+        '    <div class="favorites-item-preview"', previewFrameStyle ? ' style="' + escapeHtml(previewFrameStyle) + '"' : '', '>', imageHtml, '</div>',
         '    <div class="favorites-item-info">',
         '      ', titleContent,
         '      <div class="favorites-item-summary-row">',
@@ -1739,6 +1812,7 @@
     }).join('');
 
     ui.itemsContainer.innerHTML = markup;
+    queueFavoritePreviewFrameSync();
   }
 
   function openDrawer(trigger) {
@@ -2043,6 +2117,7 @@
     renderDrawerItems();
     syncHeartButtons();
     updateBadgesAndOpeners();
+    queueFavoritePreviewFrameSync();
   }
 
   function onDocumentClickCapture(event) {
@@ -2139,7 +2214,11 @@
     global.addEventListener('ldc:products:rendered', function onProductsRendered() {
       global.requestAnimationFrame(syncHeartButtons);
     });
-    global.addEventListener('load', syncHeartButtons);
+    global.addEventListener('load', function onWindowLoad() {
+      syncHeartButtons();
+      queueFavoritePreviewFrameSync();
+    });
+    global.requestAnimationFrame(queueFavoritePreviewFrameSync);
   }
 
   syncUi();

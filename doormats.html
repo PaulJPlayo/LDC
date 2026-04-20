@@ -1659,6 +1659,11 @@
           tan: 'background:#d2b48c;'
         };
         const getColorSwatchStyle = value => colorSwatchStyles[cleanText(value).toLowerCase()] || '';
+        const getDoormatPreviewFillColor = value => {
+          const swatchStyle = getColorSwatchStyle(value);
+          const match = swatchStyle.match(/background(?:-color)?\s*:\s*([^;]+)/i);
+          return cleanText(match?.[1]) || '#d2b48c';
+        };
         const favoriteCtaIcon = `
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
             <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
@@ -1968,6 +1973,8 @@
         };
 
         const openCart = () => {
+          getSharedFavoritesUi()?.closeDrawer?.();
+          closeFavorites();
           cartDrawer?.classList.add('is-open');
           cartOverlay?.classList.add('is-open');
           document.body.classList.add('cart-open');
@@ -2002,9 +2009,12 @@
         });
 
         const fallbackPreview = 'background: linear-gradient(135deg, #d8b4fe 0%, #a855f7 100%);';
-        const buildPreviewStyle = img => {
-          if (img) return `background-image:url('${img}'); background-size:cover; background-position:center;`;
-          return fallbackPreview;
+        const buildPreviewStyle = (img, color = '') => {
+          const fillColor = getDoormatPreviewFillColor(color);
+          if (img) {
+            return `background-color:${fillColor}; background-image:url('${img}'); background-size:cover; background-position:center; background-repeat:no-repeat;`;
+          }
+          return fillColor ? `background-color:${fillColor};` : fallbackPreview;
         };
 
         const buildSwatch = opt => {
@@ -2047,7 +2057,7 @@
             const notesOpt = findOpt('notes');
             let thumbStyle = (item.previewStyle && item.previewStyle.trim())
               ? item.previewStyle.trim()
-              : buildPreviewStyle(item.image || '');
+              : buildPreviewStyle(item.image || '', cleanText(colorOpt?.value));
             if (!item.previewStyle && thumbStyle) {
               item.previewStyle = thumbStyle;
               saveState(CART_STORAGE_KEY, cartState);
@@ -2190,7 +2200,7 @@
             heroImg?.currentSrc ||
             heroImg?.getAttribute('src')
           );
-          const previewStyle = image ? buildPreviewStyle(image) : '';
+          const previewStyle = buildPreviewStyle(image, priceCalc?.color);
           return {
             id: cleanText(resolution?.variantId) || `doormat-cart-${Date.now()}`,
             name: doormatTitle,
@@ -2218,7 +2228,10 @@
           const notesOpt = findOption('notes');
           const attachmentOpt = findOption('attachment');
           const previewImage = cleanText(cartItem?.image);
-          const previewStyle = cleanText(cartItem?.previewStyle || buildPreviewStyle(previewImage));
+          const previewStyle = cleanText(
+            cartItem?.previewStyle ||
+            buildPreviewStyle(previewImage, cleanText(colorOpt?.value))
+          );
           const metadata = {
             design_mode: 'custom',
             design_product_key: doormatProductKey,
