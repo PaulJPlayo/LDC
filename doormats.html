@@ -1799,6 +1799,25 @@
           };
           return cartState;
         };
+        const isSharedCartParityActive = () => cartDrawer?.dataset.homeParityInstalled === 'true';
+        const getSharedCartUi = () => (
+          window.ldcCart && typeof window.ldcCart === 'object' ? window.ldcCart : null
+        );
+        const getSharedCartMethod = methodName => {
+          const sharedCart = getSharedCartUi();
+          const method = sharedCart && typeof sharedCart[methodName] === 'function'
+            ? sharedCart[methodName]
+            : null;
+          if (!method) return null;
+          if (
+            (methodName === 'open' && method === openCart) ||
+            (methodName === 'close' && method === closeCart) ||
+            (methodName === 'sync' && method === renderCart)
+          ) {
+            return null;
+          }
+          return method.bind(sharedCart);
+        };
 
         const formatCurrency = amt => `$${(amt || 0).toFixed(2)}`;
         const getBasePrice = (size, color = colorEl?.value || '') => {
@@ -1975,6 +1994,11 @@
         const openCart = () => {
           getSharedFavoritesUi()?.closeDrawer?.();
           closeFavorites();
+          const sharedOpen = isSharedCartParityActive() ? getSharedCartMethod('open') : null;
+          if (sharedOpen) {
+            sharedOpen();
+            return;
+          }
           cartDrawer?.classList.add('is-open');
           cartOverlay?.classList.add('is-open');
           document.body.classList.add('cart-open');
@@ -1982,6 +2006,11 @@
           cartPanel?.focus({ preventScroll: true });
         };
         const closeCart = () => {
+          const sharedClose = isSharedCartParityActive() ? getSharedCartMethod('close') : null;
+          if (sharedClose) {
+            sharedClose();
+            return;
+          }
           cartDrawer?.classList.remove('is-open');
           cartOverlay?.classList.remove('is-open');
           document.body.classList.remove('cart-open');
@@ -1998,6 +2027,7 @@
         window.addEventListener('keydown', e => { if (e.key === 'Escape') closeCart(); });
         checkoutBtn?.addEventListener('click', () => { window.location.href = 'checkout.html'; });
         resetBtn?.addEventListener('click', () => {
+          if (isSharedCartParityActive()) return;
           const medusaCart = window.LDCCommerce;
           if (medusaCart?.resetCart) {
             medusaCart.resetCart();
@@ -2029,6 +2059,12 @@
 
         const renderCart = () => {
           if (!cartItemsEl) return;
+          const sharedSync = isSharedCartParityActive() ? getSharedCartMethod('sync') : null;
+          if (sharedSync) {
+            sharedSync();
+            syncBadges();
+            return;
+          }
           refreshCartState();
           const items = cartState.items || [];
           if (!items.length) {
@@ -2474,11 +2510,24 @@
         });
         document.addEventListener('cart:set', event => {
           refreshCartState(event?.detail);
-          renderCart();
+          syncBadges(event?.detail);
+          if (!isSharedCartParityActive()) {
+            renderCart();
+          }
         });
         document.addEventListener('cart:reset', () => {
           refreshCartState({ items: [], currency_code: 'USD' });
-          renderCart();
+          syncBadges({ items: [], currency_code: 'USD' });
+          if (!isSharedCartParityActive()) {
+            renderCart();
+          }
+        });
+        window.addEventListener('storage', event => {
+          if (event?.key !== CART_STORAGE_KEY) return;
+          syncBadges();
+          if (!isSharedCartParityActive()) {
+            renderCart();
+          }
         });
 
         // Thumbnail gallery swap for attire hero image
