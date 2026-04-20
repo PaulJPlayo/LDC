@@ -855,6 +855,63 @@
     return true;
   }
 
+  function extractPreviewUrlFromStyle(styleValue) {
+    var style = toText(styleValue);
+    if (!style) return '';
+    var match = style.match(/url\(["']?(.*?)["']?\)/i);
+    return match ? match[1] : '';
+  }
+
+  function findFavoriteOptionRecord(favorite, targetLabel) {
+    var normalizedTarget = normalizeFavoriteMetadataLabel(targetLabel).toLowerCase();
+    if (!normalizedTarget) return null;
+    var selectedOptions = Array.isArray(favorite && favorite.selected_options) ? favorite.selected_options : [];
+    return selectedOptions.find(function findOption(option) {
+      return normalizeFavoriteMetadataLabel(option && option.label).toLowerCase() === normalizedTarget;
+    }) || null;
+  }
+
+  function getDoormatPreviewFillStyleForFavorite(favorite) {
+    if (!isDoormatFavoriteRecord(favorite)) return '';
+    var colorOption = findFavoriteOptionRecord(favorite, 'Color');
+    var swatchStyle = toText(
+      colorOption && (
+        colorOption.swatch_style ||
+        colorOption.swatchStyle
+      )
+    );
+    var match = swatchStyle.match(/background(?:-color)?\s*:\s*([^;]+)/i);
+    var fillColor = toText(match && match[1]) || '#d2b48c';
+    return fillColor ? 'background-color:' + fillColor + ';' : '';
+  }
+
+  function buildSharedFavoritePreviewStyle(favorite) {
+    var previewStyle = toText(favorite && favorite.preview_style);
+    var fillStyle = getDoormatPreviewFillStyleForFavorite(favorite);
+    if (previewStyle && (!fillStyle || /background(?:-color)?\s*:/i.test(previewStyle))) {
+      return previewStyle;
+    }
+    if (previewStyle && fillStyle) {
+      return fillStyle + ' ' + previewStyle;
+    }
+    var image = toText(
+      favorite && (
+        favorite.preview_image ||
+        favorite.image_url
+      )
+    ) || extractPreviewUrlFromStyle(previewStyle);
+    if (image) {
+      return [
+        fillStyle,
+        "background-image:url('" + image.replace(/'/g, "\\'") + "')",
+        'background-size:cover',
+        'background-position:center',
+        'background-repeat:no-repeat'
+      ].filter(Boolean).join('; ') + ';';
+    }
+    return fillStyle;
+  }
+
   function buildCartItemFromFavorite(favorite, overrides) {
     var source = favorite || {};
     var patch = isObject(overrides) ? overrides : {};
@@ -865,7 +922,7 @@
       price: Number(source.price || 0),
       quantity: Math.max(1, Number(source.quantity || 1) || 1),
       image: source.preview_image || source.image_url || '',
-      previewStyle: buildFavoritePreviewStyle(source),
+      previewStyle: buildSharedFavoritePreviewStyle(source),
       options: Array.isArray(source.selected_options)
         ? source.selected_options.map(cloneOption)
         : []
@@ -957,7 +1014,7 @@
     var isDesign = isDesignSubmittedFavorite(favorite);
     var description = toText(favorite.short_description || favorite.description);
     var previewImage = toText(favorite.preview_image || favorite.image_url);
-    var previewStyle = buildFavoritePreviewStyle(favorite);
+    var previewStyle = buildSharedFavoritePreviewStyle(favorite);
     var variantTitle = normalizeFavoriteMetadataLabel(favorite.variant_title || favorite.options_summary);
     var hasPrice =
       favorite.price !== null &&
