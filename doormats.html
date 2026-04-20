@@ -109,6 +109,27 @@
         width: 1rem;
         height: 1rem;
       }
+      .icon-badge {
+        position: absolute;
+        top: -0.4rem;
+        right: -0.25rem;
+        min-width: 1.25rem;
+        height: 1.25rem;
+        padding: 0 0.35rem;
+        border-radius: 9999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.68rem;
+        font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
+        color: #7c3aed;
+        background: #ffffff;
+        border: 1px solid rgba(182, 120, 245, 0.45);
+        box-shadow: 0 6px 12px rgba(15, 23, 42, 0.18);
+        pointer-events: none;
+      }
 
       body.support-open {
         overflow: hidden;
@@ -2552,7 +2573,7 @@
             }
           };
 
-          const setHero = index => {
+          const setHero = (index, { shouldScroll = true } = {}) => {
             const total = thumbImages.length;
             if (!total) return;
             const normalized = ((index % total) + total) % total;
@@ -2566,10 +2587,12 @@
             thumbImages.forEach((img, idx) => {
               img.classList.toggle('is-active', idx === normalized);
             });
-            scrollHeroIntoView();
+            if (shouldScroll) {
+              scrollHeroIntoView();
+            }
           };
 
-          setHero(currentIndex);
+          setHero(currentIndex, { shouldScroll: false });
           thumbImages.forEach((img, index) => {
             img.addEventListener('click', () => setHero(index));
           });
