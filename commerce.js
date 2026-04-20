@@ -2938,20 +2938,69 @@
       ? `background-color: #ffffff; background-image: url("${src}"); background-size: cover; background-position: center; background-repeat: no-repeat;`
       : '';
 
+  const extractPreviewFillColor = styleValue => {
+    const style = String(styleValue || '').trim();
+    if (!style) return '';
+    const backgroundColorMatch = style.match(/background-color\s*:\s*([^;]+)/i);
+    if (backgroundColorMatch && backgroundColorMatch[1]) {
+      return backgroundColorMatch[1].trim();
+    }
+    const backgroundMatch = style.match(/background\s*:\s*([^;]+)/i);
+    return backgroundMatch && backgroundMatch[1] ? backgroundMatch[1].trim() : '';
+  };
+
+  const isDoormatPreviewFillItem = metadata => {
+    if (!metadata || typeof metadata !== 'object') return false;
+    const productKey = String(
+      metadata.design_product_key ||
+      metadata.designProductKey ||
+      metadata.product_key ||
+      metadata.productKey ||
+      ''
+    )
+      .trim()
+      .toLowerCase();
+    if (productKey !== 'doormat-custom') return false;
+    const sizeLabel = String(
+      metadata.design_size_label ||
+      metadata.designSizeLabel ||
+      metadata.size_label ||
+      metadata.sizeLabel ||
+      ''
+    )
+      .trim()
+      .toLowerCase();
+    return sizeLabel === '18x30 unframed mat';
+  };
+
   const getLineItemDisplayPreviewStyle = item => {
     if (!item || typeof item !== 'object') return '';
     const metadata = normalizeMetadata(item.metadata);
-    const displayImage = getLineItemDisplayImage(item);
-    if (displayImage) {
-      return buildPreviewStyle(displayImage);
-    }
-    return (
+    const explicitPreviewStyle =
       metadata?.design_preview_style ||
       metadata?.designPreviewStyle ||
       metadata?.preview_style ||
       metadata?.previewStyle ||
-      ''
-    );
+      '';
+    if (isDoormatPreviewFillItem(metadata) && explicitPreviewStyle) {
+      return explicitPreviewStyle;
+    }
+    const displayImage = getLineItemDisplayImage(item);
+    if (displayImage) {
+      if (isDoormatPreviewFillItem(metadata)) {
+        const fillColor =
+          extractPreviewFillColor(
+            metadata?.design_color_style ||
+            metadata?.designColorStyle ||
+            metadata?.selected_color_style ||
+            metadata?.selectedColorStyle ||
+            explicitPreviewStyle
+          ) || '#d2b48c';
+        return `background-color: ${fillColor}; background-image: url("${displayImage}"); background-size: cover; background-position: center; background-repeat: no-repeat;`;
+      }
+      return buildPreviewStyle(displayImage);
+    }
+    return explicitPreviewStyle;
   };
 
   const getLineItemDisplayDescription = item => {
