@@ -1630,8 +1630,25 @@
     }) || null;
   }
 
+  function isDoormatPreviewRecord(item) {
+    if (!item || typeof item !== 'object') return false;
+    var productHandle = toText(item.product_handle || item.productHandle).toLowerCase();
+    if (productHandle === 'doormat-custom' || productHandle === 'doormats-custom') {
+      return true;
+    }
+    var productUrl = toText(
+      item.product_url ||
+      item.productUrl ||
+      item.source_path
+    )
+      .split('?')[0]
+      .split('#')[0]
+      .toLowerCase();
+    return productUrl === '/doormats' || productUrl === 'doormats.html';
+  }
+
   function getDoormatPreviewFillStyle(item) {
-    if (!isDoormatFavoriteRecord(item)) return '';
+    if (!isDoormatPreviewRecord(item)) return '';
     var colorOption = findFavoriteOption(item, 'Color');
     var swatchStyle = toText(
       colorOption && (
