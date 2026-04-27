@@ -3777,6 +3777,8 @@
     '/tumblers',
     '/cups',
     '/accessories',
+    '/attire',
+    '/doormats',
     '/sale',
     '/under-25',
     '/last-chance',
