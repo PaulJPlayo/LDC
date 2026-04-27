@@ -4806,9 +4806,36 @@
     node.style.color = tone === 'error' ? '#b91c1c' : '#0f172a';
   };
 
-  const announceAuthChange = () => {
+  const getAuthToken = data => {
+    const token = data?.token || data?.access_token || '';
+    if (!token) {
+      throw new Error('Customer auth token was not returned.');
+    }
+    return token;
+  };
+
+  const createCustomerSession = token => {
+    return request('/auth/session', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  };
+
+  const signInCustomerSession = async (email, password) => {
+    const authData = await request('/auth/customer/emailpass', {
+      method: 'POST',
+      body: { email, password }
+    });
+    const token = getAuthToken(authData);
+    await createCustomerSession(token);
+  };
+
+  const announceAuthChange = (detail = {}) => {
     try {
-      window.dispatchEvent(new CustomEvent('ldc:auth:change'));
+      window.dispatchEvent(new CustomEvent('ldc:auth:change', { detail }));
     } catch (error) {
       // Ignore if CustomEvent is unavailable.
     }
@@ -4824,10 +4851,7 @@
       return;
     }
     try {
-      await request('/store/auth', {
-        method: 'POST',
-        body: { email, password }
-      });
+      await signInCustomerSession(email, password);
       setFormMessage(form, 'Signed in successfully.', 'success');
       announceAuthChange();
     } catch (error) {
@@ -4843,8 +4867,8 @@
     const password = form.querySelector('#signUpPassword')?.value || '';
     const confirm = form.querySelector('#signUpConfirm')?.value || '';
 
-    if (!email || !password) {
-      setFormMessage(form, 'Email and password are required.', 'error');
+    if (!name || !email || !password) {
+      setFormMessage(form, 'Name, email, and password are required.', 'error');
       return;
     }
     if (password !== confirm) {
@@ -4856,20 +4880,25 @@
     const lastName = rest.join(' ');
 
     try {
-      await request('/store/customers', {
-        method: 'POST',
-        body: {
-          email,
-          password,
-          first_name: firstName || 'Customer',
-          last_name: lastName || ''
-        }
-      });
-      await request('/store/auth', {
+      const registerData = await request('/auth/customer/emailpass/register', {
         method: 'POST',
         body: { email, password }
       });
+      const registrationToken = getAuthToken(registerData);
+      await request('/store/customers', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${registrationToken}`
+        },
+        body: {
+          email,
+          first_name: firstName || '',
+          last_name: lastName || ''
+        }
+      });
+      await signInCustomerSession(email, password);
       setFormMessage(form, 'Account created. You are now signed in.', 'success');
+      form.reset();
       announceAuthChange();
     } catch (error) {
       setFormMessage(form, 'Unable to create account. Please try again.', 'error');
@@ -4877,13 +4906,49 @@
   };
 
   const getCustomer = async () => {
-    const data = await request('/store/customers/me');
+    const data = await request('/store/customers/me', {
+      credentials: 'include'
+    });
     return data?.customer || data;
   };
 
   const getOrders = async () => {
-    const data = await request('/store/customers/me/orders');
-    return data?.orders || data;
+    const data = await request('/store/orders', {
+      credentials: 'include'
+    });
+    if (Array.isArray(data?.orders)) return data.orders;
+    if (Array.isArray(data)) return data;
+    return [];
+  };
+
+  const logoutCustomerSession = () => {
+    return request('/auth/session', {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+  };
+
+  const handleLogout = async event => {
+    event.preventDefault();
+    const button = event.currentTarget;
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Signing Out...';
+
+    try {
+      await logoutCustomerSession();
+      announceAuthChange({ state: 'logged-out' });
+    } catch (error) {
+      if (error && (error.status === 401 || error.status === 403)) {
+        announceAuthChange({ state: 'logged-out' });
+      } else {
+        const statusEl = document.querySelector('[data-account-status]');
+        if (statusEl) statusEl.textContent = 'Unable to sign out. Please try again.';
+      }
+    } finally {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
   };
 
   const sanitizeAuditText = value =>
@@ -5231,6 +5296,9 @@
   const signUpForm = document.querySelector('[data-signup-form]');
   if (signUpForm) signUpForm.addEventListener('submit', handleSignUp);
 
+  const logoutButton = document.querySelector('[data-account-logout]');
+  if (logoutButton) logoutButton.addEventListener('click', handleLogout);
+
   const requestForUi = async (path, options = {}) => {
     const payload = await request(path, options);
     return normalizeCommerceResponseForDisplay(payload);
@@ -5247,6 +5315,7 @@
     request: requestForUi,
     getCustomer,
     getOrders,
+    logout: logoutCustomerSession,
     getOrCreateCart: getOrCreateCartForUi,
     addLineItem,
     syncBadges,

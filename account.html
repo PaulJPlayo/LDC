@@ -126,6 +126,14 @@
         letter-spacing: 0.16em;
         cursor: pointer;
       }
+      .auth-submit:disabled {
+        cursor: wait;
+        opacity: 0.7;
+      }
+      .account-logout {
+        width: fit-content;
+        min-width: 9rem;
+      }
       .account-details {
         display: grid;
         gap: 1.5rem;
@@ -186,7 +194,7 @@
           Continue Shopping
         </a>
         <h1 class="account-title">Your Account</h1>
-        <p class="account-subtitle">Manage your profile and track every LDC order in one place.</p>
+        <p class="account-subtitle">View your profile and orders linked to your signed-in account.</p>
       </header>
 
       <section class="account-card">
@@ -224,7 +232,7 @@
                 <input id="signUpPassword" type="password" autocomplete="new-password" placeholder="Create a password" required />
               </div>
               <div class="auth-field">
-                <label for="signUpConfirm">Confirm</label>
+                <label for="signUpConfirm">Confirm password</label>
                 <input id="signUpConfirm" type="password" autocomplete="new-password" placeholder="Re-enter password" required />
               </div>
               <button class="auth-submit" type="submit">Create Account</button>
@@ -237,6 +245,7 @@
             <div><strong>Name:</strong> <span data-account-name></span></div>
             <div><strong>Email:</strong> <span data-account-email></span></div>
           </div>
+          <button class="auth-submit account-logout" type="button" data-account-logout>Log Out</button>
 
           <div>
             <h3>Order History</h3>
@@ -266,13 +275,16 @@
           if (statusEl) statusEl.textContent = message;
           if (authEl) authEl.hidden = false;
           if (detailsEl) detailsEl.hidden = true;
+          if (nameEl) nameEl.textContent = '';
+          if (emailEl) emailEl.textContent = '';
+          if (ordersEl) ordersEl.innerHTML = '';
         };
 
         const showDetails = (customer, orders) => {
           if (statusEl) statusEl.textContent = 'Account ready.';
           if (authEl) authEl.hidden = true;
           if (detailsEl) detailsEl.hidden = false;
-          if (nameEl) nameEl.textContent = `${customer?.first_name || ''} ${customer?.last_name || ''}`.trim() || 'Customer';
+          if (nameEl) nameEl.textContent = `${customer?.first_name || ''} ${customer?.last_name || ''}`.trim() || 'Not provided';
           if (emailEl) emailEl.textContent = customer?.email || '';
 
           if (!ordersEl) return;
@@ -281,7 +293,7 @@
           if (!orders || !orders.length) {
             const empty = document.createElement('div');
             empty.className = 'order-empty';
-            empty.textContent = 'No orders yet.';
+            empty.textContent = 'No orders are linked to this account yet.';
             ordersEl.appendChild(empty);
             return;
           }
@@ -328,7 +340,13 @@
         };
 
         loadAccount();
-        window.addEventListener('ldc:auth:change', loadAccount);
+        window.addEventListener('ldc:auth:change', event => {
+          if (event?.detail?.state === 'logged-out') {
+            showAuth('You have been signed out.');
+            return;
+          }
+          loadAccount();
+        });
       })();
     </script>
   </body>
