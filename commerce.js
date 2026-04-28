@@ -4921,6 +4921,152 @@
     return [];
   };
 
+  const getAccountPageElements = () => ({
+    statusEl: document.querySelector('[data-account-status]'),
+    authEl: document.querySelector('[data-account-auth]'),
+    detailsEl: document.querySelector('[data-account-details]'),
+    greetingEl: document.querySelector('[data-account-greeting]'),
+    nameEl: document.querySelector('[data-account-name]'),
+    emailEl: document.querySelector('[data-account-email]'),
+    logoutEl: document.querySelector('[data-account-logout]'),
+    orderHistoryEl: document.querySelector('[data-order-history]'),
+    ordersEl: document.querySelector('[data-order-list]')
+  });
+
+  const hasAccountPageState = elements =>
+    Boolean(elements.statusEl || elements.authEl || elements.detailsEl);
+
+  const setAccountStatusMessage = (elements, message = '') => {
+    if (!elements.statusEl) return;
+    elements.statusEl.textContent = message;
+    elements.statusEl.hidden = !message;
+  };
+
+  const getCustomerFullName = customer =>
+    `${customer?.first_name || ''} ${customer?.last_name || ''}`.trim();
+
+  const getCustomerFirstName = customer => {
+    const firstName = String(customer?.first_name || '').trim();
+    if (firstName) return firstName;
+    return getCustomerFullName(customer).split(/\s+/).filter(Boolean)[0] || '';
+  };
+
+  const formatAccountCurrency = (value, currency) => {
+    const amount = Number(value || 0) / 100;
+    const code = (currency || 'USD').toUpperCase();
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: code }).format(amount);
+  };
+
+  const appendOrderMeta = (container, label, value) => {
+    const item = document.createElement('span');
+    item.textContent = `${label}: ${value}`;
+    container.appendChild(item);
+  };
+
+  const renderAccountOrders = (orders, elements = getAccountPageElements()) => {
+    if (!elements.ordersEl) return;
+    elements.ordersEl.innerHTML = '';
+
+    if (!Array.isArray(orders) || orders.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'order-empty';
+      empty.textContent = 'No orders are linked to this account yet.';
+      elements.ordersEl.appendChild(empty);
+      return;
+    }
+
+    orders.forEach(order => {
+      const card = document.createElement('div');
+      card.className = 'order-card';
+
+      const title = document.createElement('h4');
+      title.textContent = `Order ${order?.display_id || order?.id || ''}`.trim();
+      card.appendChild(title);
+
+      const meta = document.createElement('div');
+      meta.className = 'order-meta';
+      const created = order?.created_at ? new Date(order.created_at) : null;
+      const dateLabel = created ? created.toLocaleDateString() : 'Order date pending';
+      appendOrderMeta(meta, 'Date', dateLabel);
+      appendOrderMeta(meta, 'Total', formatAccountCurrency(order?.total, order?.currency_code));
+      appendOrderMeta(meta, 'Payment', order?.payment_status || 'pending');
+      appendOrderMeta(meta, 'Fulfillment', order?.fulfillment_status || 'unfulfilled');
+      card.appendChild(meta);
+
+      elements.ordersEl.appendChild(card);
+    });
+  };
+
+  const setAccountLoggedOutState = (message = '') => {
+    const elements = getAccountPageElements();
+    if (!hasAccountPageState(elements)) return;
+    setAccountStatusMessage(elements, message);
+    if (elements.authEl) elements.authEl.hidden = false;
+    if (elements.detailsEl) elements.detailsEl.hidden = true;
+    if (elements.orderHistoryEl) elements.orderHistoryEl.hidden = true;
+    if (elements.logoutEl) elements.logoutEl.hidden = true;
+    if (elements.greetingEl) elements.greetingEl.textContent = '';
+    if (elements.nameEl) elements.nameEl.textContent = '';
+    if (elements.emailEl) elements.emailEl.textContent = '';
+    if (elements.ordersEl) elements.ordersEl.innerHTML = '';
+  };
+
+  const setAccountLoadingState = () => {
+    const elements = getAccountPageElements();
+    if (!hasAccountPageState(elements)) return;
+    setAccountStatusMessage(elements, 'Loading your account...');
+    if (elements.authEl) elements.authEl.hidden = true;
+    if (elements.detailsEl) elements.detailsEl.hidden = true;
+  };
+
+  const setAccountLoggedInState = (customer, orders) => {
+    const elements = getAccountPageElements();
+    if (!hasAccountPageState(elements)) return;
+    setAccountStatusMessage(elements, '');
+    if (elements.authEl) elements.authEl.hidden = true;
+    if (elements.detailsEl) elements.detailsEl.hidden = false;
+    if (elements.orderHistoryEl) elements.orderHistoryEl.hidden = false;
+    if (elements.logoutEl) elements.logoutEl.hidden = false;
+
+    const firstName = getCustomerFirstName(customer);
+    if (elements.greetingEl) {
+      elements.greetingEl.textContent = firstName ? `Welcome back, ${firstName}.` : 'Welcome back.';
+    }
+    if (elements.nameEl) elements.nameEl.textContent = getCustomerFullName(customer) || 'Not provided';
+    if (elements.emailEl) elements.emailEl.textContent = customer?.email || '';
+    renderAccountOrders(orders, elements);
+  };
+
+  const refreshAccountState = async () => {
+    const elements = getAccountPageElements();
+    if (!hasAccountPageState(elements)) return;
+    setAccountLoadingState();
+    try {
+      const customer = await getCustomer();
+      const orders = await getOrders();
+      setAccountLoggedInState(customer, orders);
+    } catch (error) {
+      if (error && (error.status === 401 || error.status === 403)) {
+        setAccountLoggedOutState();
+        return;
+      }
+      setAccountLoggedOutState('Unable to load account details. Please try again soon.');
+    }
+  };
+
+  const initAccountPage = () => {
+    const elements = getAccountPageElements();
+    if (!hasAccountPageState(elements)) return;
+    refreshAccountState();
+    window.addEventListener('ldc:auth:change', event => {
+      if (event?.detail?.state === 'logged-out') {
+        setAccountLoggedOutState();
+        return;
+      }
+      refreshAccountState();
+    });
+  };
+
   const logoutCustomerSession = () => {
     return request('/auth/session', {
       method: 'DELETE',
@@ -4942,8 +5088,7 @@
       if (error && (error.status === 401 || error.status === 403)) {
         announceAuthChange({ state: 'logged-out' });
       } else {
-        const statusEl = document.querySelector('[data-account-status]');
-        if (statusEl) statusEl.textContent = 'Unable to sign out. Please try again.';
+        setAccountStatusMessage(getAccountPageElements(), 'Unable to sign out. Please try again.');
       }
     } finally {
       button.disabled = false;
@@ -5299,6 +5444,8 @@
   const logoutButton = document.querySelector('[data-account-logout]');
   if (logoutButton) logoutButton.addEventListener('click', handleLogout);
 
+  initAccountPage();
+
   const requestForUi = async (path, options = {}) => {
     const payload = await request(path, options);
     return normalizeCommerceResponseForDisplay(payload);
@@ -5315,6 +5462,7 @@
     request: requestForUi,
     getCustomer,
     getOrders,
+    refreshAccountState,
     logout: logoutCustomerSession,
     getOrCreateCart: getOrCreateCartForUi,
     addLineItem,

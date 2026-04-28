@@ -73,9 +73,18 @@
         color: rgba(248, 250, 252, 0.75);
         margin: 0 0 1.5rem 0;
       }
+      .account-status[hidden] {
+        display: none;
+      }
       .account-auth {
         display: grid;
         gap: 1.5rem;
+      }
+      .account-auth[hidden],
+      .account-details[hidden],
+      .account-logout[hidden],
+      [data-order-history][hidden] {
+        display: none;
       }
       .auth-grid {
         display: grid;
@@ -137,6 +146,26 @@
       .account-details {
         display: grid;
         gap: 1.5rem;
+      }
+      .account-summary {
+        display: grid;
+        gap: 0.45rem;
+      }
+      .account-summary h2 {
+        margin: 0;
+        font-size: 1.35rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .account-summary p {
+        margin: 0;
+        color: rgba(248, 250, 252, 0.76);
+        line-height: 1.55;
+      }
+      .account-greeting {
+        font-size: clamp(1.25rem, 3vw, 1.65rem);
+        font-weight: 700;
+        color: #ffffff !important;
       }
       .account-meta {
         display: grid;
@@ -202,20 +231,6 @@
 
         <div class="account-auth" data-account-auth hidden>
           <div class="auth-grid">
-            <form class="auth-card" data-signin-form>
-              <h3>Sign In</h3>
-              <p>Use your email to access order history.</p>
-              <div class="auth-field">
-                <label for="signInEmail">Email</label>
-                <input id="signInEmail" type="email" autocomplete="email" placeholder="you@example.com" required />
-              </div>
-              <div class="auth-field">
-                <label for="signInPassword">Password</label>
-                <input id="signInPassword" type="password" autocomplete="current-password" placeholder="Enter your password" required />
-              </div>
-              <button class="auth-submit" type="submit">Sign In</button>
-            </form>
-
             <form class="auth-card" data-signup-form>
               <h3>Create Account</h3>
               <p>New here? Set up your LDC account.</p>
@@ -237,17 +252,36 @@
               </div>
               <button class="auth-submit" type="submit">Create Account</button>
             </form>
+
+            <form class="auth-card" data-signin-form>
+              <h3>Sign In</h3>
+              <p>Use your email and password to access order history.</p>
+              <div class="auth-field">
+                <label for="signInEmail">Email</label>
+                <input id="signInEmail" type="email" autocomplete="email" placeholder="you@example.com" required />
+              </div>
+              <div class="auth-field">
+                <label for="signInPassword">Password</label>
+                <input id="signInPassword" type="password" autocomplete="current-password" placeholder="Enter your password" required />
+              </div>
+              <button class="auth-submit" type="submit">Sign In</button>
+            </form>
           </div>
         </div>
 
         <div class="account-details" data-account-details hidden>
+          <div class="account-summary">
+            <p class="account-greeting" data-account-greeting></p>
+            <h2>Account Summary</h2>
+            <p>Profile details and orders linked to your signed-in account.</p>
+          </div>
           <div class="account-meta">
             <div><strong>Name:</strong> <span data-account-name></span></div>
             <div><strong>Email:</strong> <span data-account-email></span></div>
           </div>
-          <button class="auth-submit account-logout" type="button" data-account-logout>Log Out</button>
+          <button class="auth-submit account-logout" type="button" data-account-logout hidden>Log Out</button>
 
-          <div>
+          <div data-order-history hidden>
             <h3>Order History</h3>
             <div class="orders-list" data-order-list></div>
           </div>
@@ -256,98 +290,5 @@
     </main>
 
     <script src="commerce.js"></script>
-    <script>
-      (() => {
-        const statusEl = document.querySelector('[data-account-status]');
-        const authEl = document.querySelector('[data-account-auth]');
-        const detailsEl = document.querySelector('[data-account-details]');
-        const nameEl = document.querySelector('[data-account-name]');
-        const emailEl = document.querySelector('[data-account-email]');
-        const ordersEl = document.querySelector('[data-order-list]');
-
-        const formatCurrency = (value, currency) => {
-          const amount = Number(value || 0) / 100;
-          const code = (currency || 'USD').toUpperCase();
-          return new Intl.NumberFormat('en-US', { style: 'currency', currency: code }).format(amount);
-        };
-
-        const showAuth = message => {
-          if (statusEl) statusEl.textContent = message;
-          if (authEl) authEl.hidden = false;
-          if (detailsEl) detailsEl.hidden = true;
-          if (nameEl) nameEl.textContent = '';
-          if (emailEl) emailEl.textContent = '';
-          if (ordersEl) ordersEl.innerHTML = '';
-        };
-
-        const showDetails = (customer, orders) => {
-          if (statusEl) statusEl.textContent = 'Account ready.';
-          if (authEl) authEl.hidden = true;
-          if (detailsEl) detailsEl.hidden = false;
-          if (nameEl) nameEl.textContent = `${customer?.first_name || ''} ${customer?.last_name || ''}`.trim() || 'Not provided';
-          if (emailEl) emailEl.textContent = customer?.email || '';
-
-          if (!ordersEl) return;
-          ordersEl.innerHTML = '';
-
-          if (!orders || !orders.length) {
-            const empty = document.createElement('div');
-            empty.className = 'order-empty';
-            empty.textContent = 'No orders are linked to this account yet.';
-            ordersEl.appendChild(empty);
-            return;
-          }
-
-          orders.forEach(order => {
-            const card = document.createElement('div');
-            card.className = 'order-card';
-            const created = order?.created_at ? new Date(order.created_at) : null;
-            const dateLabel = created ? created.toLocaleDateString() : 'Order date pending';
-            const total = formatCurrency(order?.total, order?.currency_code);
-            const payment = order?.payment_status || 'pending';
-            const fulfillment = order?.fulfillment_status || 'unfulfilled';
-
-            card.innerHTML = `
-              <h4>Order ${order?.display_id || order?.id || ''}</h4>
-              <div class="order-meta">
-                <span>Date: ${dateLabel}</span>
-                <span>Total: ${total}</span>
-                <span>Payment: ${payment}</span>
-                <span>Fulfillment: ${fulfillment}</span>
-              </div>
-            `;
-            ordersEl.appendChild(card);
-          });
-        };
-
-        const loadAccount = async () => {
-          if (!window.LDCCommerce) {
-            showAuth('Account services are not connected yet.');
-            return;
-          }
-          if (statusEl) statusEl.textContent = 'Loading your account...';
-          try {
-            const customer = await window.LDCCommerce.getCustomer();
-            const orders = await window.LDCCommerce.getOrders();
-            showDetails(customer, orders);
-          } catch (error) {
-            if (error && (error.status === 401 || error.status === 403)) {
-              showAuth('Please sign in to view your account.');
-              return;
-            }
-            showAuth('Unable to load account details. Please try again soon.');
-          }
-        };
-
-        loadAccount();
-        window.addEventListener('ldc:auth:change', event => {
-          if (event?.detail?.state === 'logged-out') {
-            showAuth('You have been signed out.');
-            return;
-          }
-          loadAccount();
-        });
-      })();
-    </script>
   </body>
 </html>
