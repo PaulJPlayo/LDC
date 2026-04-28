@@ -2739,11 +2739,11 @@
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3zm0 0c-4.418 0-8 2.239-8 5v3h16v-3c0-2.761-3.582-5-8-5z"/></svg>
           </div>
           <span aria-hidden="true">|</span>
-          <a href="#" class="hover:text-slate-900" data-signin-open>Sign In</a>
+          <a href="#" class="hover:text-slate-900" data-signin-open data-home-auth-primary data-home-auth-state="logged-out">Sign In</a>
+          <span aria-hidden="true" data-home-auth-signup-separator>|</span>
+          <a href="#" class="hover:text-slate-900" data-signup-open data-home-auth-signup>Sign Up</a>
           <span aria-hidden="true">|</span>
-          <a href="#" class="hover:text-slate-900" data-signup-open>Sign Up</a>
-          <span aria-hidden="true">|</span>
-          <a href="account.html" class="hover:text-slate-900">Account</a>
+          <a href="/account" class="hover:text-slate-900" data-home-auth-account>Account</a>
           <span aria-hidden="true">|</span>
           <a href="#" class="hover:text-slate-900" data-support-open>Support</a>
         </div>
@@ -2752,11 +2752,11 @@
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3zm0 0c-4.418 0-8 2.239-8 5v3h16v-3c0-2.761-3.582-5-8-5z"/></svg>
           </div>
           <span aria-hidden="true">|</span>
-          <a href="#" class="hover:text-slate-900" data-signin-open>Sign In</a>
+          <a href="#" class="hover:text-slate-900" data-signin-open data-home-auth-primary data-home-auth-state="logged-out">Sign In</a>
+          <span aria-hidden="true" data-home-auth-signup-separator>|</span>
+          <a href="#" class="hover:text-slate-900" data-signup-open data-home-auth-signup>Sign Up</a>
           <span aria-hidden="true">|</span>
-          <a href="#" class="hover:text-slate-900" data-signup-open>Sign Up</a>
-          <span aria-hidden="true">|</span>
-          <a href="account.html" class="hover:text-slate-900">Account</a>
+          <a href="/account" class="hover:text-slate-900" data-home-auth-account>Account</a>
           <span aria-hidden="true">|</span>
           <a href="#" class="hover:text-slate-900" data-support-open>Support</a>
         </div>
@@ -2922,7 +2922,7 @@
         <div class="signin-card-content">
           <p class="signin-eyebrow">Welcome Back</p>
           <h2 class="signin-title" id="signInTitle">Sign In to Lovett's</h2>
-          <p class="signin-subtitle">Access your saved carts, favorites, and exclusive member offers.</p>
+          <p class="signin-subtitle">Access your LDC account and order history.</p>
           <form class="signin-form" data-signin-form>
             <label class="signin-field" for="signInEmail">
               <span>Email</span>
@@ -2953,7 +2953,7 @@
         <div class="signup-card-content">
           <p class="signup-eyebrow">Join the Club</p>
           <h2 class="signup-title" id="signUpTitle">Create Your Account</h2>
-          <p class="signup-subtitle">Unlock exclusive savings, track orders, and save your favorite Lovett’s creations.</p>
+          <p class="signup-subtitle">Create your LDC account to view orders linked to your email.</p>
           <form class="signup-form" data-signup-form>
             <label class="signup-field" for="signUpName">
               <span>Full Name</span>
@@ -3856,6 +3856,7 @@
         };
         signInOpeners.forEach(trigger => {
           trigger.addEventListener('click', event => {
+            if (trigger.dataset.homeAuthState === 'authenticated') return;
             event.preventDefault();
             openSignIn();
           });
@@ -3878,7 +3879,6 @@
         });
         signInForm?.addEventListener('submit', event => {
           event.preventDefault();
-          closeSignIn();
         });
         signInToSignUp?.addEventListener('click', event => {
           event.preventDefault();
@@ -3937,7 +3937,6 @@
         });
         signUpForm?.addEventListener('submit', event => {
           event.preventDefault();
-          closeSignUp();
         });
         signUpToSignIn?.addEventListener('click', event => {
           event.preventDefault();

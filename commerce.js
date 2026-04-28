@@ -5067,6 +5067,100 @@
     });
   };
 
+  const getHomepageHeaderAuthElements = () => ({
+    primaryLinks: Array.from(document.querySelectorAll('[data-home-auth-primary]')),
+    signUpLinks: Array.from(document.querySelectorAll('[data-home-auth-signup]')),
+    signUpSeparators: Array.from(document.querySelectorAll('[data-home-auth-signup-separator]')),
+    accountLinks: Array.from(document.querySelectorAll('[data-home-auth-account]')),
+    signInOverlay: document.querySelector('[data-signin-overlay]'),
+    signUpOverlay: document.querySelector('[data-signup-overlay]')
+  });
+
+  const hasHomepageHeaderAuthState = elements =>
+    Boolean(elements.primaryLinks.length || elements.signUpLinks.length || elements.accountLinks.length);
+
+  const setHomeAuthLinkHref = (links, href) => {
+    links.forEach(link => {
+      link.setAttribute('href', href);
+    });
+  };
+
+  const closeHomepageAuthOverlays = elements => {
+    [elements.signInOverlay, elements.signUpOverlay].forEach(overlay => {
+      if (!overlay) return;
+      overlay.classList.remove('is-open');
+      overlay.setAttribute('aria-hidden', 'true');
+    });
+    document.body.classList.remove('signin-open', 'signup-open');
+  };
+
+  const setHomepageHeaderLoggedOutState = () => {
+    const elements = getHomepageHeaderAuthElements();
+    if (!hasHomepageHeaderAuthState(elements)) return;
+    elements.primaryLinks.forEach(link => {
+      link.textContent = 'Sign In';
+      link.setAttribute('href', '#');
+      link.dataset.homeAuthState = 'logged-out';
+      link.removeAttribute('aria-label');
+      link.hidden = false;
+    });
+    elements.signUpLinks.forEach(link => {
+      link.hidden = false;
+    });
+    elements.signUpSeparators.forEach(separator => {
+      separator.hidden = false;
+    });
+    setHomeAuthLinkHref(elements.accountLinks, '/account');
+  };
+
+  const setHomepageHeaderLoggedInState = (customer, options = {}) => {
+    const elements = getHomepageHeaderAuthElements();
+    if (!hasHomepageHeaderAuthState(elements)) return;
+    const firstName = getCustomerFirstName(customer);
+    const label = firstName || 'Account';
+    elements.primaryLinks.forEach(link => {
+      link.textContent = label;
+      link.setAttribute('href', '/account');
+      link.dataset.homeAuthState = 'authenticated';
+      link.setAttribute('aria-label', 'View your account');
+      link.hidden = false;
+    });
+    elements.signUpLinks.forEach(link => {
+      link.hidden = true;
+    });
+    elements.signUpSeparators.forEach(separator => {
+      separator.hidden = true;
+    });
+    setHomeAuthLinkHref(elements.accountLinks, '/account');
+    if (options.closeOverlays) {
+      closeHomepageAuthOverlays(elements);
+    }
+  };
+
+  const refreshHomepageHeaderAuthState = async (options = {}) => {
+    const elements = getHomepageHeaderAuthElements();
+    if (!hasHomepageHeaderAuthState(elements)) return;
+    try {
+      const customer = await getCustomer();
+      setHomepageHeaderLoggedInState(customer, options);
+    } catch (error) {
+      setHomepageHeaderLoggedOutState();
+    }
+  };
+
+  const initHomepageHeaderAuthState = () => {
+    const elements = getHomepageHeaderAuthElements();
+    if (!hasHomepageHeaderAuthState(elements)) return;
+    refreshHomepageHeaderAuthState();
+    window.addEventListener('ldc:auth:change', event => {
+      if (event?.detail?.state === 'logged-out') {
+        setHomepageHeaderLoggedOutState();
+        return;
+      }
+      refreshHomepageHeaderAuthState({ closeOverlays: true });
+    });
+  };
+
   const logoutCustomerSession = () => {
     return request('/auth/session', {
       method: 'DELETE',
@@ -5445,6 +5539,7 @@
   if (logoutButton) logoutButton.addEventListener('click', handleLogout);
 
   initAccountPage();
+  initHomepageHeaderAuthState();
 
   const requestForUi = async (path, options = {}) => {
     const payload = await request(path, options);
@@ -5463,6 +5558,7 @@
     getCustomer,
     getOrders,
     refreshAccountState,
+    refreshHomepageHeaderAuthState,
     logout: logoutCustomerSession,
     getOrCreateCart: getOrCreateCartForUi,
     addLineItem,
