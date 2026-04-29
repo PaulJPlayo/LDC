@@ -1,4 +1,4 @@
-import { defineMiddlewares } from "@medusajs/framework/http"
+import { authenticate, defineMiddlewares } from "@medusajs/framework/http"
 import express from "express"
 import path from "path"
 
@@ -20,6 +20,14 @@ export default defineMiddlewares({
       bodyParser: {
         sizeLimit: "10mb",
       },
+    },
+    {
+      matcher: "/store/customers/me/saved-items*",
+      middlewares: [authenticate("customer", ["session", "bearer"])],
+    },
+    {
+      matcher: "/store/customers/me/saved-carts*",
+      middlewares: [authenticate("customer", ["session", "bearer"])],
     },
     {
       matcher: "/store/products",

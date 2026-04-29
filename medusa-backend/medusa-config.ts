@@ -87,6 +87,9 @@ module.exports = defineConfig({
     gift_cards: {
       resolve: "./src/modules/gift-cards"
     },
+    customer_saved_workspace: {
+      resolve: "./src/modules/customer-saved-workspace"
+    },
     notification: {
       options: {
         providers: notificationProviders,
