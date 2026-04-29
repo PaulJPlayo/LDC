@@ -943,6 +943,15 @@
     );
   }
 
+  function hasBackendSavedItemIdentity(favorite) {
+    if (!favorite || typeof favorite !== 'object') return false;
+    return Boolean(
+      toText(favorite.saved_item_id) ||
+      toText(favorite.account_saved_item_id) ||
+      toText(favorite.account_source).toLowerCase() === 'backend'
+    );
+  }
+
   function getFavoriteNotes(favorite) {
     var selectedOptions = Array.isArray(favorite && favorite.selected_options) ? favorite.selected_options : [];
     var notes = selectedOptions.find(function findNotes(option) {
@@ -1337,7 +1346,7 @@
     state.items = nextItems;
     persistState(accountMode ? 'account_remove' : 'remove', { id: favoriteId });
     if (accountMode && match) {
-      if (isAccountSyncableFavorite(match)) {
+      if (hasBackendSavedItemIdentity(match) || isAccountSyncableFavorite(match)) {
         queueAccountFavoriteDelete(match);
       } else {
         removeLocalFavoriteRecord(match);
@@ -1367,7 +1376,7 @@
     persistState(accountMode ? 'account_clear' : 'clear', {});
     if (accountMode) {
       removedItems.forEach(function eachRemovedFavorite(item) {
-        if (isAccountSyncableFavorite(item)) {
+        if (hasBackendSavedItemIdentity(item) || isAccountSyncableFavorite(item)) {
           queueAccountFavoriteDelete(item);
         } else {
           removeLocalFavoriteRecord(item);
