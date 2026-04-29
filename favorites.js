@@ -2,12 +2,11 @@
  * Shared favorites store for the static storefront.
  *
  * Exposes: window.ldcFavorites
- * Storage key: ldc:favorites
+ * Guest session storage key: ldc:favorites:guest-session
  *
  * Supported migration path:
- * - same-key payload-shape normalization for historical favorites payloads stored at ldc:favorites
- * - legacy-key migration remains extensible, but repo/history evidence only shows ldc:favorites as the
- *   persisted favorites payload key
+ * - historical guest favorites stored at ldc:favorites are cleared and no longer restored
+ * - logged-in account favorites are sourced from the backend saved-items API
  *
  * Core API:
  * - getFavorites(), getFavoriteById(id), hasFavorite(id)
@@ -23,18 +22,19 @@
   }
 
   var STORE_VERSION = 2;
-  var STORAGE_KEY = 'ldc:favorites';
+  var LEGACY_STORAGE_KEY = 'ldc:favorites';
+  var STORAGE_KEY = 'ldc:favorites:guest-session';
   var CHANGE_EVENT = 'ldc:favorites:change';
   var AUTH_CHANGE_EVENT = 'ldc:auth:change';
   var ACCOUNT_FAVORITE_TYPE = 'product_favorite';
   var DEFAULT_MEDUSA_BACKEND = 'https://api.lovettsldc.com';
   var DEFAULT_MEDUSA_PUBLISHABLE_KEY = 'pk_427f7900e23e30a0e18feaf0604aa9caaa9d0cb21571889081d2cb93fb13ffb0';
-  // Future-ready hook for real alternate-key migration. Current repo/history evidence only found ldc:favorites.
-  var LEGACY_KEYS = ['ldc:favorites'];
+  var LEGACY_KEYS = [LEGACY_STORAGE_KEY];
 
   var listeners = new Set();
   var moveToCartAdapter = null;
-  var storage = null;
+  var guestStorage = null;
+  var legacyStorage = null;
   var accountMode = false;
   var accountLoaded = false;
   var accountLoadPromise = null;
@@ -50,23 +50,31 @@
     return new Date().toISOString();
   }
 
-  function hasStorage() {
+  function hasStorage(areaName) {
     try {
-      if (!global.localStorage) return false;
+      var target = global && global[areaName];
+      if (!target) return false;
       var probe = '__ldc_favorites_store_probe__';
-      global.localStorage.setItem(probe, '1');
-      global.localStorage.removeItem(probe);
+      target.setItem(probe, '1');
+      target.removeItem(probe);
       return true;
     } catch (error) {
       return false;
     }
   }
 
-  function getStorage() {
-    if (storage) return storage;
-    if (!hasStorage()) return null;
-    storage = global.localStorage;
-    return storage;
+  function getGuestStorage() {
+    if (guestStorage) return guestStorage;
+    if (!hasStorage('sessionStorage')) return null;
+    guestStorage = global.sessionStorage;
+    return guestStorage;
+  }
+
+  function getLegacyStorage() {
+    if (legacyStorage) return legacyStorage;
+    if (!hasStorage('localStorage')) return null;
+    legacyStorage = global.localStorage;
+    return legacyStorage;
   }
 
   function isObject(value) {
@@ -673,45 +681,57 @@
     });
   }
 
-  function readRawStorageValue(key) {
-    var store = getStorage();
-    if (!store) return null;
+  function readRawStorageValue(key, store) {
+    var target = store || getGuestStorage();
+    if (!target) return null;
     try {
-      return store.getItem(key);
+      return target.getItem(key);
     } catch (error) {
       return null;
     }
   }
 
-  function writeRawStorageValue(key, value) {
-    var store = getStorage();
-    if (!store) return false;
+  function writeRawStorageValue(key, value, store) {
+    var target = store || getGuestStorage();
+    if (!target) return false;
     try {
-      store.setItem(key, value);
+      target.setItem(key, value);
       return true;
     } catch (error) {
       return false;
     }
   }
 
+  function removeRawStorageValue(key, store) {
+    var target = store || getGuestStorage();
+    if (!target) return false;
+    try {
+      target.removeItem(key);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function cleanupLegacyFavoriteStorage() {
+    var store = getLegacyStorage();
+    if (!store) return null;
+    LEGACY_KEYS.forEach(function eachLegacyKey(key) {
+      removeRawStorageValue(key, store);
+    });
+    return true;
+  }
+
   function loadStateFromStorage(options) {
     var settings = isObject(options) ? options : {};
-    var store = getStorage();
+    cleanupLegacyFavoriteStorage();
+
+    var store = getGuestStorage();
     if (!store) {
       return normalizeFavoritesPayload({ items: [] });
     }
 
-    var rawText = null;
-    var rawKeyUsed = STORAGE_KEY;
-
-    for (var i = 0; i < LEGACY_KEYS.length; i += 1) {
-      var key = LEGACY_KEYS[i];
-      rawText = readRawStorageValue(key);
-      if (rawText) {
-        rawKeyUsed = key;
-        break;
-      }
-    }
+    var rawText = readRawStorageValue(STORAGE_KEY, store);
 
     if (!rawText) {
       return normalizeFavoritesPayload({ items: [] });
@@ -727,15 +747,8 @@
     var normalized = migratePayload(parsed, { source_path: getCurrentPath() });
     var normalizedText = serializeState(normalized);
 
-    if (!settings.readonly && (rawText !== normalizedText || rawKeyUsed !== STORAGE_KEY)) {
-      writeRawStorageValue(STORAGE_KEY, normalizedText);
-      if (rawKeyUsed !== STORAGE_KEY) {
-        try {
-          store.removeItem(rawKeyUsed);
-        } catch (error) {
-          // Ignore cleanup failures.
-        }
-      }
+    if (!settings.readonly && rawText !== normalizedText) {
+      writeRawStorageValue(STORAGE_KEY, normalizedText, store);
     }
 
     return normalized;
@@ -772,7 +785,12 @@
   function persistState(reason, meta) {
     state.updated_at = isoNow();
     if (!accountMode) {
-      writeRawStorageValue(STORAGE_KEY, serializeState(state));
+      if (state.items.length) {
+        writeRawStorageValue(STORAGE_KEY, serializeState(state));
+      } else {
+        removeRawStorageValue(STORAGE_KEY);
+      }
+      cleanupLegacyFavoriteStorage();
     }
     emitChange(reason, meta);
   }
@@ -1016,6 +1034,90 @@
     };
   }
 
+  function clearGuestSessionFavoritesByIds(ids) {
+    var idList = Array.isArray(ids) ? ids.map(toText).filter(Boolean) : [];
+    if (!idList.length) return 0;
+
+    var localState = loadStateFromStorage({ readonly: true });
+    var removeMap = idList.reduce(function buildMap(result, id) {
+      result[id] = true;
+      return result;
+    }, {});
+    var originalLength = localState.items.length;
+
+    localState.items = localState.items.filter(function keepItem(item) {
+      return !removeMap[toText(item && item.id)] && !removeMap[toText(item && item.favorite_key)];
+    });
+    if (localState.items.length === originalLength) return 0;
+
+    localState.updated_at = isoNow();
+    if (localState.items.length) {
+      writeRawStorageValue(STORAGE_KEY, serializeState(localState));
+    } else {
+      removeRawStorageValue(STORAGE_KEY);
+    }
+    return originalLength - localState.items.length;
+  }
+
+  function mergeGuestSessionFavoritesIntoAccount() {
+    var guestState = loadStateFromStorage({ readonly: true });
+    var candidates = [];
+    var payloads = [];
+
+    (guestState.items || []).forEach(function eachGuestFavorite(favorite) {
+      var payload = mapFavoriteToSavedItem(favorite);
+      if (!payload) return;
+      candidates.push(favorite);
+      payloads.push(payload);
+    });
+
+    if (!payloads.length) {
+      return Promise.resolve({ saved_items: [], merged: 0, skipped: 0, errors: [] });
+    }
+
+    return accountRequest('/store/customers/me/saved-items/merge', {
+      method: 'POST',
+      body: {
+        items: payloads,
+        strategy: 'upsert_by_dedupe_key'
+      }
+    }).then(function onMerged(result) {
+      var errors = Array.isArray(result && result.errors) ? result.errors : [];
+      var failedIndexes = errors.reduce(function buildFailedIndexes(map, error) {
+        var index = Number(error && error.index);
+        if (Number.isFinite(index)) map[index] = true;
+        return map;
+      }, {});
+      var mergedIds = candidates
+        .filter(function keepSuccessfulCandidate(_favorite, index) {
+          return !failedIndexes[index];
+        })
+        .map(function mapCandidateId(favorite) {
+          return toText(favorite && favorite.id);
+        })
+        .filter(Boolean);
+
+      var cleared = clearGuestSessionFavoritesByIds(mergedIds);
+      emitChange('guest_merge_complete', {
+        merged: Number(result && result.merged) || mergedIds.length,
+        skipped: Number(result && result.skipped) || 0,
+        cleared: cleared
+      });
+      return result;
+    }).catch(function onMergeFailed(error) {
+      if (global.console && typeof global.console.warn === 'function') {
+        global.console.warn('[favorites] Guest favorites merge failed', {
+          status: error && error.status
+        });
+      }
+      emitChange('guest_merge_failed', {
+        status: error && error.status,
+        message: toText(error && error.message)
+      });
+      return { saved_items: [], merged: 0, skipped: payloads.length, errors: [{ message: toText(error && error.message) }] };
+    });
+  }
+
   function mapSavedItemToFavorite(savedItem) {
     if (!savedItem || typeof savedItem !== 'object') return null;
     if (toText(savedItem.type) && toText(savedItem.type) !== ACCOUNT_FAVORITE_TYPE) return null;
@@ -1112,11 +1214,16 @@
           exitAccountMode('account_logged_out');
           return false;
         }
-        return listAccountSavedItems().then(function onSavedItems(savedItems) {
-          if (refreshId !== accountRefreshVersion) return accountMode;
-          applyAccountSavedItems(savedItems, 'account_load');
-          return true;
-        });
+        return mergeGuestSessionFavoritesIntoAccount()
+          .then(function afterGuestMerge() {
+            if (refreshId !== accountRefreshVersion) return accountMode;
+            return listAccountSavedItems();
+          })
+          .then(function onSavedItems(savedItems) {
+            if (refreshId !== accountRefreshVersion) return accountMode;
+            applyAccountSavedItems(savedItems, 'account_load');
+            return true;
+          });
       })
       .catch(function onAccountRefreshError(error) {
         if (refreshId !== accountRefreshVersion) return accountMode;
@@ -1270,7 +1377,11 @@
       return item.id !== favoriteId;
     });
     localState.updated_at = isoNow();
-    writeRawStorageValue(STORAGE_KEY, serializeState(localState));
+    if (localState.items.length) {
+      writeRawStorageValue(STORAGE_KEY, serializeState(localState));
+    } else {
+      removeRawStorageValue(STORAGE_KEY);
+    }
     return true;
   }
 
@@ -1766,7 +1877,10 @@
   }
 
   function handleStorageEvent(event) {
-    if (!event || event.key !== STORAGE_KEY) return;
+    if (!event || event.key !== STORAGE_KEY) {
+      if (event && event.key === LEGACY_STORAGE_KEY) cleanupLegacyFavoriteStorage();
+      return;
+    }
     if (accountMode) return;
     var nextState = loadStateFromStorage();
     var prevSerialized = serializeState(state);
@@ -1796,6 +1910,7 @@
     __sharedStore: true,
     version: STORE_VERSION,
     storageKey: STORAGE_KEY,
+    legacyStorageKey: LEGACY_STORAGE_KEY,
     events: {
       change: CHANGE_EVENT
     },
