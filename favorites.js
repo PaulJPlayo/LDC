@@ -27,6 +27,8 @@
   var CHANGE_EVENT = 'ldc:favorites:change';
   var AUTH_CHANGE_EVENT = 'ldc:auth:change';
   var ACCOUNT_FAVORITE_TYPE = 'product_favorite';
+  var DOORMAT_BUILD_TYPE = 'doormat_build';
+  var SUPPORTED_ACCOUNT_SAVED_ITEM_TYPES = [ACCOUNT_FAVORITE_TYPE, DOORMAT_BUILD_TYPE];
   var DEFAULT_MEDUSA_BACKEND = 'https://api.lovettsldc.com';
   var DEFAULT_MEDUSA_PUBLISHABLE_KEY = 'pk_427f7900e23e30a0e18feaf0604aa9caaa9d0cb21571889081d2cb93fb13ffb0';
   var LEGACY_KEYS = [LEGACY_STORAGE_KEY];
@@ -101,6 +103,17 @@
     if (!normalized) return 0;
     var parsed = Number(normalized);
     return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function shortHash(value) {
+    var text = toText(value);
+    if (!text) return 'none';
+    var hash = 0;
+    for (var i = 0; i < text.length; i += 1) {
+      hash = ((hash << 5) - hash) + text.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(36);
   }
 
   function toCurrencyCode(value) {
@@ -365,6 +378,15 @@
     };
   }
 
+  function cloneJsonValue(value, fallback) {
+    if (value === null || value === undefined) return fallback;
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch (error) {
+      return fallback;
+    }
+  }
+
   function cloneFavorite(item) {
     return {
       id: item.id,
@@ -392,7 +414,11 @@
       saved_item_id: item.saved_item_id,
       account_saved_item_id: item.account_saved_item_id,
       account_dedupe_key: item.account_dedupe_key,
-      account_source: item.account_source
+      account_source: item.account_source,
+      account_saved_item_type: item.account_saved_item_type,
+      line_item_metadata: cloneJsonValue(item.line_item_metadata, null),
+      upload_references: cloneJsonValue(item.upload_references, []),
+      live_reference: cloneJsonValue(item.live_reference, null)
     };
   }
 
@@ -458,7 +484,17 @@
       saved_item_id: toText(source.saved_item_id || source.savedItemId),
       account_saved_item_id: toText(source.account_saved_item_id || source.accountSavedItemId),
       account_dedupe_key: toText(source.account_dedupe_key || source.accountDedupeKey || source.dedupe_key || source.dedupeKey),
-      account_source: toText(source.account_source || source.accountSource)
+      account_source: toText(source.account_source || source.accountSource),
+      account_saved_item_type: toText(source.account_saved_item_type || source.accountSavedItemType || source.saved_item_type || source.savedItemType || source.type),
+      line_item_metadata: isObject(source.line_item_metadata || source.lineItemMetadata)
+        ? cloneJsonValue(source.line_item_metadata || source.lineItemMetadata, null)
+        : null,
+      upload_references: Array.isArray(source.upload_references || source.uploadReferences)
+        ? cloneJsonValue(source.upload_references || source.uploadReferences, [])
+        : [],
+      live_reference: isObject(source.live_reference || source.liveReference)
+        ? cloneJsonValue(source.live_reference || source.liveReference, null)
+        : null
     };
 
     if (!canonical.short_description) {
@@ -511,7 +547,8 @@
       'saved_item_id',
       'account_saved_item_id',
       'account_dedupe_key',
-      'account_source'
+      'account_source',
+      'account_saved_item_type'
     ];
 
     fields.forEach(function eachField(field) {
@@ -531,6 +568,15 @@
     if (Array.isArray(incoming.selected_options) && incoming.selected_options.length) {
       merged.selected_options = incoming.selected_options.map(cloneOption);
       merged.options_summary = optionsSummary(merged.selected_options);
+    }
+    if (isObject(incoming.line_item_metadata)) {
+      merged.line_item_metadata = cloneJsonValue(incoming.line_item_metadata, null);
+    }
+    if (Array.isArray(incoming.upload_references)) {
+      merged.upload_references = cloneJsonValue(incoming.upload_references, []);
+    }
+    if (isObject(incoming.live_reference)) {
+      merged.live_reference = cloneJsonValue(incoming.live_reference, null);
     }
 
     merged.updated_at = incoming.updated_at || isoNow();
@@ -886,10 +932,21 @@
   }
 
   function listAccountSavedItems() {
-    return accountRequest('/store/customers/me/saved-items?type=' + encodeURIComponent(ACCOUNT_FAVORITE_TYPE) + '&limit=200')
-      .then(function onSavedItems(payload) {
-        return Array.isArray(payload && payload.saved_items) ? payload.saved_items : [];
+    return Promise.all(SUPPORTED_ACCOUNT_SAVED_ITEM_TYPES.map(function eachType(type) {
+      return accountRequest('/store/customers/me/saved-items?type=' + encodeURIComponent(type) + '&limit=200')
+        .then(function onSavedItems(payload) {
+          return Array.isArray(payload && payload.saved_items) ? payload.saved_items : [];
+        });
+    })).then(function flattenSavedItems(results) {
+      var byId = new Map();
+      results.forEach(function eachResult(items) {
+        (items || []).forEach(function eachItem(item) {
+          var id = toText(item && item.id);
+          if (id) byId.set(id, item);
+        });
       });
+      return Array.from(byId.values());
+    });
   }
 
   function isUnsafeUploadKey(key) {
@@ -899,6 +956,9 @@
   function hasRawAccountPayload(value, depth, parentKey) {
     if (depth > 8) return false;
     if (value === null || value === undefined) return false;
+    if ((global.File && value instanceof global.File) || (global.Blob && value instanceof global.Blob)) {
+      return true;
+    }
     if (typeof value === 'string') {
       var text = toText(value);
       if (!text) return false;
@@ -920,6 +980,7 @@
   function sanitizeAccountPayload(value, depth, parentKey) {
     if (depth > 8) return undefined;
     if (value === null || value === undefined) return value;
+    if ((global.File && value instanceof global.File) || (global.Blob && value instanceof global.Blob)) return undefined;
     if (typeof value === 'string') {
       if (/^data:/i.test(toText(value))) return '';
       if (isUnsafeUploadKey(parentKey) && toText(value)) return '';
@@ -945,7 +1006,10 @@
 
   function isAccountSyncableFavorite(favorite) {
     if (!favorite || typeof favorite !== 'object') return false;
-    if (isAttireFavoriteRecord(favorite) || isDoormatFavoriteRecord(favorite) || isDesignSubmittedFavorite(favorite)) {
+    if (isDoormatFavoriteRecord(favorite)) {
+      return isAccountSyncableDoormatBuild(favorite);
+    }
+    if (isAttireFavoriteRecord(favorite) || isDesignSubmittedFavorite(favorite)) {
       return false;
     }
     if (hasRawAccountPayload(favorite, 0, '')) return false;
@@ -996,7 +1060,135 @@
     ].join('|');
   }
 
+  function getFavoriteOptionValue(favorite, label) {
+    var option = findFavoriteOptionRecord(favorite, label);
+    return toText(option && option.value);
+  }
+
+  function isUploadBearingFavorite(favorite) {
+    if (!favorite || typeof favorite !== 'object') return false;
+    if (hasRawAccountPayload(favorite, 0, '')) return true;
+    if (Array.isArray(favorite.upload_references) && favorite.upload_references.length) return true;
+    if (isObject(favorite.line_item_metadata)) {
+      var metadata = favorite.line_item_metadata;
+      if (
+        toText(metadata.design_attachment_name) ||
+        toText(metadata.designAttachmentName) ||
+        toText(metadata.design_attachment_key) ||
+        toText(metadata.designAttachmentKey) ||
+        toText(metadata.design_attachment_url) ||
+        toText(metadata.designAttachmentUrl)
+      ) {
+        return true;
+      }
+    }
+    var selectedOptions = Array.isArray(favorite.selected_options) ? favorite.selected_options : [];
+    return selectedOptions.some(function hasAttachmentOption(option) {
+      var label = normalizeFavoriteMetadataLabel(option && option.label).toLowerCase();
+      return label === 'attachment' && Boolean(
+        toText(option && option.value) ||
+        toText(option && (option.attachment_key || option.attachmentKey)) ||
+        toText(option && (option.attachment_data || option.attachmentData))
+      );
+    });
+  }
+
+  function isAccountSyncableDoormatBuild(favorite) {
+    if (!isDoormatFavoriteRecord(favorite)) return false;
+    if (isUploadBearingFavorite(favorite)) return false;
+    return Boolean(
+      toText(favorite.title) &&
+      toText(favorite.variant_id) &&
+      getFavoriteOptionValue(favorite, 'Size') &&
+      getFavoriteOptionValue(favorite, 'Color')
+    );
+  }
+
+  function buildDoormatAccountDedupeKey(favorite) {
+    var variantRef = toText(favorite && favorite.variant_id) || 'none';
+    var sizeRef = getFavoriteOptionValue(favorite, 'Size') || 'none';
+    var colorRef = getFavoriteOptionValue(favorite, 'Color') || 'none';
+    var notesRef = getFavoriteNotes(favorite);
+    return [
+      DOORMAT_BUILD_TYPE,
+      'doormat-custom',
+      'variant:' + toLowerSlug(variantRef),
+      'size:' + toLowerSlug(sizeRef),
+      'color:' + toLowerSlug(colorRef),
+      'notes:' + shortHash(notesRef),
+      'uploads:none'
+    ].join('|');
+  }
+
+  function buildSavedItemDedupeKey(favorite) {
+    if (isDoormatFavoriteRecord(favorite)) {
+      return buildDoormatAccountDedupeKey(favorite);
+    }
+    return buildAccountDedupeKey(favorite);
+  }
+
+  function getFavoritePriceSnapshotDisplay(favorite) {
+    var price = toNumber(favorite && favorite.price);
+    if (!Number.isFinite(price) || price <= 0) return '';
+    var currency = toCurrencyCode(favorite && favorite.currency_code);
+    if (currency === 'USD') return '$' + price.toFixed(2);
+    return String(price);
+  }
+
+  function mapDoormatFavoriteToSavedItem(favorite) {
+    if (!isAccountSyncableDoormatBuild(favorite)) return null;
+
+    var cloned = cloneFavorite(favorite);
+    var dedupeKey = toText(favorite.account_dedupe_key) || buildDoormatAccountDedupeKey(favorite);
+    var safePayload = sanitizeAccountPayload(cloned, 0, '') || {};
+    var safeMetadata = sanitizeAccountPayload(buildCommerceMetadataFromFavorite(favorite), 0, '') || {};
+    var safeOptions = sanitizeAccountPayload(favorite.selected_options || [], 0, '') || [];
+    var price = toNumber(favorite.price);
+    var priceAmount = Number.isFinite(price) ? Math.round(price * 100) : 0;
+    var size = getFavoriteOptionValue(favorite, 'Size');
+    var color = getFavoriteOptionValue(favorite, 'Color');
+
+    return {
+      type: DOORMAT_BUILD_TYPE,
+      dedupe_key: dedupeKey,
+      favorite_key: toText(favorite.favorite_key || favorite.id) || buildFavoriteKey(favorite),
+      source_path: '/doormats',
+      product_id: toText(favorite.product_id),
+      product_handle: toText(favorite.product_handle) || 'doormat-custom',
+      product_key: toText(favorite.product_key) || 'doormat-custom',
+      variant_id: toText(favorite.variant_id),
+      title: toText(favorite.title) || 'Custom Doormat',
+      variant_title: toText(favorite.variant_title),
+      description: toText(favorite.description),
+      short_description: toText(favorite.short_description),
+      image_url: toText(favorite.image_url || favorite.preview_image),
+      preview_image: toText(favorite.preview_image || favorite.image_url),
+      preview_style: toText(favorite.preview_style),
+      quantity: Math.max(1, toNumber(favorite.quantity) || 1),
+      currency_code: toCurrencyCode(favorite.currency_code),
+      price_snapshot_amount: priceAmount,
+      price_snapshot_display: getFavoritePriceSnapshotDisplay(favorite),
+      selected_options: safeOptions,
+      item_payload: safePayload,
+      line_item_metadata: safeMetadata,
+      notes: getFavoriteNotes(favorite),
+      upload_references: [],
+      live_reference: {
+        source_path: '/doormats',
+        product_id: toText(favorite.product_id),
+        product_handle: toText(favorite.product_handle) || 'doormat-custom',
+        product_key: toText(favorite.product_key) || 'doormat-custom',
+        variant_id: toText(favorite.variant_id),
+        size: size,
+        color: color
+      }
+    };
+  }
+
   function mapFavoriteToSavedItem(favorite) {
+    if (isDoormatFavoriteRecord(favorite)) {
+      return mapDoormatFavoriteToSavedItem(favorite);
+    }
     if (!isAccountSyncableFavorite(favorite)) return null;
 
     var cloned = cloneFavorite(favorite);
@@ -1120,7 +1312,8 @@
 
   function mapSavedItemToFavorite(savedItem) {
     if (!savedItem || typeof savedItem !== 'object') return null;
-    if (toText(savedItem.type) && toText(savedItem.type) !== ACCOUNT_FAVORITE_TYPE) return null;
+    var savedType = toText(savedItem.type) || ACCOUNT_FAVORITE_TYPE;
+    if (SUPPORTED_ACCOUNT_SAVED_ITEM_TYPES.indexOf(savedType) === -1) return null;
 
     var payload = isObject(savedItem.item_payload) ? savedItem.item_payload : {};
     var snapshotAmount = Number(savedItem.price_snapshot_amount);
@@ -1128,6 +1321,9 @@
       product_id: toText(savedItem.product_id || payload.product_id),
       product_handle: toText(savedItem.product_handle || payload.product_handle),
       product_key: toText(savedItem.product_key || payload.product_key),
+      product_url: savedType === DOORMAT_BUILD_TYPE
+        ? toText(savedItem.source_path || payload.product_url || payload.productUrl || '/doormats')
+        : toText(payload.product_url || payload.productUrl),
       variant_id: toText(savedItem.variant_id || payload.variant_id),
       title: toText(savedItem.title || payload.title) || 'Favorite',
       variant_title: toText(savedItem.variant_title || payload.variant_title),
@@ -1149,7 +1345,17 @@
       saved_item_id: toText(savedItem.id),
       account_saved_item_id: toText(savedItem.id),
       account_dedupe_key: toText(savedItem.dedupe_key),
-      account_source: 'backend'
+      account_source: 'backend',
+      account_saved_item_type: savedType,
+      line_item_metadata: isObject(savedItem.line_item_metadata)
+        ? cloneJsonValue(savedItem.line_item_metadata, null)
+        : (isObject(payload.line_item_metadata) ? cloneJsonValue(payload.line_item_metadata, null) : null),
+      upload_references: Array.isArray(savedItem.upload_references)
+        ? cloneJsonValue(savedItem.upload_references, [])
+        : [],
+      live_reference: isObject(savedItem.live_reference)
+        ? cloneJsonValue(savedItem.live_reference, null)
+        : null
     });
     var favorite = normalizeFavoriteItem(mapped, { source_path: mapped.source_path });
     var favoriteKey = toText(savedItem.favorite_key || payload.favorite_key || payload.id || favorite.id);
@@ -1161,6 +1367,10 @@
     favorite.account_saved_item_id = toText(savedItem.id);
     favorite.account_dedupe_key = toText(savedItem.dedupe_key);
     favorite.account_source = 'backend';
+    favorite.account_saved_item_type = savedType;
+    favorite.line_item_metadata = cloneJsonValue(mapped.line_item_metadata, null);
+    favorite.upload_references = cloneJsonValue(mapped.upload_references, []);
+    favorite.live_reference = cloneJsonValue(mapped.live_reference, null);
     return favorite;
   }
 
@@ -1277,7 +1487,7 @@
   function resolveSavedItemIdForFavorite(favorite) {
     var direct = toText(favorite && (favorite.account_saved_item_id || favorite.saved_item_id));
     if (direct) return Promise.resolve(direct);
-    var dedupeKey = toText(favorite && favorite.account_dedupe_key) || buildAccountDedupeKey(favorite || {});
+    var dedupeKey = toText(favorite && favorite.account_dedupe_key) || buildSavedItemDedupeKey(favorite || {});
     return listAccountSavedItems().then(function findSavedItemId(savedItems) {
       var match = (savedItems || []).find(function findItem(item) {
         return toText(item && item.dedupe_key) === dedupeKey;
@@ -1423,8 +1633,9 @@
         rawItem
       );
       if (accountMode) {
-        merged.account_dedupe_key = toText(merged.account_dedupe_key) || buildAccountDedupeKey(merged);
+        merged.account_dedupe_key = toText(merged.account_dedupe_key) || buildSavedItemDedupeKey(merged);
         merged.account_source = toText(merged.account_source) || 'backend_pending';
+        merged.account_saved_item_type = isDoormatFavoriteRecord(merged) ? DOORMAT_BUILD_TYPE : ACCOUNT_FAVORITE_TYPE;
       }
       state.items.splice(existingIndex, 1, merged);
       persistState(accountMode ? 'account_update' : 'update', { id: merged.id });
@@ -1435,8 +1646,9 @@
     }
 
     if (accountMode) {
-      normalized.account_dedupe_key = toText(normalized.account_dedupe_key) || buildAccountDedupeKey(normalized);
+      normalized.account_dedupe_key = toText(normalized.account_dedupe_key) || buildSavedItemDedupeKey(normalized);
       normalized.account_source = 'backend_pending';
+      normalized.account_saved_item_type = isDoormatFavoriteRecord(normalized) ? DOORMAT_BUILD_TYPE : ACCOUNT_FAVORITE_TYPE;
     }
     state.items.push(normalized);
     persistState(accountMode ? 'account_add' : 'add', { id: normalized.id });
