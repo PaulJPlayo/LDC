@@ -25,12 +25,20 @@
   var STORE_VERSION = 2;
   var STORAGE_KEY = 'ldc:favorites';
   var CHANGE_EVENT = 'ldc:favorites:change';
+  var AUTH_CHANGE_EVENT = 'ldc:auth:change';
+  var ACCOUNT_FAVORITE_TYPE = 'product_favorite';
+  var DEFAULT_MEDUSA_BACKEND = 'https://api.lovettsldc.com';
+  var DEFAULT_MEDUSA_PUBLISHABLE_KEY = 'pk_427f7900e23e30a0e18feaf0604aa9caaa9d0cb21571889081d2cb93fb13ffb0';
   // Future-ready hook for real alternate-key migration. Current repo/history evidence only found ldc:favorites.
   var LEGACY_KEYS = ['ldc:favorites'];
 
   var listeners = new Set();
   var moveToCartAdapter = null;
   var storage = null;
+  var accountMode = false;
+  var accountLoaded = false;
+  var accountLoadPromise = null;
+  var accountRefreshVersion = 0;
   var state = {
     version: STORE_VERSION,
     storage_key: STORAGE_KEY,
@@ -372,7 +380,11 @@
       options_summary: item.options_summary,
       source_path: item.source_path,
       added_at: item.added_at,
-      updated_at: item.updated_at
+      updated_at: item.updated_at,
+      saved_item_id: item.saved_item_id,
+      account_saved_item_id: item.account_saved_item_id,
+      account_dedupe_key: item.account_dedupe_key,
+      account_source: item.account_source
     };
   }
 
@@ -434,7 +446,11 @@
         source.source_path || source.sourcePath || context.source_path || context.sourcePath || getCurrentPath()
       ) || '/',
       added_at: toText(source.added_at || source.addedAt || source.created_at || source.createdAt || source.updated_at || source.updatedAt),
-      updated_at: isoNow()
+      updated_at: isoNow(),
+      saved_item_id: toText(source.saved_item_id || source.savedItemId),
+      account_saved_item_id: toText(source.account_saved_item_id || source.accountSavedItemId),
+      account_dedupe_key: toText(source.account_dedupe_key || source.accountDedupeKey || source.dedupe_key || source.dedupeKey),
+      account_source: toText(source.account_source || source.accountSource)
     };
 
     if (!canonical.short_description) {
@@ -483,7 +499,11 @@
       'preview_style',
       'options_summary',
       'source_path',
-      'added_at'
+      'added_at',
+      'saved_item_id',
+      'account_saved_item_id',
+      'account_dedupe_key',
+      'account_source'
     ];
 
     fields.forEach(function eachField(field) {
@@ -528,7 +548,7 @@
     return merged;
   }
 
-  function findFavoriteMatch(rawInput) {
+  function findFavoriteMatchInItems(items, rawInput) {
     var directId = '';
     var lookupAliases = [];
 
@@ -545,8 +565,9 @@
 
     if (!directId && !lookupAliases.length) return null;
 
-    for (var i = 0; i < state.items.length; i += 1) {
-      var item = state.items[i];
+    var sourceItems = Array.isArray(items) ? items : [];
+    for (var i = 0; i < sourceItems.length; i += 1) {
+      var item = sourceItems[i];
       if (!item) continue;
       if (directId && (item.id === directId || item.favorite_key === directId)) {
         return item;
@@ -558,6 +579,10 @@
     }
 
     return null;
+  }
+
+  function findFavoriteMatch(rawInput) {
+    return findFavoriteMatchInItems(state.items, rawInput);
   }
 
   function normalizeFavoritesPayload(rawPayload, meta) {
@@ -669,7 +694,8 @@
     }
   }
 
-  function loadStateFromStorage() {
+  function loadStateFromStorage(options) {
+    var settings = isObject(options) ? options : {};
     var store = getStorage();
     if (!store) {
       return normalizeFavoritesPayload({ items: [] });
@@ -701,7 +727,7 @@
     var normalized = migratePayload(parsed, { source_path: getCurrentPath() });
     var normalizedText = serializeState(normalized);
 
-    if (rawText !== normalizedText || rawKeyUsed !== STORAGE_KEY) {
+    if (!settings.readonly && (rawText !== normalizedText || rawKeyUsed !== STORAGE_KEY)) {
       writeRawStorageValue(STORAGE_KEY, normalizedText);
       if (rawKeyUsed !== STORAGE_KEY) {
         try {
@@ -745,7 +771,9 @@
 
   function persistState(reason, meta) {
     state.updated_at = isoNow();
-    writeRawStorageValue(STORAGE_KEY, serializeState(state));
+    if (!accountMode) {
+      writeRawStorageValue(STORAGE_KEY, serializeState(state));
+    }
     emitChange(reason, meta);
   }
 
@@ -753,6 +781,8 @@
     return {
       version: STORE_VERSION,
       storage_key: STORAGE_KEY,
+      mode: accountMode ? 'account' : 'guest',
+      account_loaded: Boolean(accountLoaded),
       updated_at: state.updated_at,
       items: state.items.map(cloneFavorite)
     };
@@ -771,9 +801,492 @@
     return Boolean(findFavoriteMatch(id));
   }
 
+  function getStoreApiConfig() {
+    var body = global.document && global.document.body ? global.document.body : null;
+    var dataset = body && body.dataset ? body.dataset : {};
+    var enabled = dataset.medusaEnabled === 'true' || global.LDC_MEDUSA_ENABLED === true;
+    var backendUrl = toText(dataset.medusaBackend || global.LDC_MEDUSA_BACKEND || DEFAULT_MEDUSA_BACKEND).replace(/\/+$/, '');
+    var publishableKey = toText(
+      dataset.medusaPublishableKey ||
+      global.LDC_MEDUSA_PUBLISHABLE_KEY ||
+      DEFAULT_MEDUSA_PUBLISHABLE_KEY
+    );
+    return {
+      enabled: Boolean(enabled && backendUrl),
+      backendUrl: backendUrl,
+      publishableKey: publishableKey
+    };
+  }
+
+  function accountRequest(path, options) {
+    var config = getStoreApiConfig();
+    var requestOptions = isObject(options) ? options : {};
+    if (!config.enabled) {
+      return Promise.reject(new Error('Store API is unavailable for account favorites.'));
+    }
+
+    var headers = Object.assign({
+      'Content-Type': 'application/json'
+    }, requestOptions.headers || {});
+    if (config.publishableKey) {
+      headers['x-publishable-api-key'] = config.publishableKey;
+    }
+
+    return global.fetch(config.backendUrl + path, {
+      method: requestOptions.method || 'GET',
+      headers: headers,
+      credentials: 'include',
+      body: requestOptions.body ? JSON.stringify(requestOptions.body) : undefined
+    }).then(function parseAccountResponse(response) {
+      return response.text().then(function parseText(text) {
+        var payload = {};
+        if (text) {
+          try {
+            payload = JSON.parse(text);
+          } catch (error) {
+            payload = { message: text };
+          }
+        }
+        if (!response.ok) {
+          var requestError = new Error(
+            toText(payload && (payload.message || payload.error)) ||
+              'Account favorites request failed.'
+          );
+          requestError.status = response.status;
+          requestError.payload = payload;
+          throw requestError;
+        }
+        return payload;
+      });
+    });
+  }
+
+  function getAccountCustomer() {
+    return accountRequest('/store/customers/me').then(function onCustomerResult(payload) {
+      return payload && (payload.customer || payload);
+    });
+  }
+
+  function listAccountSavedItems() {
+    return accountRequest('/store/customers/me/saved-items?type=' + encodeURIComponent(ACCOUNT_FAVORITE_TYPE) + '&limit=200')
+      .then(function onSavedItems(payload) {
+        return Array.isArray(payload && payload.saved_items) ? payload.saved_items : [];
+      });
+  }
+
+  function isUnsafeUploadKey(key) {
+    return /^(attachment_data|attachmentdata|data_url|dataurl|base64|raw_file|rawfile|file_data|filedata|blob)$/i.test(toText(key));
+  }
+
+  function hasRawAccountPayload(value, depth, parentKey) {
+    if (depth > 8) return false;
+    if (value === null || value === undefined) return false;
+    if (typeof value === 'string') {
+      var text = toText(value);
+      if (!text) return false;
+      if (/^data:/i.test(text)) return true;
+      if (isUnsafeUploadKey(parentKey) && text) return true;
+      return false;
+    }
+    if (typeof value !== 'object') return false;
+    if (Array.isArray(value)) {
+      return value.some(function eachEntry(entry) {
+        return hasRawAccountPayload(entry, depth + 1, parentKey);
+      });
+    }
+    return Object.keys(value).some(function eachKey(key) {
+      return hasRawAccountPayload(value[key], depth + 1, key);
+    });
+  }
+
+  function sanitizeAccountPayload(value, depth, parentKey) {
+    if (depth > 8) return undefined;
+    if (value === null || value === undefined) return value;
+    if (typeof value === 'string') {
+      if (/^data:/i.test(toText(value))) return '';
+      if (isUnsafeUploadKey(parentKey) && toText(value)) return '';
+      return value;
+    }
+    if (typeof value !== 'object') return value;
+    if (Array.isArray(value)) {
+      return value
+        .map(function eachEntry(entry) {
+          return sanitizeAccountPayload(entry, depth + 1, parentKey);
+        })
+        .filter(function keepEntry(entry) {
+          return entry !== undefined;
+        });
+    }
+    return Object.keys(value).reduce(function reduceSafe(result, key) {
+      if (isUnsafeUploadKey(key)) return result;
+      var nextValue = sanitizeAccountPayload(value[key], depth + 1, key);
+      if (nextValue !== undefined) result[key] = nextValue;
+      return result;
+    }, {});
+  }
+
+  function isAccountSyncableFavorite(favorite) {
+    if (!favorite || typeof favorite !== 'object') return false;
+    if (isAttireFavoriteRecord(favorite) || isDoormatFavoriteRecord(favorite) || isDesignSubmittedFavorite(favorite)) {
+      return false;
+    }
+    if (hasRawAccountPayload(favorite, 0, '')) return false;
+    return Boolean(
+      toText(favorite.title) &&
+      (
+        toText(favorite.product_id) ||
+        toText(favorite.product_handle) ||
+        toText(favorite.product_key) ||
+        toText(favorite.product_url) ||
+        toText(favorite.variant_id)
+      )
+    );
+  }
+
+  function getFavoriteNotes(favorite) {
+    var selectedOptions = Array.isArray(favorite && favorite.selected_options) ? favorite.selected_options : [];
+    var notes = selectedOptions.find(function findNotes(option) {
+      return normalizeFavoriteMetadataLabel(option && option.label).toLowerCase() === 'notes';
+    });
+    return toText(notes && notes.value);
+  }
+
+  function buildAccountDedupeKey(favorite) {
+    var productRef =
+      toText(favorite.product_handle) ||
+      toText(favorite.product_id) ||
+      toText(favorite.product_key) ||
+      normalizeUrl(favorite.product_url) ||
+      toText(favorite.title) ||
+      'product';
+    var variantRef = toText(favorite.variant_id) || toText(favorite.variant_title) || 'default';
+    var optionsRef = optionsSummary(favorite.selected_options || []) || toText(favorite.options_summary) || 'default';
+    return [
+      ACCOUNT_FAVORITE_TYPE,
+      toLowerSlug(productRef),
+      toLowerSlug(variantRef),
+      toLowerSlug(optionsRef)
+    ].join('|');
+  }
+
+  function mapFavoriteToSavedItem(favorite) {
+    if (!isAccountSyncableFavorite(favorite)) return null;
+
+    var cloned = cloneFavorite(favorite);
+    var dedupeKey = toText(favorite.account_dedupe_key) || buildAccountDedupeKey(favorite);
+    var safePayload = sanitizeAccountPayload(cloned, 0, '') || {};
+    var safeMetadata = sanitizeAccountPayload(buildCommerceMetadataFromFavorite(favorite), 0, '') || {};
+    var price = toNumber(favorite.price);
+    var priceAmount = Number.isFinite(price) ? Math.round(price * 100) : 0;
+
+    return {
+      type: ACCOUNT_FAVORITE_TYPE,
+      dedupe_key: dedupeKey,
+      favorite_key: toText(favorite.favorite_key || favorite.id) || buildFavoriteKey(favorite),
+      source_path: toText(favorite.source_path) || getCurrentPath(),
+      product_id: toText(favorite.product_id),
+      product_handle: toText(favorite.product_handle),
+      product_key: toText(favorite.product_key),
+      variant_id: toText(favorite.variant_id),
+      title: toText(favorite.title) || 'Favorite',
+      variant_title: toText(favorite.variant_title),
+      description: toText(favorite.description),
+      short_description: toText(favorite.short_description),
+      image_url: toText(favorite.image_url || favorite.preview_image),
+      preview_image: toText(favorite.preview_image || favorite.image_url),
+      preview_style: toText(favorite.preview_style),
+      quantity: Math.max(1, toNumber(favorite.quantity) || 1),
+      currency_code: toCurrencyCode(favorite.currency_code),
+      price_snapshot_amount: priceAmount,
+      price_snapshot_display: price ? String(price) : '',
+      selected_options: sanitizeAccountPayload(favorite.selected_options || [], 0, '') || [],
+      item_payload: safePayload,
+      line_item_metadata: safeMetadata,
+      notes: getFavoriteNotes(favorite),
+      upload_references: []
+    };
+  }
+
+  function mapSavedItemToFavorite(savedItem) {
+    if (!savedItem || typeof savedItem !== 'object') return null;
+    if (toText(savedItem.type) && toText(savedItem.type) !== ACCOUNT_FAVORITE_TYPE) return null;
+
+    var payload = isObject(savedItem.item_payload) ? savedItem.item_payload : {};
+    var snapshotAmount = Number(savedItem.price_snapshot_amount);
+    var mapped = Object.assign({}, payload, {
+      product_id: toText(savedItem.product_id || payload.product_id),
+      product_handle: toText(savedItem.product_handle || payload.product_handle),
+      product_key: toText(savedItem.product_key || payload.product_key),
+      variant_id: toText(savedItem.variant_id || payload.variant_id),
+      title: toText(savedItem.title || payload.title) || 'Favorite',
+      variant_title: toText(savedItem.variant_title || payload.variant_title),
+      short_description: toText(savedItem.short_description || payload.short_description),
+      description: toText(savedItem.description || payload.description),
+      price: Number.isFinite(snapshotAmount) && snapshotAmount > 0
+        ? snapshotAmount / 100
+        : toNumber(payload.price || 0),
+      currency_code: toCurrencyCode(savedItem.currency_code || payload.currency_code),
+      preview_image: toText(savedItem.preview_image || savedItem.image_url || payload.preview_image || payload.image_url),
+      image_url: toText(savedItem.image_url || savedItem.preview_image || payload.image_url || payload.preview_image),
+      preview_style: toText(savedItem.preview_style || payload.preview_style),
+      selected_options: Array.isArray(savedItem.selected_options)
+        ? savedItem.selected_options
+        : (Array.isArray(payload.selected_options) ? payload.selected_options : []),
+      source_path: toText(savedItem.source_path || payload.source_path) || '/',
+      added_at: toText(savedItem.created_at || payload.added_at),
+      updated_at: toText(savedItem.updated_at || payload.updated_at),
+      saved_item_id: toText(savedItem.id),
+      account_saved_item_id: toText(savedItem.id),
+      account_dedupe_key: toText(savedItem.dedupe_key),
+      account_source: 'backend'
+    });
+    var favorite = normalizeFavoriteItem(mapped, { source_path: mapped.source_path });
+    var favoriteKey = toText(savedItem.favorite_key || payload.favorite_key || payload.id || favorite.id);
+    if (favoriteKey) {
+      favorite.id = favoriteKey;
+      favorite.favorite_key = favoriteKey;
+    }
+    favorite.saved_item_id = toText(savedItem.id);
+    favorite.account_saved_item_id = toText(savedItem.id);
+    favorite.account_dedupe_key = toText(savedItem.dedupe_key);
+    favorite.account_source = 'backend';
+    return favorite;
+  }
+
+  function getDeferredLocalFavorites() {
+    return loadStateFromStorage({ readonly: true }).items.filter(function keepDeferred(item) {
+      return !isAccountSyncableFavorite(item);
+    });
+  }
+
+  function buildAccountStateFromSavedItems(savedItems) {
+    var accountItems = (Array.isArray(savedItems) ? savedItems : [])
+      .map(mapSavedItemToFavorite)
+      .filter(Boolean);
+    return normalizeFavoritesPayload({
+      items: accountItems.concat(getDeferredLocalFavorites())
+    }, { source_path: getCurrentPath() });
+  }
+
+  function applyAccountSavedItems(savedItems, reason) {
+    accountMode = true;
+    accountLoaded = true;
+    state = buildAccountStateFromSavedItems(savedItems);
+    emitChange(reason || 'account_load', { mode: 'account' });
+    return getFavorites();
+  }
+
+  function exitAccountMode(reason) {
+    accountRefreshVersion += 1;
+    accountMode = false;
+    accountLoaded = false;
+    accountLoadPromise = null;
+    state = loadStateFromStorage();
+    emitChange(reason || 'account_logout', { mode: 'guest' });
+    return getFavorites();
+  }
+
+  function refreshAccountFavorites(options) {
+    var force = isObject(options) && options.force === true;
+    if (accountLoadPromise && !force) return accountLoadPromise;
+    if (!getStoreApiConfig().enabled) {
+      return Promise.resolve(false);
+    }
+
+    var refreshId = accountRefreshVersion + 1;
+    accountRefreshVersion = refreshId;
+
+    var pending = getAccountCustomer()
+      .then(function onCustomer(customer) {
+        if (refreshId !== accountRefreshVersion) return accountMode;
+        if (!customer || !toText(customer.id || customer.email)) {
+          exitAccountMode('account_logged_out');
+          return false;
+        }
+        return listAccountSavedItems().then(function onSavedItems(savedItems) {
+          if (refreshId !== accountRefreshVersion) return accountMode;
+          applyAccountSavedItems(savedItems, 'account_load');
+          return true;
+        });
+      })
+      .catch(function onAccountRefreshError(error) {
+        if (refreshId !== accountRefreshVersion) return accountMode;
+        if (error && (error.status === 401 || error.status === 403)) {
+          exitAccountMode('account_logged_out');
+        } else if (accountMode) {
+          emitChange('account_load_failed', {
+            status: error && error.status,
+            message: toText(error && error.message)
+          });
+        }
+        return false;
+      });
+
+    accountLoadPromise = pending.then(function cleanup(result) {
+      if (refreshId === accountRefreshVersion) {
+        accountLoadPromise = null;
+      }
+      return result;
+    }, function cleanupError(error) {
+      if (refreshId === accountRefreshVersion) {
+        accountLoadPromise = null;
+      }
+      throw error;
+    });
+
+    return accountLoadPromise;
+  }
+
+  function upsertAccountSavedFavorite(favorite) {
+    var payload = mapFavoriteToSavedItem(favorite);
+    if (!payload) {
+      return Promise.reject(new Error('Favorite is not eligible for account sync.'));
+    }
+    return accountRequest('/store/customers/me/saved-items', {
+      method: 'POST',
+      body: payload
+    }).then(function onSaved(payloadResult) {
+      return payloadResult && (payloadResult.saved_item || payloadResult.savedItem || payloadResult);
+    });
+  }
+
+  function deleteAccountSavedFavorite(savedItemId) {
+    var id = toText(savedItemId);
+    if (!id) return Promise.reject(new Error('Missing saved item id.'));
+    return accountRequest('/store/customers/me/saved-items/' + encodeURIComponent(id), {
+      method: 'DELETE'
+    });
+  }
+
+  function resolveSavedItemIdForFavorite(favorite) {
+    var direct = toText(favorite && (favorite.account_saved_item_id || favorite.saved_item_id));
+    if (direct) return Promise.resolve(direct);
+    var dedupeKey = toText(favorite && favorite.account_dedupe_key) || buildAccountDedupeKey(favorite || {});
+    return listAccountSavedItems().then(function findSavedItemId(savedItems) {
+      var match = (savedItems || []).find(function findItem(item) {
+        return toText(item && item.dedupe_key) === dedupeKey;
+      });
+      return toText(match && match.id);
+    });
+  }
+
+  function queueAccountFavoriteUpsert(favorite) {
+    var favoriteId = toText(favorite && favorite.id);
+    upsertAccountSavedFavorite(favorite)
+      .then(function onSaved(savedItem) {
+        var mapped = mapSavedItemToFavorite(savedItem);
+        if (!mapped) return;
+        var existing = findFavoriteMatch(favoriteId) || findFavoriteMatch(mapped);
+        var index = existing
+          ? state.items.findIndex(function findIndex(item) { return item.id === existing.id; })
+          : -1;
+        if (index >= 0) {
+          state.items.splice(index, 1, mergeFavoriteRecords(state.items[index], mapped));
+        } else {
+          state.items.push(mapped);
+        }
+        persistState('account_sync', { id: mapped.id, saved_item_id: mapped.saved_item_id });
+      })
+      .catch(function onSaveFailed(error) {
+        var current = findFavoriteMatch(favoriteId);
+        if (current && !toText(current.saved_item_id || current.account_saved_item_id)) {
+          state.items = state.items.filter(function filterItem(item) {
+            return item.id !== current.id;
+          });
+          persistState('account_sync_failed', {
+            id: current.id,
+            status: error && error.status,
+            message: toText(error && error.message)
+          });
+        }
+        if (global.console && typeof global.console.warn === 'function') {
+          global.console.warn('[favorites] Account favorite save failed', {
+            id: favoriteId,
+            status: error && error.status
+          });
+        }
+      });
+  }
+
+  function queueAccountFavoriteDelete(favorite) {
+    resolveSavedItemIdForFavorite(favorite)
+      .then(function onResolved(savedItemId) {
+        if (!savedItemId) return null;
+        return deleteAccountSavedFavorite(savedItemId);
+      })
+      .catch(function onDeleteFailed(error) {
+        if (global.console && typeof global.console.warn === 'function') {
+          global.console.warn('[favorites] Account favorite delete failed', {
+            id: favorite && favorite.id,
+            status: error && error.status
+          });
+        }
+        refreshAccountFavorites();
+      });
+  }
+
+  function upsertLocalFavoriteRecord(rawItem, meta) {
+    var normalized = normalizeFavoriteItem(rawItem, meta);
+    if (!normalized.id) return null;
+    var localState = loadStateFromStorage();
+    var existing = findFavoriteMatchInItems(localState.items, rawItem) || findFavoriteMatchInItems(localState.items, normalized.id);
+    var existingIndex = existing
+      ? localState.items.findIndex(function findIndex(item) { return item.id === existing.id; })
+      : -1;
+    var nextRecord = normalized;
+
+    if (existingIndex >= 0) {
+      nextRecord = mergeFavoriteRecordsWithSource(
+        localState.items[existingIndex],
+        localState.items[existingIndex],
+        normalized,
+        rawItem
+      );
+      localState.items.splice(existingIndex, 1, nextRecord);
+    } else {
+      localState.items.push(nextRecord);
+    }
+
+    localState.updated_at = isoNow();
+    writeRawStorageValue(STORAGE_KEY, serializeState(localState));
+    return cloneFavorite(nextRecord);
+  }
+
+  function removeLocalFavoriteRecord(rawInput) {
+    var localState = loadStateFromStorage();
+    var match = findFavoriteMatchInItems(localState.items, rawInput);
+    var favoriteId = toText(match && match.id);
+    if (!favoriteId) return false;
+    localState.items = localState.items.filter(function filterItem(item) {
+      return item.id !== favoriteId;
+    });
+    localState.updated_at = isoNow();
+    writeRawStorageValue(STORAGE_KEY, serializeState(localState));
+    return true;
+  }
+
   function upsertFavorite(rawItem, meta) {
     var normalized = normalizeFavoriteItem(rawItem, meta);
     if (!normalized.id) return null;
+
+    if (accountMode && !isAccountSyncableFavorite(normalized)) {
+      var localFavorite = upsertLocalFavoriteRecord(rawItem, meta);
+      if (!localFavorite) return null;
+      var localExisting = findFavoriteMatch(localFavorite) || findFavoriteMatch(localFavorite.id);
+      var localExistingIndex = localExisting
+        ? state.items.findIndex(function findIndex(item) { return item.id === localExisting.id; })
+        : -1;
+      if (localExistingIndex >= 0) {
+        state.items.splice(localExistingIndex, 1, mergeFavoriteRecords(state.items[localExistingIndex], localFavorite));
+        state.updated_at = isoNow();
+        emitChange('local_deferred_update', { id: localFavorite.id, mode: 'account' });
+      } else {
+        state.items.push(localFavorite);
+        state.updated_at = isoNow();
+        emitChange('local_deferred_add', { id: localFavorite.id, mode: 'account' });
+      }
+      return cloneFavorite(localFavorite);
+    }
 
     var existing = findFavoriteMatch(rawItem) || findFavoriteMatch(normalized.id);
     var existingIndex = existing
@@ -789,13 +1302,27 @@
         normalized,
         rawItem
       );
+      if (accountMode) {
+        merged.account_dedupe_key = toText(merged.account_dedupe_key) || buildAccountDedupeKey(merged);
+        merged.account_source = toText(merged.account_source) || 'backend_pending';
+      }
       state.items.splice(existingIndex, 1, merged);
-      persistState('update', { id: merged.id });
+      persistState(accountMode ? 'account_update' : 'update', { id: merged.id });
+      if (accountMode) {
+        queueAccountFavoriteUpsert(merged);
+      }
       return cloneFavorite(merged);
     }
 
+    if (accountMode) {
+      normalized.account_dedupe_key = toText(normalized.account_dedupe_key) || buildAccountDedupeKey(normalized);
+      normalized.account_source = 'backend_pending';
+    }
     state.items.push(normalized);
-    persistState('add', { id: normalized.id });
+    persistState(accountMode ? 'account_add' : 'add', { id: normalized.id });
+    if (accountMode) {
+      queueAccountFavoriteUpsert(normalized);
+    }
     return cloneFavorite(normalized);
   }
 
@@ -808,7 +1335,14 @@
     });
     if (nextItems.length === state.items.length) return false;
     state.items = nextItems;
-    persistState('remove', { id: favoriteId });
+    persistState(accountMode ? 'account_remove' : 'remove', { id: favoriteId });
+    if (accountMode && match) {
+      if (isAccountSyncableFavorite(match)) {
+        queueAccountFavoriteDelete(match);
+      } else {
+        removeLocalFavoriteRecord(match);
+      }
+    }
     return true;
   }
 
@@ -828,8 +1362,18 @@
 
   function clearFavorites() {
     if (!state.items.length) return false;
+    var removedItems = state.items.slice();
     state.items = [];
-    persistState('clear', {});
+    persistState(accountMode ? 'account_clear' : 'clear', {});
+    if (accountMode) {
+      removedItems.forEach(function eachRemovedFavorite(item) {
+        if (isAccountSyncableFavorite(item)) {
+          queueAccountFavoriteDelete(item);
+        } else {
+          removeLocalFavoriteRecord(item);
+        }
+      });
+    }
     return true;
   }
 
@@ -1214,6 +1758,7 @@
 
   function handleStorageEvent(event) {
     if (!event || event.key !== STORAGE_KEY) return;
+    if (accountMode) return;
     var nextState = loadStateFromStorage();
     var prevSerialized = serializeState(state);
     var nextSerialized = serializeState(nextState);
@@ -1222,10 +1767,20 @@
     emitChange('storage_sync', { key: STORAGE_KEY });
   }
 
+  function handleAuthChange(event) {
+    var detail = event && event.detail && typeof event.detail === 'object' ? event.detail : {};
+    if (detail.state === 'logged-out') {
+      exitAccountMode('account_logout');
+      return;
+    }
+    refreshAccountFavorites({ force: true });
+  }
+
   state = loadStateFromStorage();
 
   if (typeof global.addEventListener === 'function') {
     global.addEventListener('storage', handleStorageEvent);
+    global.addEventListener(AUTH_CHANGE_EVENT, handleAuthChange);
   }
 
   var publicApi = {
@@ -1251,9 +1806,17 @@
     buildFavoriteKey: buildFavoriteKey,
     buildCartItemFromFavorite: buildCartItemFromFavorite,
     buildCommerceMetadataFromFavorite: buildCommerceMetadataFromFavorite,
+    isAccountMode: function isAccountMode() {
+      return Boolean(accountMode);
+    },
+    refreshAccountFavorites: refreshAccountFavorites,
     setMoveToCartAdapter: setMoveToCartAdapter,
     moveFavoriteToCart: moveFavoriteToCart,
     reloadFromStorage: function reloadFromStorage() {
+      if (accountMode) {
+        refreshAccountFavorites();
+        return getFavorites();
+      }
       state = loadStateFromStorage();
       emitChange('reload', {});
       return getFavorites();
@@ -1261,6 +1824,10 @@
   };
 
   global.ldcFavorites = publicApi;
+
+  if (getStoreApiConfig().enabled) {
+    global.setTimeout(refreshAccountFavorites, 0);
+  }
 })(window);
 
 (function initFavoritesUi(global) {
