@@ -2424,6 +2424,7 @@
     buildFavoriteKey: buildFavoriteKey,
     buildCartItemFromFavorite: buildCartItemFromFavorite,
     buildCommerceMetadataFromFavorite: buildCommerceMetadataFromFavorite,
+    buildAttireCommerceMetadataFromFavorite: buildAttireCommerceMetadataFromFavorite,
     buildUploadAttachmentMetadata: buildUploadAttachmentMetadata,
     ensurePersistentUploadReference: ensurePersistentUploadReference,
     getFavoriteUploadReference: getFavoriteUploadReference,
@@ -3216,7 +3217,10 @@
         }
 
         favorite.variant_id = variantId;
-        return ensurePersistentUploadReference(favorite)
+        var uploadReferenceReady = typeof api.ensurePersistentUploadReference === 'function'
+          ? api.ensurePersistentUploadReference(favorite)
+          : Promise.resolve(favorite);
+        return uploadReferenceReady
           .then(function onUploadReady(uploadReadyFavorite) {
             favorite = uploadReadyFavorite || favorite;
             favorite.variant_id = variantId;
@@ -3244,8 +3248,13 @@
               attireProductHandle === 'attire-shirts-custom' ||
               attireProductUrl === '/attire' ||
               attireProductUrl === 'attire.html';
-            if (isAttireFavorite && commerce && typeof commerce.buildAttireLineItemMetadataFromLegacyItem === 'function') {
-              metadata = buildAttireCommerceMetadataFromFavorite(favorite, variantId, commerce);
+            if (
+              isAttireFavorite &&
+              commerce &&
+              typeof commerce.buildAttireLineItemMetadataFromLegacyItem === 'function' &&
+              typeof api.buildAttireCommerceMetadataFromFavorite === 'function'
+            ) {
+              metadata = api.buildAttireCommerceMetadataFromFavorite(favorite, variantId, commerce);
             }
             if (!isObject(metadata)) {
               metadata = typeof api.buildCommerceMetadataFromFavorite === 'function'
