@@ -29,7 +29,9 @@
   var ACCOUNT_FAVORITE_TYPE = 'product_favorite';
   var DOORMAT_BUILD_TYPE = 'doormat_build';
   var ATTIRE_BUILD_TYPE = 'attire_build';
-  var SUPPORTED_ACCOUNT_SAVED_ITEM_TYPES = [ACCOUNT_FAVORITE_TYPE, DOORMAT_BUILD_TYPE, ATTIRE_BUILD_TYPE];
+  var CUSTOM_DESIGN_TYPE = 'custom_design';
+  var CUSTOMIZATION_RESTORE_STORAGE_KEY = 'ldc:customization:restore-design';
+  var SUPPORTED_ACCOUNT_SAVED_ITEM_TYPES = [ACCOUNT_FAVORITE_TYPE, DOORMAT_BUILD_TYPE, ATTIRE_BUILD_TYPE, CUSTOM_DESIGN_TYPE];
   var DEFAULT_MEDUSA_BACKEND = 'https://api.lovettsldc.com';
   var DEFAULT_MEDUSA_PUBLISHABLE_KEY = 'pk_427f7900e23e30a0e18feaf0604aa9caaa9d0cb21571889081d2cb93fb13ffb0';
   var LEGACY_KEYS = [LEGACY_STORAGE_KEY];
@@ -311,6 +313,9 @@
   }
 
   function chooseStoredFavoriteId(item, source) {
+    if (isCustomDesignFavoriteRecord(item)) {
+      return buildFavoriteKey(item);
+    }
     if (isAttireFavoriteRecord(item)) {
       return buildFavoriteKey(item);
     }
@@ -419,7 +424,79 @@
     ].join('|');
   }
 
+  function getFavoriteItemPayload(favorite) {
+    return isObject(favorite && favorite.item_payload) ? favorite.item_payload : {};
+  }
+
+  function getCustomDesignRestoreState(favorite) {
+    var payload = getFavoriteItemPayload(favorite);
+    if (isObject(payload.restore_state)) return payload.restore_state;
+    if (isObject(payload.restoreState)) return payload.restoreState;
+    if (isObject(favorite && favorite.restore_state)) return favorite.restore_state;
+    if (isObject(favorite && favorite.restoreState)) return favorite.restoreState;
+    return {};
+  }
+
+  function getCustomDesignField(favorite, keys) {
+    var restoreState = getCustomDesignRestoreState(favorite);
+    var liveReference = isObject(favorite && favorite.live_reference) ? favorite.live_reference : {};
+    var sources = [favorite || {}, restoreState, liveReference];
+    for (var sourceIndex = 0; sourceIndex < sources.length; sourceIndex += 1) {
+      var source = sources[sourceIndex];
+      if (!isObject(source)) continue;
+      for (var keyIndex = 0; keyIndex < keys.length; keyIndex += 1) {
+        var key = keys[keyIndex];
+        var value = toText(source[key]);
+        if (value) return value;
+      }
+    }
+    return '';
+  }
+
+  function getCustomDesignSelectionValue(favorite, selectionKey, label) {
+    var restoreState = getCustomDesignRestoreState(favorite);
+    var selection = isObject(restoreState && restoreState[selectionKey]) ? restoreState[selectionKey] : {};
+    return (
+      toText(selection.key) ||
+      toText(selection.label) ||
+      getFavoriteOptionValue(favorite, label) ||
+      'none'
+    );
+  }
+
+  function buildCustomDesignIdentityParts(favorite) {
+    var productRef =
+      getCustomDesignField(favorite, ['product_key', 'productKey']) ||
+      getCustomDesignField(favorite, ['product_handle', 'productHandle']) ||
+      getCustomDesignField(favorite, ['product_id', 'productId']) ||
+      'customization';
+    var variantRef =
+      getCustomDesignField(favorite, ['variant_id', 'variantId', 'baseVariantId']) ||
+      'none';
+    var wrapRef = getCustomDesignSelectionValue(favorite, 'wrap', 'Wrap');
+    var colorRef = getCustomDesignSelectionValue(favorite, 'color', 'Color');
+    var accessoryRef = getCustomDesignSelectionValue(favorite, 'accessory', 'Accessory');
+    var notesRef = getFavoriteNotes(favorite) || getCustomDesignField(favorite, ['notes', 'design_notes']);
+    var uploadRef = getFavoriteUploadReference(favorite);
+    return [
+      'product:' + toLowerSlug(productRef),
+      'variant:' + toLowerSlug(variantRef),
+      'wrap:' + toLowerSlug(wrapRef),
+      'color:' + toLowerSlug(colorRef),
+      'accessory:' + toLowerSlug(accessoryRef),
+      'notes:' + shortHash(notesRef),
+      'uploads:' + (uploadRef ? shortHash(uploadRef.key) : 'none')
+    ];
+  }
+
+  function buildCustomDesignFavoriteKey(item) {
+    return ['fav', CUSTOM_DESIGN_TYPE].concat(buildCustomDesignIdentityParts(item)).join('|');
+  }
+
   function buildFavoriteKey(item) {
+    if (isCustomDesignFavoriteRecord(item)) {
+      return buildCustomDesignFavoriteKey(item);
+    }
     if (isAttireFavoriteRecord(item)) {
       return buildAttireFavoriteKey(item);
     }
@@ -485,6 +562,7 @@
       account_saved_item_type: item.account_saved_item_type,
       owner_scope: item.owner_scope,
       merged_to_account: item.merged_to_account === true,
+      item_payload: cloneJsonValue(item.item_payload, null),
       line_item_metadata: cloneJsonValue(item.line_item_metadata, null),
       upload_references: cloneJsonValue(item.upload_references, []),
       live_reference: cloneJsonValue(item.live_reference, null)
@@ -563,6 +641,11 @@
       account_saved_item_type: toText(source.account_saved_item_type || source.accountSavedItemType || source.saved_item_type || source.savedItemType || source.type),
       owner_scope: normalizeOwnerScope(source.owner_scope || source.ownerScope),
       merged_to_account: source.merged_to_account === true || source.mergedToAccount === true,
+      item_payload: isObject(source.item_payload || source.itemPayload)
+        ? cloneJsonValue(source.item_payload || source.itemPayload, null)
+        : (isObject(source.restore_state || source.restoreState)
+          ? { restore_state: cloneJsonValue(source.restore_state || source.restoreState, {}) }
+          : null),
       line_item_metadata: isObject(source.line_item_metadata || source.lineItemMetadata)
         ? cloneJsonValue(source.line_item_metadata || source.lineItemMetadata, null)
         : null,
@@ -627,7 +710,8 @@
       'account_source',
       'account_saved_item_type',
       'owner_scope',
-      'merged_to_account'
+      'merged_to_account',
+      'item_payload'
     ];
 
     fields.forEach(function eachField(field) {
@@ -1426,6 +1510,9 @@
     if (isAttireFavoriteRecord(favorite)) {
       return isAccountSyncableAttireBuild(favorite);
     }
+    if (isCustomDesignFavoriteRecord(favorite)) {
+      return isAccountSyncableCustomDesign(favorite);
+    }
     if (isDesignSubmittedFavorite(favorite)) {
       return false;
     }
@@ -1547,6 +1634,20 @@
     );
   }
 
+  function isAccountSyncableCustomDesign(favorite) {
+    if (!isCustomDesignFavoriteRecord(favorite)) return false;
+    if (hasUnsafeUploadPayload(favorite)) return false;
+    return Boolean(
+      toText(favorite.title) &&
+      (
+        getCustomDesignField(favorite, ['product_key', 'productKey']) ||
+        getCustomDesignField(favorite, ['product_handle', 'productHandle']) ||
+        getCustomDesignField(favorite, ['product_id', 'productId'])
+      ) &&
+      getCustomDesignField(favorite, ['variant_id', 'variantId', 'baseVariantId'])
+    );
+  }
+
   function buildDoormatAccountDedupeKey(favorite) {
     var variantRef = toText(favorite && favorite.variant_id) || 'none';
     var sizeRef = getFavoriteOptionValue(favorite, 'Size') || 'none';
@@ -1587,6 +1688,10 @@
     ].join('|');
   }
 
+  function buildCustomDesignAccountDedupeKey(favorite) {
+    return [CUSTOM_DESIGN_TYPE].concat(buildCustomDesignIdentityParts(favorite)).join('|');
+  }
+
   function buildSavedItemDedupeKey(favorite) {
     if (isDoormatFavoriteRecord(favorite)) {
       return buildDoormatAccountDedupeKey(favorite);
@@ -1594,12 +1699,16 @@
     if (isAttireFavoriteRecord(favorite)) {
       return buildAttireAccountDedupeKey(favorite);
     }
+    if (isCustomDesignFavoriteRecord(favorite)) {
+      return buildCustomDesignAccountDedupeKey(favorite);
+    }
     return buildAccountDedupeKey(favorite);
   }
 
   function getAccountSavedItemTypeForFavorite(favorite) {
     if (isDoormatFavoriteRecord(favorite)) return DOORMAT_BUILD_TYPE;
     if (isAttireFavoriteRecord(favorite)) return ATTIRE_BUILD_TYPE;
+    if (isCustomDesignFavoriteRecord(favorite)) return CUSTOM_DESIGN_TYPE;
     return ACCOUNT_FAVORITE_TYPE;
   }
 
@@ -1723,12 +1832,88 @@
     };
   }
 
+  function mapCustomDesignFavoriteToSavedItem(favorite) {
+    if (!isAccountSyncableCustomDesign(favorite)) return null;
+
+    var cloned = cloneFavorite(favorite);
+    var dedupeKey = buildCustomDesignAccountDedupeKey(favorite);
+    var favoriteKey = buildFavoriteKey(favorite);
+    cloned.id = favoriteKey;
+    cloned.favorite_key = favoriteKey;
+    cloned.account_dedupe_key = dedupeKey;
+    cloned.account_saved_item_type = CUSTOM_DESIGN_TYPE;
+    var restoreState = getCustomDesignRestoreState(favorite);
+    var payloadSource = Object.assign({}, cloned, {
+      type: CUSTOM_DESIGN_TYPE,
+      source_path: '/customization',
+      restore_state: cloneJsonValue(restoreState, {})
+    });
+    delete payloadSource.item_payload;
+
+    var safePayload = sanitizeAccountPayload(payloadSource, 0, '') || {};
+    var customMetadata = isObject(favorite.line_item_metadata)
+      ? favorite.line_item_metadata
+      : buildCommerceMetadataFromFavorite(favorite);
+    var safeMetadata = sanitizeAccountPayload(customMetadata || {}, 0, '') || {};
+    var safeOptions = sanitizeAccountPayload(favorite.selected_options || [], 0, '') || [];
+    var uploadRef = getFavoriteUploadReference(favorite);
+    var price = toNumber(favorite.price);
+    var priceAmount = Number.isFinite(price) ? Math.round(price * 100) : 0;
+    var wrap = getFavoriteOptionValue(favorite, 'Wrap');
+    var color = getFavoriteOptionValue(favorite, 'Color');
+    var accessory = getFavoriteOptionValue(favorite, 'Accessory');
+    var productKey = getCustomDesignField(favorite, ['product_key', 'productKey']) || 'customization';
+    var productHandle = getCustomDesignField(favorite, ['product_handle', 'productHandle']) || productKey;
+    var variantId = getCustomDesignField(favorite, ['variant_id', 'variantId', 'baseVariantId']);
+
+    return {
+      type: CUSTOM_DESIGN_TYPE,
+      dedupe_key: dedupeKey,
+      favorite_key: favoriteKey,
+      source_path: '/customization',
+      product_id: getCustomDesignField(favorite, ['product_id', 'productId']),
+      product_handle: productHandle,
+      product_key: productKey,
+      variant_id: variantId,
+      title: toText(favorite.title) || 'Custom Design',
+      variant_title: toText(favorite.variant_title) || [wrap, color, accessory].filter(Boolean).join(' | '),
+      description: toText(favorite.description),
+      short_description: toText(favorite.short_description),
+      image_url: toText(favorite.image_url || favorite.preview_image),
+      preview_image: toText(favorite.preview_image || favorite.image_url),
+      preview_style: toText(favorite.preview_style),
+      quantity: Math.max(1, toNumber(favorite.quantity) || 1),
+      currency_code: toCurrencyCode(favorite.currency_code),
+      price_snapshot_amount: priceAmount,
+      price_snapshot_display: getFavoritePriceSnapshotDisplay(favorite),
+      selected_options: safeOptions,
+      item_payload: safePayload,
+      line_item_metadata: safeMetadata,
+      notes: getFavoriteNotes(favorite),
+      upload_references: uploadRef ? [uploadRef] : [],
+      live_reference: {
+        source_path: '/customization',
+        product_id: getCustomDesignField(favorite, ['product_id', 'productId']),
+        product_handle: productHandle,
+        product_key: productKey,
+        variant_id: variantId,
+        wrap: wrap,
+        color: color,
+        accessory: accessory,
+        upload_reference_key: uploadRef ? uploadRef.key : ''
+      }
+    };
+  }
+
   function mapFavoriteToSavedItem(favorite) {
     if (isDoormatFavoriteRecord(favorite)) {
       return mapDoormatFavoriteToSavedItem(favorite);
     }
     if (isAttireFavoriteRecord(favorite)) {
       return mapAttireFavoriteToSavedItem(favorite);
+    }
+    if (isCustomDesignFavoriteRecord(favorite)) {
+      return mapCustomDesignFavoriteToSavedItem(favorite);
     }
     if (!isAccountSyncableFavorite(favorite)) return null;
 
@@ -1822,7 +2007,7 @@
   function prepareFavoriteForAccountMerge(favorite) {
     var candidate = cloneFavorite(favorite || {});
     if (
-      (isDoormatFavoriteRecord(candidate) || isAttireFavoriteRecord(candidate)) &&
+      (isDoormatFavoriteRecord(candidate) || isAttireFavoriteRecord(candidate) || isCustomDesignFavoriteRecord(candidate)) &&
       hasUnsafeUploadPayload(candidate)
     ) {
       return ensurePersistentUploadReference(candidate)
@@ -1922,7 +2107,9 @@
     var payload = isObject(savedItem.item_payload) ? savedItem.item_payload : {};
     var defaultSourcePath = savedType === DOORMAT_BUILD_TYPE
       ? '/doormats'
-      : (savedType === ATTIRE_BUILD_TYPE ? '/attire' : '');
+      : (savedType === ATTIRE_BUILD_TYPE
+        ? '/attire'
+        : (savedType === CUSTOM_DESIGN_TYPE ? '/customization' : ''));
     var snapshotAmount = Number(savedItem.price_snapshot_amount);
     var mapped = Object.assign({}, payload, {
       product_id: toText(savedItem.product_id || payload.product_id),
@@ -1932,7 +2119,11 @@
         ? toText(savedItem.source_path || payload.product_url || payload.productUrl || defaultSourcePath)
         : toText(payload.product_url || payload.productUrl),
       variant_id: toText(savedItem.variant_id || payload.variant_id),
-      title: toText(savedItem.title || payload.title) || (savedType === ATTIRE_BUILD_TYPE ? 'Custom Attire' : 'Favorite'),
+      title: toText(savedItem.title || payload.title) || (
+        savedType === ATTIRE_BUILD_TYPE
+          ? 'Custom Attire'
+          : (savedType === CUSTOM_DESIGN_TYPE ? 'Custom Design' : 'Favorite')
+      ),
       variant_title: toText(savedItem.variant_title || payload.variant_title),
       short_description: toText(savedItem.short_description || payload.short_description),
       description: toText(savedItem.description || payload.description),
@@ -1966,7 +2157,7 @@
         : null
     });
     var favorite = normalizeFavoriteItem(mapped, { source_path: mapped.source_path });
-    var favoriteKey = savedType === ATTIRE_BUILD_TYPE
+    var favoriteKey = (savedType === ATTIRE_BUILD_TYPE || savedType === CUSTOM_DESIGN_TYPE)
       ? buildFavoriteKey(favorite)
       : toText(savedItem.favorite_key || payload.favorite_key || payload.id || favorite.id);
     if (favoriteKey) {
@@ -2257,7 +2448,7 @@
         rawItem
       );
       if (accountMode) {
-        merged.account_dedupe_key = isAttireFavoriteRecord(merged)
+        merged.account_dedupe_key = (isAttireFavoriteRecord(merged) || isCustomDesignFavoriteRecord(merged))
           ? buildSavedItemDedupeKey(merged)
           : (toText(merged.account_dedupe_key) || buildSavedItemDedupeKey(merged));
         merged.account_source = toText(merged.account_source) || 'backend_pending';
@@ -2273,7 +2464,7 @@
     }
 
     if (accountMode) {
-      normalized.account_dedupe_key = isAttireFavoriteRecord(normalized)
+      normalized.account_dedupe_key = (isAttireFavoriteRecord(normalized) || isCustomDesignFavoriteRecord(normalized))
         ? buildSavedItemDedupeKey(normalized)
         : (toText(normalized.account_dedupe_key) || buildSavedItemDedupeKey(normalized));
       normalized.account_source = 'backend_pending';
@@ -2495,6 +2686,33 @@
     return productUrl === '/attire' || productUrl === 'attire.html';
   }
 
+  function isCustomDesignFavoriteRecord(favorite) {
+    if (!favorite || typeof favorite !== 'object') return false;
+    if (isDoormatFavoriteRecord(favorite) || isAttireFavoriteRecord(favorite)) return false;
+    var explicitType = toText(
+      favorite.account_saved_item_type ||
+        favorite.accountSavedItemType ||
+        favorite.saved_item_type ||
+        favorite.savedItemType ||
+        favorite.type
+    ).toLowerCase();
+    if (explicitType === CUSTOM_DESIGN_TYPE) return true;
+    var productUrl = toText(
+      favorite.product_url ||
+        favorite.productUrl ||
+        favorite.source_path ||
+        favorite.sourcePath
+    )
+      .split('?')[0]
+      .split('#')[0]
+      .toLowerCase();
+    if (productUrl === '/customization' || productUrl === 'customization.html') return true;
+    var payload = getFavoriteItemPayload(favorite);
+    if (toText(payload.type).toLowerCase() === CUSTOM_DESIGN_TYPE) return true;
+    if (isObject(payload.restore_state || payload.restoreState)) return true;
+    return false;
+  }
+
   function buildAttireCommerceMetadataFromFavorite(favorite, variantId, commerce) {
     if (!favorite || !commerce || typeof commerce.buildAttireLineItemMetadataFromLegacyItem !== 'function') {
       return null;
@@ -2680,10 +2898,100 @@
     }, {});
   }
 
+  function buildCustomDesignRestorePayload(favorite) {
+    if (!isCustomDesignFavoriteRecord(favorite)) return null;
+    var restoreState = cloneJsonValue(getCustomDesignRestoreState(favorite), {}) || {};
+    var uploadRef = getFavoriteUploadReference(favorite);
+    var metadata = isObject(favorite.line_item_metadata)
+      ? cloneJsonValue(favorite.line_item_metadata, {})
+      : buildCommerceMetadataFromFavorite(favorite);
+    var selectedOptions = Array.isArray(favorite.selected_options)
+      ? favorite.selected_options.map(cloneOption)
+      : [];
+    var payload = Object.assign({}, restoreState, {
+      type: CUSTOM_DESIGN_TYPE,
+      source_path: '/customization',
+      favorite_key: toText(favorite.favorite_key || favorite.id),
+      productKey: getCustomDesignField(favorite, ['product_key', 'productKey']),
+      productHandle: getCustomDesignField(favorite, ['product_handle', 'productHandle']),
+      productId: getCustomDesignField(favorite, ['product_id', 'productId']),
+      variantId: getCustomDesignField(favorite, ['variant_id', 'variantId', 'baseVariantId']),
+      title: toText(favorite.title) || 'Custom Design',
+      name: toText(favorite.title) || 'Custom Design',
+      description: toText(favorite.description || favorite.short_description),
+      price: toNumber(favorite.price),
+      currency_code: toCurrencyCode(favorite.currency_code),
+      preview_image: toText(favorite.preview_image || favorite.image_url),
+      preview_style: toText(favorite.preview_style),
+      selected_options: selectedOptions,
+      line_item_metadata: metadata || {},
+      notes: getFavoriteNotes(favorite)
+    });
+    if (uploadRef) {
+      payload.upload_references = [uploadRef];
+      payload.attachment = {
+        provider: uploadRef.provider,
+        key: uploadRef.key,
+        filename: uploadRef.filename,
+        content_type: uploadRef.content_type,
+        size: uploadRef.size,
+        display_url: uploadRef.display_url || uploadRef.url,
+        route: uploadRef.route || '/customization',
+        source: uploadRef.source || 'upload_inspiration',
+        status: uploadRef.status || 'active'
+      };
+    }
+    return sanitizeAccountPayload(payload, 0, '') || null;
+  }
+
+  function restoreCustomDesignToBuilder(favorite) {
+    var payload = buildCustomDesignRestorePayload(favorite);
+    if (!payload) {
+      return {
+        ok: false,
+        reason: 'restore_payload_unavailable',
+        id: favorite && favorite.id,
+        user_message: 'This saved design cannot be restored yet.'
+      };
+    }
+    var store = getGuestStorage();
+    if (!store) {
+      return {
+        ok: false,
+        reason: 'session_storage_unavailable',
+        id: favorite && favorite.id,
+        user_message: 'This browser cannot restore the saved design right now.'
+      };
+    }
+    try {
+      store.setItem(CUSTOMIZATION_RESTORE_STORAGE_KEY, JSON.stringify(payload));
+    } catch (error) {
+      return {
+        ok: false,
+        reason: 'restore_payload_write_failed',
+        id: favorite && favorite.id,
+        error: toText(error && error.message),
+        user_message: 'This browser cannot restore the saved design right now.'
+      };
+    }
+    return {
+      ok: true,
+      id: favorite && favorite.id,
+      restored: true,
+      restore_to_builder: true,
+      preserve_favorite: true,
+      redirect_url: 'customization.html',
+      user_message: 'Opening saved design.'
+    };
+  }
+
   function moveFavoriteToCart(id, context) {
     var favorite = getFavoriteById(id);
     if (!favorite) {
       return Promise.resolve({ ok: false, reason: 'favorite_not_found', id: toText(id) });
+    }
+    if (isCustomDesignFavoriteRecord(favorite)) {
+      return Promise.resolve(restoreCustomDesignToBuilder(favorite, context));
     }
     if (typeof moveToCartAdapter !== 'function') {
       return Promise.resolve({ ok: false, reason: 'adapter_not_set', id: favorite.id });
@@ -2797,9 +3105,11 @@
     buildCommerceMetadataFromFavorite: buildCommerceMetadataFromFavorite,
     buildAttireCommerceMetadataFromFavorite: buildAttireCommerceMetadataFromFavorite,
     buildUploadAttachmentMetadata: buildUploadAttachmentMetadata,
+    buildCustomDesignRestorePayload: buildCustomDesignRestorePayload,
     ensurePersistentUploadReference: ensurePersistentUploadReference,
     getFavoriteUploadReference: getFavoriteUploadReference,
     isPersistentUploadReference: isPersistentUploadReference,
+    isCustomDesignFavorite: isCustomDesignFavoriteRecord,
     isAccountMode: function isAccountMode() {
       return Boolean(accountMode);
     },
@@ -3375,6 +3685,25 @@
     return image;
   }
 
+  function isCustomDesignItem(item) {
+    return Boolean(
+      api &&
+        typeof api.isCustomDesignFavorite === 'function' &&
+        api.isCustomDesignFavorite(item)
+    );
+  }
+
+  function getPrimaryActionLabel(item) {
+    return isCustomDesignItem(item) ? 'Restore to Builder' : 'Move to Cart';
+  }
+
+  function getPrimaryActionMarkup(item) {
+    if (isCustomDesignItem(item)) {
+      return '<span>Restore</span>';
+    }
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>';
+  }
+
   function syncFavoritePreviewFrames(root) {
     var scope = root && typeof root.querySelectorAll === 'function' ? root : document;
     Array.prototype.slice.call(scope.querySelectorAll('[data-favorite-id]')).forEach(function eachCard(card) {
@@ -3424,6 +3753,8 @@
         ? '<a class="favorites-item-name" href="' + escapeHtml(productUrl) + '">' + title + '</a>'
         : '<div class="favorites-item-name">' + title + '</div>';
       var detailsMarkup = renderFavoriteDetailsMarkup(item);
+      var actionLabel = escapeHtml(getPrimaryActionLabel(item));
+      var actionMarkup = getPrimaryActionMarkup(item);
       return [
         '<article class="favorites-item" data-favorite-id="', id, '">',
         '  <div class="favorites-item-main">',
@@ -3433,8 +3764,8 @@
         '      <div class="favorites-item-summary-row">',
         '        <div class="favorites-item-price">', price, '</div>',
         '        <div class="favorites-item-actions">',
-        '          <button type="button" class="favorites-move-btn" data-favorite-add-cart aria-label="Move ', title, ' to cart">',
-        '            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M2.25 2.25a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .728.568l.432 1.864h13.134a.75.75 0 0 1 .732.928l-1.5 6a.75.75 0 0 1-.732.572H8.715l.3 1.5H18a.75.75 0 1 1 0 1.5H8.25a.75.75 0 0 1-.732-.568L5.4 3.75H3a.75.75 0 0 1-.75-.75Zm4.5 16.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm9 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" /></svg>',
+        '          <button type="button" class="favorites-move-btn" data-favorite-add-cart aria-label="', actionLabel, ' ', title, '">',
+        '            ', actionMarkup,
         '          </button>',
         '          <button type="button" class="favorites-remove-btn" data-favorite-remove aria-label="Remove ', title, '">×</button>',
         '        </div>',
@@ -3723,6 +4054,8 @@
           if (result && result.user_message && commerce && typeof commerce.showStatusMessage === 'function') {
             commerce.showStatusMessage(result.user_message, 'error');
           }
+        } else if (result.redirect_url) {
+          global.location.href = result.redirect_url;
         }
         try {
           document.dispatchEvent(new CustomEvent('ldc:favorites:move-to-cart', {
@@ -3851,6 +4184,7 @@
   syncUi();
   api.getFavoriteDetailRows = getFavoriteDetailRows;
   api.renderFavoriteDetailsMarkup = renderFavoriteDetailsMarkup;
+  api.getFavoritePrimaryActionLabel = getPrimaryActionLabel;
   attachListeners();
 
   global.ldcFavoritesUI = {

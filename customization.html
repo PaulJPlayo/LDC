@@ -1329,6 +1329,10 @@
       .cta-wrap {
         margin-top: 0.75rem;
         text-align: center;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.75rem;
       }
       .cta-btn {
         display: inline-flex;
@@ -1345,10 +1349,26 @@
         color: #1f0f24;
         text-decoration: none;
         transition: transform 160ms ease, box-shadow 160ms ease;
+        cursor: pointer;
       }
       .cta-btn:hover {
         transform: translateY(-3px);
         box-shadow: 0 18px 36px rgba(249, 115, 22, 0.25);
+      }
+      .design-save-btn {
+        background: linear-gradient(135deg, #e0b0ff 0%, #d8b4fe 100%);
+      }
+      .design-save-status {
+        flex-basis: 100%;
+        margin: 0.2rem 0 0;
+        font-size: 0.85rem;
+        color: #3f2a56;
+      }
+      .design-save-status.is-error {
+        color: #b91c1c;
+      }
+      .design-save-status[hidden] {
+        display: none;
       }
       footer {
         margin-top: auto;
@@ -1661,9 +1681,13 @@
                       </div>
                     </div>
                     <div class="cta-wrap">
+                      <button type="button" class="cta-btn design-save-btn" data-design-save>
+                        Save Design
+                      </button>
                       <a href="checkout.html" class="cta-btn" data-design-submit>
                         Submit Your Design
                       </a>
+                      <p class="design-save-status" data-design-save-status hidden></p>
                     </div>
                   </div>
                 </div>
@@ -1676,6 +1700,7 @@
         Lovett's Designs &amp; Crafts · Design creations made with love
       </footer>
     </div>
+    <script src="favorites.js" defer></script>
     <script src="commerce.js" defer></script>
     <script src="assets/hls.min.js" defer></script>
     <script>
@@ -1683,6 +1708,7 @@
         const DESIGN_SELECTION_KEY = 'ldcDesignSelection';
         const DESIGN_SELECTION_PENDING_KEY = 'ldcDesignSelectionPending';
         const DESIGN_SELECTION_PENDING_AT_KEY = 'ldcDesignSelectionPendingAt';
+        const CUSTOM_DESIGN_RESTORE_KEY = 'ldc:customization:restore-design';
         const CART_STORAGE_KEY = 'ldc:cart';
         const designFrame = document.querySelector('[data-design-frame]');
         const designImageWrap = designFrame?.querySelector('[data-design-image-wrap]');
@@ -1695,7 +1721,22 @@
         const designVideoPromptCta = designFrame?.querySelector('[data-prompt-cta]');
         const designPriceValue = document.querySelector('[data-design-price] .design-price-value');
         const designAttachmentInput = document.getElementById('designUploadCustomization');
+        const designSaveBtn = document.querySelector('[data-design-save]');
+        const designSaveStatus = document.querySelector('[data-design-save-status]');
         let designScrollPending = false;
+        const setDesignSaveStatus = (message, isError = false) => {
+          if (!designSaveStatus) return;
+          const text = String(message || '').trim();
+          if (!text) {
+            designSaveStatus.textContent = '';
+            designSaveStatus.hidden = true;
+            designSaveStatus.classList.remove('is-error');
+            return;
+          }
+          designSaveStatus.textContent = text;
+          designSaveStatus.hidden = false;
+          designSaveStatus.classList.toggle('is-error', Boolean(isError));
+        };
         const scrollDesignPreviewIntoView = (targetEl = designFrame) => {
           const target = targetEl || designFrame;
           if (!target || designScrollPending) return;
@@ -1775,6 +1816,24 @@
             throw new Error(text || `Attachment upload failed (${response.status})`);
           }
           return response.json();
+        };
+        const normalizeUploadReference = (uploadedAttachment, attachment = null) => {
+          const key = String(uploadedAttachment?.key || uploadedAttachment?.id || '').trim();
+          if (!key) return null;
+          const filename = String(uploadedAttachment?.filename || attachment?.name || 'Attachment').trim() || 'Attachment';
+          const displayUrl = String(uploadedAttachment?.url || uploadedAttachment?.display_url || '').trim();
+          return {
+            provider: 's3',
+            key,
+            filename,
+            content_type: String(uploadedAttachment?.content_type || attachment?.type || '').trim(),
+            size: Number(attachment?.size || uploadedAttachment?.size || 0) || 0,
+            display_url: displayUrl,
+            url: displayUrl,
+            route: '/customization',
+            source: 'upload_inspiration',
+            status: 'active'
+          };
         };
         const designColorPreview = document.querySelector('[data-color-preview]');
         const designColorPreviewWrap = designColorPreview?.closest('.design-preview-tile');
@@ -3211,6 +3270,120 @@
           return `background-color: #ffffff; background-image: url("${src}"); background-size: cover; background-position: center; background-repeat: no-repeat;`;
         };
 
+        const getDesignNotes = () => {
+          const notesEl = document.getElementById('design-notes-customization');
+          return notesEl ? notesEl.value.trim() : '';
+        };
+
+        const getActiveWrapOption = () =>
+          document.querySelector('[data-wrap-option][aria-pressed="true"]') || null;
+
+        const getActiveWrapKey = () => {
+          const option = getActiveWrapOption();
+          return option?.getAttribute('data-wrap-option') || '';
+        };
+
+        const getPreviewState = () => {
+          const src = lastImageState?.src || designImage?.getAttribute('src') || '';
+          const alt = lastImageState?.alt || designImage?.getAttribute('alt') || 'Custom design preview';
+          return {
+            src,
+            alt,
+            style: buildImagePreviewStyle(src)
+          };
+        };
+
+        const getCurrentDesignSwatches = () =>
+          Array.from(designColorTrack?.querySelectorAll('.swatch') || [])
+            .map(readSwatchData)
+            .filter(Boolean);
+
+        const buildSelectedDesignOptions = uploadRef => ([
+          selectedColorLabel
+            ? { label: 'Color', value: selectedColorLabel, swatchStyle: selectedColorStyle, swatchGlyph: selectedColorGlyph }
+            : null,
+          selectedAccessoryLabel
+            ? { label: 'Accessory', value: selectedAccessoryLabel, swatchStyle: selectedAccessoryStyle, swatchGlyph: selectedAccessoryGlyph }
+            : null,
+          selectedWrapLabel ? { label: 'Wrap', value: selectedWrapLabel } : null,
+          getDesignNotes() ? { label: 'Notes', value: getDesignNotes() } : null,
+          uploadRef
+            ? {
+                label: 'Attachment',
+                value: uploadRef.filename,
+                attachmentKey: uploadRef.key,
+                attachmentUrl: uploadRef.display_url || uploadRef.url || '',
+                attachmentProvider: uploadRef.provider || 's3',
+                attachmentContentType: uploadRef.content_type || '',
+                attachmentSize: uploadRef.size ? String(uploadRef.size) : ''
+              }
+            : null
+        ].filter(Boolean));
+
+        const buildCustomizationRestoreState = (variantId, uploadRef = null) => {
+          const preview = getPreviewState();
+          const pricing = getDesignPricingContext();
+          return {
+            type: 'custom_design',
+            source_path: '/customization',
+            productKey: selectedDesignProductKey || selectedDesignProductHandle || selectedDesignProductId || 'customization',
+            productHandle: selectedDesignProductHandle || selectedDesignProductKey || '',
+            productId: selectedDesignProductId || '',
+            variantId: variantId || selectedDesignVariantId || selectedDesignBaseVariantId || '',
+            baseVariantId: selectedDesignBaseVariantId || selectedDesignVariantId || variantId || '',
+            name: selectedDesignName || 'Custom Design',
+            description: selectedDesignDescription || '',
+            price: pricing.totalPrice,
+            basePrice: pricing.basePrice,
+            addonPrice: pricing.addonPrice,
+            totalPrice: pricing.totalPrice,
+            currency_code: 'USD',
+            preview_image: preview.src,
+            preview_style: preview.style,
+            preview_alt: preview.alt,
+            src: preview.src,
+            alt: preview.alt,
+            swatches: getCurrentDesignSwatches(),
+            color: {
+              key: selectedColorLabel || '',
+              label: selectedColorLabel || '',
+              style: selectedColorStyle || '',
+              glyph: selectedColorGlyph || '',
+              variantId: selectedDesignVariantId || ''
+            },
+            accessory: {
+              key: selectedAccessoryLabel || '',
+              label: selectedAccessoryLabel || '',
+              style: selectedAccessoryStyle || '',
+              glyph: selectedAccessoryGlyph || '',
+              imageSrc: selectedAccessoryImageSrc || '',
+              imageAlt: selectedAccessoryImageAlt || ''
+            },
+            wrap: {
+              key: getActiveWrapKey(),
+              label: selectedWrapLabel || ''
+            },
+            notes: getDesignNotes(),
+            upload_references: uploadRef ? [uploadRef] : []
+          };
+        };
+
+        const resolveVariantFromSelection = async () => {
+          const commerce = window.LDCCommerce;
+          if (!commerce?.resolveVariantId) return selectedDesignVariantId || '';
+          const key = selectedDesignProductKey || selectedDesignProductHandle || selectedDesignProductId || '';
+          if (!key) return selectedDesignVariantId || '';
+          const dummy = document.createElement('button');
+          dummy.dataset.productKey = selectedDesignProductKey || selectedDesignProductHandle || selectedDesignProductId || '';
+          if (selectedDesignProductHandle) dummy.dataset.productHandle = selectedDesignProductHandle;
+          if (selectedDesignProductId) dummy.dataset.productId = selectedDesignProductId;
+          try {
+            return (await commerce.resolveVariantId(dummy)) || selectedDesignVariantId || '';
+          } catch {
+            return selectedDesignVariantId || '';
+          }
+        };
+
         const buildDesignProduct = async (idOverride, uploadedAttachment = null) => {
           const pricing = getDesignPricingContext();
           const nameParts = [];
@@ -3248,7 +3421,7 @@
                 ? {
                     label: 'Attachment',
                     value: attachment.name,
-                    attachmentData: attachmentUrl || attachment.dataUrl || ''
+                    attachmentData: attachmentUrl || ''
                   }
                 : null
             ].filter(Boolean),
@@ -3303,6 +3476,251 @@
           );
         };
 
+        const buildCustomDesignFavoritePayload = async (variantId, uploadRef = null) => {
+          const preview = getPreviewState();
+          const pricing = getDesignPricingContext();
+          const restoreState = buildCustomizationRestoreState(variantId, uploadRef);
+          const metadataAttachment = uploadRef
+            ? { key: uploadRef.key, url: uploadRef.display_url || uploadRef.url || '' }
+            : null;
+          const attachmentDetails = uploadRef
+            ? { name: uploadRef.filename, type: uploadRef.content_type, size: uploadRef.size }
+            : null;
+          const metadata = await buildDesignMetadata(variantId, metadataAttachment, attachmentDetails);
+          const selectedOptions = buildSelectedDesignOptions(uploadRef);
+          const titleParts = [];
+          if (selectedDesignName) titleParts.push(selectedDesignName);
+          if (selectedWrapLabel) titleParts.push(selectedWrapLabel);
+          const title = titleParts.length ? `Custom Design – ${titleParts.join(' · ')}` : 'Custom Design';
+          return {
+            type: 'custom_design',
+            source_path: '/customization',
+            product_key: selectedDesignProductKey || selectedDesignProductHandle || selectedDesignProductId || 'customization',
+            product_handle: selectedDesignProductHandle || selectedDesignProductKey || '',
+            product_id: selectedDesignProductId || '',
+            product_url: 'customization.html',
+            variant_id: variantId || selectedDesignVariantId || selectedDesignBaseVariantId || '',
+            title,
+            variant_title: [selectedWrapLabel, selectedColorLabel, selectedAccessoryLabel].filter(Boolean).join(' | '),
+            short_description: selectedDesignDescription || '',
+            description: selectedDesignDescription || '',
+            price: pricing.totalPrice,
+            quantity: 1,
+            currency_code: 'USD',
+            preview_image: preview.src,
+            image_url: preview.src,
+            preview_style: preview.style,
+            selected_options: selectedOptions,
+            options_summary: selectedOptions.map(option => `${option.label}: ${option.value}`).join(' | '),
+            item_payload: {
+              type: 'custom_design',
+              restore_state: restoreState
+            },
+            line_item_metadata: metadata,
+            upload_references: uploadRef ? [uploadRef] : [],
+            live_reference: {
+              source_path: '/customization',
+              product_key: selectedDesignProductKey || selectedDesignProductHandle || selectedDesignProductId || 'customization',
+              product_handle: selectedDesignProductHandle || selectedDesignProductKey || '',
+              product_id: selectedDesignProductId || '',
+              variant_id: variantId || selectedDesignVariantId || selectedDesignBaseVariantId || '',
+              wrap_key: getActiveWrapKey(),
+              wrap_label: selectedWrapLabel || '',
+              color_label: selectedColorLabel || '',
+              accessory_label: selectedAccessoryLabel || '',
+              upload_reference_key: uploadRef?.key || ''
+            }
+          };
+        };
+
+        const saveDesignToFavorites = async () => {
+          const favoritesApi = window.ldcFavorites;
+          if (!favoritesApi?.addFavorite) {
+            setDesignSaveStatus('Favorites are unavailable right now.', true);
+            return;
+          }
+          const resolvedVariantId = selectedDesignVariantId || await resolveVariantFromSelection();
+          if (!resolvedVariantId) {
+            setDesignSaveStatus('Select a product to design first.', true);
+            return;
+          }
+          selectedDesignVariantId = resolvedVariantId;
+          const attachment = await readDesignAttachment();
+          let uploadRef = null;
+          if (attachment?.name) {
+            if (!attachment.dataUrl) {
+              setDesignSaveStatus('Upload Inspiration must be under 5MB to save with this design.', true);
+              return;
+            }
+            const uploadedAttachment = await uploadDesignAttachment(attachment);
+            uploadRef = normalizeUploadReference(uploadedAttachment, attachment);
+            if (!uploadRef) {
+              setDesignSaveStatus('Upload Inspiration could not be converted to a persistent reference.', true);
+              return;
+            }
+          }
+          const payload = await buildCustomDesignFavoritePayload(resolvedVariantId, uploadRef);
+          const saved = favoritesApi.addFavorite(payload, { source_path: '/customization' });
+          if (!saved) {
+            setDesignSaveStatus('This design could not be saved safely.', true);
+            return;
+          }
+          setDesignSaveStatus(
+            favoritesApi.isAccountMode?.() ? 'Saved to your account.' : 'Saved for this session.'
+          );
+          window.ldcFavoritesUI?.openDrawer?.(designSaveBtn);
+        };
+
+        const readRestoreDesignPayload = () => {
+          try {
+            const raw = sessionStorage.getItem(CUSTOM_DESIGN_RESTORE_KEY);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== 'object' || parsed.type !== 'custom_design') return null;
+            return parsed;
+          } catch {
+            return null;
+          }
+        };
+
+        const clearRestoreDesignPayload = () => {
+          try {
+            sessionStorage.removeItem(CUSTOM_DESIGN_RESTORE_KEY);
+          } catch {}
+        };
+
+        const applySavedDesignRestore = async () => {
+          const payload = readRestoreDesignPayload();
+          if (!payload) return;
+          try {
+            const colorState = payload.color && typeof payload.color === 'object' ? payload.color : {};
+            const accessoryState = payload.accessory && typeof payload.accessory === 'object' ? payload.accessory : {};
+            const wrapState = payload.wrap && typeof payload.wrap === 'object' ? payload.wrap : {};
+            if (Array.isArray(payload.swatches) && payload.swatches.length) {
+              const enrichedSwatches = await enrichDesignSwatches(payload.swatches, {
+                productKey: payload.productKey || '',
+                productHandle: payload.productHandle || '',
+                productId: payload.productId || ''
+              });
+              setDesignColorSwatches(enrichedSwatches.length ? enrichedSwatches : payload.swatches);
+            }
+            resetDesignSelections();
+            selectedDesignName = payload.name || payload.title || selectedDesignName || 'Custom Design';
+            selectedDesignDescription = payload.description || selectedDesignDescription || '';
+            selectedDesignProductKey = payload.productKey || selectedDesignProductKey || '';
+            selectedDesignProductHandle = payload.productHandle || selectedDesignProductHandle || '';
+            selectedDesignProductId = payload.productId || selectedDesignProductId || '';
+            selectedDesignVariantId = payload.variantId || selectedDesignVariantId || '';
+            selectedDesignBaseVariantId = payload.baseVariantId || selectedDesignBaseVariantId || selectedDesignVariantId;
+            const previewSrc = payload.preview_image || payload.src || '';
+            if (previewSrc) {
+              lastImageState = {
+                src: previewSrc,
+                alt: payload.preview_alt || payload.alt || 'Custom design preview'
+              };
+              setDesignPreviewImage(lastImageState.src, lastImageState.alt);
+            }
+            const restoredBasePrice = Number(payload.basePrice ?? payload.line_item_metadata?.design_base_price ?? payload.price);
+            if (Number.isFinite(restoredBasePrice)) {
+              designBasePrice = restoredBasePrice;
+              lastPrice = { amount: designBasePrice };
+              selectedColorPrice = null;
+            }
+
+            const notesEl = document.getElementById('design-notes-customization');
+            if (notesEl) {
+              notesEl.value = payload.notes || '';
+              notesEl.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
+            const colorSwatch = findStoredSelectionSwatch(designColorTrack, {
+              label: colorState.label || '',
+              style: colorState.style || '',
+              glyph: colorState.glyph || '',
+              variantId: colorState.variantId || payload.variantId || ''
+            }, colorState.variantId || payload.variantId || '');
+            if (colorSwatch) {
+              colorSwatch.click();
+            } else if (colorState.label) {
+              const colorTarget = document.querySelector('[data-selected-color]');
+              selectedColorLabel = colorState.label || '';
+              selectedColorStyle = colorState.style || '';
+              selectedColorGlyph = colorState.glyph || '';
+              syncDesignSelectionTarget(colorTarget, {
+                style: selectedColorStyle,
+                glyph: selectedColorGlyph,
+                label: selectedColorLabel,
+                placeholder: 'Color selected',
+                selected: true
+              });
+              updateColorPreview(selectedColorStyle, selectedColorLabel, selectedColorGlyph);
+            }
+
+            const accessorySwatch = findStoredSelectionSwatch(designAccessoryTrack, {
+              label: accessoryState.label || '',
+              style: accessoryState.style || '',
+              glyph: accessoryState.glyph || ''
+            });
+            if (accessorySwatch) {
+              accessorySwatch.click();
+            } else if (accessoryState.label) {
+              const accessoryTarget = document.querySelector('[data-selected-accessory]');
+              selectedAccessoryLabel = accessoryState.label || '';
+              selectedAccessoryStyle = accessoryState.style || '';
+              selectedAccessoryGlyph = accessoryState.glyph || '';
+              selectedAccessoryImageSrc = accessoryState.imageSrc || '';
+              selectedAccessoryImageAlt = accessoryState.imageAlt || '';
+              syncDesignSelectionTarget(accessoryTarget, {
+                style: selectedAccessoryStyle,
+                glyph: selectedAccessoryGlyph,
+                label: selectedAccessoryLabel,
+                placeholder: 'Accessory selected',
+                selected: true
+              });
+              updateAccessoryPreview(
+                selectedAccessoryStyle,
+                selectedAccessoryLabel,
+                selectedAccessoryGlyph,
+                selectedAccessoryImageSrc,
+                selectedAccessoryImageAlt
+              );
+            }
+
+            const wrapOption = Array.from(document.querySelectorAll('[data-wrap-option]')).find(option => {
+              const key = option.getAttribute('data-wrap-option') || '';
+              const label = option.querySelector('span')?.textContent?.trim() || option.textContent.trim();
+              return (wrapState.key && key === wrapState.key) || (wrapState.label && label === wrapState.label);
+            });
+            if (wrapOption) {
+              wrapOption.click();
+            } else if (wrapState.label) {
+              const wrapTarget = document.querySelector('[data-selected-wrap]');
+              selectedWrapLabel = wrapState.label;
+              wrapPrice = 2.5;
+              syncDesignSelectionTarget(wrapTarget, {
+                style: '',
+                glyph: selectedWrapLabel.charAt(0).toUpperCase(),
+                label: selectedWrapLabel,
+                placeholder: 'Select a wrap template',
+                selected: true
+              });
+            }
+
+            const uploadRef = Array.isArray(payload.upload_references) ? payload.upload_references[0] : null;
+            if (uploadRef?.filename) {
+              setDesignSaveStatus(`Restored attachment reference: ${uploadRef.filename}`);
+            } else {
+              setDesignSaveStatus('Saved design restored.');
+            }
+            updateDesignTotal();
+          } catch (error) {
+            console.warn('Unable to restore saved design', error);
+            setDesignSaveStatus('Unable to restore that saved design. Please review your selections.', true);
+          } finally {
+            clearRestoreDesignPayload();
+          }
+        };
+
         const readCartFromStorage = () => {
           try {
             const raw = localStorage.getItem(CART_STORAGE_KEY);
@@ -3321,20 +3739,6 @@
           const commerce = window.LDCCommerce;
           const medusaEnabled = commerce?.enabled && (document.body?.dataset?.medusaEnabled === 'true' || window.LDC_MEDUSA_ENABLED === true);
           if (medusaEnabled) {
-            const resolveVariantFromSelection = async () => {
-              if (!commerce?.resolveVariantId) return '';
-              const key = selectedDesignProductKey || selectedDesignProductHandle || selectedDesignProductId || '';
-              if (!key) return '';
-              const dummy = document.createElement('button');
-              dummy.dataset.productKey = selectedDesignProductKey || selectedDesignProductHandle || selectedDesignProductId || '';
-              if (selectedDesignProductHandle) dummy.dataset.productHandle = selectedDesignProductHandle;
-              if (selectedDesignProductId) dummy.dataset.productId = selectedDesignProductId;
-              try {
-                return (await commerce.resolveVariantId(dummy)) || '';
-              } catch {
-                return '';
-              }
-            };
             const resolvedVariantId = selectedDesignVariantId || await resolveVariantFromSelection();
             if (!resolvedVariantId) {
               alert('Select a product to design first (use the pencil icon on a product tile).');
@@ -3380,6 +3784,25 @@
           });
         }
 
+        if (designSaveBtn) {
+          designSaveBtn.addEventListener('click', async event => {
+            event.preventDefault();
+            if (designSaveBtn.dataset.busy === 'true') return;
+            designSaveBtn.dataset.busy = 'true';
+            designSaveBtn.setAttribute('disabled', 'true');
+            setDesignSaveStatus('Saving design...');
+            try {
+              await saveDesignToFavorites();
+            } catch (error) {
+              console.warn('Design save failed', error);
+              setDesignSaveStatus('We ran into a problem saving this design. Please try again.', true);
+            } finally {
+              designSaveBtn.dataset.busy = 'false';
+              designSaveBtn.removeAttribute('disabled');
+            }
+          });
+        }
+
         bindUploadLabels();
         await applyStoredDesignSelection();
         initSwatchSliders();
@@ -3387,6 +3810,7 @@
         initMobilePreviewSelectors();
         initBasePrice();
         applyPendingStoredDesignSelections();
+        await applySavedDesignRestore();
         updateDesignTotal();
       })();
     </script>
