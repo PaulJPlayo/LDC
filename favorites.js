@@ -311,6 +311,10 @@
   }
 
   function chooseStoredFavoriteId(item, source) {
+    if (isAttireFavoriteRecord(item)) {
+      return buildFavoriteKey(item);
+    }
+
     var explicitKey = toText(source && (source.favorite_key || source.favoriteKey));
     if (explicitKey) return explicitKey;
 
@@ -374,7 +378,52 @@
     return 'default';
   }
 
+  function buildAttireFavoriteUploadRef(item) {
+    var uploadRef = getFavoriteUploadReference(item);
+    if (uploadRef && uploadRef.key) return 'ref:' + shortHash(uploadRef.key);
+
+    var attachmentOption = getFavoriteAttachmentOption(item);
+    if (!attachmentOption) return 'none';
+
+    var pendingRef = [
+      stripAttachmentReferenceNote(attachmentOption.value),
+      attachmentOption.attachment_content_type || attachmentOption.attachmentContentType,
+      attachmentOption.attachment_size || attachmentOption.attachmentSize
+    ].map(toText).filter(Boolean).join('|');
+
+    return pendingRef ? 'pending:' + shortHash(pendingRef) : 'none';
+  }
+
+  function buildAttireFavoriteKey(item) {
+    var productRef =
+      toText(item && (item.product_key || item.productKey)) ||
+      toText(item && (item.product_handle || item.productHandle)) ||
+      buildProductRef(item || {});
+    var variantRef = toText(item && item.variant_id) || 'none';
+    var styleRef = getFavoriteOptionValue(item, 'Style') || 'none';
+    var colorRef = getFavoriteOptionValue(item, 'Color') || 'none';
+    var sizeRef = getFavoriteOptionValue(item, 'Size') || 'none';
+    var notesRef = getFavoriteNotes(item);
+    var uploadRef = buildAttireFavoriteUploadRef(item);
+
+    return [
+      'fav',
+      ATTIRE_BUILD_TYPE,
+      toLowerSlug(productRef || 'attire-custom'),
+      'variant:' + toLowerSlug(variantRef),
+      'style:' + toLowerSlug(styleRef),
+      'color:' + toLowerSlug(colorRef),
+      'size:' + toLowerSlug(sizeRef),
+      'notes:' + shortHash(notesRef),
+      'uploads:' + uploadRef
+    ].join('|');
+  }
+
   function buildFavoriteKey(item) {
+    if (isAttireFavoriteRecord(item)) {
+      return buildAttireFavoriteKey(item);
+    }
+
     var productRef = buildProductRef(item);
     var variantRef = buildVariantRef(item);
     return 'fav|' + productRef + '|' + variantRef;
@@ -1618,7 +1667,10 @@
     if (!isAccountSyncableAttireBuild(favorite)) return null;
 
     var cloned = cloneFavorite(favorite);
-    var dedupeKey = toText(favorite.account_dedupe_key) || buildAttireAccountDedupeKey(favorite);
+    var dedupeKey = buildAttireAccountDedupeKey(favorite);
+    var favoriteKey = buildFavoriteKey(favorite);
+    cloned.id = favoriteKey;
+    cloned.favorite_key = favoriteKey;
     var safePayload = sanitizeAccountPayload(cloned, 0, '') || {};
     var attireMetadata = buildAttireCommerceMetadataFromFavorite(favorite, favorite.variant_id, global.LDCCommerce);
     var safeMetadata = sanitizeAccountPayload(attireMetadata || buildCommerceMetadataFromFavorite(favorite), 0, '') || {};
@@ -1635,7 +1687,7 @@
     return {
       type: ATTIRE_BUILD_TYPE,
       dedupe_key: dedupeKey,
-      favorite_key: toText(favorite.favorite_key || favorite.id) || buildFavoriteKey(favorite),
+      favorite_key: favoriteKey,
       source_path: '/attire',
       product_id: toText(favorite.product_id),
       product_handle: productHandle,
@@ -1914,7 +1966,9 @@
         : null
     });
     var favorite = normalizeFavoriteItem(mapped, { source_path: mapped.source_path });
-    var favoriteKey = toText(savedItem.favorite_key || payload.favorite_key || payload.id || favorite.id);
+    var favoriteKey = savedType === ATTIRE_BUILD_TYPE
+      ? buildFavoriteKey(favorite)
+      : toText(savedItem.favorite_key || payload.favorite_key || payload.id || favorite.id);
     if (favoriteKey) {
       favorite.id = favoriteKey;
       favorite.favorite_key = favoriteKey;
@@ -2203,7 +2257,9 @@
         rawItem
       );
       if (accountMode) {
-        merged.account_dedupe_key = toText(merged.account_dedupe_key) || buildSavedItemDedupeKey(merged);
+        merged.account_dedupe_key = isAttireFavoriteRecord(merged)
+          ? buildSavedItemDedupeKey(merged)
+          : (toText(merged.account_dedupe_key) || buildSavedItemDedupeKey(merged));
         merged.account_source = toText(merged.account_source) || 'backend_pending';
         merged.account_saved_item_type = getAccountSavedItemTypeForFavorite(merged);
         merged.owner_scope = 'account';
@@ -2217,7 +2273,9 @@
     }
 
     if (accountMode) {
-      normalized.account_dedupe_key = toText(normalized.account_dedupe_key) || buildSavedItemDedupeKey(normalized);
+      normalized.account_dedupe_key = isAttireFavoriteRecord(normalized)
+        ? buildSavedItemDedupeKey(normalized)
+        : (toText(normalized.account_dedupe_key) || buildSavedItemDedupeKey(normalized));
       normalized.account_source = 'backend_pending';
       normalized.account_saved_item_type = getAccountSavedItemTypeForFavorite(normalized);
       normalized.owner_scope = 'account';
