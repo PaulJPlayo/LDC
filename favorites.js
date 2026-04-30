@@ -378,14 +378,14 @@
     return {
       label: option.label,
       value: option.value,
-      swatch_style: option.swatch_style,
-      swatch_glyph: option.swatch_glyph,
-      attachment_data: option.attachment_data,
-      attachment_key: option.attachment_key,
-      attachment_url: option.attachment_url,
-      attachment_provider: option.attachment_provider,
-      attachment_content_type: option.attachment_content_type,
-      attachment_size: option.attachment_size,
+      swatch_style: option.swatch_style || option.swatchStyle,
+      swatch_glyph: option.swatch_glyph || option.swatchGlyph,
+      attachment_data: option.attachment_data || option.attachmentData,
+      attachment_key: option.attachment_key || option.attachmentKey,
+      attachment_url: option.attachment_url || option.attachmentUrl,
+      attachment_provider: option.attachment_provider || option.attachmentProvider,
+      attachment_content_type: option.attachment_content_type || option.attachmentContentType,
+      attachment_size: option.attachment_size || option.attachmentSize,
       layout: option.layout
     };
   }
