@@ -1330,7 +1330,9 @@
         margin-top: 0.75rem;
         text-align: center;
         display: flex;
-        flex-wrap: wrap;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: center;
         justify-content: center;
         gap: 0.75rem;
       }
@@ -1681,12 +1683,12 @@
                       </div>
                     </div>
                     <div class="cta-wrap">
-                      <button type="button" class="cta-btn design-save-btn" data-design-save>
-                        Save Design
-                      </button>
                       <a href="checkout.html" class="cta-btn" data-design-submit>
                         Submit Your Design
                       </a>
+                      <button type="button" class="cta-btn design-save-btn" data-design-save>
+                        Save Design
+                      </button>
                       <p class="design-save-status" data-design-save-status hidden></p>
                     </div>
                   </div>
@@ -1708,7 +1710,6 @@
         const DESIGN_SELECTION_KEY = 'ldcDesignSelection';
         const DESIGN_SELECTION_PENDING_KEY = 'ldcDesignSelectionPending';
         const DESIGN_SELECTION_PENDING_AT_KEY = 'ldcDesignSelectionPendingAt';
-        const CUSTOM_DESIGN_RESTORE_KEY = 'ldc:customization:restore-design';
         const CART_STORAGE_KEY = 'ldc:cart';
         const designFrame = document.querySelector('[data-design-frame]');
         const designImageWrap = designFrame?.querySelector('[data-design-image-wrap]');
@@ -2495,6 +2496,25 @@
           setMobileSelectorIndex('color', 0);
           renderMobileSelector('color');
           resetDesignSwatchSlider();
+        };
+
+        const resetCustomizationTileForNextDesign = () => {
+          clearDesignImageSelection();
+          setDesignColorSwatches(defaultDesignSwatches);
+          resetDesignSelections();
+          const notesEl = document.getElementById('design-notes-customization');
+          if (notesEl) {
+            notesEl.value = '';
+            notesEl.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+          if (designAttachmentInput) {
+            designAttachmentInput.value = '';
+            const labelSpan = designAttachmentInput.closest('.support-upload')?.querySelector('.support-upload-trigger span');
+            if (labelSpan) {
+              labelSpan.textContent = labelSpan.dataset.defaultText || 'Upload Inspiration';
+            }
+          }
+          updateDesignTotal();
         };
 
         designColorPreviewClear?.addEventListener('click', event => {
@@ -3569,156 +3589,8 @@
             favoritesApi.isAccountMode?.() ? 'Saved to your account.' : 'Saved for this session.'
           );
           window.ldcFavoritesUI?.openDrawer?.(designSaveBtn);
-        };
-
-        const readRestoreDesignPayload = () => {
-          try {
-            const raw = sessionStorage.getItem(CUSTOM_DESIGN_RESTORE_KEY);
-            if (!raw) return null;
-            const parsed = JSON.parse(raw);
-            if (!parsed || typeof parsed !== 'object' || parsed.type !== 'custom_design') return null;
-            return parsed;
-          } catch {
-            return null;
-          }
-        };
-
-        const clearRestoreDesignPayload = () => {
-          try {
-            sessionStorage.removeItem(CUSTOM_DESIGN_RESTORE_KEY);
-          } catch {}
-        };
-
-        const applySavedDesignRestore = async () => {
-          const payload = readRestoreDesignPayload();
-          if (!payload) return;
-          try {
-            const colorState = payload.color && typeof payload.color === 'object' ? payload.color : {};
-            const accessoryState = payload.accessory && typeof payload.accessory === 'object' ? payload.accessory : {};
-            const wrapState = payload.wrap && typeof payload.wrap === 'object' ? payload.wrap : {};
-            if (Array.isArray(payload.swatches) && payload.swatches.length) {
-              const enrichedSwatches = await enrichDesignSwatches(payload.swatches, {
-                productKey: payload.productKey || '',
-                productHandle: payload.productHandle || '',
-                productId: payload.productId || ''
-              });
-              setDesignColorSwatches(enrichedSwatches.length ? enrichedSwatches : payload.swatches);
-            }
-            resetDesignSelections();
-            selectedDesignName = payload.name || payload.title || selectedDesignName || 'Custom Design';
-            selectedDesignDescription = payload.description || selectedDesignDescription || '';
-            selectedDesignProductKey = payload.productKey || selectedDesignProductKey || '';
-            selectedDesignProductHandle = payload.productHandle || selectedDesignProductHandle || '';
-            selectedDesignProductId = payload.productId || selectedDesignProductId || '';
-            selectedDesignVariantId = payload.variantId || selectedDesignVariantId || '';
-            selectedDesignBaseVariantId = payload.baseVariantId || selectedDesignBaseVariantId || selectedDesignVariantId;
-            const previewSrc = payload.preview_image || payload.src || '';
-            if (previewSrc) {
-              lastImageState = {
-                src: previewSrc,
-                alt: payload.preview_alt || payload.alt || 'Custom design preview'
-              };
-              setDesignPreviewImage(lastImageState.src, lastImageState.alt);
-            }
-            const restoredBasePrice = Number(payload.basePrice ?? payload.line_item_metadata?.design_base_price ?? payload.price);
-            if (Number.isFinite(restoredBasePrice)) {
-              designBasePrice = restoredBasePrice;
-              lastPrice = { amount: designBasePrice };
-              selectedColorPrice = null;
-            }
-
-            const notesEl = document.getElementById('design-notes-customization');
-            if (notesEl) {
-              notesEl.value = payload.notes || '';
-              notesEl.dispatchEvent(new Event('input', { bubbles: true }));
-            }
-
-            const colorSwatch = findStoredSelectionSwatch(designColorTrack, {
-              label: colorState.label || '',
-              style: colorState.style || '',
-              glyph: colorState.glyph || '',
-              variantId: colorState.variantId || payload.variantId || ''
-            }, colorState.variantId || payload.variantId || '');
-            if (colorSwatch) {
-              colorSwatch.click();
-            } else if (colorState.label) {
-              const colorTarget = document.querySelector('[data-selected-color]');
-              selectedColorLabel = colorState.label || '';
-              selectedColorStyle = colorState.style || '';
-              selectedColorGlyph = colorState.glyph || '';
-              syncDesignSelectionTarget(colorTarget, {
-                style: selectedColorStyle,
-                glyph: selectedColorGlyph,
-                label: selectedColorLabel,
-                placeholder: 'Color selected',
-                selected: true
-              });
-              updateColorPreview(selectedColorStyle, selectedColorLabel, selectedColorGlyph);
-            }
-
-            const accessorySwatch = findStoredSelectionSwatch(designAccessoryTrack, {
-              label: accessoryState.label || '',
-              style: accessoryState.style || '',
-              glyph: accessoryState.glyph || ''
-            });
-            if (accessorySwatch) {
-              accessorySwatch.click();
-            } else if (accessoryState.label) {
-              const accessoryTarget = document.querySelector('[data-selected-accessory]');
-              selectedAccessoryLabel = accessoryState.label || '';
-              selectedAccessoryStyle = accessoryState.style || '';
-              selectedAccessoryGlyph = accessoryState.glyph || '';
-              selectedAccessoryImageSrc = accessoryState.imageSrc || '';
-              selectedAccessoryImageAlt = accessoryState.imageAlt || '';
-              syncDesignSelectionTarget(accessoryTarget, {
-                style: selectedAccessoryStyle,
-                glyph: selectedAccessoryGlyph,
-                label: selectedAccessoryLabel,
-                placeholder: 'Accessory selected',
-                selected: true
-              });
-              updateAccessoryPreview(
-                selectedAccessoryStyle,
-                selectedAccessoryLabel,
-                selectedAccessoryGlyph,
-                selectedAccessoryImageSrc,
-                selectedAccessoryImageAlt
-              );
-            }
-
-            const wrapOption = Array.from(document.querySelectorAll('[data-wrap-option]')).find(option => {
-              const key = option.getAttribute('data-wrap-option') || '';
-              const label = option.querySelector('span')?.textContent?.trim() || option.textContent.trim();
-              return (wrapState.key && key === wrapState.key) || (wrapState.label && label === wrapState.label);
-            });
-            if (wrapOption) {
-              wrapOption.click();
-            } else if (wrapState.label) {
-              const wrapTarget = document.querySelector('[data-selected-wrap]');
-              selectedWrapLabel = wrapState.label;
-              wrapPrice = 2.5;
-              syncDesignSelectionTarget(wrapTarget, {
-                style: '',
-                glyph: selectedWrapLabel.charAt(0).toUpperCase(),
-                label: selectedWrapLabel,
-                placeholder: 'Select a wrap template',
-                selected: true
-              });
-            }
-
-            const uploadRef = Array.isArray(payload.upload_references) ? payload.upload_references[0] : null;
-            if (uploadRef?.filename) {
-              setDesignSaveStatus(`Restored attachment reference: ${uploadRef.filename}`);
-            } else {
-              setDesignSaveStatus('Saved design restored.');
-            }
-            updateDesignTotal();
-          } catch (error) {
-            console.warn('Unable to restore saved design', error);
-            setDesignSaveStatus('Unable to restore that saved design. Please review your selections.', true);
-          } finally {
-            clearRestoreDesignPayload();
-          }
+          resetCustomizationTileForNextDesign();
+          setTimeout(() => setDesignSaveStatus(''), 3500);
         };
 
         const readCartFromStorage = () => {
@@ -3755,6 +3627,7 @@
             const metadata = await buildDesignMetadata(resolvedVariantId, uploadedAttachment, attachment);
             await commerce.addLineItem(resolvedVariantId, 1, metadata);
             await commerce.syncBadges();
+            resetCustomizationTileForNextDesign();
             window.location.href = 'checkout.html';
             return;
           }
@@ -3768,6 +3641,7 @@
           try {
             sessionStorage.setItem('ldc:design:last', JSON.stringify(product));
           } catch {}
+          resetCustomizationTileForNextDesign();
           window.location.href = 'checkout.html';
         };
 
@@ -3810,7 +3684,6 @@
         initMobilePreviewSelectors();
         initBasePrice();
         applyPendingStoredDesignSelections();
-        await applySavedDesignRestore();
         updateDesignTotal();
       })();
     </script>
