@@ -428,10 +428,18 @@
       account_dedupe_key: item.account_dedupe_key,
       account_source: item.account_source,
       account_saved_item_type: item.account_saved_item_type,
+      owner_scope: item.owner_scope,
+      merged_to_account: item.merged_to_account === true,
       line_item_metadata: cloneJsonValue(item.line_item_metadata, null),
       upload_references: cloneJsonValue(item.upload_references, []),
       live_reference: cloneJsonValue(item.live_reference, null)
     };
+  }
+
+  function normalizeOwnerScope(value) {
+    var scope = toText(value).toLowerCase();
+    if (scope === 'account' || scope === 'guest') return scope;
+    return '';
   }
 
   function normalizeFavoriteItem(rawItem, meta) {
@@ -498,6 +506,8 @@
       account_dedupe_key: toText(source.account_dedupe_key || source.accountDedupeKey || source.dedupe_key || source.dedupeKey),
       account_source: toText(source.account_source || source.accountSource),
       account_saved_item_type: toText(source.account_saved_item_type || source.accountSavedItemType || source.saved_item_type || source.savedItemType || source.type),
+      owner_scope: normalizeOwnerScope(source.owner_scope || source.ownerScope),
+      merged_to_account: source.merged_to_account === true || source.mergedToAccount === true,
       line_item_metadata: isObject(source.line_item_metadata || source.lineItemMetadata)
         ? cloneJsonValue(source.line_item_metadata || source.lineItemMetadata, null)
         : null,
@@ -560,7 +570,9 @@
       'account_saved_item_id',
       'account_dedupe_key',
       'account_source',
-      'account_saved_item_type'
+      'account_saved_item_type',
+      'owner_scope',
+      'merged_to_account'
     ];
 
     fields.forEach(function eachField(field) {
@@ -739,6 +751,94 @@
     });
   }
 
+  function hasAccountSourceMarker(favorite) {
+    var source = toText(favorite && (favorite.account_source || favorite.accountSource)).toLowerCase();
+    return Boolean(source && source !== 'guest' && source !== 'local');
+  }
+
+  function isAccountOwnedFavorite(favorite) {
+    if (!favorite || typeof favorite !== 'object') return false;
+    if (hasBackendSavedItemIdentity(favorite)) return true;
+    if (normalizeOwnerScope(favorite.owner_scope || favorite.ownerScope) === 'account') return true;
+    if (favorite.merged_to_account === true || favorite.mergedToAccount === true) return true;
+    return hasAccountSourceMarker(favorite);
+  }
+
+  function isGuestScopedFavorite(favorite) {
+    if (!favorite || typeof favorite !== 'object') return false;
+    if (isAccountOwnedFavorite(favorite)) return false;
+    var ownerScope = normalizeOwnerScope(favorite.owner_scope || favorite.ownerScope);
+    return !ownerScope || ownerScope === 'guest';
+  }
+
+  function markGuestScopedFavorite(favorite) {
+    var next = cloneFavorite(favorite);
+    next.owner_scope = 'guest';
+    next.merged_to_account = false;
+    next.saved_item_id = '';
+    next.account_saved_item_id = '';
+    next.account_dedupe_key = '';
+    next.account_source = '';
+    next.account_saved_item_type = '';
+    return next;
+  }
+
+  function markAccountScopedFavorite(favorite, source, type) {
+    var next = cloneFavorite(favorite);
+    next.owner_scope = 'account';
+    next.account_source = toText(source) || toText(next.account_source) || 'account_deferred';
+    if (type) {
+      next.account_saved_item_type = type;
+    }
+    return next;
+  }
+
+  function filterGuestSessionState(nextState) {
+    var payload = nextState || {};
+    return {
+      version: STORE_VERSION,
+      storage_key: STORAGE_KEY,
+      updated_at: payload.updated_at || isoNow(),
+      items: (payload.items || [])
+        .filter(isGuestScopedFavorite)
+        .map(markGuestScopedFavorite)
+    };
+  }
+
+  function writeGuestSessionState(nextState) {
+    var guestState = filterGuestSessionState(nextState);
+    guestState.updated_at = isoNow();
+    if (guestState.items.length) {
+      writeRawStorageValue(STORAGE_KEY, serializeState(guestState));
+    } else {
+      removeRawStorageValue(STORAGE_KEY);
+    }
+    cleanupLegacyFavoriteStorage();
+    return guestState;
+  }
+
+  function buildFavoriteAliasMap(items) {
+    return (Array.isArray(items) ? items : []).reduce(function buildMap(result, item) {
+      if (!item) return result;
+      collectFavoriteAliases(item, item).forEach(function eachAlias(alias) {
+        if (alias) result[alias] = true;
+      });
+      if (toText(item.id)) result[toText(item.id)] = true;
+      if (toText(item.favorite_key)) result[toText(item.favorite_key)] = true;
+      return result;
+    }, {});
+  }
+
+  function favoriteMatchesAliasMap(item, aliasMap) {
+    if (!item || !aliasMap) return false;
+    var aliases = collectFavoriteAliases(item, item);
+    if (toText(item.id)) aliases.push(toText(item.id));
+    if (toText(item.favorite_key)) aliases.push(toText(item.favorite_key));
+    return aliases.some(function hasBlockedAlias(alias) {
+      return Boolean(aliasMap[alias]);
+    });
+  }
+
   function readRawStorageValue(key, store) {
     var target = store || getGuestStorage();
     if (!target) return null;
@@ -802,7 +902,7 @@
       parsed = { items: [] };
     }
 
-    var normalized = migratePayload(parsed, { source_path: getCurrentPath() });
+    var normalized = filterGuestSessionState(migratePayload(parsed, { source_path: getCurrentPath() }));
     var normalizedText = serializeState(normalized);
 
     if (!settings.readonly && rawText !== normalizedText) {
@@ -843,11 +943,13 @@
   function persistState(reason, meta) {
     state.updated_at = isoNow();
     if (!accountMode) {
-      if (state.items.length) {
-        writeRawStorageValue(STORAGE_KEY, serializeState(state));
+      var guestState = filterGuestSessionState(state);
+      if (guestState.items.length) {
+        writeRawStorageValue(STORAGE_KEY, serializeState(guestState));
       } else {
         removeRawStorageValue(STORAGE_KEY);
       }
+      state = guestState;
       cleanupLegacyFavoriteStorage();
     }
     emitChange(reason, meta);
@@ -1206,6 +1308,10 @@
     return /^(attachment_data|attachmentdata|data_url|dataurl|base64|raw_file|rawfile|file_data|filedata|blob)$/i.test(toText(key));
   }
 
+  function isInternalAccountPayloadKey(key) {
+    return /^(owner_scope|ownerscope|merged_to_account|mergedtoaccount|account_source|accountsource|account_saved_item_id|accountsaveditemid|saved_item_id|saveditemid|account_dedupe_key|accountdedupekey|account_saved_item_type|accountsaveditemtype)$/i.test(toText(key));
+  }
+
   function hasRawAccountPayload(value, depth, parentKey) {
     if (depth > 8) return false;
     if (value === null || value === undefined) return false;
@@ -1250,7 +1356,7 @@
         });
     }
     return Object.keys(value).reduce(function reduceSafe(result, key) {
-      if (isUnsafeUploadKey(key)) return result;
+      if (isUnsafeUploadKey(key) || isInternalAccountPayloadKey(key)) return result;
       var nextValue = sanitizeAccountPayload(value[key], depth + 1, key);
       if (nextValue !== undefined) result[key] = nextValue;
       return result;
@@ -1503,17 +1609,44 @@
     var originalLength = localState.items.length;
 
     localState.items = localState.items.filter(function keepItem(item) {
-      return !removeMap[toText(item && item.id)] && !removeMap[toText(item && item.favorite_key)];
+      return isGuestScopedFavorite(item) && !removeMap[toText(item && item.id)] && !removeMap[toText(item && item.favorite_key)];
     });
     if (localState.items.length === originalLength) return 0;
 
-    localState.updated_at = isoNow();
-    if (localState.items.length) {
-      writeRawStorageValue(STORAGE_KEY, serializeState(localState));
-    } else {
-      removeRawStorageValue(STORAGE_KEY);
-    }
+    writeGuestSessionState(localState);
     return originalLength - localState.items.length;
+  }
+
+  function clearGuestSessionFavoritesByItems(items) {
+    var aliasMap = buildFavoriteAliasMap(items);
+    if (!Object.keys(aliasMap).length) return 0;
+
+    var localState = loadStateFromStorage({ readonly: true });
+    var originalLength = localState.items.length;
+    localState.items = localState.items.filter(function keepItem(item) {
+      return isGuestScopedFavorite(item) && !favoriteMatchesAliasMap(item, aliasMap);
+    });
+    if (localState.items.length === originalLength) return 0;
+
+    writeGuestSessionState(localState);
+    return originalLength - localState.items.length;
+  }
+
+  function purgeAccountFavoritesFromGuestStorage(accountItems) {
+    var accountOwnedItems = (Array.isArray(accountItems) ? accountItems : []).filter(isAccountOwnedFavorite);
+    var localState = loadStateFromStorage({ readonly: true });
+    var originalLength = localState.items.length;
+    var aliasMap = buildFavoriteAliasMap(accountOwnedItems);
+
+    localState.items = localState.items.filter(function keepItem(item) {
+      return isGuestScopedFavorite(item) && !favoriteMatchesAliasMap(item, aliasMap);
+    });
+
+    if (accountOwnedItems.length || localState.items.length !== originalLength) {
+      writeGuestSessionState(localState);
+    }
+
+    return Math.max(0, originalLength - localState.items.length);
   }
 
   function mergeGuestSessionFavoritesIntoAccount() {
@@ -1522,6 +1655,7 @@
     var payloads = [];
 
     (guestState.items || []).forEach(function eachGuestFavorite(favorite) {
+      if (!isGuestScopedFavorite(favorite)) return;
       var payload = mapFavoriteToSavedItem(favorite);
       if (!payload) return;
       candidates.push(favorite);
@@ -1545,16 +1679,20 @@
         if (Number.isFinite(index)) map[index] = true;
         return map;
       }, {});
-      var mergedIds = candidates
+      var successfulCandidates = candidates
         .filter(function keepSuccessfulCandidate(_favorite, index) {
           return !failedIndexes[index];
-        })
+        });
+      var mergedIds = successfulCandidates
         .map(function mapCandidateId(favorite) {
           return toText(favorite && favorite.id);
         })
         .filter(Boolean);
 
-      var cleared = clearGuestSessionFavoritesByIds(mergedIds);
+      var cleared = Math.max(
+        clearGuestSessionFavoritesByIds(mergedIds),
+        clearGuestSessionFavoritesByItems(successfulCandidates)
+      );
       emitChange('guest_merge_complete', {
         merged: Number(result && result.merged) || mergedIds.length,
         skipped: Number(result && result.skipped) || 0,
@@ -1612,6 +1750,7 @@
       account_dedupe_key: toText(savedItem.dedupe_key),
       account_source: 'backend',
       account_saved_item_type: savedType,
+      owner_scope: 'account',
       line_item_metadata: isObject(savedItem.line_item_metadata)
         ? cloneJsonValue(savedItem.line_item_metadata, null)
         : (isObject(payload.line_item_metadata) ? cloneJsonValue(payload.line_item_metadata, null) : null),
@@ -1633,6 +1772,7 @@
     favorite.account_dedupe_key = toText(savedItem.dedupe_key);
     favorite.account_source = 'backend';
     favorite.account_saved_item_type = savedType;
+    favorite.owner_scope = 'account';
     favorite.line_item_metadata = cloneJsonValue(mapped.line_item_metadata, null);
     favorite.upload_references = cloneJsonValue(mapped.upload_references, []);
     favorite.live_reference = cloneJsonValue(mapped.live_reference, null);
@@ -1641,7 +1781,7 @@
 
   function getDeferredLocalFavorites() {
     return loadStateFromStorage({ readonly: true }).items.filter(function keepDeferred(item) {
-      return !isAccountSyncableFavorite(item);
+      return isGuestScopedFavorite(item) && !isAccountSyncableFavorite(item);
     });
   }
 
@@ -1664,6 +1804,7 @@
 
   function exitAccountMode(reason) {
     accountRefreshVersion += 1;
+    purgeAccountFavoritesFromGuestStorage(state.items);
     accountMode = false;
     accountLoaded = false;
     accountLoadPromise = null;
@@ -1817,7 +1958,7 @@
   }
 
   function upsertLocalFavoriteRecord(rawItem, meta) {
-    var normalized = normalizeFavoriteItem(rawItem, meta);
+    var normalized = markGuestScopedFavorite(normalizeFavoriteItem(rawItem, meta));
     if (!normalized.id) return null;
     var localState = loadStateFromStorage();
     var existing = findFavoriteMatchInItems(localState.items, rawItem) || findFavoriteMatchInItems(localState.items, normalized.id);
@@ -1833,13 +1974,13 @@
         normalized,
         rawItem
       );
+      nextRecord = markGuestScopedFavorite(nextRecord);
       localState.items.splice(existingIndex, 1, nextRecord);
     } else {
       localState.items.push(nextRecord);
     }
 
-    localState.updated_at = isoNow();
-    writeRawStorageValue(STORAGE_KEY, serializeState(localState));
+    writeGuestSessionState(localState);
     return cloneFavorite(nextRecord);
   }
 
@@ -1851,12 +1992,7 @@
     localState.items = localState.items.filter(function filterItem(item) {
       return item.id !== favoriteId;
     });
-    localState.updated_at = isoNow();
-    if (localState.items.length) {
-      writeRawStorageValue(STORAGE_KEY, serializeState(localState));
-    } else {
-      removeRawStorageValue(STORAGE_KEY);
-    }
+    writeGuestSessionState(localState);
     return true;
   }
 
@@ -1865,22 +2001,29 @@
     if (!normalized.id) return null;
 
     if (accountMode && !isAccountSyncableFavorite(normalized)) {
-      var localFavorite = upsertLocalFavoriteRecord(rawItem, meta);
-      if (!localFavorite) return null;
-      var localExisting = findFavoriteMatch(localFavorite) || findFavoriteMatch(localFavorite.id);
-      var localExistingIndex = localExisting
-        ? state.items.findIndex(function findIndex(item) { return item.id === localExisting.id; })
+      var accountFavoriteType = isAttireFavoriteRecord(normalized) ? 'attire_build_deferred' : 'custom_deferred';
+      var accountFavorite = markAccountScopedFavorite(normalized, 'account_deferred', accountFavoriteType);
+      removeLocalFavoriteRecord(accountFavorite);
+      var accountExisting = findFavoriteMatch(accountFavorite) || findFavoriteMatch(accountFavorite.id);
+      var accountExistingIndex = accountExisting
+        ? state.items.findIndex(function findIndex(item) { return item.id === accountExisting.id; })
         : -1;
-      if (localExistingIndex >= 0) {
-        state.items.splice(localExistingIndex, 1, mergeFavoriteRecords(state.items[localExistingIndex], localFavorite));
+      if (accountExistingIndex >= 0) {
+        var mergedDeferred = markAccountScopedFavorite(
+          mergeFavoriteRecords(state.items[accountExistingIndex], accountFavorite),
+          'account_deferred',
+          accountFavoriteType
+        );
+        state.items.splice(accountExistingIndex, 1, mergedDeferred);
         state.updated_at = isoNow();
-        emitChange('local_deferred_update', { id: localFavorite.id, mode: 'account' });
+        emitChange('account_deferred_update', { id: mergedDeferred.id, mode: 'account' });
+        return cloneFavorite(mergedDeferred);
       } else {
-        state.items.push(localFavorite);
+        state.items.push(accountFavorite);
         state.updated_at = isoNow();
-        emitChange('local_deferred_add', { id: localFavorite.id, mode: 'account' });
+        emitChange('account_deferred_add', { id: accountFavorite.id, mode: 'account' });
+        return cloneFavorite(accountFavorite);
       }
-      return cloneFavorite(localFavorite);
     }
 
     var existing = findFavoriteMatch(rawItem) || findFavoriteMatch(normalized.id);
@@ -1901,6 +2044,7 @@
         merged.account_dedupe_key = toText(merged.account_dedupe_key) || buildSavedItemDedupeKey(merged);
         merged.account_source = toText(merged.account_source) || 'backend_pending';
         merged.account_saved_item_type = isDoormatFavoriteRecord(merged) ? DOORMAT_BUILD_TYPE : ACCOUNT_FAVORITE_TYPE;
+        merged.owner_scope = 'account';
       }
       state.items.splice(existingIndex, 1, merged);
       persistState(accountMode ? 'account_update' : 'update', { id: merged.id });
@@ -1914,6 +2058,9 @@
       normalized.account_dedupe_key = toText(normalized.account_dedupe_key) || buildSavedItemDedupeKey(normalized);
       normalized.account_source = 'backend_pending';
       normalized.account_saved_item_type = isDoormatFavoriteRecord(normalized) ? DOORMAT_BUILD_TYPE : ACCOUNT_FAVORITE_TYPE;
+      normalized.owner_scope = 'account';
+    } else {
+      normalized.owner_scope = 'guest';
     }
     state.items.push(normalized);
     persistState(accountMode ? 'account_add' : 'add', { id: normalized.id });
@@ -1936,6 +2083,8 @@
     if (accountMode && match) {
       if (hasBackendSavedItemIdentity(match) || isAccountSyncableFavorite(match)) {
         queueAccountFavoriteDelete(match);
+      } else if (isAccountOwnedFavorite(match)) {
+        purgeAccountFavoritesFromGuestStorage([match]);
       } else {
         removeLocalFavoriteRecord(match);
       }
@@ -1966,6 +2115,8 @@
       removedItems.forEach(function eachRemovedFavorite(item) {
         if (hasBackendSavedItemIdentity(item) || isAccountSyncableFavorite(item)) {
           queueAccountFavoriteDelete(item);
+        } else if (isAccountOwnedFavorite(item)) {
+          purgeAccountFavoritesFromGuestStorage([item]);
         } else {
           removeLocalFavoriteRecord(item);
         }
