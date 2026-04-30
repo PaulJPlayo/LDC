@@ -2150,8 +2150,9 @@
                     const value = opt.value || '';
                     const normalizedLabel = label.toLowerCase();
                     if (normalizedLabel === 'attachment') {
+                      const attachmentUrl = typeof opt.attachmentData === 'string' && !/^data:/i.test(opt.attachmentData) ? opt.attachmentData : '';
                       const badge = opt.attachmentData ? ' (attached)' : '';
-                      const viewLink = opt.attachmentData ? `<a href="${opt.attachmentData.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="cart-attachment-link">View</a>` : '';
+                      const viewLink = attachmentUrl ? `<a href="${attachmentUrl.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="cart-attachment-link">View</a>` : '';
                       return `<div class="cart-option"><span class="cart-option-label">${label}</span><span class="cart-option-value">${value}${badge} ${viewLink}</span></div>`;
                     }
                     if (normalizedLabel === 'color' || normalizedLabel === 'package') {
@@ -2242,7 +2243,11 @@
           const attachment = await readAttachment();
           if (attachment?.name) {
             const note = attachment.dataUrl ? '' : ' (file reference)';
-            push('Attachment', `${attachment.name}${note}`, { attachmentData: attachment.dataUrl || '' });
+            push('Attachment', `${attachment.name}${note}`, {
+              attachmentData: attachment.dataUrl || '',
+              attachmentContentType: attachment.type || '',
+              attachmentSize: attachment.size || 0
+            });
           }
           return options;
         };
@@ -2307,7 +2312,14 @@
             design_size_label: cleanText(sizeOpt?.value) || undefined,
             design_notes: cleanText(notesOpt?.value) || undefined,
             design_attachment_name: stripAttachmentReferenceNote(attachmentOpt?.value) || undefined,
-            design_attachment_data: cleanText(attachmentOpt?.attachmentData || attachmentOpt?.attachment_data) || undefined
+            design_attachment_url: cleanText(attachmentOpt?.attachmentUrl || attachmentOpt?.attachment_url) || undefined,
+            design_attachment_key: cleanText(attachmentOpt?.attachmentKey || attachmentOpt?.attachment_key) || undefined,
+            design_attachment_provider: cleanText(attachmentOpt?.attachmentProvider || attachmentOpt?.attachment_provider) ||
+              (cleanText(attachmentOpt?.attachmentKey || attachmentOpt?.attachment_key) ? 's3' : undefined),
+            design_attachment_content_type: cleanText(attachmentOpt?.attachmentContentType || attachmentOpt?.attachment_content_type) || undefined,
+            design_attachment_size: Number.isFinite(Number(attachmentOpt?.attachmentSize || attachmentOpt?.attachment_size))
+              ? Number(attachmentOpt?.attachmentSize || attachmentOpt?.attachment_size)
+              : undefined
           };
           return Object.fromEntries(
             Object.entries(metadata).filter(([, value]) => value !== undefined && value !== '')
@@ -2336,6 +2348,10 @@
             swatchGlyph: cleanText(option?.swatchGlyph || option?.swatch_glyph),
             attachmentData: cleanText(option?.attachmentData || option?.attachment_data),
             attachmentKey: cleanText(option?.attachmentKey || option?.attachment_key),
+            attachmentUrl: cleanText(option?.attachmentUrl || option?.attachment_url),
+            attachmentProvider: cleanText(option?.attachmentProvider || option?.attachment_provider),
+            attachmentContentType: cleanText(option?.attachmentContentType || option?.attachment_content_type),
+            attachmentSize: cleanText(option?.attachmentSize || option?.attachment_size),
             layout: cleanText(option?.layout)
           })).filter(option => option.label && option.value) : [];
           options.push({
@@ -2421,7 +2437,26 @@
           button?.setAttribute('aria-busy', 'true');
           if (button) button.disabled = true;
           try {
-            const saved = sharedFavorites.addFavorite(payload, { source_path: payload.source_path });
+            let favoritePayload = payload;
+            if (
+              typeof sharedFavorites.isAccountMode === 'function' &&
+              sharedFavorites.isAccountMode() &&
+              typeof sharedFavorites.ensurePersistentUploadReference === 'function'
+            ) {
+              try {
+                favoritePayload = await sharedFavorites.ensurePersistentUploadReference(payload);
+              } catch (error) {
+                const message = cleanText(error?.userMessage || error?.user_message) ||
+                  'Reattach Upload Inspiration before saving this Doormat build.';
+                commerce?.showStatusMessage?.(message, 'error');
+                return {
+                  ok: false,
+                  reason: cleanText(error?.reason) || 'upload_reference_failed',
+                  user_message: message
+                };
+              }
+            }
+            const saved = sharedFavorites.addFavorite(favoritePayload, { source_path: favoritePayload.source_path });
             refreshFavoritesState();
             renderFavorites();
             await syncDoormatFavoriteButton();

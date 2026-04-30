@@ -2049,8 +2049,9 @@
                     const value = opt.value || '';
                     const normalizedLabel = label.toLowerCase();
                     if (normalizedLabel === 'attachment') {
+                      const attachmentUrl = typeof opt.attachmentData === 'string' && !/^data:/i.test(opt.attachmentData) ? opt.attachmentData : '';
                       const badge = opt.attachmentData ? ' (attached)' : '';
-                      const viewLink = opt.attachmentData ? `<a href="${opt.attachmentData.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="cart-attachment-link">View</a>` : '';
+                      const viewLink = attachmentUrl ? `<a href="${attachmentUrl.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="cart-attachment-link">View</a>` : '';
                       return `<div class="cart-option"><span class="cart-option-label">${label}</span><span class="cart-option-value">${value}${badge} ${viewLink}</span></div>`;
                     }
                     if (normalizedLabel === 'color' || normalizedLabel === 'package') {
@@ -2118,7 +2119,11 @@
           const attachment = await readAttachment();
           if (attachment?.name) {
             const note = attachment.dataUrl ? '' : ' (file reference)';
-            push('Attachment', `${attachment.name}${note}`, { attachmentData: attachment.dataUrl || '' });
+            push('Attachment', `${attachment.name}${note}`, {
+              attachmentData: attachment.dataUrl || '',
+              attachmentContentType: attachment.type || '',
+              attachmentSize: attachment.size || 0
+            });
           }
           return options;
         };
@@ -2211,6 +2216,10 @@
             swatchGlyph: cleanText(option?.swatchGlyph || option?.swatch_glyph),
             attachmentData: cleanText(option?.attachmentData || option?.attachment_data),
             attachmentKey: cleanText(option?.attachmentKey || option?.attachment_key),
+            attachmentUrl: cleanText(option?.attachmentUrl || option?.attachment_url),
+            attachmentProvider: cleanText(option?.attachmentProvider || option?.attachment_provider),
+            attachmentContentType: cleanText(option?.attachmentContentType || option?.attachment_content_type),
+            attachmentSize: cleanText(option?.attachmentSize || option?.attachment_size),
             layout: cleanText(option?.layout)
           };
         };
@@ -2349,12 +2358,29 @@
               id: source?.id
             };
           }
-          const cartItem = buildAttireCartSource(source);
+          const sharedFavoritesApi = getSharedFavorites();
+          let safeSource = source;
+          if (sharedFavoritesApi && typeof sharedFavoritesApi.ensurePersistentUploadReference === 'function') {
+            try {
+              safeSource = await sharedFavoritesApi.ensurePersistentUploadReference(source);
+            } catch (error) {
+              return {
+                ok: false,
+                reason: cleanText(error?.reason) || 'upload_reference_failed',
+                user_message:
+                  cleanText(error?.userMessage || error?.user_message) ||
+                  'Reattach Upload Inspiration before moving this favorite to cart.',
+                error: cleanText(error?.message),
+                id: source?.id
+              };
+            }
+          }
+          const cartItem = buildAttireCartSource(safeSource);
           const resolution = await resolveAttireCartEntry({
-            ...source,
+            ...safeSource,
             product_handle: cartItem.product_handle || 'attire-custom',
             product_url: cartItem.product_url || '/attire',
-            variant_title: cartItem.variant_title || cleanText(source?.options_summary)
+            variant_title: cartItem.variant_title || cleanText(safeSource?.options_summary)
           });
           const variantId = cleanText(resolution?.variantId);
           if (!variantId) {
@@ -2376,11 +2402,21 @@
               id: source?.id
             };
           }
+          const uploadRef = sharedFavoritesApi && typeof sharedFavoritesApi.getFavoriteUploadReference === 'function'
+            ? sharedFavoritesApi.getFavoriteUploadReference(safeSource)
+            : null;
           const metadata = commerce.buildAttireLineItemMetadataFromLegacyItem({
             ...cartItem,
             id: variantId,
             variant_id: variantId
-          });
+          }, uploadRef ? {
+            name: uploadRef.filename,
+            url: uploadRef.display_url || uploadRef.url,
+            key: uploadRef.key,
+            provider: uploadRef.provider,
+            content_type: uploadRef.content_type,
+            size: uploadRef.size
+          } : {});
           try {
             await commerce.addLineItem(
               variantId,

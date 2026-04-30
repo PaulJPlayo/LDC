@@ -3262,6 +3262,39 @@
       (previewImage ? buildPreviewStyle(previewImage) : '');
     const designTitle = String(item.title || item.name || 'L.A.W. Attire').trim() || 'L.A.W. Attire';
     const productHandle = String(item.product_handle || item.productHandle || 'attire-custom').trim() || 'attire-custom';
+    const attachmentUrl = String(
+      attachment?.url ||
+      attachment?.display_url ||
+      attachmentOpt?.attachmentUrl ||
+      attachmentOpt?.attachment_url ||
+      ''
+    ).trim();
+    const attachmentKey = String(
+      attachment?.key ||
+      attachment?.id ||
+      attachmentOpt?.attachmentKey ||
+      attachmentOpt?.attachment_key ||
+      ''
+    ).trim();
+    const attachmentProvider = String(
+      attachment?.provider ||
+      attachmentOpt?.attachmentProvider ||
+      attachmentOpt?.attachment_provider ||
+      ''
+    ).trim();
+    const attachmentContentType = String(
+      attachment?.content_type ||
+      attachment?.contentType ||
+      attachmentOpt?.attachmentContentType ||
+      attachmentOpt?.attachment_content_type ||
+      ''
+    ).trim();
+    const attachmentSize = Number(
+      attachment?.size ||
+      attachmentOpt?.attachmentSize ||
+      attachmentOpt?.attachment_size ||
+      0
+    );
     const metadata = {
       design_mode: 'custom',
       design_product_key: productHandle,
@@ -3285,12 +3318,12 @@
       design_notes: String(notesOpt?.value || '').trim() || undefined,
       design_attachment_name:
         stripAttachmentReferenceNote(attachment?.name || attachmentOpt?.value || '') || undefined,
-      design_attachment_url: String(attachment?.url || '').trim() || undefined,
-      design_attachment_key: String(attachment?.key || attachment?.id || '').trim() || undefined,
-      design_attachment_data:
-        !String(attachment?.url || attachment?.key || attachment?.id || '').trim()
-          ? String(attachment?.data || attachmentOpt?.attachmentData || attachmentOpt?.attachment_data || '').trim() || undefined
-          : undefined
+      design_attachment_url: attachmentUrl || undefined,
+      design_attachment_key: attachmentKey || undefined,
+      design_attachment_provider: attachmentProvider || (attachmentKey ? 's3' : undefined),
+      design_attachment_content_type: attachmentContentType || undefined,
+      design_attachment_size:
+        Number.isFinite(attachmentSize) && attachmentSize > 0 ? attachmentSize : undefined
     };
 
     return Object.fromEntries(
@@ -3455,8 +3488,6 @@
     const designAttachmentUrl =
       metadata.design_attachment_url ||
       metadata.designAttachmentUrl ||
-      metadata.design_attachment_data ||
-      metadata.designAttachmentData ||
       '';
     const designAttachmentKey =
       metadata.design_attachment_key ||
@@ -4076,7 +4107,11 @@
                 : (
                     typeof option?.attachment_data === 'string'
                       ? option.attachment_data
-                      : ''
+                      : (
+                          typeof option?.attachmentUrl === 'string'
+                            ? option.attachmentUrl
+                            : (typeof option?.attachment_url === 'string' ? option.attachment_url : '')
+                        )
                   ),
             attachmentKey:
               typeof option?.attachmentKey === 'string'
@@ -4578,8 +4613,11 @@
                   return classes.join(' ');
                 })();
                 if (option.kind === 'attachment') {
-                  const viewLink = option.attachmentData
-                    ? `<a href="${option.attachmentData.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="cart-attachment-link">View</a>`
+                  const attachmentUrl = typeof option.attachmentData === 'string' && !/^data:/i.test(option.attachmentData)
+                    ? option.attachmentData
+                    : '';
+                  const viewLink = attachmentUrl
+                    ? `<a href="${attachmentUrl.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="cart-attachment-link">View</a>`
                     : '';
                   return `<span class="${rowClass}"><span class="label">Attachment</span><span class="cart-item-option-body cart-attachment-body"><span class="value">${option.value || 'Attached file'}</span>${viewLink}</span></span>`;
                 }

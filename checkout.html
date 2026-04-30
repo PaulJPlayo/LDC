@@ -739,8 +739,11 @@
               ? `<span class="checkout-item-swatch${opt.isTextSwatch ? ' is-text' : ''}" style="${opt.swatchStyle.replace(/\"/g, '&quot;')};">${escapeCheckoutHtml(opt.swatchGlyph || '')}</span>`
               : '';
             if (opt.kind === 'attachment') {
-              const viewLink = opt.attachmentData
-                ? `<a href="${escapeCheckoutHtml(String(opt.attachmentData).replace(/\"/g, '&quot;'))}" target="_blank" rel="noopener" class="checkout-attachment-link">View</a>`
+              const attachmentUrl = typeof opt.attachmentData === 'string' && !/^data:/i.test(opt.attachmentData)
+                ? opt.attachmentData
+                : '';
+              const viewLink = attachmentUrl
+                ? `<a href="${escapeCheckoutHtml(String(attachmentUrl).replace(/\"/g, '&quot;'))}" target="_blank" rel="noopener" class="checkout-attachment-link">View</a>`
                 : '';
               return `<li class="${rowClass}"><span class="label">Attachment</span><span class="checkout-item-option-body checkout-attachment-body"><span class="value">${escapeCheckoutHtml(opt.value || 'Attached file')}</span>${viewLink}</span></li>`;
             }
@@ -793,7 +796,15 @@
               : (typeof option.swatch_glyph === 'string' ? option.swatch_glyph : ''),
             attachmentData: typeof option.attachmentData === 'string'
               ? option.attachmentData
-              : (typeof option.attachment_data === 'string' ? option.attachment_data : ''),
+              : (
+                  typeof option.attachment_data === 'string'
+                    ? option.attachment_data
+                    : (
+                        typeof option.attachmentUrl === 'string'
+                          ? option.attachmentUrl
+                          : (typeof option.attachment_url === 'string' ? option.attachment_url : '')
+                      )
+                ),
             attachmentKey: typeof option.attachmentKey === 'string'
               ? option.attachmentKey
               : (typeof option.attachment_key === 'string' ? option.attachment_key : ''),
@@ -898,15 +909,30 @@
           const attachmentData = String(
             attachmentOption?.attachmentData ||
             attachmentOption?.attachment_data ||
+            attachmentOption?.attachmentUrl ||
+            attachmentOption?.attachment_url ||
             ''
           ).trim();
           const attachmentName = stripAttachmentReferenceNote(attachmentOption?.value || '');
-          if (!attachmentData || !attachmentData.startsWith('data:') || !commerce?.backendUrl) {
+          const attachmentKey = String(
+            attachmentOption?.attachmentKey ||
+            attachmentOption?.attachment_key ||
+            ''
+          ).trim();
+          if (!attachmentData || !commerce?.backendUrl) {
             return {
               name: attachmentName || 'Attachment',
-              url: '',
-              key: '',
-              data: attachmentData
+              url: attachmentData && !attachmentData.startsWith('data:') ? attachmentData : '',
+              key: attachmentKey,
+              data: ''
+            };
+          }
+          if (!attachmentData.startsWith('data:')) {
+            return {
+              name: attachmentName || 'Attachment',
+              url: attachmentData,
+              key: attachmentKey,
+              data: ''
             };
           }
 
@@ -943,12 +969,12 @@
               data: ''
             };
           } catch (error) {
-            console.warn('Checkout: unable to upload attire attachment, falling back to inline attachment data.', error);
+            console.warn('Checkout: unable to upload attire attachment; continuing without inline attachment data.', error);
             return {
               name: attachmentName || 'Attachment',
               url: '',
               key: '',
-              data: attachmentData
+              data: ''
             };
           }
         };
@@ -1756,7 +1782,16 @@
                               value: String(opt?.value ?? '').trim(),
                               swatchStyle: typeof opt?.swatchStyle === 'string' ? opt.swatchStyle.trim() : '',
                               swatchGlyph: typeof opt?.swatchGlyph === 'string' ? opt.swatchGlyph : '',
-                              attachmentData: typeof opt?.attachmentData === 'string' ? opt.attachmentData : ''
+                              attachmentData: typeof opt?.attachmentData === 'string'
+                                ? opt.attachmentData
+                                : (
+                                    typeof opt?.attachmentUrl === 'string'
+                                      ? opt.attachmentUrl
+                                      : (typeof opt?.attachment_url === 'string' ? opt.attachment_url : '')
+                                  ),
+                              attachmentKey: typeof opt?.attachmentKey === 'string'
+                                ? opt.attachmentKey
+                                : (typeof opt?.attachment_key === 'string' ? opt.attachment_key : '')
                             }))
                             .filter(opt => opt.label || opt.value)
                         : [],
@@ -1818,7 +1853,16 @@
                         value: String(opt?.value ?? '').trim(),
                         swatchStyle: typeof opt?.swatchStyle === 'string' ? opt.swatchStyle.trim() : '',
                         swatchGlyph: typeof opt?.swatchGlyph === 'string' ? opt.swatchGlyph : '',
-                        attachmentData: typeof opt?.attachmentData === 'string' ? opt.attachmentData : ''
+                        attachmentData: typeof opt?.attachmentData === 'string'
+                          ? opt.attachmentData
+                          : (
+                              typeof opt?.attachmentUrl === 'string'
+                                ? opt.attachmentUrl
+                                : (typeof opt?.attachment_url === 'string' ? opt.attachment_url : '')
+                            ),
+                        attachmentKey: typeof opt?.attachmentKey === 'string'
+                          ? opt.attachmentKey
+                          : (typeof opt?.attachment_key === 'string' ? opt.attachment_key : '')
                       }))
                       .filter(opt => opt.label || opt.value)
                   : [],

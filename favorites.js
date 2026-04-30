@@ -161,6 +161,10 @@
         swatch_glyph: '',
         attachment_data: '',
         attachment_key: '',
+        attachment_url: '',
+        attachment_provider: '',
+        attachment_content_type: '',
+        attachment_size: '',
         layout: ''
       };
     }
@@ -187,6 +191,10 @@
       swatch_glyph: toText(rawOption.swatch_glyph || rawOption.swatchGlyph),
       attachment_data: toText(rawOption.attachment_data || rawOption.attachmentData),
       attachment_key: toText(rawOption.attachment_key || rawOption.attachmentKey),
+      attachment_url: toText(rawOption.attachment_url || rawOption.attachmentUrl || rawOption.display_url || rawOption.displayUrl),
+      attachment_provider: toText(rawOption.attachment_provider || rawOption.attachmentProvider || rawOption.provider),
+      attachment_content_type: toText(rawOption.attachment_content_type || rawOption.attachmentContentType || rawOption.content_type || rawOption.contentType),
+      attachment_size: toText(rawOption.attachment_size || rawOption.attachmentSize || rawOption.size),
       layout: toText(rawOption.layout)
     };
   }
@@ -374,6 +382,10 @@
       swatch_glyph: option.swatch_glyph,
       attachment_data: option.attachment_data,
       attachment_key: option.attachment_key,
+      attachment_url: option.attachment_url,
+      attachment_provider: option.attachment_provider,
+      attachment_content_type: option.attachment_content_type,
+      attachment_size: option.attachment_size,
       layout: option.layout
     };
   }
@@ -931,6 +943,247 @@
     });
   }
 
+  function isDataUrl(value) {
+    return /^data:[^;]+;base64,/i.test(toText(value));
+  }
+
+  function stripAttachmentReferenceNote(value) {
+    return toText(value).replace(/\s*\(file reference\)\s*$/i, '').trim();
+  }
+
+  function getDataUrlContentType(dataUrl) {
+    var match = toText(dataUrl).match(/^data:([^;,]+)[;,]/i);
+    return match ? toText(match[1]) : '';
+  }
+
+  function getDataUrlSize(dataUrl) {
+    var raw = toText(dataUrl);
+    var match = raw.match(/^data:[^;]+;base64,(.+)$/i);
+    if (!match) return 0;
+    var base64 = match[1].replace(/\s/g, '');
+    if (!base64) return 0;
+    var padding = base64.endsWith('==') ? 2 : (base64.endsWith('=') ? 1 : 0);
+    return Math.max(0, Math.floor((base64.length * 3) / 4) - padding);
+  }
+
+  function getFavoriteAttachmentOption(favorite) {
+    var selectedOptions = Array.isArray(favorite && favorite.selected_options) ? favorite.selected_options : [];
+    return selectedOptions.find(function findAttachmentOption(option) {
+      return normalizeFavoriteMetadataLabel(option && option.label).toLowerCase() === 'attachment';
+    }) || null;
+  }
+
+  function normalizeUploadReference(value) {
+    if (!value || typeof value !== 'object') return null;
+    var key = toText(value.key || value.attachment_key || value.attachmentKey || value.id);
+    var url = toText(
+      value.display_url ||
+      value.displayUrl ||
+      value.url ||
+      value.attachment_url ||
+      value.attachmentUrl
+    );
+    var filename = stripAttachmentReferenceNote(
+      value.filename ||
+      value.name ||
+      value.value ||
+      value.attachment_name ||
+      value.attachmentName ||
+      'Attachment'
+    ) || 'Attachment';
+    if (!key) return null;
+    return {
+      provider: toText(value.provider || value.attachment_provider || value.attachmentProvider) || 's3',
+      key: key,
+      filename: filename,
+      content_type: toText(value.content_type || value.contentType || value.attachment_content_type || value.attachmentContentType),
+      size: toNumber(value.size || value.attachment_size || value.attachmentSize),
+      display_url: url,
+      url: url,
+      route: toText(value.route || value.source_path || value.sourcePath),
+      source: toText(value.source) || 'upload_inspiration',
+      status: toText(value.status) || 'active'
+    };
+  }
+
+  function getFavoriteUploadReference(favorite) {
+    if (!favorite || typeof favorite !== 'object') return null;
+
+    if (Array.isArray(favorite.upload_references)) {
+      for (var i = 0; i < favorite.upload_references.length; i += 1) {
+        var normalizedReference = normalizeUploadReference(favorite.upload_references[i]);
+        if (normalizedReference) return normalizedReference;
+      }
+    }
+
+    if (isObject(favorite.line_item_metadata)) {
+      var metadata = favorite.line_item_metadata;
+      var metadataReference = normalizeUploadReference({
+        key: metadata.design_attachment_key || metadata.designAttachmentKey,
+        filename: metadata.design_attachment_name || metadata.designAttachmentName,
+        url: metadata.design_attachment_url || metadata.designAttachmentUrl,
+        provider: metadata.design_attachment_provider || metadata.designAttachmentProvider,
+        content_type: metadata.design_attachment_content_type || metadata.designAttachmentContentType,
+        size: metadata.design_attachment_size || metadata.designAttachmentSize,
+        route: metadata.design_source_path || metadata.designSourcePath || favorite.source_path
+      });
+      if (metadataReference) return metadataReference;
+    }
+
+    var attachmentOption = getFavoriteAttachmentOption(favorite);
+    if (!attachmentOption) return null;
+    return normalizeUploadReference({
+      key: attachmentOption.attachment_key || attachmentOption.attachmentKey,
+      filename: attachmentOption.value,
+      url: attachmentOption.attachment_url || attachmentOption.attachmentUrl,
+      provider: attachmentOption.attachment_provider || attachmentOption.attachmentProvider,
+      content_type: attachmentOption.attachment_content_type || attachmentOption.attachmentContentType,
+      size: attachmentOption.attachment_size || attachmentOption.attachmentSize,
+      route: favorite.source_path || favorite.product_url
+    });
+  }
+
+  function isPersistentUploadReference(value) {
+    return Boolean(normalizeUploadReference(value));
+  }
+
+  function buildUploadAttachmentMetadata(uploadRef) {
+    var ref = normalizeUploadReference(uploadRef);
+    if (!ref) return {};
+    var metadata = {
+      design_attachment_name: ref.filename,
+      design_attachment_provider: ref.provider,
+      design_attachment_key: ref.key,
+      design_attachment_url: ref.display_url || ref.url,
+      design_attachment_content_type: ref.content_type,
+      design_attachment_size: ref.size || undefined
+    };
+    return Object.keys(metadata).reduce(function reduceAttachmentMetadata(result, key) {
+      var value = metadata[key];
+      if (value !== undefined && value !== null && toText(value)) {
+        result[key] = value;
+      }
+      return result;
+    }, {});
+  }
+
+  function uploadDesignAttachment(dataUrl, details) {
+    var config = getStoreApiConfig();
+    var filename = stripAttachmentReferenceNote(details && details.filename) || 'attachment';
+    var contentType = toText(details && details.content_type) || getDataUrlContentType(dataUrl) || 'application/octet-stream';
+    if (!config.enabled) {
+      return Promise.reject(new Error('Store API is unavailable for upload references.'));
+    }
+    if (!isDataUrl(dataUrl)) {
+      return Promise.reject(new Error('Upload Inspiration must be reattached before it can move to cart.'));
+    }
+    var headers = { 'Content-Type': 'application/json' };
+    if (config.publishableKey) {
+      headers['x-publishable-api-key'] = config.publishableKey;
+    }
+    return global.fetch(config.backendUrl + '/store/design-attachments', {
+      method: 'POST',
+      headers: headers,
+      credentials: 'omit',
+      body: JSON.stringify({
+        filename: filename,
+        content_type: contentType,
+        data_url: dataUrl
+      })
+    }).then(function parseUploadResponse(response) {
+      return response.text().then(function parseText(text) {
+        var payload = {};
+        if (text) {
+          try {
+            payload = JSON.parse(text);
+          } catch (error) {
+            payload = { message: text };
+          }
+        }
+        if (!response.ok) {
+          var uploadError = new Error(toText(payload.message || payload.error) || 'Attachment upload failed.');
+          uploadError.status = response.status;
+          throw uploadError;
+        }
+        var reference = normalizeUploadReference({
+          provider: 's3',
+          key: payload.key || payload.id,
+          filename: payload.filename || filename,
+          url: payload.url,
+          content_type: contentType,
+          size: toNumber(details && details.size) || getDataUrlSize(dataUrl),
+          route: details && details.route,
+          source: 'upload_inspiration',
+          status: 'active'
+        });
+        if (!reference) {
+          throw new Error('Attachment upload did not return a persistent key.');
+        }
+        return reference;
+      });
+    });
+  }
+
+  function applyUploadReferenceToFavorite(favorite, uploadRef) {
+    var ref = normalizeUploadReference(uploadRef);
+    if (!ref) return cloneFavorite(favorite);
+    var cloned = cloneFavorite(favorite);
+    var attachmentOption = getFavoriteAttachmentOption(cloned);
+    if (attachmentOption) {
+      attachmentOption.value = ref.filename || stripAttachmentReferenceNote(attachmentOption.value) || 'Attachment';
+      attachmentOption.attachment_data = '';
+      attachmentOption.attachment_key = ref.key;
+      attachmentOption.attachment_url = ref.display_url || ref.url || '';
+      attachmentOption.attachment_provider = ref.provider || 's3';
+      attachmentOption.attachment_content_type = ref.content_type || '';
+      attachmentOption.attachment_size = ref.size ? String(ref.size) : '';
+    }
+    cloned.upload_references = [ref];
+    cloned.line_item_metadata = Object.assign(
+      {},
+      isObject(cloned.line_item_metadata) ? cloned.line_item_metadata : {},
+      buildUploadAttachmentMetadata(ref)
+    );
+    delete cloned.line_item_metadata.design_attachment_data;
+    return cloned;
+  }
+
+  function ensurePersistentUploadReference(favorite) {
+    var cloned = cloneFavorite(favorite || {});
+    var existingReference = getFavoriteUploadReference(cloned);
+    if (existingReference) {
+      return Promise.resolve(applyUploadReferenceToFavorite(cloned, existingReference));
+    }
+
+    var attachmentOption = getFavoriteAttachmentOption(cloned);
+    if (!attachmentOption) {
+      return Promise.resolve(cloned);
+    }
+
+    var rawData = toText(attachmentOption.attachment_data || attachmentOption.attachmentData);
+    if (!rawData) {
+      var missingError = new Error('Reattach Upload Inspiration before moving this favorite to cart.');
+      missingError.reason = 'upload_reference_missing';
+      missingError.userMessage = 'Reattach Upload Inspiration before moving this favorite to cart.';
+      return Promise.reject(missingError);
+    }
+    if (!isDataUrl(rawData)) {
+      var unsafeError = new Error('Upload Inspiration must be converted to a persistent reference before moving to cart.');
+      unsafeError.reason = 'upload_reference_unsafe';
+      unsafeError.userMessage = 'Upload Inspiration must be reattached before moving this favorite to cart.';
+      return Promise.reject(unsafeError);
+    }
+
+    return uploadDesignAttachment(rawData, {
+      filename: stripAttachmentReferenceNote(attachmentOption.value) || 'attachment',
+      content_type: attachmentOption.attachment_content_type || attachmentOption.attachmentContentType || getDataUrlContentType(rawData),
+      size: toNumber(attachmentOption.attachment_size || attachmentOption.attachmentSize) || getDataUrlSize(rawData),
+      route: cloned.source_path || cloned.product_url || getCurrentPath()
+    }).then(function onUploaded(uploadRef) {
+      return applyUploadReferenceToFavorite(cloned, uploadRef);
+    });
+  }
+
   function listAccountSavedItems() {
     return Promise.all(SUPPORTED_ACCOUNT_SAVED_ITEM_TYPES.map(function eachType(type) {
       return accountRequest('/store/customers/me/saved-items?type=' + encodeURIComponent(type) + '&limit=200')
@@ -1093,9 +1346,18 @@
     });
   }
 
+  function hasUnsafeUploadPayload(favorite) {
+    if (!favorite || typeof favorite !== 'object') return false;
+    if (hasRawAccountPayload(favorite, 0, '')) return true;
+    var attachmentOption = getFavoriteAttachmentOption(favorite);
+    if (!attachmentOption) return false;
+    if (getFavoriteUploadReference(favorite)) return false;
+    return Boolean(toText(attachmentOption.value));
+  }
+
   function isAccountSyncableDoormatBuild(favorite) {
     if (!isDoormatFavoriteRecord(favorite)) return false;
-    if (isUploadBearingFavorite(favorite)) return false;
+    if (hasUnsafeUploadPayload(favorite)) return false;
     return Boolean(
       toText(favorite.title) &&
       toText(favorite.variant_id) &&
@@ -1109,6 +1371,7 @@
     var sizeRef = getFavoriteOptionValue(favorite, 'Size') || 'none';
     var colorRef = getFavoriteOptionValue(favorite, 'Color') || 'none';
     var notesRef = getFavoriteNotes(favorite);
+    var uploadRef = getFavoriteUploadReference(favorite);
     return [
       DOORMAT_BUILD_TYPE,
       'doormat-custom',
@@ -1116,7 +1379,7 @@
       'size:' + toLowerSlug(sizeRef),
       'color:' + toLowerSlug(colorRef),
       'notes:' + shortHash(notesRef),
-      'uploads:none'
+      'uploads:' + (uploadRef ? shortHash(uploadRef.key) : 'none')
     ].join('|');
   }
 
@@ -1143,6 +1406,7 @@
     var safePayload = sanitizeAccountPayload(cloned, 0, '') || {};
     var safeMetadata = sanitizeAccountPayload(buildCommerceMetadataFromFavorite(favorite), 0, '') || {};
     var safeOptions = sanitizeAccountPayload(favorite.selected_options || [], 0, '') || [];
+    var uploadRef = getFavoriteUploadReference(favorite);
     var price = toNumber(favorite.price);
     var priceAmount = Number.isFinite(price) ? Math.round(price * 100) : 0;
     var size = getFavoriteOptionValue(favorite, 'Size');
@@ -1172,7 +1436,7 @@
       item_payload: safePayload,
       line_item_metadata: safeMetadata,
       notes: getFavoriteNotes(favorite),
-      upload_references: [],
+      upload_references: uploadRef ? [uploadRef] : [],
       live_reference: {
         source_path: '/doormats',
         product_id: toText(favorite.product_id),
@@ -1180,7 +1444,8 @@
         product_key: toText(favorite.product_key) || 'doormat-custom',
         variant_id: toText(favorite.variant_id),
         size: size,
-        color: color
+        color: color,
+        upload_reference_key: uploadRef ? uploadRef.key : ''
       }
     };
   }
@@ -1863,6 +2128,7 @@
     if (!favorite || !commerce || typeof commerce.buildAttireLineItemMetadataFromLegacyItem !== 'function') {
       return null;
     }
+    var uploadRef = getFavoriteUploadReference(favorite);
     return commerce.buildAttireLineItemMetadataFromLegacyItem({
       id: toText(variantId) || toText(favorite.variant_id) || favorite.id,
       variant_id: toText(variantId) || toText(favorite.variant_id),
@@ -1880,7 +2146,14 @@
       selected_options: Array.isArray(favorite.selected_options)
         ? favorite.selected_options.map(cloneOption)
         : []
-    });
+    }, uploadRef ? {
+      name: uploadRef.filename,
+      url: uploadRef.display_url || uploadRef.url,
+      key: uploadRef.key,
+      provider: uploadRef.provider,
+      content_type: uploadRef.content_type,
+      size: uploadRef.size
+    } : {});
   }
 
   function buildCommerceMetadataFromFavorite(favorite) {
@@ -1946,7 +2219,6 @@
       var value = toText(option && option.value);
       var swatchStyle = toText(option && option.swatch_style);
       var swatchGlyph = toText(option && option.swatch_glyph);
-      var attachmentData = toText(option && (option.attachment_data || option.attachmentData));
       var attachmentKey = toText(option && (option.attachment_key || option.attachmentKey));
       if (!label || !value) return;
 
@@ -1976,9 +2248,19 @@
           return;
         }
         if (label === 'attachment') {
-          metadata.design_attachment_name = value.replace(/\s*\(file reference\)\s*$/i, '').trim();
-          if (attachmentData) metadata.design_attachment_data = attachmentData;
-          if (attachmentKey) metadata.design_attachment_key = attachmentKey;
+          var uploadRef = getFavoriteUploadReference(favorite) || normalizeUploadReference({
+            key: attachmentKey,
+            filename: value,
+            url: option && (option.attachment_url || option.attachmentUrl),
+            provider: option && (option.attachment_provider || option.attachmentProvider),
+            content_type: option && (option.attachment_content_type || option.attachmentContentType),
+            size: option && (option.attachment_size || option.attachmentSize),
+            route: favorite.source_path || favorite.product_url
+          });
+          metadata.design_attachment_name = stripAttachmentReferenceNote(value);
+          if (uploadRef) {
+            Object.assign(metadata, buildUploadAttachmentMetadata(uploadRef));
+          }
         }
         return;
       }
@@ -2142,6 +2424,10 @@
     buildFavoriteKey: buildFavoriteKey,
     buildCartItemFromFavorite: buildCartItemFromFavorite,
     buildCommerceMetadataFromFavorite: buildCommerceMetadataFromFavorite,
+    buildUploadAttachmentMetadata: buildUploadAttachmentMetadata,
+    ensurePersistentUploadReference: ensurePersistentUploadReference,
+    getFavoriteUploadReference: getFavoriteUploadReference,
+    isPersistentUploadReference: isPersistentUploadReference,
     isAccountMode: function isAccountMode() {
       return Boolean(accountMode);
     },
@@ -2930,82 +3216,66 @@
         }
 
         favorite.variant_id = variantId;
-        var cartItem = buildCartItem({
-          id: variantId,
-          variant_id: variantId,
-          product_id: favorite.product_id || '',
-          product_handle: favorite.product_handle || '',
-          product_url: favorite.product_url || '',
-          image: favorite.preview_image || favorite.image_url || '',
-          previewStyle: favorite.preview_style || ''
-        });
-        var metadata = null;
-        var attireProductHandle = toText(favorite.product_handle || favorite.productHandle).toLowerCase();
-        var attireProductUrl = toText(
-          favorite.product_url ||
-          favorite.productUrl ||
-          favorite.source_path
-        )
-          .split('?')[0]
-          .split('#')[0]
-          .toLowerCase();
-        var isAttireFavorite =
-          attireProductHandle === 'attire-custom' ||
-          attireProductHandle === 'attire-shirts-custom' ||
-          attireProductUrl === '/attire' ||
-          attireProductUrl === 'attire.html';
-        if (isAttireFavorite && commerce && typeof commerce.buildAttireLineItemMetadataFromLegacyItem === 'function') {
-          var attireSelectedOptions = Array.isArray(favorite.selected_options)
-            ? favorite.selected_options.map(function mapAttireOption(option) {
-              return {
-                label: option && option.label,
-                value: option && option.value,
-                swatch_style: option && (option.swatch_style || option.swatchStyle),
-                swatch_glyph: option && (option.swatch_glyph || option.swatchGlyph)
-              };
-            })
-            : [];
-          metadata = commerce.buildAttireLineItemMetadataFromLegacyItem({
-            id: toText(variantId) || toText(favorite.variant_id) || favorite.id,
-            variant_id: toText(variantId) || toText(favorite.variant_id),
-            title: favorite.title || favorite.name || 'L.A.W. Attire',
-            name: favorite.name || favorite.title || 'L.A.W. Attire',
-            product_handle: toText(favorite.product_handle || favorite.productHandle) || 'attire-custom',
-            product_url: toText(favorite.product_url || favorite.productUrl || favorite.source_path) || '/attire',
-            variant_title: toText(favorite.variant_title || favorite.options_summary),
-            price: Number(favorite.price || 0),
-            currency_code: toText(favorite.currency_code) || 'USD',
-            quantity: moveQuantity,
-            image: toText(favorite.preview_image || favorite.image_url),
-            description: toText(favorite.description || favorite.short_description),
-            preview_style: toText(favorite.preview_style),
-            selected_options: attireSelectedOptions
-          });
-        }
-        if (!isObject(metadata)) {
-          metadata = typeof api.buildCommerceMetadataFromFavorite === 'function'
-            ? api.buildCommerceMetadataFromFavorite(favorite)
-            : {};
-        }
-
-        return Promise.resolve(commerce.addLineItem(variantId, moveQuantity, metadata))
-          .then(function onAdded() {
-            var syncPromise = typeof commerce.syncBadges === 'function'
-              ? Promise.resolve(commerce.syncBadges())
-              : Promise.resolve();
-            return syncPromise.then(function afterSync() {
-              if (global.ldcCart && typeof global.ldcCart.open === 'function') {
-                global.ldcCart.open();
-              }
-              return { ok: true, mode: 'medusa', variant_id: variantId, cart_item: cartItem };
+        return ensurePersistentUploadReference(favorite)
+          .then(function onUploadReady(uploadReadyFavorite) {
+            favorite = uploadReadyFavorite || favorite;
+            favorite.variant_id = variantId;
+            var cartItem = buildCartItem({
+              id: variantId,
+              variant_id: variantId,
+              product_id: favorite.product_id || '',
+              product_handle: favorite.product_handle || '',
+              product_url: favorite.product_url || '',
+              image: favorite.preview_image || favorite.image_url || '',
+              previewStyle: favorite.preview_style || ''
             });
+            var metadata = null;
+            var attireProductHandle = toText(favorite.product_handle || favorite.productHandle).toLowerCase();
+            var attireProductUrl = toText(
+              favorite.product_url ||
+              favorite.productUrl ||
+              favorite.source_path
+            )
+              .split('?')[0]
+              .split('#')[0]
+              .toLowerCase();
+            var isAttireFavorite =
+              attireProductHandle === 'attire-custom' ||
+              attireProductHandle === 'attire-shirts-custom' ||
+              attireProductUrl === '/attire' ||
+              attireProductUrl === 'attire.html';
+            if (isAttireFavorite && commerce && typeof commerce.buildAttireLineItemMetadataFromLegacyItem === 'function') {
+              metadata = buildAttireCommerceMetadataFromFavorite(favorite, variantId, commerce);
+            }
+            if (!isObject(metadata)) {
+              metadata = typeof api.buildCommerceMetadataFromFavorite === 'function'
+                ? api.buildCommerceMetadataFromFavorite(favorite)
+                : {};
+            }
+
+            return Promise.resolve(commerce.addLineItem(variantId, moveQuantity, metadata))
+              .then(function onAdded() {
+                var syncPromise = typeof commerce.syncBadges === 'function'
+                  ? Promise.resolve(commerce.syncBadges())
+                  : Promise.resolve();
+                return syncPromise.then(function afterSync() {
+                  if (global.ldcCart && typeof global.ldcCart.open === 'function') {
+                    global.ldcCart.open();
+                  }
+                  return { ok: true, mode: 'medusa', variant_id: variantId, cart_item: cartItem };
+                });
+              });
           })
           .catch(function onFailure(error) {
             var classified = typeof commerce.classifyCartMutationError === 'function'
               ? commerce.classifyCartMutationError(error)
               : null;
-            var reason = toText(classified && classified.reason) || 'medusa_add_failed';
-            var userMessage = toText(classified && classified.userMessage) || 'Unable to move this favorite to cart right now.';
+            var reason = toText(error && error.reason) || toText(classified && classified.reason) || 'medusa_add_failed';
+            var userMessage =
+              toText(error && error.userMessage) ||
+              toText(error && error.user_message) ||
+              toText(classified && classified.userMessage) ||
+              'Unable to move this favorite to cart right now.';
             return {
               ok: false,
               reason: reason,
