@@ -28,7 +28,8 @@
   var AUTH_CHANGE_EVENT = 'ldc:auth:change';
   var ACCOUNT_FAVORITE_TYPE = 'product_favorite';
   var DOORMAT_BUILD_TYPE = 'doormat_build';
-  var SUPPORTED_ACCOUNT_SAVED_ITEM_TYPES = [ACCOUNT_FAVORITE_TYPE, DOORMAT_BUILD_TYPE];
+  var ATTIRE_BUILD_TYPE = 'attire_build';
+  var SUPPORTED_ACCOUNT_SAVED_ITEM_TYPES = [ACCOUNT_FAVORITE_TYPE, DOORMAT_BUILD_TYPE, ATTIRE_BUILD_TYPE];
   var DEFAULT_MEDUSA_BACKEND = 'https://api.lovettsldc.com';
   var DEFAULT_MEDUSA_PUBLISHABLE_KEY = 'pk_427f7900e23e30a0e18feaf0604aa9caaa9d0cb21571889081d2cb93fb13ffb0';
   var LEGACY_KEYS = [LEGACY_STORAGE_KEY];
@@ -286,7 +287,12 @@
 
     push(toText(source && (source.favorite_key || source.favoriteKey)));
     push(normalizeLegacyId(source && source.id));
+    push(toText(source && (source.account_dedupe_key || source.accountDedupeKey || source.dedupe_key || source.dedupeKey)));
+    push(toText(item && (item.account_dedupe_key || item.dedupe_key)));
     push(buildFavoriteKey(item));
+    if (item && isAccountSyncableFavorite(item)) {
+      push(buildSavedItemDedupeKey(item));
+    }
     push(buildLooseLegacySignature(item));
 
     return aliases;
@@ -1368,7 +1374,10 @@
     if (isDoormatFavoriteRecord(favorite)) {
       return isAccountSyncableDoormatBuild(favorite);
     }
-    if (isAttireFavoriteRecord(favorite) || isDesignSubmittedFavorite(favorite)) {
+    if (isAttireFavoriteRecord(favorite)) {
+      return isAccountSyncableAttireBuild(favorite);
+    }
+    if (isDesignSubmittedFavorite(favorite)) {
       return false;
     }
     if (hasRawAccountPayload(favorite, 0, '')) return false;
@@ -1472,6 +1481,23 @@
     );
   }
 
+  function isAccountSyncableAttireBuild(favorite) {
+    if (!isAttireFavoriteRecord(favorite)) return false;
+    if (hasUnsafeUploadPayload(favorite)) return false;
+    return Boolean(
+      toText(favorite.title) &&
+      toText(favorite.variant_id) &&
+      (
+        toText(favorite.product_handle) ||
+        toText(favorite.product_key) ||
+        toText(favorite.product_id)
+      ) &&
+      getFavoriteOptionValue(favorite, 'Style') &&
+      getFavoriteOptionValue(favorite, 'Color') &&
+      getFavoriteOptionValue(favorite, 'Size')
+    );
+  }
+
   function buildDoormatAccountDedupeKey(favorite) {
     var variantRef = toText(favorite && favorite.variant_id) || 'none';
     var sizeRef = getFavoriteOptionValue(favorite, 'Size') || 'none';
@@ -1489,11 +1515,43 @@
     ].join('|');
   }
 
+  function buildAttireAccountDedupeKey(favorite) {
+    var productRef =
+      toText(favorite && (favorite.product_key || favorite.productKey)) ||
+      toText(favorite && (favorite.product_handle || favorite.productHandle)) ||
+      'attire-custom';
+    var variantRef = toText(favorite && favorite.variant_id) || 'none';
+    var styleRef = getFavoriteOptionValue(favorite, 'Style') || 'none';
+    var colorRef = getFavoriteOptionValue(favorite, 'Color') || 'none';
+    var sizeRef = getFavoriteOptionValue(favorite, 'Size') || 'none';
+    var notesRef = getFavoriteNotes(favorite);
+    var uploadRef = getFavoriteUploadReference(favorite);
+    return [
+      ATTIRE_BUILD_TYPE,
+      toLowerSlug(productRef),
+      'variant:' + toLowerSlug(variantRef),
+      'style:' + toLowerSlug(styleRef),
+      'color:' + toLowerSlug(colorRef),
+      'size:' + toLowerSlug(sizeRef),
+      'notes:' + shortHash(notesRef),
+      'uploads:' + (uploadRef ? shortHash(uploadRef.key) : 'none')
+    ].join('|');
+  }
+
   function buildSavedItemDedupeKey(favorite) {
     if (isDoormatFavoriteRecord(favorite)) {
       return buildDoormatAccountDedupeKey(favorite);
     }
+    if (isAttireFavoriteRecord(favorite)) {
+      return buildAttireAccountDedupeKey(favorite);
+    }
     return buildAccountDedupeKey(favorite);
+  }
+
+  function getAccountSavedItemTypeForFavorite(favorite) {
+    if (isDoormatFavoriteRecord(favorite)) return DOORMAT_BUILD_TYPE;
+    if (isAttireFavoriteRecord(favorite)) return ATTIRE_BUILD_TYPE;
+    return ACCOUNT_FAVORITE_TYPE;
   }
 
   function getFavoritePriceSnapshotDisplay(favorite) {
@@ -1556,9 +1614,69 @@
     };
   }
 
+  function mapAttireFavoriteToSavedItem(favorite) {
+    if (!isAccountSyncableAttireBuild(favorite)) return null;
+
+    var cloned = cloneFavorite(favorite);
+    var dedupeKey = toText(favorite.account_dedupe_key) || buildAttireAccountDedupeKey(favorite);
+    var safePayload = sanitizeAccountPayload(cloned, 0, '') || {};
+    var attireMetadata = buildAttireCommerceMetadataFromFavorite(favorite, favorite.variant_id, global.LDCCommerce);
+    var safeMetadata = sanitizeAccountPayload(attireMetadata || buildCommerceMetadataFromFavorite(favorite), 0, '') || {};
+    var safeOptions = sanitizeAccountPayload(favorite.selected_options || [], 0, '') || [];
+    var uploadRef = getFavoriteUploadReference(favorite);
+    var price = toNumber(favorite.price);
+    var priceAmount = Number.isFinite(price) ? Math.round(price * 100) : 0;
+    var style = getFavoriteOptionValue(favorite, 'Style');
+    var color = getFavoriteOptionValue(favorite, 'Color');
+    var size = getFavoriteOptionValue(favorite, 'Size');
+    var productKey = toText(favorite.product_key || favorite.productKey) || 'attire-custom';
+    var productHandle = toText(favorite.product_handle || favorite.productHandle) || productKey;
+
+    return {
+      type: ATTIRE_BUILD_TYPE,
+      dedupe_key: dedupeKey,
+      favorite_key: toText(favorite.favorite_key || favorite.id) || buildFavoriteKey(favorite),
+      source_path: '/attire',
+      product_id: toText(favorite.product_id),
+      product_handle: productHandle,
+      product_key: productKey,
+      variant_id: toText(favorite.variant_id),
+      title: toText(favorite.title) || 'Custom Attire',
+      variant_title: toText(favorite.variant_title) || [style, color, size].filter(Boolean).join(' | '),
+      description: toText(favorite.description),
+      short_description: toText(favorite.short_description),
+      image_url: toText(favorite.image_url || favorite.preview_image),
+      preview_image: toText(favorite.preview_image || favorite.image_url),
+      preview_style: toText(favorite.preview_style),
+      quantity: Math.max(1, toNumber(favorite.quantity) || 1),
+      currency_code: toCurrencyCode(favorite.currency_code),
+      price_snapshot_amount: priceAmount,
+      price_snapshot_display: getFavoritePriceSnapshotDisplay(favorite),
+      selected_options: safeOptions,
+      item_payload: safePayload,
+      line_item_metadata: safeMetadata,
+      notes: getFavoriteNotes(favorite),
+      upload_references: uploadRef ? [uploadRef] : [],
+      live_reference: {
+        source_path: '/attire',
+        product_id: toText(favorite.product_id),
+        product_handle: productHandle,
+        product_key: productKey,
+        variant_id: toText(favorite.variant_id),
+        style: style,
+        color: color,
+        size: size,
+        upload_reference_key: uploadRef ? uploadRef.key : ''
+      }
+    };
+  }
+
   function mapFavoriteToSavedItem(favorite) {
     if (isDoormatFavoriteRecord(favorite)) {
       return mapDoormatFavoriteToSavedItem(favorite);
+    }
+    if (isAttireFavoriteRecord(favorite)) {
+      return mapAttireFavoriteToSavedItem(favorite);
     }
     if (!isAccountSyncableFavorite(favorite)) return null;
 
@@ -1649,29 +1767,56 @@
     return Math.max(0, originalLength - localState.items.length);
   }
 
+  function prepareFavoriteForAccountMerge(favorite) {
+    var candidate = cloneFavorite(favorite || {});
+    if (
+      (isDoormatFavoriteRecord(candidate) || isAttireFavoriteRecord(candidate)) &&
+      hasUnsafeUploadPayload(candidate)
+    ) {
+      return ensurePersistentUploadReference(candidate)
+        .catch(function onUploadReferenceFailed(error) {
+          if (global.console && typeof global.console.warn === 'function') {
+            global.console.warn('[favorites] Guest custom favorite upload reference failed before merge', {
+              id: candidate.id,
+              status: error && error.status,
+              reason: toText(error && error.reason)
+            });
+          }
+          return null;
+        });
+    }
+    return Promise.resolve(candidate);
+  }
+
   function mergeGuestSessionFavoritesIntoAccount() {
     var guestState = loadStateFromStorage({ readonly: true });
     var candidates = [];
+    var preparedCandidates = [];
     var payloads = [];
 
-    (guestState.items || []).forEach(function eachGuestFavorite(favorite) {
+    var prepareTasks = (guestState.items || []).map(function eachGuestFavorite(favorite) {
       if (!isGuestScopedFavorite(favorite)) return;
-      var payload = mapFavoriteToSavedItem(favorite);
-      if (!payload) return;
-      candidates.push(favorite);
-      payloads.push(payload);
+      return prepareFavoriteForAccountMerge(favorite).then(function onPrepared(prepared) {
+        if (!prepared) return;
+        var payload = mapFavoriteToSavedItem(prepared);
+        if (!payload) return;
+        candidates.push(favorite);
+        preparedCandidates.push(prepared);
+        payloads.push(payload);
+      });
     });
 
-    if (!payloads.length) {
-      return Promise.resolve({ saved_items: [], merged: 0, skipped: 0, errors: [] });
-    }
-
-    return accountRequest('/store/customers/me/saved-items/merge', {
-      method: 'POST',
-      body: {
-        items: payloads,
-        strategy: 'upsert_by_dedupe_key'
+    return Promise.all(prepareTasks).then(function onPreparedMergePayloads() {
+      if (!payloads.length) {
+        return { saved_items: [], merged: 0, skipped: 0, errors: [] };
       }
+      return accountRequest('/store/customers/me/saved-items/merge', {
+        method: 'POST',
+        body: {
+          items: payloads,
+          strategy: 'upsert_by_dedupe_key'
+        }
+      });
     }).then(function onMerged(result) {
       var errors = Array.isArray(result && result.errors) ? result.errors : [];
       var failedIndexes = errors.reduce(function buildFailedIndexes(map, error) {
@@ -1683,6 +1828,10 @@
         .filter(function keepSuccessfulCandidate(_favorite, index) {
           return !failedIndexes[index];
         });
+      var successfulPreparedCandidates = preparedCandidates
+        .filter(function keepSuccessfulPreparedCandidate(_favorite, index) {
+          return !failedIndexes[index];
+        });
       var mergedIds = successfulCandidates
         .map(function mapCandidateId(favorite) {
           return toText(favorite && favorite.id);
@@ -1691,7 +1840,7 @@
 
       var cleared = Math.max(
         clearGuestSessionFavoritesByIds(mergedIds),
-        clearGuestSessionFavoritesByItems(successfulCandidates)
+        clearGuestSessionFavoritesByItems(successfulCandidates.concat(successfulPreparedCandidates))
       );
       emitChange('guest_merge_complete', {
         merged: Number(result && result.merged) || mergedIds.length,
@@ -1719,16 +1868,19 @@
     if (SUPPORTED_ACCOUNT_SAVED_ITEM_TYPES.indexOf(savedType) === -1) return null;
 
     var payload = isObject(savedItem.item_payload) ? savedItem.item_payload : {};
+    var defaultSourcePath = savedType === DOORMAT_BUILD_TYPE
+      ? '/doormats'
+      : (savedType === ATTIRE_BUILD_TYPE ? '/attire' : '');
     var snapshotAmount = Number(savedItem.price_snapshot_amount);
     var mapped = Object.assign({}, payload, {
       product_id: toText(savedItem.product_id || payload.product_id),
       product_handle: toText(savedItem.product_handle || payload.product_handle),
       product_key: toText(savedItem.product_key || payload.product_key),
-      product_url: savedType === DOORMAT_BUILD_TYPE
-        ? toText(savedItem.source_path || payload.product_url || payload.productUrl || '/doormats')
+      product_url: defaultSourcePath
+        ? toText(savedItem.source_path || payload.product_url || payload.productUrl || defaultSourcePath)
         : toText(payload.product_url || payload.productUrl),
       variant_id: toText(savedItem.variant_id || payload.variant_id),
-      title: toText(savedItem.title || payload.title) || 'Favorite',
+      title: toText(savedItem.title || payload.title) || (savedType === ATTIRE_BUILD_TYPE ? 'Custom Attire' : 'Favorite'),
       variant_title: toText(savedItem.variant_title || payload.variant_title),
       short_description: toText(savedItem.short_description || payload.short_description),
       description: toText(savedItem.description || payload.description),
@@ -1742,7 +1894,7 @@
       selected_options: Array.isArray(savedItem.selected_options)
         ? savedItem.selected_options
         : (Array.isArray(payload.selected_options) ? payload.selected_options : []),
-      source_path: toText(savedItem.source_path || payload.source_path) || '/',
+      source_path: toText(savedItem.source_path || payload.source_path) || defaultSourcePath || '/',
       added_at: toText(savedItem.created_at || payload.added_at),
       updated_at: toText(savedItem.updated_at || payload.updated_at),
       saved_item_id: toText(savedItem.id),
@@ -2001,7 +2153,17 @@
     if (!normalized.id) return null;
 
     if (accountMode && !isAccountSyncableFavorite(normalized)) {
-      var accountFavoriteType = isAttireFavoriteRecord(normalized) ? 'attire_build_deferred' : 'custom_deferred';
+      if (isAttireFavoriteRecord(normalized)) {
+        removeLocalFavoriteRecord(normalized);
+        if (global.console && typeof global.console.warn === 'function') {
+          global.console.warn('[favorites] Attire favorite was not saved because it is missing a safe account payload.', {
+            id: normalized.id
+          });
+        }
+        emitChange('account_attire_sync_blocked', { id: normalized.id, mode: 'account' });
+        return null;
+      }
+      var accountFavoriteType = 'custom_deferred';
       var accountFavorite = markAccountScopedFavorite(normalized, 'account_deferred', accountFavoriteType);
       removeLocalFavoriteRecord(accountFavorite);
       var accountExisting = findFavoriteMatch(accountFavorite) || findFavoriteMatch(accountFavorite.id);
@@ -2043,7 +2205,7 @@
       if (accountMode) {
         merged.account_dedupe_key = toText(merged.account_dedupe_key) || buildSavedItemDedupeKey(merged);
         merged.account_source = toText(merged.account_source) || 'backend_pending';
-        merged.account_saved_item_type = isDoormatFavoriteRecord(merged) ? DOORMAT_BUILD_TYPE : ACCOUNT_FAVORITE_TYPE;
+        merged.account_saved_item_type = getAccountSavedItemTypeForFavorite(merged);
         merged.owner_scope = 'account';
       }
       state.items.splice(existingIndex, 1, merged);
@@ -2057,7 +2219,7 @@
     if (accountMode) {
       normalized.account_dedupe_key = toText(normalized.account_dedupe_key) || buildSavedItemDedupeKey(normalized);
       normalized.account_source = 'backend_pending';
-      normalized.account_saved_item_type = isDoormatFavoriteRecord(normalized) ? DOORMAT_BUILD_TYPE : ACCOUNT_FAVORITE_TYPE;
+      normalized.account_saved_item_type = getAccountSavedItemTypeForFavorite(normalized);
       normalized.owner_scope = 'account';
     } else {
       normalized.owner_scope = 'guest';
@@ -2290,7 +2452,7 @@
       variant_title: toText(favorite.variant_title || favorite.options_summary),
       price: toNumber(favorite.price),
       currency_code: toText(favorite.currency_code) || 'USD',
-      quantity: 1,
+      quantity: Math.max(1, toNumber(favorite.quantity) || 1),
       image: toText(favorite.preview_image || favorite.image_url),
       description: toText(favorite.description || favorite.short_description),
       preview_style: toText(favorite.preview_style),

@@ -1520,7 +1520,7 @@
                       <path fill-rule="evenodd" d="M11.998 21.003 5.155 14.16a5.25 5.25 0 0 1 7.425-7.425l.42.42.42-.42a5.25 5.25 0 0 1 7.425 7.425l-6.843 6.843a1.5 1.5 0 0 1-2.122 0Z" clip-rule="evenodd" />
                     </svg>
                   </button>
-                  <button class="cta-button" type="button" data-add-to-cart data-product-key="attire-custom">Add to Cart</button>
+                  <button class="cta-button" type="button" data-add-to-cart data-product-key="attire-custom" data-variant-id="variant_01KE74Y57TFVFAAQBH8G0AAHPN">Add to Cart</button>
                   <div class="design-price-wrapper attire-price-wrapper" aria-live="polite" role="status">
                     <div class="design-price-bubble attire-price-bubble" data-attire-price-bubble>
                       <span class="design-price-value" data-attire-price-total>$0.00</span>
@@ -1737,6 +1737,7 @@
           button.type = 'button';
           button.setAttribute('data-add-to-cart', '');
           button.setAttribute('data-product-key', 'attire-custom');
+          button.setAttribute('data-variant-id', 'variant_01KE74Y57TFVFAAQBH8G0AAHPN');
           button.textContent = 'Add to Cart';
           return button;
         };
@@ -2297,7 +2298,8 @@
             source?.variant_id ||
             source?.variantId ||
             source?.selected_variant_id ||
-            source?.selectedVariantId
+            source?.selectedVariantId ||
+            getAttireAddToCartBtn()?.dataset.variantId
           );
           if (directVariantId) {
             return {
@@ -2557,11 +2559,59 @@
           return true;
         };
 
+        const prepareAttireFavoritePayload = async payload => {
+          const sharedFavorites = getSharedFavorites();
+          let prepared = { ...payload };
+          const resolution = await resolveAttireCartEntry({
+            ...prepared,
+            product_handle: prepared.product_handle || 'attire-custom',
+            product_url: prepared.product_url || '/attire',
+            variant_title: prepared.variant_title || prepared.options_summary
+          });
+          const variantId = cleanText(resolution?.variantId);
+          if (!variantId) {
+            setAttireActionStatus(
+              cleanText(resolution?.userMessage) ||
+                'Select this attire option again before saving it to favorites.'
+            );
+            return null;
+          }
+          prepared = {
+            ...prepared,
+            variant_id: variantId,
+            selected_variant_id: variantId
+          };
+          if (sharedFavorites && typeof sharedFavorites.buildFavoriteKey === 'function') {
+            prepared.favorite_key = sharedFavorites.buildFavoriteKey(prepared);
+          }
+          if (
+            sharedFavorites &&
+            typeof sharedFavorites.isAccountMode === 'function' &&
+            sharedFavorites.isAccountMode() &&
+            typeof sharedFavorites.ensurePersistentUploadReference === 'function'
+          ) {
+            try {
+              prepared = await sharedFavorites.ensurePersistentUploadReference(prepared);
+              if (typeof sharedFavorites.buildFavoriteKey === 'function') {
+                prepared.favorite_key = sharedFavorites.buildFavoriteKey(prepared);
+              }
+            } catch (error) {
+              setAttireActionStatus(
+                cleanText(error?.userMessage || error?.user_message) ||
+                  'Reattach Upload Inspiration before saving this attire build.'
+              );
+              return null;
+            }
+          }
+          return prepared;
+        };
+
         const addProduct = async isFavorite => {
           if (isFavorite) {
             const sharedFavorites = getSharedFavorites();
             if (!sharedFavorites || typeof sharedFavorites.addFavorite !== 'function') return null;
-            const payload = await buildFavoritePayload();
+            const payload = await prepareAttireFavoritePayload(await buildFavoritePayload());
+            if (!payload) return null;
             setAttireActionStatus('', 'success');
             const added = sharedFavorites.addFavorite(payload, { source_path: payload.source_path });
             syncBadges();
