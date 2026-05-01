@@ -1842,9 +1842,10 @@
     cloned.account_dedupe_key = dedupeKey;
     cloned.account_saved_item_type = CUSTOM_DESIGN_TYPE;
     var restoreState = getCustomDesignRestoreState(favorite);
+    var sourcePath = toText(favorite.source_path || favorite.sourcePath) || '/customization';
     var payloadSource = Object.assign({}, cloned, {
       type: CUSTOM_DESIGN_TYPE,
-      source_path: '/customization',
+      source_path: sourcePath,
       restore_state: cloneJsonValue(restoreState, {})
     });
     delete payloadSource.item_payload;
@@ -1869,7 +1870,7 @@
       type: CUSTOM_DESIGN_TYPE,
       dedupe_key: dedupeKey,
       favorite_key: favoriteKey,
-      source_path: '/customization',
+      source_path: sourcePath,
       product_id: getCustomDesignField(favorite, ['product_id', 'productId']),
       product_handle: productHandle,
       product_key: productKey,
@@ -1891,7 +1892,7 @@
       notes: getFavoriteNotes(favorite),
       upload_references: uploadRef ? [uploadRef] : [],
       live_reference: {
-        source_path: '/customization',
+        source_path: sourcePath,
         product_id: getCustomDesignField(favorite, ['product_id', 'productId']),
         product_handle: productHandle,
         product_key: productKey,
