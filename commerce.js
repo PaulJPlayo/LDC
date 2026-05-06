@@ -3577,7 +3577,7 @@
       options.push({
         label: 'Attachment',
         value: designAttachmentName,
-        attachmentData: designAttachmentUrl,
+        attachmentUrl: designAttachmentUrl,
         attachmentKey: designAttachmentKey
       });
     }
@@ -3665,6 +3665,7 @@
           ? option.swatchStyle.trim()
           : (kind === 'accessory' ? 'background:#d8b4fe;' : 'background:#e2e8f0;'))
       : '';
+    const attachmentUrl = getSafeCartAttachmentUrl(option);
     return {
       ...option,
       label,
@@ -3675,8 +3676,71 @@
       swatchGlyph,
       swatchStyle,
       isTextSwatch,
-      attachmentData: typeof option.attachmentData === 'string' ? option.attachmentData : '',
+      attachmentUrl,
       attachmentKey: typeof option.attachmentKey === 'string' ? option.attachmentKey : ''
+    };
+  };
+
+  const isUnsafeCartStorageValue = value => {
+    if (value === null || value === undefined) return false;
+    if ((window.File && value instanceof window.File) || (window.Blob && value instanceof window.Blob)) {
+      return true;
+    }
+    if (typeof value !== 'string') return false;
+    return /^data:/i.test(value.trim());
+  };
+
+  const getSafeCartAttachmentUrl = option => {
+    if (!option || typeof option !== 'object') return '';
+    const candidates = [
+      option.attachmentUrl,
+      option.attachment_url,
+      option.displayUrl,
+      option.display_url,
+      option.url,
+      option.attachmentData,
+      option.attachment_data
+    ];
+    for (const candidate of candidates) {
+      if (typeof candidate !== 'string') continue;
+      const value = candidate.trim();
+      if (value && !isUnsafeCartStorageValue(value)) return value;
+    }
+    return '';
+  };
+
+  const isUnsafeCartStorageKey = key =>
+    /^(attachment_data|attachmentdata|raw_upload|rawupload|raw_upload_data|rawuploaddata|data_url|dataurl|base64|raw_file|rawfile|file_data|filedata|file|blob)$/i.test(String(key || '').trim());
+
+  const sanitizeLegacyCartStorageValue = value => {
+    if (value === null || value === undefined) return value;
+    if (isUnsafeCartStorageValue(value)) return '';
+    if (Array.isArray(value)) {
+      return value
+        .map(entry => sanitizeLegacyCartStorageValue(entry))
+        .filter(entry => entry !== undefined);
+    }
+    if (typeof value !== 'object') return value;
+
+    const result = {};
+    const safeAttachmentUrl = getSafeCartAttachmentUrl(value);
+    Object.entries(value).forEach(([key, entry]) => {
+      if (isUnsafeCartStorageKey(key)) return;
+      const sanitized = sanitizeLegacyCartStorageValue(entry);
+      if (sanitized !== undefined) result[key] = sanitized;
+    });
+    if (safeAttachmentUrl && !result.attachmentUrl && !result.attachment_url) {
+      result.attachmentUrl = safeAttachmentUrl;
+    }
+    return result;
+  };
+
+  const sanitizeLegacyCartStoragePayload = payload => {
+    const sanitized = sanitizeLegacyCartStorageValue(payload || { items: [] });
+    return {
+      ...sanitized,
+      items: Array.isArray(sanitized?.items) ? sanitized.items : [],
+      currency_code: getCurrencyCode(sanitized?.currency_code || payload?.currency_code || 'USD')
     };
   };
 
@@ -3685,7 +3749,7 @@
     const items = Array.isArray(cart?.items)
       ? getOrderedCartItems(cart).map(item => formatLegacyItem(item, currencyCode)).filter(Boolean)
       : [];
-    const payload = { items, currency_code: currencyCode };
+    const payload = sanitizeLegacyCartStoragePayload({ items, currency_code: currencyCode });
     try {
       localStorage.setItem(LEGACY_CART_KEY, JSON.stringify(payload));
     } catch (error) {
@@ -4009,10 +4073,10 @@
   };
 
   const writeLegacyCartState = state => {
-    const payload = {
+    const payload = sanitizeLegacyCartStoragePayload({
       items: Array.isArray(state?.items) ? state.items : [],
       currency_code: getCurrencyCode(state?.currency_code || 'USD')
-    };
+    });
     try {
       localStorage.setItem(LEGACY_CART_KEY, JSON.stringify(payload));
     } catch (error) {
@@ -4035,7 +4099,7 @@
 
   const encodeLegacyCartState = state => {
     try {
-      return encodeURIComponent(JSON.stringify(state || { items: [] }));
+      return encodeURIComponent(JSON.stringify(sanitizeLegacyCartStoragePayload(state || { items: [] })));
     } catch (error) {
       console.warn('Unable to encode legacy cart payload', error);
       return '';
@@ -4101,18 +4165,7 @@
                       ? option.swatch_glyph
                       : ''
                   ),
-            attachmentData:
-              typeof option?.attachmentData === 'string'
-                ? option.attachmentData
-                : (
-                    typeof option?.attachment_data === 'string'
-                      ? option.attachment_data
-                      : (
-                          typeof option?.attachmentUrl === 'string'
-                            ? option.attachmentUrl
-                            : (typeof option?.attachment_url === 'string' ? option.attachment_url : '')
-                        )
-                  ),
+            attachmentUrl: getSafeCartAttachmentUrl(option),
             attachmentKey:
               typeof option?.attachmentKey === 'string'
                 ? option.attachmentKey
@@ -4613,9 +4666,7 @@
                   return classes.join(' ');
                 })();
                 if (option.kind === 'attachment') {
-                  const attachmentUrl = typeof option.attachmentData === 'string' && !/^data:/i.test(option.attachmentData)
-                    ? option.attachmentData
-                    : '';
+                  const attachmentUrl = getSafeCartAttachmentUrl(option);
                   const viewLink = attachmentUrl
                     ? `<a href="${attachmentUrl.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="cart-attachment-link">View</a>`
                     : '';

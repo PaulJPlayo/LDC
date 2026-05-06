@@ -1899,8 +1899,15 @@
             });
             doormatProductPromise = commerce
               .request(`/store/products?${params.toString()}`)
-              .then(payload => payload?.products?.[0] || null)
-              .catch(() => null);
+              .then(payload => {
+                const product = payload?.products?.[0] || null;
+                if (!product) doormatProductPromise = null;
+                return product;
+              })
+              .catch(() => {
+                doormatProductPromise = null;
+                return null;
+              });
           }
           return doormatProductPromise;
         };
@@ -2150,8 +2157,9 @@
                     const value = opt.value || '';
                     const normalizedLabel = label.toLowerCase();
                     if (normalizedLabel === 'attachment') {
-                      const attachmentUrl = typeof opt.attachmentData === 'string' && !/^data:/i.test(opt.attachmentData) ? opt.attachmentData : '';
-                      const badge = opt.attachmentData ? ' (attached)' : '';
+                      const attachmentUrl = typeof opt.attachmentUrl === 'string' && !/^data:/i.test(opt.attachmentUrl) ? opt.attachmentUrl : '';
+                      const hasAttachment = Boolean(attachmentUrl || opt.attachmentKey || opt.guestUploadReference || opt.attachmentName || value);
+                      const badge = hasAttachment ? ' (attached)' : '';
                       const viewLink = attachmentUrl ? `<a href="${attachmentUrl.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" class="cart-attachment-link">View</a>` : '';
                       return `<div class="cart-option"><span class="cart-option-label">${label}</span><span class="cart-option-value">${value}${badge} ${viewLink}</span></div>`;
                     }
@@ -2224,7 +2232,8 @@
           });
         };
 
-        const buildOptions = async () => {
+        const buildOptions = async (config = {}) => {
+          const includeRawAttachmentData = config.includeRawAttachmentData === true;
           const options = [];
           const val = el => {
             if (!el) return '';
@@ -2242,21 +2251,29 @@
           push('Notes', notesEl?.value?.trim() || '');
           const attachment = await readAttachment();
           if (attachment?.name) {
-            const note = attachment.dataUrl ? '' : ' (file reference)';
-            push('Attachment', `${attachment.name}${note}`, {
-              attachmentData: attachment.dataUrl || '',
+            const attachmentName = cleanText(attachment.name);
+            const attachmentLabel = attachmentName ? `Upload Inspiration: ${attachmentName}` : 'Upload Inspiration';
+            const attachmentMeta = {
+              attachmentName,
+              uploadName: attachmentName,
+              attachmentLabel,
+              guestUploadReference: 'filename-only',
               attachmentContentType: attachment.type || '',
               attachmentSize: attachment.size || 0
-            });
+            };
+            if (includeRawAttachmentData && attachment.dataUrl) {
+              attachmentMeta.attachmentData = attachment.dataUrl;
+            }
+            push('Attachment', attachmentLabel, attachmentMeta);
           }
           return options;
         };
         const stripAttachmentReferenceNote = value =>
           cleanText(value).replace(/\s*\(file reference\)\s*$/i, '').trim();
-        const buildDoormatCartItem = async resolution => {
+        const buildDoormatCartItem = async (resolution, config = {}) => {
           const heroImg = document.querySelector('.attire-hero-image img');
           const priceCalc = updatePriceBubble(resolution);
-          const options = await buildOptions();
+          const options = await buildOptions(config);
           const image = cleanText(
             resolution?.image ||
             heroImg?.currentSrc ||
@@ -2332,7 +2349,8 @@
             resolution: null
           };
         };
-        const buildDoormatFavoritePayload = async () => {
+        const buildDoormatFavoritePayload = async (config = {}) => {
+          const includeRawAttachmentData = config.includeRawAttachmentData === true;
           const { selection, resolution } = await ensureDoormatFavoriteSelection();
           if (!resolution?.variantId) {
             return {
@@ -2340,20 +2358,29 @@
               resolution
             };
           }
-          const cartItem = await buildDoormatCartItem(resolution);
-          const options = Array.isArray(cartItem.options) ? cartItem.options.map(option => ({
-            label: cleanText(option?.label),
-            value: cleanText(option?.value),
-            swatchStyle: cleanText(option?.swatchStyle || option?.swatch_style),
-            swatchGlyph: cleanText(option?.swatchGlyph || option?.swatch_glyph),
-            attachmentData: cleanText(option?.attachmentData || option?.attachment_data),
-            attachmentKey: cleanText(option?.attachmentKey || option?.attachment_key),
-            attachmentUrl: cleanText(option?.attachmentUrl || option?.attachment_url),
-            attachmentProvider: cleanText(option?.attachmentProvider || option?.attachment_provider),
-            attachmentContentType: cleanText(option?.attachmentContentType || option?.attachment_content_type),
-            attachmentSize: cleanText(option?.attachmentSize || option?.attachment_size),
-            layout: cleanText(option?.layout)
-          })).filter(option => option.label && option.value) : [];
+          const cartItem = await buildDoormatCartItem(resolution, config);
+          const options = Array.isArray(cartItem.options) ? cartItem.options.map(option => {
+            const attachmentData = includeRawAttachmentData
+              ? cleanText(option?.attachmentData || option?.attachment_data)
+              : '';
+            return {
+              label: cleanText(option?.label),
+              value: cleanText(option?.value),
+              swatchStyle: cleanText(option?.swatchStyle || option?.swatch_style),
+              swatchGlyph: cleanText(option?.swatchGlyph || option?.swatch_glyph),
+              attachmentName: cleanText(option?.attachmentName || option?.attachment_name),
+              uploadName: cleanText(option?.uploadName || option?.upload_name),
+              attachmentLabel: cleanText(option?.attachmentLabel || option?.attachment_label),
+              guestUploadReference: cleanText(option?.guestUploadReference || option?.guest_upload_reference),
+              ...(attachmentData ? { attachmentData } : {}),
+              attachmentKey: cleanText(option?.attachmentKey || option?.attachment_key),
+              attachmentUrl: cleanText(option?.attachmentUrl || option?.attachment_url),
+              attachmentProvider: cleanText(option?.attachmentProvider || option?.attachment_provider),
+              attachmentContentType: cleanText(option?.attachmentContentType || option?.attachment_content_type),
+              attachmentSize: cleanText(option?.attachmentSize || option?.attachment_size),
+              layout: cleanText(option?.layout)
+            };
+          }).filter(option => option.label && option.value) : [];
           options.push({
             label: 'Quantity',
             value: String(Math.max(1, Number(cartItem.quantity || selection?.qty || 1)))
@@ -2424,7 +2451,12 @@
               user_message: message
             };
           }
-          const { payload, resolution } = await buildDoormatFavoritePayload();
+          const isAccountSave =
+            typeof sharedFavorites.isAccountMode === 'function' &&
+            sharedFavorites.isAccountMode();
+          const { payload, resolution } = await buildDoormatFavoritePayload({
+            includeRawAttachmentData: isAccountSave
+          });
           if (!payload || !resolution?.variantId) {
             const message = cleanText(resolution?.userMessage) || 'Unavailable';
             commerce?.showStatusMessage?.(message, 'error');
@@ -2439,8 +2471,7 @@
           try {
             let favoritePayload = payload;
             if (
-              typeof sharedFavorites.isAccountMode === 'function' &&
-              sharedFavorites.isAccountMode() &&
+              isAccountSave &&
               typeof sharedFavorites.ensurePersistentUploadReference === 'function'
             ) {
               try {

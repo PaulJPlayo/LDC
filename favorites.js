@@ -150,18 +150,38 @@
     return match ? toText(match[1]) : '';
   }
 
+  function isUnsafeInlineData(value) {
+    return /^data:/i.test(toText(value));
+  }
+
+  function normalizeSafeAttachmentUrl(rawOption) {
+    if (!isObject(rawOption)) return '';
+    var explicitUrl = toText(
+      rawOption.attachment_url ||
+      rawOption.attachmentUrl ||
+      rawOption.display_url ||
+      rawOption.displayUrl ||
+      rawOption.url
+    );
+    if (explicitUrl && !isUnsafeInlineData(explicitUrl)) return explicitUrl;
+
+    var legacyAttachmentData = toText(rawOption.attachment_data || rawOption.attachmentData);
+    if (legacyAttachmentData && !isUnsafeInlineData(legacyAttachmentData)) return legacyAttachmentData;
+    return '';
+  }
+
   function normalizeOption(rawOption) {
     if (!rawOption) return null;
 
     if (typeof rawOption === 'string') {
       var simple = toText(rawOption);
       if (!simple) return null;
+      if (isUnsafeInlineData(simple)) return null;
       return {
         label: 'Option',
         value: simple,
         swatch_style: '',
         swatch_glyph: '',
-        attachment_data: '',
         attachment_key: '',
         attachment_url: '',
         attachment_provider: '',
@@ -184,19 +204,31 @@
       toText(rawOption.selected) ||
       '';
 
+    if (isUnsafeUploadKey(label)) return null;
+    if (isUnsafeInlineData(value)) value = '';
     if (!label && !value) return null;
+    var isAttachmentOption = normalizeFavoriteMetadataLabel(label).toLowerCase() === 'attachment';
 
     return {
       label: label || 'Option',
       value: value,
       swatch_style: toText(rawOption.swatch_style || rawOption.swatchStyle),
       swatch_glyph: toText(rawOption.swatch_glyph || rawOption.swatchGlyph),
-      attachment_data: toText(rawOption.attachment_data || rawOption.attachmentData),
-      attachment_key: toText(rawOption.attachment_key || rawOption.attachmentKey),
-      attachment_url: toText(rawOption.attachment_url || rawOption.attachmentUrl || rawOption.display_url || rawOption.displayUrl),
-      attachment_provider: toText(rawOption.attachment_provider || rawOption.attachmentProvider || rawOption.provider),
-      attachment_content_type: toText(rawOption.attachment_content_type || rawOption.attachmentContentType || rawOption.content_type || rawOption.contentType),
-      attachment_size: toText(rawOption.attachment_size || rawOption.attachmentSize || rawOption.size),
+      attachment_name: isAttachmentOption
+        ? toText(rawOption.attachment_name || rawOption.attachmentName || rawOption.filename || rawOption.name)
+        : '',
+      upload_name: isAttachmentOption ? toText(rawOption.upload_name || rawOption.uploadName) : '',
+      attachment_label: isAttachmentOption ? toText(rawOption.attachment_label || rawOption.attachmentLabel) : '',
+      guest_upload_reference: isAttachmentOption ? toText(rawOption.guest_upload_reference || rawOption.guestUploadReference) : '',
+      upload_reference: isAttachmentOption ? toText(rawOption.upload_reference || rawOption.uploadReference) : '',
+      upload_reference_id: isAttachmentOption ? toText(rawOption.upload_reference_id || rawOption.uploadReferenceId) : '',
+      attachment_key: isAttachmentOption ? toText(rawOption.attachment_key || rawOption.attachmentKey) : '',
+      attachment_url: isAttachmentOption ? normalizeSafeAttachmentUrl(rawOption) : '',
+      attachment_provider: isAttachmentOption ? toText(rawOption.attachment_provider || rawOption.attachmentProvider || rawOption.provider) : '',
+      attachment_content_type: isAttachmentOption
+        ? toText(rawOption.attachment_content_type || rawOption.attachmentContentType || rawOption.content_type || rawOption.contentType)
+        : '',
+      attachment_size: isAttachmentOption ? toText(rawOption.attachment_size || rawOption.attachmentSize || rawOption.size) : '',
       layout: toText(rawOption.layout)
     };
   }
@@ -511,7 +543,12 @@
       value: option.value,
       swatch_style: option.swatch_style || option.swatchStyle,
       swatch_glyph: option.swatch_glyph || option.swatchGlyph,
-      attachment_data: option.attachment_data || option.attachmentData,
+      attachment_name: option.attachment_name || option.attachmentName,
+      upload_name: option.upload_name || option.uploadName,
+      attachment_label: option.attachment_label || option.attachmentLabel,
+      guest_upload_reference: option.guest_upload_reference || option.guestUploadReference,
+      upload_reference: option.upload_reference || option.uploadReference,
+      upload_reference_id: option.upload_reference_id || option.uploadReferenceId,
       attachment_key: option.attachment_key || option.attachmentKey,
       attachment_url: option.attachment_url || option.attachmentUrl,
       attachment_provider: option.attachment_provider || option.attachmentProvider,
@@ -566,6 +603,41 @@
       upload_references: cloneJsonValue(item.upload_references, []),
       live_reference: cloneJsonValue(item.live_reference, null)
     };
+  }
+
+  function sanitizeFavoriteStoragePayload(value, fallback) {
+    if (value === null || value === undefined) return fallback;
+    var sanitized = sanitizeAccountPayload(value, 0, '');
+    return sanitized === undefined ? fallback : sanitized;
+  }
+
+  function sanitizeUploadReferenceList(uploadReferences) {
+    if (!Array.isArray(uploadReferences)) return [];
+    return uploadReferences
+      .map(function eachUploadReference(uploadReference) {
+        var normalized = normalizeUploadReference(uploadReference);
+        if (!normalized) return null;
+        return sanitizeFavoriteStoragePayload(normalized, null);
+      })
+      .filter(Boolean);
+  }
+
+  function sanitizeFavoriteForGuestStorage(favorite) {
+    var next = cloneFavorite(favorite || {});
+    [
+      'preview_image',
+      'image_url',
+      'preview_style'
+    ].forEach(function clearUnsafeRootField(field) {
+      if (/data:/i.test(toText(next[field]))) next[field] = '';
+    });
+    next.selected_options = normalizeOptions(next.selected_options || []);
+    next.options_summary = optionsSummary(next.selected_options);
+    next.item_payload = sanitizeFavoriteStoragePayload(next.item_payload, null);
+    next.line_item_metadata = sanitizeFavoriteStoragePayload(next.line_item_metadata, null);
+    next.upload_references = sanitizeUploadReferenceList(next.upload_references);
+    next.live_reference = sanitizeFavoriteStoragePayload(next.live_reference, null);
+    return next;
   }
 
   function normalizeOwnerScope(value) {
@@ -679,7 +751,7 @@
     canonical.id = stableKey;
     canonical.favorite_key = stableKey;
 
-    return canonical;
+    return sanitizeFavoriteForGuestStorage(canonical);
   }
 
   function mergeFavoriteRecords(current, incoming) {
@@ -746,7 +818,7 @@
       merged.added_at = merged.updated_at;
     }
 
-    return merged;
+    return sanitizeFavoriteForGuestStorage(merged);
   }
 
   function mergeFavoriteRecordsWithSource(current, currentSource, incoming, incomingSource) {
@@ -940,6 +1012,7 @@
       items: (payload.items || [])
         .filter(isGuestScopedFavorite)
         .map(markGuestScopedFavorite)
+        .map(sanitizeFavoriteForGuestStorage)
     };
   }
 
@@ -1216,13 +1289,14 @@
   function normalizeUploadReference(value) {
     if (!value || typeof value !== 'object') return null;
     var key = toText(value.key || value.attachment_key || value.attachmentKey || value.id);
-    var url = toText(
+    var rawUrl = toText(
       value.display_url ||
       value.displayUrl ||
       value.url ||
       value.attachment_url ||
       value.attachmentUrl
     );
+    var url = isUnsafeInlineData(rawUrl) ? '' : rawUrl;
     var filename = stripAttachmentReferenceNote(
       value.filename ||
       value.name ||
@@ -1371,7 +1445,8 @@
     var attachmentOption = getFavoriteAttachmentOption(cloned);
     if (attachmentOption) {
       attachmentOption.value = ref.filename || stripAttachmentReferenceNote(attachmentOption.value) || 'Attachment';
-      attachmentOption.attachment_data = '';
+      delete attachmentOption.attachment_data;
+      delete attachmentOption.attachmentData;
       attachmentOption.attachment_key = ref.key;
       attachmentOption.attachment_url = ref.display_url || ref.url || '';
       attachmentOption.attachment_provider = ref.provider || 's3';
@@ -1402,6 +1477,9 @@
 
     var rawData = toText(attachmentOption.attachment_data || attachmentOption.attachmentData);
     if (!rawData) {
+      if (!accountMode) {
+        return Promise.resolve(sanitizeFavoriteForGuestStorage(cloned));
+      }
       var missingError = new Error('Reattach Upload Inspiration before moving this favorite to cart.');
       missingError.reason = 'upload_reference_missing';
       missingError.userMessage = 'Reattach Upload Inspiration before moving this favorite to cart.';
@@ -1443,7 +1521,7 @@
   }
 
   function isUnsafeUploadKey(key) {
-    return /^(attachment_data|attachmentdata|data_url|dataurl|base64|raw_file|rawfile|file_data|filedata|blob)$/i.test(toText(key));
+    return /^(attachment_data|attachmentdata|raw_upload|rawupload|raw_upload_data|rawuploaddata|data_url|dataurl|base64|raw_file|rawfile|file_data|filedata|file|blob)$/i.test(toText(key));
   }
 
   function isInternalAccountPayloadKey(key) {
@@ -1602,7 +1680,7 @@
     var attachmentOption = getFavoriteAttachmentOption(favorite);
     if (!attachmentOption) return false;
     if (getFavoriteUploadReference(favorite)) return false;
-    return Boolean(toText(attachmentOption.value));
+    return hasRawAccountPayload(attachmentOption, 0, '');
   }
 
   function isAccountSyncableDoormatBuild(favorite) {
