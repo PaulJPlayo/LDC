@@ -221,10 +221,15 @@
         flex-wrap: wrap;
         gap: 0.75rem;
       }
+      .saved-cart-restore,
       .saved-cart-delete {
         width: auto;
         min-width: 8rem;
         padding-inline: 1.1rem;
+      }
+      .saved-cart-restore[disabled] {
+        opacity: 0.62;
+        cursor: not-allowed;
       }
       .order-card {
         border: 1px solid rgba(148, 163, 184, 0.3);

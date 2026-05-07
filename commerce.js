@@ -30,6 +30,9 @@
   const CART_AUDIT_STORAGE_KEY = 'LDC_CART_ADD_FAILS';
   const CART_AUDIT_LIMIT = 200;
   const SAVED_CARTS_ENDPOINT = '/store/customers/me/saved-carts';
+  const SAVED_CART_RESTORE_MAX_QUANTITY = 99;
+  const SAVED_CART_RESTORE_CONFIRM_MESSAGE =
+    'Restore this saved cart to your current cart? Prices and availability may have changed.';
   const DESIGN_SELECTION_KEY = 'ldcDesignSelection';
   const DESIGN_SELECTION_PENDING_KEY = 'ldcDesignSelectionPending';
   const DESIGN_SELECTION_PENDING_AT_KEY = 'ldcDesignSelectionPendingAt';
@@ -4427,6 +4430,338 @@
     });
   };
 
+  const getSavedCartRestoreLineItems = savedCart =>
+    Array.isArray(savedCart?.line_items) ? savedCart.line_items : [];
+
+  const isSavedCartInactiveForRestore = savedCart => {
+    if (!savedCart || typeof savedCart !== 'object') return true;
+    const status = String(savedCart.status || 'active').trim().toLowerCase();
+    if (status && status !== 'active') return true;
+    return Boolean(savedCart.archived_at || savedCart.deleted_at);
+  };
+
+  const isSavedCartRestorable = savedCart =>
+    !isSavedCartInactiveForRestore(savedCart) &&
+    getSavedCartRestoreLineItems(savedCart).length > 0 &&
+    Math.max(0, Number(savedCart?.item_count || getSavedCartRestoreLineItems(savedCart).length)) > 0;
+
+  const getSavedCartRestoreDisabledReason = savedCart => {
+    if (isSavedCartInactiveForRestore(savedCart)) {
+      return 'Only active saved carts can be restored.';
+    }
+    if (!getSavedCartRestoreLineItems(savedCart).length) {
+      return 'This saved cart has no items to restore.';
+    }
+    return '';
+  };
+
+  const pushUniqueText = (list, value, formatter = value => String(value || '').trim()) => {
+    const text = formatter(value);
+    if (!text || list.includes(text)) return;
+    list.push(text);
+  };
+
+  const getSavedCartLineItemTitle = (lineItem, index = 0) =>
+    String(
+      lineItem?.title ||
+      lineItem?.display?.title ||
+      lineItem?.display?.name ||
+      lineItem?.product_title ||
+      `Item ${index + 1}`
+    ).trim() || `Item ${index + 1}`;
+
+  const getSavedCartRestoreQuantity = lineItem => {
+    const rawQuantity = Number(lineItem?.quantity || lineItem?.display?.quantity || 1);
+    if (!Number.isFinite(rawQuantity) || rawQuantity <= 0) return null;
+    const quantity = Math.floor(rawQuantity);
+    if (quantity <= 0 || quantity > SAVED_CART_RESTORE_MAX_QUANTITY) return null;
+    return quantity;
+  };
+
+  const getSavedCartOptionByLabel = (options, targetLabel) => {
+    const normalizedTarget = String(targetLabel || '').trim().toLowerCase();
+    if (!normalizedTarget) return null;
+    return (Array.isArray(options) ? options : []).find(option => {
+      const label = String(option?.label || '').trim().toLowerCase();
+      return label === normalizedTarget;
+    }) || null;
+  };
+
+  const getSavedCartLineItemSelectedOptions = lineItem => {
+    const selected = Array.isArray(lineItem?.selected_options)
+      ? lineItem.selected_options
+      : Array.isArray(lineItem?.selectedOptions)
+        ? lineItem.selectedOptions
+        : [];
+    const displayOptions = Array.isArray(lineItem?.display?.options)
+      ? lineItem.display.options
+      : [];
+    return sanitizeSavedCartPayloadValue([...selected, ...displayOptions])
+      .filter(option => option && typeof option === 'object' && (option.label || option.value));
+  };
+
+  const getSavedCartLineItemLookupKeys = lineItem => {
+    const keys = [];
+    const display = lineItem?.display || {};
+    const push = value => pushUniqueText(keys, value, raw => slugify(raw || ''));
+    push(lineItem?.product_key || lineItem?.productKey);
+    push(lineItem?.product_handle || lineItem?.productHandle);
+    push(lineItem?.product_id || lineItem?.productId);
+    push(lineItem?.title);
+    push(lineItem?.product_title || lineItem?.productTitle);
+    push(display.product_key || display.productKey);
+    push(display.product_handle || display.productHandle);
+    push(display.product_id || display.productId);
+    push(display.title || display.name);
+
+    const rawUrl = String(display.product_url || display.productUrl || display.source_path || '').trim();
+    if (rawUrl) {
+      const path = rawUrl.split('?')[0].split('#')[0];
+      const parts = path.split('/').filter(Boolean);
+      if (parts.length) {
+        push(parts[parts.length - 1].replace(/\.html?$/i, ''));
+      }
+    }
+    return keys;
+  };
+
+  const getSavedCartLineItemVariantLabels = lineItem => {
+    const labels = [];
+    const push = value => pushUniqueText(labels, value, raw => cleanVariantLabel(raw || ''));
+    push(lineItem?.variant_title || lineItem?.variantTitle);
+    push(lineItem?.display?.variant_title || lineItem?.display?.variantTitle);
+    getSavedCartLineItemSelectedOptions(lineItem).forEach(option => {
+      push(option?.value);
+      push(option?.label);
+    });
+    return labels;
+  };
+
+  const resolveLiveProductByVariantId = async variantId => {
+    const normalizedVariantId = String(variantId || '').trim();
+    if (!normalizedVariantId) return null;
+    const index = await loadProductIndex();
+    return (Array.isArray(index?.products) ? index.products : []).find(product =>
+      getLiveVariants(product).some(variant => String(variant?.id || '').trim() === normalizedVariantId)
+    ) || null;
+  };
+
+  const resolveSavedCartLineItemVariant = async lineItem => {
+    const sanitized = sanitizeSavedCartPayloadValue(lineItem || {});
+    const preferredVariantId = String(
+      sanitized.variant_id ||
+      sanitized.variantId ||
+      sanitized.display?.variant_id ||
+      sanitized.display?.variantId ||
+      ''
+    ).trim();
+    let product = await resolveLiveProduct({
+      productKey: sanitized.product_key || sanitized.productKey || sanitized.display?.product_key || sanitized.display?.productKey || '',
+      productHandle: sanitized.product_handle || sanitized.productHandle || sanitized.display?.product_handle || sanitized.display?.productHandle || '',
+      productId: sanitized.product_id || sanitized.productId || sanitized.display?.product_id || sanitized.display?.productId || '',
+      lookupKeys: getSavedCartLineItemLookupKeys(sanitized)
+    });
+    if (!product && preferredVariantId) {
+      product = await resolveLiveProductByVariantId(preferredVariantId);
+    }
+    if (!product) {
+      return {
+        product: null,
+        variant: null,
+        variantId: null,
+        reason: 'unavailable',
+        userMessage: getCartEntryUserMessage('unavailable')
+      };
+    }
+    return resolveLiveVariantChoice(product, {
+      preferredVariantId,
+      labels: getSavedCartLineItemVariantLabels(sanitized)
+    });
+  };
+
+  const hasSavedCartDesignMetadata = lineItem => {
+    const metadata = normalizeMetadata(lineItem?.metadata);
+    return Boolean(
+      hasDesignLineItemMetadata(metadata) ||
+      metadata.design_color_label ||
+      metadata.designColorLabel ||
+      metadata.design_style_label ||
+      metadata.designStyleLabel ||
+      metadata.design_size_label ||
+      metadata.designSizeLabel ||
+      metadata.design_attachment_name ||
+      metadata.designAttachmentName ||
+      lineItem?.display?.isDesignSubmitted === true
+    );
+  };
+
+  const assignIfMissing = (target, key, value) => {
+    if (target[key] !== undefined && target[key] !== '') return;
+    if (value === undefined || value === null || value === '') return;
+    target[key] = value;
+  };
+
+  const buildSavedCartRestoreMetadata = lineItem => {
+    const sanitized = sanitizeSavedCartPayloadValue(lineItem || {});
+    const metadata = sanitizeSavedCartPayloadValue(normalizeMetadata(sanitized.metadata));
+    const display = sanitizeSavedCartPayloadValue(sanitized.display || {});
+    const selectedOptions = getSavedCartLineItemSelectedOptions(sanitized);
+    const restoreMetadata = { ...metadata };
+    const colorOption = getSavedCartOptionByLabel(selectedOptions, 'color');
+    const accessoryOption = getSavedCartOptionByLabel(selectedOptions, 'accessory');
+    const styleOption = getSavedCartOptionByLabel(selectedOptions, 'style');
+    const sizeOption = getSavedCartOptionByLabel(selectedOptions, 'size');
+    const notesOption = getSavedCartOptionByLabel(selectedOptions, 'notes');
+    const attachmentOption = getSavedCartOptionByLabel(selectedOptions, 'attachment');
+    const isDesignLike = hasSavedCartDesignMetadata(sanitized);
+
+    if (colorOption) {
+      assignIfMissing(restoreMetadata, 'selected_color_label', String(colorOption.value || '').trim());
+      assignIfMissing(restoreMetadata, 'selected_color_style', colorOption.swatchStyle || colorOption.swatch_style || '');
+      assignIfMissing(restoreMetadata, 'selected_color_glyph', colorOption.swatchGlyph || colorOption.swatch_glyph || '');
+    }
+    if (accessoryOption) {
+      assignIfMissing(restoreMetadata, 'selected_accessory_label', String(accessoryOption.value || '').trim());
+      assignIfMissing(restoreMetadata, 'selected_accessory_style', accessoryOption.swatchStyle || accessoryOption.swatch_style || '');
+      assignIfMissing(restoreMetadata, 'selected_accessory_glyph', accessoryOption.swatchGlyph || accessoryOption.swatch_glyph || '');
+    }
+    if (isDesignLike) {
+      assignIfMissing(restoreMetadata, 'design_style_label', String(styleOption?.value || '').trim());
+      assignIfMissing(restoreMetadata, 'design_size_label', String(sizeOption?.value || '').trim());
+      assignIfMissing(restoreMetadata, 'design_notes', String(notesOption?.value || '').trim());
+      assignIfMissing(
+        restoreMetadata,
+        'design_attachment_name',
+        stripAttachmentReferenceNote(attachmentOption?.value || '')
+      );
+      assignIfMissing(
+        restoreMetadata,
+        'design_attachment_url',
+        getSafeCartAttachmentUrl(attachmentOption || {})
+      );
+      assignIfMissing(
+        restoreMetadata,
+        'design_attachment_key',
+        attachmentOption?.attachmentKey || attachmentOption?.attachment_key || ''
+      );
+      assignIfMissing(
+        restoreMetadata,
+        'design_attachment_provider',
+        attachmentOption?.attachmentProvider || attachmentOption?.attachment_provider || ''
+      );
+    }
+
+    assignIfMissing(restoreMetadata, 'product_description', display.description || display.product_description || '');
+    assignIfMissing(restoreMetadata, 'preview_style', display.previewStyle || display.preview_style || '');
+    if (selectedOptions.length) {
+      restoreMetadata.saved_cart_selected_options = selectedOptions;
+    }
+    return sanitizeSavedCartPayloadValue(restoreMetadata);
+  };
+
+  const formatSkippedSavedCartItems = skippedItems => {
+    const items = Array.isArray(skippedItems) ? skippedItems : [];
+    if (!items.length) return '';
+    const names = items
+      .slice(0, 3)
+      .map(item => {
+        const title = String(item?.title || 'Item').trim();
+        const reason = String(item?.reason || '').trim();
+        return reason ? `${title} (${reason})` : title;
+      })
+      .join(', ');
+    const suffix = items.length > 3 ? `, and ${items.length - 3} more` : '';
+    return `${names}${suffix}`;
+  };
+
+  const buildSavedCartRestoreMessage = result => {
+    const restored = Array.isArray(result?.restoredItems) ? result.restoredItems : [];
+    const skipped = Array.isArray(result?.skippedItems) ? result.skippedItems : [];
+    const restoredQuantity = restored.reduce((sum, item) => sum + Math.max(1, Number(item?.quantity || 1)), 0);
+    if (restoredQuantity > 0 && skipped.length) {
+      const skippedSummary = formatSkippedSavedCartItems(skipped);
+      return `Restored ${restoredQuantity} item${restoredQuantity === 1 ? '' : 's'} to your cart. Some items could not be restored because they are unavailable or changed.${skippedSummary ? ` Skipped: ${skippedSummary}.` : ''} Prices and availability may have changed.`;
+    }
+    if (restoredQuantity > 0) {
+      return `Restored ${restoredQuantity} item${restoredQuantity === 1 ? '' : 's'} to your cart. Prices and availability may have changed.`;
+    }
+    const skippedSummary = formatSkippedSavedCartItems(skipped);
+    return `No items could be restored.${skippedSummary ? ` Skipped: ${skippedSummary}.` : ''}`;
+  };
+
+  const restoreSavedCartToCurrentCart = async savedCart => {
+    const authState = await getSavedCartAuthState();
+    if (!authState.authenticated) {
+      const error = new Error('Sign in to restore saved carts.');
+      error.status = 401;
+      throw error;
+    }
+    if (!isSavedCartRestorable(savedCart)) {
+      throw new Error(getSavedCartRestoreDisabledReason(savedCart) || 'This saved cart cannot be restored.');
+    }
+
+    const restoredItems = [];
+    const skippedItems = [];
+    const lineItems = getSavedCartRestoreLineItems(savedCart);
+
+    for (const [index, rawItem] of lineItems.entries()) {
+      const lineItem = sanitizeSavedCartPayloadValue(rawItem || {});
+      const title = getSavedCartLineItemTitle(lineItem, index);
+      const quantity = getSavedCartRestoreQuantity(lineItem);
+      if (!quantity) {
+        skippedItems.push({ title, reason: 'Quantity needs review' });
+        continue;
+      }
+
+      const resolved = await resolveSavedCartLineItemVariant(lineItem);
+      if (!resolved?.variantId) {
+        skippedItems.push({
+          title,
+          reason: resolved?.userMessage || getCartEntryUserMessage(resolved?.reason || 'unavailable')
+        });
+        continue;
+      }
+
+      try {
+        await addLineItem(resolved.variantId, quantity, buildSavedCartRestoreMetadata(lineItem));
+        restoredItems.push({ title, quantity });
+      } catch (error) {
+        const classified = classifyCartMutationError(error);
+        skippedItems.push({
+          title,
+          reason: classified.userMessage || 'Unavailable'
+        });
+      }
+    }
+
+    if (!restoredItems.length) {
+      const error = new Error(buildSavedCartRestoreMessage({ restoredItems, skippedItems }));
+      error.skippedItems = skippedItems;
+      throw error;
+    }
+
+    await syncBadges();
+    try {
+      window.ldcCart?.sync?.();
+      window.ldcCart?.open?.();
+    } catch (error) {
+      // Cart drawer support varies by storefront route; the cart state has already been refreshed.
+    }
+
+    return { restoredItems, skippedItems };
+  };
+
+  const restoreSavedCart = async id => {
+    const savedCartId = String(id || '').trim();
+    if (!savedCartId) throw new Error('Saved cart id is required.');
+    const savedCarts = await listSavedCarts();
+    const savedCart = savedCarts.find(cart => String(cart?.id || '').trim() === savedCartId);
+    if (!savedCart) {
+      throw new Error('Unable to load this saved cart. Please refresh and try again.');
+    }
+    return restoreSavedCartToCurrentCart(savedCart);
+  };
+
   const announceSavedCartsChange = () => {
     try {
       window.dispatchEvent(new CustomEvent('ldc:saved-carts:change'));
@@ -5522,6 +5857,18 @@
 
       const actions = document.createElement('div');
       actions.className = 'saved-cart-actions';
+      const restoreButton = document.createElement('button');
+      restoreButton.className = 'auth-submit saved-cart-restore';
+      restoreButton.type = 'button';
+      restoreButton.setAttribute('data-saved-cart-restore', savedCart?.id || '');
+      restoreButton.textContent = 'Restore';
+      if (!isSavedCartRestorable(savedCart)) {
+        restoreButton.disabled = true;
+        restoreButton.setAttribute('aria-disabled', 'true');
+        const reason = getSavedCartRestoreDisabledReason(savedCart);
+        if (reason) restoreButton.title = reason;
+      }
+      actions.appendChild(restoreButton);
       const deleteButton = document.createElement('button');
       deleteButton.className = 'auth-submit saved-cart-delete';
       deleteButton.type = 'button';
@@ -5573,6 +5920,45 @@
       if (elements.savedCartsStatusEl) {
         elements.savedCartsStatusEl.textContent = 'Unable to delete saved cart. Please try again.';
       }
+    }
+  };
+
+  const handleSavedCartRestore = async event => {
+    const button = event.target.closest('[data-saved-cart-restore]');
+    if (!button) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const savedCartId = button.getAttribute('data-saved-cart-restore');
+    if (!savedCartId || button.disabled) return;
+    if (!window.confirm(SAVED_CART_RESTORE_CONFIRM_MESSAGE)) return;
+
+    const elements = getAccountPageElements();
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Checking...';
+    if (elements.savedCartsStatusEl) {
+      elements.savedCartsStatusEl.textContent = 'Checking current availability...';
+    }
+
+    try {
+      const result = await restoreSavedCart(savedCartId);
+      const message = buildSavedCartRestoreMessage(result);
+      if (elements.savedCartsStatusEl) {
+        elements.savedCartsStatusEl.textContent = message;
+      }
+      showCartToast(message, 'success');
+    } catch (error) {
+      if (elements.savedCartsStatusEl) {
+        elements.savedCartsStatusEl.textContent =
+          error?.message || 'Unable to restore this saved cart. Please try again.';
+      }
+      showCartToast(
+        error?.message || 'Unable to restore this saved cart. Please try again.',
+        'error'
+      );
+    } finally {
+      button.disabled = false;
+      button.textContent = originalText || 'Restore';
     }
   };
 
@@ -5650,6 +6036,7 @@
   const initAccountPage = () => {
     const elements = getAccountPageElements();
     if (!hasAccountPageState(elements)) return;
+    elements.savedCartsListEl?.addEventListener('click', handleSavedCartRestore);
     elements.savedCartsListEl?.addEventListener('click', handleSavedCartDelete);
     refreshAccountState();
     window.addEventListener('ldc:auth:change', event => {
@@ -6182,6 +6569,7 @@
     saveCurrentCart,
     listSavedCarts,
     deleteSavedCart,
+    restoreSavedCart,
     isDesignSubmittedLineItem,
     decorateLineItemDisplayRows,
     normalizeDisplayOption,
