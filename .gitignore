@@ -17,6 +17,11 @@ build/
 # Environment files
 .env
 .env.*
+.env.e2e.local
+!.env.e2e.example
+playwright/.auth/
+test-results/
+playwright-report/
 *.pem
 
 # OS files

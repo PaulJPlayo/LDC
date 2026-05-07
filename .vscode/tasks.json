@@ -1,0 +1,35 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Playwright MCP Server",
+      "type": "shell",
+      "command": "/usr/local/bin/npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest",
+        "--port",
+        "8931",
+        "--browser",
+        "chrome",
+        "--secrets",
+        "${workspaceFolder}/.env.e2e.local",
+        "--output-dir",
+        "${workspaceFolder}/test-results/mcp"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "never",
+        "panel": "dedicated",
+        "clear": false
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "runOn": "folderOpen",
+        "instanceLimit": 1
+      }
+    }
+  ]
+}
