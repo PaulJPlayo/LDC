@@ -83,7 +83,8 @@
       .account-auth[hidden],
       .account-details[hidden],
       .account-logout[hidden],
-      [data-order-history][hidden] {
+      [data-order-history][hidden],
+      [data-saved-carts-section][hidden] {
         display: none;
       }
       .auth-grid {
@@ -179,6 +180,51 @@
       .orders-list {
         display: grid;
         gap: 1rem;
+      }
+      .saved-carts-section {
+        display: grid;
+        gap: 0.85rem;
+      }
+      .saved-carts-section h3 {
+        margin: 0;
+      }
+      .saved-carts-status {
+        margin: 0;
+        color: rgba(248, 250, 252, 0.72);
+        line-height: 1.5;
+      }
+      .saved-carts-list {
+        display: grid;
+        gap: 1rem;
+      }
+      .saved-cart-card {
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        border-radius: 1rem;
+        padding: 1rem 1.25rem;
+        background: rgba(15, 23, 42, 0.45);
+        display: grid;
+        gap: 0.7rem;
+      }
+      .saved-cart-card h4 {
+        margin: 0;
+        font-size: 1rem;
+      }
+      .saved-cart-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        font-size: 0.85rem;
+        color: rgba(248, 250, 252, 0.75);
+      }
+      .saved-cart-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+      .saved-cart-delete {
+        width: auto;
+        min-width: 8rem;
+        padding-inline: 1.1rem;
       }
       .order-card {
         border: 1px solid rgba(148, 163, 184, 0.3);
@@ -280,6 +326,12 @@
             <div><strong>Email:</strong> <span data-account-email></span></div>
           </div>
           <button class="auth-submit account-logout" type="button" data-account-logout hidden>Log Out</button>
+
+          <div class="saved-carts-section" data-saved-carts-section hidden>
+            <h3>Saved Carts</h3>
+            <p class="saved-carts-status" data-saved-carts-status>Loading saved carts...</p>
+            <div class="saved-carts-list" data-saved-carts-list></div>
+          </div>
 
           <div data-order-history hidden>
             <h3>Order History</h3>

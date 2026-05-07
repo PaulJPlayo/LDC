@@ -29,6 +29,7 @@
   const LEGACY_CART_KEY = 'ldc:cart';
   const CART_AUDIT_STORAGE_KEY = 'LDC_CART_ADD_FAILS';
   const CART_AUDIT_LIMIT = 200;
+  const SAVED_CARTS_ENDPOINT = '/store/customers/me/saved-carts';
   const DESIGN_SELECTION_KEY = 'ldcDesignSelection';
   const DESIGN_SELECTION_PENDING_KEY = 'ldcDesignSelectionPending';
   const DESIGN_SELECTION_PENDING_AT_KEY = 'ldcDesignSelectionPendingAt';
@@ -4204,6 +4205,372 @@
       currency: getCurrencyCode(currencyCode)
     }).format(amount ?? 0);
 
+  const isUnsafeSavedCartPayloadKey = key => {
+    const normalized = String(key || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    return [
+      'customerid',
+      'attachmentdata',
+      'attachmentdataurl',
+      'rawupload',
+      'rawuploaddata',
+      'dataurl',
+      'base64',
+      'base64data',
+      'rawfile',
+      'filedata',
+      'file',
+      'blob',
+      'payment',
+      'payments',
+      'paymentsession',
+      'paymentsessions',
+      'paymentcollection',
+      'paymentcollections',
+      'paymentmethod',
+      'paymentmethods',
+      'card',
+      'cardnumber',
+      'cvv',
+      'cvc',
+      'securitycode',
+      'authorization',
+      'authorizationcode',
+      'token',
+      'jwt',
+      'cookie',
+      'password',
+      'secret',
+      'clientsecret'
+    ].includes(normalized);
+  };
+
+  const isUnsafeSavedCartString = value => {
+    const text = String(value || '').trim();
+    if (!text) return false;
+    if (/^data:/i.test(text) || /data:image/i.test(text) || /;base64,/i.test(text)) return true;
+    if (/base64/i.test(text) && text.length > 120) return true;
+    if (text.length >= 512 && text.length % 4 === 0 && /^[A-Za-z0-9+/]+={0,2}$/.test(text)) {
+      return true;
+    }
+    return false;
+  };
+
+  const sanitizeSavedCartPayloadValue = value => {
+    const storageSafe = sanitizeLegacyCartStorageValue(value);
+    const stripUnsafe = entry => {
+      if (entry === null || entry === undefined) return entry;
+      if (typeof entry === 'string') return isUnsafeSavedCartString(entry) ? '' : entry;
+      if (Array.isArray(entry)) {
+        return entry
+          .map(item => stripUnsafe(item))
+          .filter(item => item !== undefined);
+      }
+      if (typeof entry !== 'object') return entry;
+
+      const result = {};
+      Object.entries(entry).forEach(([key, child]) => {
+        if (isUnsafeSavedCartPayloadKey(key)) return;
+        const sanitized = stripUnsafe(child);
+        if (sanitized !== undefined) result[key] = sanitized;
+      });
+      return result;
+    };
+    return stripUnsafe(storageSafe);
+  };
+
+  const readCurrentDisplayCartState = () => {
+    const state = readLegacyCartState();
+    const currencyCode = getCurrencyCode(state.currency_code || 'USD');
+    const items = Array.isArray(state.items)
+      ? state.items
+          .map(item => normalizeLegacyCartItemForDrawer(item, currencyCode))
+          .filter(Boolean)
+      : [];
+    return { items, currency_code: currencyCode };
+  };
+
+  const getCurrentLiveCart = async () => {
+    const cartId = readCartId();
+    if (!cartId) return null;
+    return getCart(cartId);
+  };
+
+  const buildDefaultSavedCartName = () => {
+    const label = new Date().toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
+    return `Saved Cart - ${label}`;
+  };
+
+  const getSavedCartItemCount = items =>
+    (Array.isArray(items) ? items : []).reduce((sum, item) => {
+      const quantity = Math.max(1, Number(item?.quantity || 1));
+      return sum + quantity;
+    }, 0);
+
+  const getSavedCartSubtotalMinor = (items, currencyCode) => {
+    const divisor = getCurrencyDivisor(currencyCode);
+    return (Array.isArray(items) ? items : []).reduce((sum, item) => {
+      const explicitMinor = Number(item?.price_minor);
+      const major = Number(item?.price || 0);
+      const unitMinor = Number.isFinite(explicitMinor)
+        ? explicitMinor
+        : Math.round((Number.isFinite(major) ? major : 0) * divisor);
+      const quantity = Math.max(1, Number(item?.quantity || 1));
+      return sum + unitMinor * quantity;
+    }, 0);
+  };
+
+  const buildSavedCartLineItems = (displayItems, liveCart, currencyCode) => {
+    const liveItems = Array.isArray(liveCart?.items) ? liveCart.items : [];
+    const liveById = new Map(
+      liveItems.map(item => [String(item?.id || ''), item]).filter(([id]) => id)
+    );
+    const divisor = getCurrencyDivisor(currencyCode);
+
+    return (Array.isArray(displayItems) ? displayItems : []).map((item, index) => {
+      const liveItem = liveById.get(String(item?.id || '')) || liveItems[index] || null;
+      const displayItem = sanitizeSavedCartPayloadValue(item);
+      const metadata = sanitizeSavedCartPayloadValue(normalizeMetadata(liveItem?.metadata));
+      const selectedOptions = sanitizeSavedCartPayloadValue(item?.options || []);
+      const priceMinor = Number.isFinite(Number(item?.price_minor))
+        ? Number(item.price_minor)
+        : Math.round(Number(item?.price || 0) * divisor);
+
+      return sanitizeSavedCartPayloadValue({
+        line_item_id: liveItem?.id || item?.id || '',
+        product_id: liveItem?.product_id || liveItem?.product?.id || '',
+        product_handle: liveItem?.product_handle || liveItem?.product?.handle || '',
+        variant_id: liveItem?.variant_id || liveItem?.variant?.id || '',
+        variant_title: liveItem?.variant_title || liveItem?.variant?.title || '',
+        title: item?.title || item?.name || liveItem?.title || liveItem?.product_title || 'Item',
+        quantity: Math.max(1, Number(item?.quantity || liveItem?.quantity || 1)),
+        unit_price: Number.isFinite(Number(liveItem?.unit_price))
+          ? Number(liveItem.unit_price)
+          : priceMinor,
+        currency_code: getCurrencyCode(item?.currency_code || liveCart || currencyCode),
+        selected_options: selectedOptions,
+        metadata,
+        display: displayItem
+      });
+    });
+  };
+
+  const buildSavedCartPayloadFromCurrentCart = async () => {
+    const liveCart = await getCurrentLiveCart();
+    let displayState = readCurrentDisplayCartState();
+    if (!displayState.items.length && Array.isArray(liveCart?.items) && liveCart.items.length) {
+      const currencyCode = getCurrencyCode(liveCart);
+      displayState = {
+        currency_code: currencyCode,
+        items: getOrderedCartItems(liveCart)
+          .map(item => normalizeLegacyCartItemForDrawer(formatLegacyItem(item, currencyCode), currencyCode))
+          .filter(Boolean)
+      };
+    }
+
+    const currencyCode = getCurrencyCode(liveCart || displayState.currency_code || 'USD');
+    const lineItems = buildSavedCartLineItems(displayState.items, liveCart, currencyCode);
+    const itemCount = getSavedCartItemCount(displayState.items);
+    const subtotalMinor = Number.isFinite(Number(liveCart?.subtotal))
+      ? Number(liveCart.subtotal)
+      : getSavedCartSubtotalMinor(displayState.items, currencyCode);
+
+    if (!lineItems.length || itemCount <= 0) {
+      throw new Error('Add items before saving this cart.');
+    }
+
+    return sanitizeSavedCartPayloadValue({
+      name: buildDefaultSavedCartName(),
+      status: 'active',
+      currency_code: currencyCode,
+      region_id: liveCart?.region_id || liveCart?.region?.id || null,
+      cart_snapshot: {
+        cart_id: liveCart?.id || readCartId() || null,
+        captured_at: new Date().toISOString(),
+        source: 'storefront-current-cart',
+        currency_code: currencyCode,
+        region_id: liveCart?.region_id || liveCart?.region?.id || null,
+        item_count: itemCount,
+        subtotal_snapshot_amount: subtotalMinor,
+        subtotal_display: formatMoneyFromMinor(subtotalMinor, currencyCode)
+      },
+      line_items: lineItems,
+      item_count: itemCount,
+      subtotal_snapshot_amount: subtotalMinor
+    });
+  };
+
+  const listSavedCarts = async () => {
+    const payload = await request(`${SAVED_CARTS_ENDPOINT}?limit=50`, {
+      credentials: 'include'
+    });
+    return Array.isArray(payload?.saved_carts) ? payload.saved_carts : [];
+  };
+
+  const createSavedCart = async payload => {
+    const response = await request(SAVED_CARTS_ENDPOINT, {
+      method: 'POST',
+      credentials: 'include',
+      body: sanitizeSavedCartPayloadValue(payload)
+    });
+    return response?.saved_cart || response;
+  };
+
+  const deleteSavedCart = async id => {
+    const savedCartId = String(id || '').trim();
+    if (!savedCartId) throw new Error('Saved cart id is required.');
+    return request(`${SAVED_CARTS_ENDPOINT}/${encodeURIComponent(savedCartId)}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+  };
+
+  const announceSavedCartsChange = () => {
+    try {
+      window.dispatchEvent(new CustomEvent('ldc:saved-carts:change'));
+    } catch (error) {
+      // Ignore if CustomEvent is unavailable.
+    }
+  };
+
+  const saveCurrentCart = async () => {
+    const payload = await buildSavedCartPayloadFromCurrentCart();
+    const savedCart = await createSavedCart(payload);
+    announceSavedCartsChange();
+    return savedCart;
+  };
+
+  const ensureSavedCartControlStyles = () => {
+    if (document.getElementById('ldc-saved-cart-control-style')) return;
+    const style = document.createElement('style');
+    style.id = 'ldc-saved-cart-control-style';
+    style.textContent = `
+      .ldc-saved-cart-control {
+        display: grid;
+        gap: 0.45rem;
+      }
+      .ldc-save-cart-btn {
+        min-height: 2.75rem;
+      }
+      .ldc-save-cart-btn.is-secondary {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.08) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        color: var(--tile-cream-text, #ffffff);
+      }
+      .ldc-save-cart-status {
+        min-height: 1.15rem;
+        margin: 0;
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 0.78rem;
+        line-height: 1.35;
+      }
+    `;
+    document.head.appendChild(style);
+  };
+
+  const getSavedCartAuthState = async () => {
+    try {
+      const customer = await getCustomer();
+      return { authenticated: Boolean(customer?.id || customer?.email), customer };
+    } catch (error) {
+      return { authenticated: false, customer: null };
+    }
+  };
+
+  const getSavedCartDrawerItemCount = () => {
+    const state = readCurrentDisplayCartState();
+    return getSavedCartItemCount(state.items);
+  };
+
+  const syncSavedCartDrawerControl = async control => {
+    if (!control || control.dataset.syncing === 'true') return;
+    const button = control.querySelector('[data-save-cart-button]');
+    const status = control.querySelector('[data-save-cart-status]');
+    if (!button || !status) return;
+
+    const itemCount = getSavedCartDrawerItemCount();
+    if (itemCount <= 0) {
+      button.disabled = true;
+      button.textContent = 'Save Cart';
+      status.textContent = 'Add items before saving this cart.';
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Checking Account...';
+    status.textContent = 'Checking account access...';
+    control.dataset.syncing = 'true';
+    const authState = await getSavedCartAuthState();
+    control.dataset.syncing = 'false';
+    if (!authState.authenticated) {
+      button.disabled = true;
+      button.textContent = 'Sign In to Save Cart';
+      status.textContent = 'Sign in to save this cart to your account.';
+      return;
+    }
+
+    button.disabled = false;
+    button.textContent = 'Save Cart';
+    status.textContent = 'Save this cart to your account.';
+  };
+
+  const installSavedCartDrawerControls = () => {
+    const drawers = Array.from(document.querySelectorAll('[data-cart-drawer]'));
+    if (!drawers.length) return;
+    ensureSavedCartControlStyles();
+
+    drawers.forEach(drawer => {
+      const footer = drawer.querySelector('.cart-footer');
+      if (!footer || footer.querySelector('[data-saved-cart-control]')) return;
+
+      const control = document.createElement('div');
+      control.className = 'ldc-saved-cart-control';
+      control.setAttribute('data-saved-cart-control', '');
+      control.innerHTML = `
+        <button type="button" class="checkout-btn ldc-save-cart-btn is-secondary" data-save-cart-button disabled>Save Cart</button>
+        <p class="ldc-save-cart-status" data-save-cart-status>Add items before saving this cart.</p>
+      `;
+      footer.insertBefore(control, footer.firstChild);
+
+      const button = control.querySelector('[data-save-cart-button]');
+      const status = control.querySelector('[data-save-cart-status]');
+      button?.addEventListener('click', async event => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!button || button.disabled) return;
+
+        button.disabled = true;
+        button.textContent = 'Saving...';
+        if (status) status.textContent = 'Saving cart to your account...';
+        const authState = await getSavedCartAuthState();
+        if (!authState.authenticated) {
+          button.textContent = 'Sign In to Save Cart';
+          if (status) status.textContent = 'Sign in to save this cart to your account.';
+          return;
+        }
+
+        try {
+          await saveCurrentCart();
+          button.textContent = 'Saved';
+          if (status) status.textContent = 'Cart saved to your account.';
+        } catch (error) {
+          button.textContent = 'Save Cart';
+          if (status) {
+            status.textContent = error?.message || 'Unable to save this cart. Please try again.';
+          }
+        } finally {
+          window.setTimeout(() => {
+            syncSavedCartDrawerControl(control);
+          }, 1200);
+        }
+      });
+
+      syncSavedCartDrawerControl(control);
+    });
+  };
+
   const getLegacyDrawerDisplayOptions = item => {
     const options = Array.isArray(item?.options)
       ? item.options.filter(option =>
@@ -5019,7 +5386,10 @@
     emailEl: document.querySelector('[data-account-email]'),
     logoutEl: document.querySelector('[data-account-logout]'),
     orderHistoryEl: document.querySelector('[data-order-history]'),
-    ordersEl: document.querySelector('[data-order-list]')
+    ordersEl: document.querySelector('[data-order-list]'),
+    savedCartsSectionEl: document.querySelector('[data-saved-carts-section]'),
+    savedCartsStatusEl: document.querySelector('[data-saved-carts-status]'),
+    savedCartsListEl: document.querySelector('[data-saved-carts-list]')
   });
 
   const hasAccountPageState = elements =>
@@ -5086,6 +5456,126 @@
     });
   };
 
+  const formatSavedCartDate = savedCart => {
+    const raw = savedCart?.updated_at || savedCart?.created_at || savedCart?.cart_snapshot?.captured_at || '';
+    const date = raw ? new Date(raw) : null;
+    return date && !Number.isNaN(date.getTime()) ? date.toLocaleDateString() : 'Date unavailable';
+  };
+
+  const getSavedCartSubtotalDisplay = savedCart => {
+    const currencyCode = getCurrencyCode(savedCart?.currency_code || savedCart?.cart_snapshot?.currency_code || 'USD');
+    const snapshotAmount = Number(savedCart?.subtotal_snapshot_amount);
+    if (Number.isFinite(snapshotAmount)) return formatMoneyFromMinor(snapshotAmount, currencyCode);
+    const snapshotDisplay = String(savedCart?.cart_snapshot?.subtotal_display || '').trim();
+    if (snapshotDisplay) return snapshotDisplay;
+    return '';
+  };
+
+  const renderAccountSavedCarts = (state, elements = getAccountPageElements()) => {
+    if (!elements.savedCartsSectionEl || !elements.savedCartsStatusEl || !elements.savedCartsListEl) {
+      return;
+    }
+    elements.savedCartsSectionEl.hidden = false;
+    elements.savedCartsListEl.innerHTML = '';
+
+    if (state?.status === 'loading') {
+      elements.savedCartsStatusEl.textContent = 'Loading saved carts...';
+      return;
+    }
+
+    if (state?.status === 'error') {
+      elements.savedCartsStatusEl.textContent = 'Unable to load saved carts. Please try again soon.';
+      return;
+    }
+
+    const savedCarts = Array.isArray(state?.savedCarts) ? state.savedCarts : [];
+    if (!savedCarts.length) {
+      elements.savedCartsStatusEl.textContent = 'No saved carts yet.';
+      return;
+    }
+
+    elements.savedCartsStatusEl.textContent = `${savedCarts.length} saved cart${savedCarts.length === 1 ? '' : 's'}.`;
+    savedCarts.forEach(savedCart => {
+      const card = document.createElement('div');
+      card.className = 'saved-cart-card';
+      card.setAttribute('data-saved-cart-id', savedCart?.id || '');
+
+      const title = document.createElement('h4');
+      title.textContent = String(savedCart?.name || 'Saved Cart').trim() || 'Saved Cart';
+      card.appendChild(title);
+
+      const meta = document.createElement('div');
+      meta.className = 'saved-cart-meta';
+      [
+        `Items: ${Math.max(0, Number(savedCart?.item_count || 0))}`,
+        getSavedCartSubtotalDisplay(savedCart) ? `Subtotal: ${getSavedCartSubtotalDisplay(savedCart)}` : '',
+        `Date: ${formatSavedCartDate(savedCart)}`,
+        savedCart?.status ? `Status: ${savedCart.status}` : ''
+      ]
+        .filter(Boolean)
+        .forEach(value => {
+          const item = document.createElement('span');
+          item.textContent = value;
+          meta.appendChild(item);
+        });
+      card.appendChild(meta);
+
+      const actions = document.createElement('div');
+      actions.className = 'saved-cart-actions';
+      const deleteButton = document.createElement('button');
+      deleteButton.className = 'auth-submit saved-cart-delete';
+      deleteButton.type = 'button';
+      deleteButton.setAttribute('data-saved-cart-delete', savedCart?.id || '');
+      deleteButton.textContent = 'Delete';
+      actions.appendChild(deleteButton);
+      card.appendChild(actions);
+
+      elements.savedCartsListEl.appendChild(card);
+    });
+  };
+
+  const refreshAccountSavedCarts = async (elements = getAccountPageElements()) => {
+    if (!elements.savedCartsSectionEl) return;
+    renderAccountSavedCarts({ status: 'loading' }, elements);
+    try {
+      const savedCarts = await listSavedCarts();
+      renderAccountSavedCarts({ status: 'loaded', savedCarts }, elements);
+    } catch (error) {
+      if (error && (error.status === 401 || error.status === 403)) {
+        elements.savedCartsSectionEl.hidden = true;
+        if (elements.savedCartsListEl) elements.savedCartsListEl.innerHTML = '';
+        if (elements.savedCartsStatusEl) elements.savedCartsStatusEl.textContent = '';
+        return;
+      }
+      renderAccountSavedCarts({ status: 'error' }, elements);
+    }
+  };
+
+  const handleSavedCartDelete = async event => {
+    const button = event.target.closest('[data-saved-cart-delete]');
+    if (!button) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const savedCartId = button.getAttribute('data-saved-cart-delete');
+    if (!savedCartId) return;
+
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Deleting...';
+    try {
+      await deleteSavedCart(savedCartId);
+      announceSavedCartsChange();
+      await refreshAccountSavedCarts();
+    } catch (error) {
+      button.disabled = false;
+      button.textContent = originalText || 'Delete';
+      const elements = getAccountPageElements();
+      if (elements.savedCartsStatusEl) {
+        elements.savedCartsStatusEl.textContent = 'Unable to delete saved cart. Please try again.';
+      }
+    }
+  };
+
   const setAccountLoggedOutState = (message = '') => {
     const elements = getAccountPageElements();
     if (!hasAccountPageState(elements)) return;
@@ -5098,6 +5588,9 @@
     if (elements.nameEl) elements.nameEl.textContent = '';
     if (elements.emailEl) elements.emailEl.textContent = '';
     if (elements.ordersEl) elements.ordersEl.innerHTML = '';
+    if (elements.savedCartsSectionEl) elements.savedCartsSectionEl.hidden = true;
+    if (elements.savedCartsStatusEl) elements.savedCartsStatusEl.textContent = '';
+    if (elements.savedCartsListEl) elements.savedCartsListEl.innerHTML = '';
   };
 
   const setAccountLoadingState = () => {
@@ -5106,9 +5599,10 @@
     setAccountStatusMessage(elements, 'Loading your account...');
     if (elements.authEl) elements.authEl.hidden = true;
     if (elements.detailsEl) elements.detailsEl.hidden = true;
+    if (elements.savedCartsSectionEl) elements.savedCartsSectionEl.hidden = true;
   };
 
-  const setAccountLoggedInState = (customer, orders) => {
+  const setAccountLoggedInState = (customer, orders, savedCartState) => {
     const elements = getAccountPageElements();
     if (!hasAccountPageState(elements)) return;
     setAccountStatusMessage(elements, '');
@@ -5124,6 +5618,7 @@
     if (elements.nameEl) elements.nameEl.textContent = getCustomerFullName(customer) || 'Not provided';
     if (elements.emailEl) elements.emailEl.textContent = customer?.email || '';
     renderAccountOrders(orders, elements);
+    renderAccountSavedCarts(savedCartState, elements);
   };
 
   const refreshAccountState = async () => {
@@ -5132,8 +5627,17 @@
     setAccountLoadingState();
     try {
       const customer = await getCustomer();
-      const orders = await getOrders();
-      setAccountLoggedInState(customer, orders);
+      const [orders, savedCarts] = await Promise.all([
+        getOrders(),
+        listSavedCarts().catch(error => {
+          if (error && (error.status === 401 || error.status === 403)) throw error;
+          return null;
+        })
+      ]);
+      const savedCartState = Array.isArray(savedCarts)
+        ? { status: 'loaded', savedCarts }
+        : { status: 'error' };
+      setAccountLoggedInState(customer, orders, savedCartState);
     } catch (error) {
       if (error && (error.status === 401 || error.status === 403)) {
         setAccountLoggedOutState();
@@ -5146,6 +5650,7 @@
   const initAccountPage = () => {
     const elements = getAccountPageElements();
     if (!hasAccountPageState(elements)) return;
+    elements.savedCartsListEl?.addEventListener('click', handleSavedCartDelete);
     refreshAccountState();
     window.addEventListener('ldc:auth:change', event => {
       if (event?.detail?.state === 'logged-out') {
@@ -5153,6 +5658,9 @@
         return;
       }
       refreshAccountState();
+    });
+    window.addEventListener('ldc:saved-carts:change', () => {
+      refreshAccountSavedCarts();
     });
   };
 
@@ -5671,6 +6179,9 @@
     getOrderedCartItems,
     getLineItemDisplayImage,
     formatLineItemForDisplay: formatLegacyItem,
+    saveCurrentCart,
+    listSavedCarts,
+    deleteSavedCart,
     isDesignSubmittedLineItem,
     decorateLineItemDisplayRows,
     normalizeDisplayOption,
@@ -5696,6 +6207,7 @@
     hydrateProductCards();
     renderDynamicGrids();
     installCategoryMiniCartParity();
+    installSavedCartDrawerControls();
   };
 
   window.addEventListener('hashchange', () => {
@@ -5705,8 +6217,24 @@
     applyAccountContinueShoppingTargets(document);
   });
 
-  window.addEventListener('ldc:products:rendered', installCategoryMiniCartParity);
-  window.addEventListener('load', installCategoryMiniCartParity, { once: true });
+  window.addEventListener('ldc:products:rendered', () => {
+    installCategoryMiniCartParity();
+    installSavedCartDrawerControls();
+  });
+  document.addEventListener('cart:set', () => {
+    document.querySelectorAll('[data-saved-cart-control]').forEach(control => {
+      syncSavedCartDrawerControl(control);
+    });
+  });
+  window.addEventListener('ldc:auth:change', () => {
+    document.querySelectorAll('[data-saved-cart-control]').forEach(control => {
+      syncSavedCartDrawerControl(control);
+    });
+  });
+  window.addEventListener('load', () => {
+    installCategoryMiniCartParity();
+    installSavedCartDrawerControls();
+  }, { once: true });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initStorefront);
