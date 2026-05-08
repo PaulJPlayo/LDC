@@ -3,6 +3,16 @@ import express from "express"
 import path from "path"
 
 const staticDir = path.join(process.cwd(), "static")
+const authenticateAdminSavedWorkspace = authenticate("user", ["session", "bearer"])
+
+const authenticateAdminSavedWorkspaceRequest = (req, res, next) => {
+  if (req.method === "OPTIONS") {
+    next()
+    return
+  }
+
+  return authenticateAdminSavedWorkspace(req, res, next)
+}
 
 const ensureStoreProductMetadata = (req, _res, next) => {
   if (req?.queryConfig?.fields) {
@@ -31,7 +41,7 @@ export default defineMiddlewares({
     },
     {
       matcher: "/admin/customers/:id/saved-workspace",
-      middlewares: [authenticate("user", ["session", "bearer"])],
+      middlewares: [authenticateAdminSavedWorkspaceRequest],
     },
     {
       matcher: "/store/products",

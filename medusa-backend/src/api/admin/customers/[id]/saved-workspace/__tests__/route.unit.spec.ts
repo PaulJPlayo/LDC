@@ -1,11 +1,12 @@
 import { Modules } from "@medusajs/utils"
 import { CUSTOMER_SAVED_WORKSPACE_MODULE } from "../../../../../../modules/customer-saved-workspace"
-import { GET } from "../route"
+import { GET, OPTIONS } from "../route"
 
 const createResponse = () => {
   const response: Record<string, unknown> = {
     statusCode: 200,
     body: null,
+    headers: {},
   }
 
   response.status = jest.fn((statusCode: number) => {
@@ -18,6 +19,16 @@ const createResponse = () => {
     return response
   })
 
+  response.send = jest.fn((body?: unknown) => {
+    response.body = body ?? null
+    return response
+  })
+
+  response.setHeader = jest.fn((key: string, value: string) => {
+    ;(response.headers as Record<string, string>)[key] = value
+    return response
+  })
+
   return response as any
 }
 
@@ -26,14 +37,17 @@ const createRequest = ({
   actorId = "admin_123",
   savedWorkspaceService = {},
   customerService = {},
+  headers = {},
 }: {
   query?: Record<string, unknown>
   actorId?: string | null
   savedWorkspaceService?: Record<string, unknown>
   customerService?: Record<string, unknown>
+  headers?: Record<string, string>
 } = {}) =>
   ({
     auth_context: actorId ? { actor_id: actorId } : {},
+    headers,
     params: { id: "cus_123" },
     query,
     scope: {
@@ -122,6 +136,33 @@ const createServices = () => {
 }
 
 describe("GET /admin/customers/:id/saved-workspace", () => {
+  it("allows empty OPTIONS preflight without auth or service calls", async () => {
+    const services = createServices()
+    const req = createRequest({
+      actorId: null,
+      headers: {
+        origin: "https://admin.lovettsldc.com",
+        "access-control-request-headers": "content-type",
+      },
+      ...services,
+    })
+    const res = createResponse()
+
+    await OPTIONS(req, res)
+
+    expect(res.status).toHaveBeenCalledWith(204)
+    expect(res.send).toHaveBeenCalledWith()
+    expect(res.headers).toMatchObject({
+      "Access-Control-Allow-Origin": "https://admin.lovettsldc.com",
+      "Access-Control-Allow-Credentials": "true",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "content-type",
+    })
+    expect((req as any).scope.resolve).not.toHaveBeenCalled()
+    expect(services.savedWorkspaceService.listSavedItems).not.toHaveBeenCalled()
+    expect(services.customerService.retrieveCustomer).not.toHaveBeenCalled()
+  })
+
   it("returns a read-only sanitized saved workspace response", async () => {
     const services = createServices()
     const req = createRequest({

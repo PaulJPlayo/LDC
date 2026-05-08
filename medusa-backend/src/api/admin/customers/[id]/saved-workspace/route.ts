@@ -22,6 +22,14 @@ const DEFAULT_CARTS_LIMIT = 10
 const MAX_CARTS_LIMIT = 50
 const TEXT_LIMIT = 240
 const LONG_TEXT_LIMIT = 500
+const DEFAULT_ADMIN_CORS_ORIGINS = [
+  "http://127.0.0.1:5501",
+  "http://localhost:5174",
+  "https://admin.lovettsldc.com",
+  "https://lovettsldc.com",
+  "https://www.lovettsldc.com",
+  "https://ldc-8kg.pages.dev",
+]
 
 class QueryError extends Error {
   status = 400
@@ -105,6 +113,36 @@ const cleanText = (value: unknown, limit = TEXT_LIMIT) => {
   const text = String(value ?? "").trim()
   if (!text || looksUnsafeText(text)) return ""
   return text.slice(0, limit)
+}
+
+const parseCorsOrigins = (value?: string) =>
+  (value || "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+
+const getAllowedAdminCorsOrigins = () =>
+  new Set([...parseCorsOrigins(process.env.ADMIN_CORS), ...DEFAULT_ADMIN_CORS_ORIGINS])
+
+const getHeaderValue = (value: string | string[] | undefined) => {
+  if (Array.isArray(value)) return value.filter(Boolean).join(", ")
+  return value || ""
+}
+
+const applyAdminCorsHeaders = (req: MedusaRequest, res: MedusaResponse) => {
+  const origin = getHeaderValue(req.headers?.origin)
+  if (origin && getAllowedAdminCorsOrigins().has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin)
+    res.setHeader("Access-Control-Allow-Credentials", "true")
+  }
+
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS")
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    getHeaderValue(req.headers?.["access-control-request-headers"]) || "Content-Type, Authorization"
+  )
+  res.setHeader("Access-Control-Max-Age", "86400")
+  res.setHeader("Vary", "Origin, Access-Control-Request-Headers")
 }
 
 const cleanOptionalText = (value: unknown, limit = TEXT_LIMIT) => {
@@ -452,7 +490,14 @@ const getSavedItemCounts = async (
   )
 }
 
+export async function OPTIONS(req: MedusaRequest, res: MedusaResponse) {
+  applyAdminCorsHeaders(req, res)
+  res.status(204).send()
+}
+
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
+  applyAdminCorsHeaders(req, res)
+
   const adminActorId = getAdminActorId(req)
   if (!adminActorId) {
     res.status(401).json({ message: "Authentication required." })
