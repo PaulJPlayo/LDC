@@ -30,6 +30,10 @@ export default defineMiddlewares({
       middlewares: [authenticate("customer", ["session", "bearer"])],
     },
     {
+      matcher: "/admin/customers/:id/saved-workspace",
+      middlewares: [authenticate("user", ["session", "bearer"])],
+    },
+    {
       matcher: "/store/products",
       middlewares: [ensureStoreProductMetadata],
     },
