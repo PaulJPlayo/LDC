@@ -22,6 +22,7 @@
       .account-shell {
         width: 100%;
         max-width: 980px;
+        min-width: 0;
         margin: 0 auto;
         display: flex;
         flex-direction: column;
@@ -31,6 +32,8 @@
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
+        min-width: 0;
+        overflow-wrap: break-word;
       }
       .account-back {
         display: inline-flex;
@@ -61,6 +64,9 @@
         line-height: 1.6;
       }
       .account-card {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
         background: rgba(255, 255, 255, 0.08);
         border: 1px solid rgba(255, 255, 255, 0.16);
         border-radius: 1.5rem;
@@ -79,6 +85,7 @@
       .account-auth {
         display: grid;
         gap: 1.5rem;
+        min-width: 0;
       }
       .account-auth[hidden],
       .account-details[hidden],
@@ -89,13 +96,18 @@
       }
       .auth-grid {
         display: grid;
+        grid-template-columns: minmax(0, 1fr);
         gap: 1.5rem;
+        min-width: 0;
       }
       .auth-card {
+        min-width: 0;
+        max-width: 100%;
         background: rgba(15, 23, 42, 0.55);
         border: 1px solid rgba(148, 163, 184, 0.3);
         border-radius: 1.25rem;
         padding: 1.5rem;
+        overflow-wrap: break-word;
       }
       .auth-card h3 {
         margin: 0 0 0.35rem 0;
@@ -147,10 +159,13 @@
       .account-details {
         display: grid;
         gap: 1.5rem;
+        min-width: 0;
       }
       .account-summary {
         display: grid;
         gap: 0.45rem;
+        min-width: 0;
+        overflow-wrap: break-word;
       }
       .account-summary h2 {
         margin: 0;
@@ -171,19 +186,96 @@
       .account-meta {
         display: grid;
         gap: 0.5rem;
+        min-width: 0;
         font-size: 0.95rem;
         color: rgba(248, 250, 252, 0.8);
+        overflow-wrap: break-word;
       }
       .account-meta strong {
         color: #ffffff;
       }
+      .account-workspace {
+        display: grid;
+        gap: 1rem;
+        min-width: 0;
+        max-width: 100%;
+        padding: 1.15rem;
+        border: 1px solid rgba(148, 163, 184, 0.28);
+        border-radius: 1rem;
+        background: rgba(15, 23, 42, 0.34);
+      }
+      .account-workspace-header {
+        display: grid;
+        gap: 0.35rem;
+        min-width: 0;
+        overflow-wrap: break-word;
+      }
+      .account-workspace-header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .account-workspace-header p {
+        margin: 0;
+        color: rgba(248, 250, 252, 0.74);
+        line-height: 1.55;
+      }
+      .account-workspace-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.85rem;
+        min-width: 0;
+      }
+      .account-workspace-card {
+        display: grid;
+        gap: 0.55rem;
+        min-width: 0;
+        max-width: 100%;
+        padding: 1rem;
+        border: 1px solid rgba(148, 163, 184, 0.24);
+        border-radius: 0.85rem;
+        background: rgba(255, 255, 255, 0.08);
+        overflow-wrap: break-word;
+      }
+      .account-workspace-card h4 {
+        margin: 0;
+        font-size: 0.95rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .account-workspace-card p {
+        margin: 0;
+        color: rgba(248, 250, 252, 0.72);
+        line-height: 1.5;
+      }
+      .account-workspace-card a {
+        max-width: 100%;
+        color: #ffffff;
+        font-weight: 700;
+        text-decoration: underline;
+        text-underline-offset: 0.22rem;
+        overflow-wrap: anywhere;
+      }
+      .account-workspace-card a:focus-visible {
+        outline: 2px solid rgba(255, 255, 255, 0.85);
+        outline-offset: 0.2rem;
+        border-radius: 0.25rem;
+      }
+      .account-actions-panel {
+        display: grid;
+        gap: 0.75rem;
+        min-width: 0;
+      }
       .orders-list {
         display: grid;
         gap: 1rem;
+        min-width: 0;
       }
       .saved-carts-section {
         display: grid;
         gap: 0.85rem;
+        min-width: 0;
       }
       .saved-carts-section h3 {
         margin: 0;
@@ -196,6 +288,7 @@
       .saved-carts-list {
         display: grid;
         gap: 1rem;
+        min-width: 0;
       }
       .saved-cart-card {
         border: 1px solid rgba(148, 163, 184, 0.3);
@@ -257,8 +350,28 @@
         text-align: center;
         color: rgba(248, 250, 252, 0.7);
       }
+      @media (max-width: 480px) {
+        body {
+          padding-inline: 1rem;
+        }
+        .account-card {
+          padding: 1.25rem;
+        }
+        .auth-card {
+          padding: 1.25rem;
+        }
+        .account-workspace {
+          padding: 0.9rem;
+        }
+        .account-workspace-card {
+          padding: 0.85rem;
+        }
+      }
       @media (min-width: 768px) {
         .auth-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .account-workspace-grid {
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
       }
@@ -321,7 +434,7 @@
         </div>
 
         <div class="account-details" data-account-details hidden>
-          <div class="account-summary">
+          <div class="account-summary" id="account-summary">
             <p class="account-greeting" data-account-greeting></p>
             <h2>Account Summary</h2>
             <p>Profile details and orders linked to your signed-in account.</p>
@@ -330,15 +443,52 @@
             <div><strong>Name:</strong> <span data-account-name></span></div>
             <div><strong>Email:</strong> <span data-account-email></span></div>
           </div>
-          <button class="auth-submit account-logout" type="button" data-account-logout hidden>Log Out</button>
 
-          <div class="saved-carts-section" data-saved-carts-section hidden>
+          <section class="account-workspace" aria-labelledby="account-workspace-heading">
+            <div class="account-workspace-header">
+              <h3 id="account-workspace-heading">Account Workspace</h3>
+              <p>Manage your account details, saved work, saved carts, and order history from one place.</p>
+            </div>
+            <div class="account-workspace-grid">
+              <article class="account-workspace-card">
+                <h4>Account Details</h4>
+                <p>Review the profile information connected to this account.</p>
+                <a href="#account-summary">View account summary</a>
+              </article>
+              <article class="account-workspace-card">
+                <h4>Saved Workspace</h4>
+                <p>Open saved favorites, custom builds, and saved designs on the existing Favorites page.</p>
+                <a href="favorites.html">Open saved workspace</a>
+              </article>
+              <article class="account-workspace-card">
+                <h4>Saved Carts</h4>
+                <p>Return to carts saved from the shopping cart drawer.</p>
+                <a href="#saved-carts">View saved carts</a>
+              </article>
+              <article class="account-workspace-card">
+                <h4>Order History</h4>
+                <p>Review orders linked to this signed-in account.</p>
+                <a href="#order-history">View order history</a>
+              </article>
+              <article class="account-workspace-card">
+                <h4>Account Actions</h4>
+                <p>Sign out when you are finished reviewing your account.</p>
+                <a href="#account-actions">Go to logout</a>
+              </article>
+            </div>
+          </section>
+
+          <div class="account-actions-panel" id="account-actions">
+            <button class="auth-submit account-logout" type="button" data-account-logout hidden>Log Out</button>
+          </div>
+
+          <div class="saved-carts-section" id="saved-carts" data-saved-carts-section hidden>
             <h3>Saved Carts</h3>
             <p class="saved-carts-status" data-saved-carts-status>Loading saved carts...</p>
             <div class="saved-carts-list" data-saved-carts-list></div>
           </div>
 
-          <div data-order-history hidden>
+          <div id="order-history" data-order-history hidden>
             <h3>Order History</h3>
             <div class="orders-list" data-order-list></div>
           </div>
