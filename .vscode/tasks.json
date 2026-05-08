@@ -10,6 +10,8 @@
         "@playwright/mcp@latest",
         "--port",
         "8931",
+        "--host",
+        "127.0.0.1",
         "--browser",
         "chrome",
         "--secrets",
@@ -30,6 +32,23 @@
         "runOn": "folderOpen",
         "instanceLimit": 1
       }
+    },
+    {
+      "label": "Run Account Workspace Credentialed Check",
+      "type": "shell",
+      "command": "/usr/local/bin/node",
+      "args": [
+        "${workspaceFolder}/tests/e2e/account-workspace-dashboard-check.js"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
     }
   ]
 }
