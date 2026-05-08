@@ -1304,15 +1304,57 @@ const resolveUploadedFileUrl = async (uploaded) => {
   return normalizeUploadUrl(url || id);
 };
 
+const looksLikeRawEncodedValue = (value) => {
+  const text = String(value || '').trim();
+  if (!text) return false;
+  if (/^(data|blob|javascript):/i.test(text) || /;base64,/i.test(text)) return true;
+  if (/base64/i.test(text) && text.length > 120) return true;
+  if (text.length >= 512 && text.length % 4 === 0 && /^[A-Za-z0-9+/]+={0,2}$/.test(text)) {
+    return true;
+  }
+  return false;
+};
+
 const resolveMediaUrl = (value) => {
   const url = String(value || '').trim();
   if (!url) return '';
-  if (/^data:/i.test(url)) return url;
+  if (looksLikeRawEncodedValue(url)) return '';
   if (/^https?:\/\//i.test(url)) return normalizeBackendUrl(url);
   if (url.startsWith('//')) return `https:${url}`;
   if (url.startsWith('/')) return `${MEDIA_BASE}${url}`;
   if (!url.includes('://') && url.includes('/')) return `${MEDIA_BASE}/${url}`;
   return url;
+};
+
+const unsafeOrderAttachmentFieldPattern =
+  /\b(payment|card|cvv|cvc|token|cookie|password|secret|authorization|jwt|database)\b/i;
+
+const readSafeOrderAttachmentText = (value, limit = 240) => {
+  if (value === null || value === undefined) return '';
+  if (typeof File !== 'undefined' && value instanceof File) return '';
+  if (typeof Blob !== 'undefined' && value instanceof Blob) return '';
+  if (typeof value === 'object') return '';
+  const text = String(value).trim();
+  if (!text) return '';
+  if (looksLikeRawEncodedValue(text)) return '';
+  if (/^\[object (File|Blob)\]$/i.test(text) || /^(File|Blob)\s*\{/i.test(text)) return '';
+  if (unsafeOrderAttachmentFieldPattern.test(text)) return '';
+  return text.slice(0, limit);
+};
+
+const getOrderAttachmentKeyLabel = (value) => {
+  const key = readSafeOrderAttachmentText(value, 1000);
+  if (!key) return '';
+  const tail = key.split('/').filter(Boolean).pop() || key;
+  return tail.length <= 24 ? tail : `...${tail.slice(-24)}`;
+};
+
+const getOrderAttachmentSizeLabel = (value) => {
+  const size = toNumber(value);
+  if (size === null || size < 0) return '';
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 };
 
 const normalizeImageUrls = (input) => {
@@ -14156,6 +14198,18 @@ const ResourceDetail = ({ resource }) => {
       candidates
         .map((value) => (value == null ? '' : String(value).trim()))
         .find(Boolean) || '';
+    const readAttachmentText = (...candidates) =>
+      candidates
+        .map((value) => readSafeOrderAttachmentText(value))
+        .find(Boolean) || '';
+    const readAttachmentKey = (...candidates) =>
+      candidates
+        .map((value) => getOrderAttachmentKeyLabel(value))
+        .find(Boolean) || '';
+    const readAttachmentSize = (...candidates) =>
+      candidates
+        .map((value) => getOrderAttachmentSizeLabel(value))
+        .find(Boolean) || '';
     const lines = [];
     const baseTitle = readText(
       item?.title,
@@ -14218,19 +14272,29 @@ const ResourceDetail = ({ resource }) => {
       metadata?.design_notes,
       metadata?.designNotes
     );
-    const attachmentName = readText(
+    const safeAttachmentName = readAttachmentText(
       metadata?.design_attachment_name,
       metadata?.designAttachmentName
     );
-    const attachmentUrl = readText(
-      metadata?.design_attachment_url,
-      metadata?.designAttachmentUrl,
-      metadata?.design_attachment_data,
-      metadata?.designAttachmentData
+    const attachmentProvider = readAttachmentText(
+      metadata?.design_attachment_provider,
+      metadata?.designAttachmentProvider
     );
-    const attachmentKey = readText(
+    const attachmentKey = readAttachmentKey(
       metadata?.design_attachment_key,
       metadata?.designAttachmentKey
+    );
+    const attachmentType = readAttachmentText(
+      metadata?.design_attachment_content_type,
+      metadata?.designAttachmentContentType
+    );
+    const attachmentSize = readAttachmentSize(
+      metadata?.design_attachment_size,
+      metadata?.designAttachmentSize
+    );
+    const attachmentStatus = readAttachmentText(
+      metadata?.design_attachment_status,
+      metadata?.designAttachmentStatus
     );
 
     if (description) lines.push({ label: 'Description', value: description });
@@ -14256,13 +14320,20 @@ const ResourceDetail = ({ resource }) => {
     if (accessoryLabel) lines.push({ label: 'Accessory', value: accessoryLabel });
     if (wrapLabel) lines.push({ label: 'Wrap', value: wrapLabel });
     if (notes) lines.push({ label: 'Notes', value: notes });
-    if (attachmentName) {
-      lines.push({
-        label: 'Attachment',
-        value: attachmentName,
-        url: attachmentUrl ? resolveMediaUrl(attachmentUrl) : '',
-        key: attachmentKey
-      });
+    if (
+      safeAttachmentName ||
+      attachmentProvider ||
+      attachmentKey ||
+      attachmentType ||
+      attachmentSize ||
+      attachmentStatus
+    ) {
+      if (safeAttachmentName) lines.push({ label: 'Attachment', value: safeAttachmentName });
+      if (attachmentProvider) lines.push({ label: 'Attachment provider', value: attachmentProvider });
+      if (attachmentKey) lines.push({ label: 'Attachment key', value: attachmentKey });
+      if (attachmentType) lines.push({ label: 'Attachment type', value: attachmentType });
+      if (attachmentSize) lines.push({ label: 'Attachment size', value: attachmentSize });
+      if (attachmentStatus) lines.push({ label: 'Attachment status', value: attachmentStatus });
     }
     return lines;
   };
@@ -14313,17 +14384,7 @@ const ResourceDetail = ({ resource }) => {
                     {line?.label || 'Detail'}
                   </span>
                   <span>{line?.value || '-'}</span>
-                  {line?.url ? (
-                    <a
-                      href={line.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-ldc-mauve underline"
-                    >
-                      View
-                    </a>
-                  ) : null}
-                  {!line?.url && line?.key ? (
+                  {line?.key ? (
                     <span className="text-ldc-ink/50">Key: {line.key}</span>
                   ) : null}
                 </div>
