@@ -301,6 +301,19 @@ export const getDetail = async (endpoint, id, params = {}) => {
   return request(`${endpoint}/${id}${suffix ? `?${suffix}` : ''}`);
 };
 
+export const fetchCustomerSavedWorkspace = async (customerId, params = {}) => {
+  const id = String(customerId || '').trim();
+  if (!id) {
+    throw new ApiError('Customer id is required.', 400);
+  }
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => appendQueryParam(query, key, value));
+  const suffix = query.toString();
+  return request(
+    `/admin/customers/${encodeURIComponent(id)}/saved-workspace${suffix ? `?${suffix}` : ''}`
+  );
+};
+
 export const formatApiError = (error, fallback = 'Something went wrong.') => {
   if (!error) return fallback;
   if (error instanceof ApiError) {

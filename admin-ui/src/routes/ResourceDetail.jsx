@@ -5,6 +5,7 @@ import PageHeader from '../components/PageHeader.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import {
   ApiError,
+  fetchCustomerSavedWorkspace,
   formatApiError,
   getDetail,
   getList,
@@ -51,6 +52,302 @@ const formatMoneyOrDash = (amount, currency) => {
   const numeric = toNumber(amount);
   if (numeric === null) return '-';
   return formatMoney(numeric, currency);
+};
+
+const SAVED_WORKSPACE_TYPE_LABELS = {
+  product_favorite: 'Favorite',
+  doormat_build: 'Doormat build',
+  attire_build: 'Attire build',
+  custom_design: 'Custom design',
+  seasonal_design: 'Seasonal design',
+  note: 'Note'
+};
+
+const safeWorkspaceText = (value, fallback = 'Not provided') => {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === 'object') return fallback;
+  const text = String(value).trim();
+  return text || fallback;
+};
+
+const getWorkspaceArray = (value) => (Array.isArray(value) ? value : []);
+
+const getWorkspaceCount = (counts, key) => {
+  const numeric = Number(counts?.[key]);
+  return Number.isFinite(numeric) ? numeric : 0;
+};
+
+const getSavedWorkspaceCounts = (workspace) => {
+  const counts = workspace?.counts || {};
+  return {
+    favorites: getWorkspaceCount(counts, 'product_favorites'),
+    builds:
+      getWorkspaceCount(counts, 'doormat_builds') +
+      getWorkspaceCount(counts, 'attire_builds'),
+    designs:
+      getWorkspaceCount(counts, 'custom_designs') +
+      getWorkspaceCount(counts, 'seasonal_designs'),
+    carts: getWorkspaceCount(counts, 'saved_carts')
+  };
+};
+
+const getSavedWorkspaceItems = (workspace) => getWorkspaceArray(workspace?.saved_items?.data);
+
+const getSavedWorkspaceCarts = (workspace) => getWorkspaceArray(workspace?.saved_carts?.data);
+
+const formatWorkspaceType = (type) =>
+  SAVED_WORKSPACE_TYPE_LABELS[type] || safeWorkspaceText(type, 'Saved item');
+
+const formatWorkspaceOption = (option) => {
+  if (!option || typeof option !== 'object') return '';
+  const label = safeWorkspaceText(option.label, '');
+  const value = safeWorkspaceText(option.value, '');
+  if (label && value) return `${label}: ${value}`;
+  return label || value;
+};
+
+const getWorkspaceOptions = (options) =>
+  getWorkspaceArray(options)
+    .map(formatWorkspaceOption)
+    .filter(Boolean);
+
+const formatWorkspaceReference = (reference) => {
+  if (!reference || typeof reference !== 'object') return '';
+  const filename = safeWorkspaceText(reference.filename, '');
+  const provider = safeWorkspaceText(reference.provider, '');
+  const keyLabel = safeWorkspaceText(reference.key_label, '');
+  return [filename, provider, keyLabel].filter(Boolean).join(' · ');
+};
+
+const getWorkspaceReferences = (references) =>
+  getWorkspaceArray(references)
+    .map(formatWorkspaceReference)
+    .filter(Boolean);
+
+const getSavedItemReferenceLines = (item) => {
+  const lines = [];
+  if (item?.source_path) lines.push(`Source: ${safeWorkspaceText(item.source_path)}`);
+  const product = item?.product_handle || item?.product_id || item?.product_key;
+  if (product) lines.push(`Product: ${safeWorkspaceText(product)}`);
+  const variant = item?.variant_title || item?.variant_id;
+  if (variant) lines.push(`Variant: ${safeWorkspaceText(variant)}`);
+  return lines;
+};
+
+const SavedWorkspaceMetaList = ({ items }) => {
+  const rows = getWorkspaceArray(items).filter(Boolean);
+  if (!rows.length) return null;
+  return (
+    <ul className="mt-3 space-y-1 text-xs text-ldc-ink/65">
+      {rows.map((item, index) => (
+        <li key={`${item}-${index}`}>{item}</li>
+      ))}
+    </ul>
+  );
+};
+
+const SavedWorkspaceUploadList = ({ references }) => {
+  const items = getWorkspaceReferences(references);
+  if (!items.length) return null;
+  return (
+    <div className="mt-3 rounded-xl bg-ldc-cream/70 p-3">
+      <div className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-ldc-ink/50">
+        Upload references
+      </div>
+      <ul className="mt-2 space-y-1 text-xs text-ldc-ink/70">
+        {items.map((item, index) => (
+          <li key={`${item}-${index}`}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+const SavedWorkspaceOptions = ({ options }) => {
+  const items = getWorkspaceOptions(options);
+  if (!items.length) return null;
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      {items.map((item, index) => (
+        <span key={`${item}-${index}`} className="ldc-badge text-ldc-ink/70">
+          {item}
+        </span>
+      ))}
+    </div>
+  );
+};
+
+const SavedWorkspaceItemCard = ({ item }) => {
+  const title = safeWorkspaceText(item?.title, 'Saved item');
+  const notes = safeWorkspaceText(item?.notes_preview, '');
+  return (
+    <article className="rounded-2xl border border-ldc-ink/10 bg-white/75 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-ldc-ink/50">
+            {formatWorkspaceType(item?.type)}
+          </div>
+          <h4 className="mt-1 font-semibold text-ldc-ink">{title}</h4>
+        </div>
+        <StatusBadge value={item?.status || 'active'} />
+      </div>
+      <SavedWorkspaceMetaList
+        items={[
+          ...getSavedItemReferenceLines(item),
+          `Updated: ${formatDateTime(item?.updated_at || item?.created_at)}`
+        ]}
+      />
+      <SavedWorkspaceOptions options={item?.selected_options} />
+      {notes ? <p className="mt-3 text-sm text-ldc-ink/70">{notes}</p> : null}
+      <SavedWorkspaceUploadList references={item?.upload_references} />
+    </article>
+  );
+};
+
+const SavedWorkspaceCartCard = ({ cart }) => {
+  const lineItems = getWorkspaceArray(cart?.line_items);
+  const visibleLines = lineItems.slice(0, 4);
+  const remainingLines = Math.max(0, lineItems.length - visibleLines.length);
+  return (
+    <article className="rounded-2xl border border-ldc-ink/10 bg-white/75 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-ldc-ink/50">
+            Saved cart
+          </div>
+          <h4 className="mt-1 font-semibold text-ldc-ink">
+            {safeWorkspaceText(cart?.name, 'Saved cart')}
+          </h4>
+        </div>
+        <StatusBadge value={cart?.status || 'active'} />
+      </div>
+      <SavedWorkspaceMetaList
+        items={[
+          `Items: ${toNumber(cart?.item_count) ?? lineItems.length}`,
+          `Subtotal: ${formatMoneyOrDash(
+            cart?.subtotal_snapshot_amount,
+            cart?.currency_code || 'USD'
+          )}`,
+          `Updated: ${formatDateTime(cart?.updated_at || cart?.created_at)}`
+        ]}
+      />
+      {visibleLines.length ? (
+        <div className="mt-3 space-y-3">
+          {visibleLines.map((line, index) => (
+            <div key={`${safeWorkspaceText(line?.title, 'Item')}-${index}`} className="rounded-xl bg-ldc-cream/70 p-3">
+              <div className="text-sm font-semibold text-ldc-ink">
+                {safeWorkspaceText(line?.title, 'Item')} · Qty {toNumber(line?.quantity) ?? 1}
+              </div>
+              <SavedWorkspaceOptions options={line?.selected_options} />
+              <SavedWorkspaceUploadList references={line?.upload_references} />
+            </div>
+          ))}
+          {remainingLines ? (
+            <div className="text-xs text-ldc-ink/60">
+              {remainingLines} more line {remainingLines === 1 ? 'item' : 'items'}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+      <SavedWorkspaceUploadList references={cart?.upload_references} />
+    </article>
+  );
+};
+
+const SavedWorkspacePanel = ({ workspace, state }) => {
+  const counts = getSavedWorkspaceCounts(workspace);
+  const savedItems = getSavedWorkspaceItems(workspace);
+  const savedCarts = getSavedWorkspaceCarts(workspace);
+  const hasRecords = savedItems.length > 0 || savedCarts.length > 0;
+  const countCards = [
+    { label: 'Favorites', value: counts.favorites },
+    { label: 'Builds', value: counts.builds },
+    { label: 'Designs', value: counts.designs },
+    { label: 'Saved Carts', value: counts.carts }
+  ];
+
+  return (
+    <section className="ldc-card p-6" aria-labelledby="saved-workspace-heading">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 id="saved-workspace-heading" className="font-heading text-xl text-ldc-ink">
+            Saved Workspace
+          </h3>
+          <p className="mt-2 text-sm text-ldc-ink/70">
+            Read-only customer saved work, saved carts, and upload reference labels.
+          </p>
+        </div>
+        <span className="ldc-badge text-ldc-ink/70">Read only</span>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {countCards.map((card) => (
+          <div key={card.label} className="rounded-2xl bg-white/75 p-4">
+            <div className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-ldc-ink/50">
+              {card.label}
+            </div>
+            <div className="mt-2 text-2xl font-semibold text-ldc-ink">{card.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {state.loading ? (
+        <div className="mt-5 rounded-2xl bg-white/70 p-4 text-sm text-ldc-ink/70">
+          Loading saved workspace...
+        </div>
+      ) : null}
+
+      {!state.loading && state.error ? (
+        <div className="mt-5 rounded-2xl bg-rose-50 p-4 text-sm text-rose-700">
+          Unable to load saved workspace.
+        </div>
+      ) : null}
+
+      {!state.loading && !state.error && !hasRecords ? (
+        <div className="mt-5 rounded-2xl bg-white/70 p-4 text-sm text-ldc-ink/70">
+          No saved workspace records found for this customer.
+        </div>
+      ) : null}
+
+      {!state.loading && !state.error && hasRecords ? (
+        <div className="mt-6 grid gap-5 xl:grid-cols-2">
+          <div>
+            <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-ldc-ink/50">
+              Saved Items
+            </h4>
+            {savedItems.length ? (
+              <div className="mt-3 grid gap-3">
+                {savedItems.map((item, index) => (
+                  <SavedWorkspaceItemCard key={item?.id || `saved-item-${index}`} item={item} />
+                ))}
+              </div>
+            ) : (
+              <div className="mt-3 rounded-2xl bg-white/70 p-4 text-sm text-ldc-ink/70">
+                No saved items found.
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-ldc-ink/50">
+              Saved Carts
+            </h4>
+            {savedCarts.length ? (
+              <div className="mt-3 grid gap-3">
+                {savedCarts.map((cart, index) => (
+                  <SavedWorkspaceCartCard key={cart?.id || `saved-cart-${index}`} cart={cart} />
+                ))}
+              </div>
+            ) : (
+              <div className="mt-3 rounded-2xl bg-white/70 p-4 text-sm text-ldc-ink/70">
+                No saved carts found.
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
 };
 
 const GEO_ZONE_TYPE_OPTIONS = [
@@ -2358,6 +2655,11 @@ const ResourceDetail = ({ resource }) => {
   const [customerGroupMeta, setCustomerGroupMeta] = useState({ groups: [] });
   const [customerGroupMetaLoading, setCustomerGroupMetaLoading] = useState(false);
   const [customerGroupMetaError, setCustomerGroupMetaError] = useState('');
+  const [savedWorkspace, setSavedWorkspace] = useState(null);
+  const [savedWorkspaceState, setSavedWorkspaceState] = useState({
+    loading: false,
+    error: ''
+  });
   const [customerGroupMembership, setCustomerGroupMembership] = useState({
     initial: [],
     selected: []
@@ -4336,6 +4638,42 @@ const ResourceDetail = ({ resource }) => {
       isActive = false;
     };
   }, [isCustomer]);
+
+  useEffect(() => {
+    if (!isCustomer || !id) {
+      setSavedWorkspace(null);
+      setSavedWorkspaceState({ loading: false, error: '' });
+      return;
+    }
+    let isActive = true;
+
+    const loadSavedWorkspace = async () => {
+      setSavedWorkspaceState({ loading: true, error: '' });
+      let nextError = '';
+      try {
+        const payload = await fetchCustomerSavedWorkspace(id, {
+          items_limit: 25,
+          carts_limit: 10
+        });
+        if (!isActive) return;
+        setSavedWorkspace(payload || null);
+      } catch (err) {
+        if (!isActive) return;
+        setSavedWorkspace(null);
+        nextError = 'Unable to load saved workspace.';
+      } finally {
+        if (isActive) {
+          setSavedWorkspaceState({ loading: false, error: nextError });
+        }
+      }
+    };
+
+    loadSavedWorkspace();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isCustomer, id]);
 
   useEffect(() => {
     if (!isCategory) {
@@ -24144,6 +24482,10 @@ const ResourceDetail = ({ resource }) => {
                 </div>
               </form>
             </div>
+          ) : null}
+
+          {isCustomer ? (
+            <SavedWorkspacePanel workspace={savedWorkspace} state={savedWorkspaceState} />
           ) : null}
 
           {isCustomer ? (
